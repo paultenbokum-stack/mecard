@@ -17,8 +17,11 @@ $company    = $company_id ? \Me\Preview\Module::get_company_data( $company_id ) 
 $profile['id'] = $profile_id;
 $company['id'] = $company_id;
 
-// Scoped CSS for pro profiles (inline <style> in body is valid HTML5)
-\Me\Profile_Renderer\Module::render_design_style( $profile_id, $company );
+// Scoped CSS — only meaningful for pro profiles
+$profile_type = $profile['type'] ?? 'standard';
+if ( $profile_type === 'pro' || $profile_type === 'professional' ) {
+    \Me\Profile_Renderer\Module::render_design_style( $profile_id, $company );
+}
 ?>
 <div class="mecard-public-card">
     <?php \Me\Profile_Renderer\Module::render( $profile, $company, 'public' ); ?>

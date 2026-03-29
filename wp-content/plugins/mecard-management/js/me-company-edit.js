@@ -887,6 +887,11 @@
         }
     });
 
+    // Global entry point so other scripts can open a company in the editor
+    window.MeOpenCompanyEditor = function(companyId) {
+        $('#companyEditModal').modal('show');
+        loadCompanyForm(companyId);
+    };
 
 })(jQuery);
 

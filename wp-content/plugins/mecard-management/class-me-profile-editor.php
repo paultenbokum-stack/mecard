@@ -84,13 +84,12 @@ class Module {
         $company_parent = isset($_POST['company_parent']) ? absint($_POST['company_parent']) : 0;
         update_post_meta($post_id, 'company_parent', $company_parent);
 
-        // Featured image (profile picture)
-        if (isset($_POST['me_profile_photo_id'])) {
-            $photo_id = absint($_POST['me_profile_photo_id']);
-            if ($photo_id) {
-                set_post_thumbnail($post_id, $photo_id);
-            } else {
-                delete_post_thumbnail($post_id);
+        // Featured image (profile picture) — only update when a valid attachment ID is supplied.
+        // An empty/zero value means the user did not change the photo, so leave it alone.
+        if ( ! empty( $_POST['me_profile_photo_id'] ) ) {
+            $photo_id = absint( $_POST['me_profile_photo_id'] );
+            if ( $photo_id ) {
+                set_post_thumbnail( $post_id, $photo_id );
             }
         }
 

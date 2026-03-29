@@ -6,7 +6,7 @@
         console.error('[MeCard] ajaxurl missing');
     }
 
-    let current = { kind: 'profile', post_id: null };
+    let current = { kind: 'profile', post_id: null, company_id: 0 };
     let meProfileFrame = null;
 
     // Pane scope references — elements are rendered in wp_footer at priority 10, before this script
@@ -25,16 +25,16 @@
 
         if (state === 'saving') {
             $save.prop('disabled', true).text('Saving…');
-            $close.text('Close without saving');
+            $close.hide();
         } else if (state === 'saved') {
             $save.prop('disabled', false).text('Saved ✓');
-            $close.text('Close');
+            $close.show().text('Close');
         } else if (state === 'dirty') {
             $save.prop('disabled', false).text('Save');
-            $close.text('Close without saving');
+            $close.show().text('Close without saving');
         } else { // idle
             $save.prop('disabled', false).text('Save');
-            $close.text('Close');
+            $close.show().text('Close');
         }
     }
 
@@ -88,6 +88,32 @@
         setPreviewMode(mode);
     });
 
+    // ---------- Edit company design ----------
+    $(document).on('click', '#meEditCompanyDesignBtn', function(){
+        $('#meEditCompanyDesignWarning').show();
+    });
+
+    $(document).on('click', '#meEditCompanyDesignCancel', function(){
+        $('#meEditCompanyDesignWarning').hide();
+    });
+
+    $(document).on('click', '#meEditCompanyDesignConfirm', function(){
+        if (!current.company_id) return;
+        $('#meEditCompanyDesignWarning').hide();
+
+        var companyId = current.company_id;
+        var $profileModal = $('#meProfileEditorModal');
+
+        // Wait for profile modal to fully close before opening company modal
+        $profileModal.one('hidden.bs.modal', function(){
+            if (typeof window.MeOpenCompanyEditor === 'function') {
+                window.MeOpenCompanyEditor(companyId);
+            }
+        });
+
+        $profileModal.modal('hide');
+    });
+
     // ---------- Mobile preview overlay ----------
     var $mobilePreviewBody = $('#meMobilePreviewBody');
     var $switcherOriginalParent = null;
@@ -120,6 +146,19 @@
         else      { $item.hide(); }
     }
 
+    // Prefix every selector in a CSS string with a scope selector so the rules
+    // don't bleed outside the pro preview pane.
+    function scopeCustomCss(css, scope) {
+        if (!css) return '';
+        return css.replace(/([^{}]+)\{/g, function(match, selectors) {
+            var prefixed = selectors.trim().split(',').map(function(s) {
+                s = s.trim();
+                return s ? scope + ' ' + s : '';
+            }).filter(Boolean).join(', ');
+            return prefixed + ' {';
+        });
+    }
+
     // ---------- Company design (CSS custom properties) ----------
     function applyCompanyDesignToPreview(company) {
         var root = document.querySelector('#mePreviewProPane .pro-profile-container');
@@ -142,7 +181,9 @@
             styleEl.setAttribute('data-me-custom-css', '1');
             root.appendChild(styleEl);
         }
-        styleEl.textContent = company && company.custom_css ? company.custom_css : '';
+        styleEl.textContent = company && company.custom_css
+            ? scopeCustomCss(company.custom_css, '#mePreviewProPane .pro-profile-container')
+            : '';
     }
 
     // ---------- Update socials from form fields ----------
@@ -307,6 +348,12 @@
     }
 
     // ---------- Load profile into form + preview ----------
+    function updateUpsellButton(post_id) {
+        $('[data-me-preview-upsell]')
+            .attr('data-product_id', post_id)
+            .attr('href', '?add-to-cart=' + post_id);
+    }
+
     function loadProfile(post_id){
         current.post_id = post_id;
         setSaveUI('idle');
@@ -326,6 +373,8 @@
             const profile = res.data.profile || {};
             const company = res.data.company || {};
 
+            current.company_id = company.id || 0;
+
             populateProfileForm(profile);
             syncPreviewVisibilityFromType(profile.type);
             applyCompanyDesignToPreview(company);
@@ -333,6 +382,17 @@
             populatePreview(profile, company);
             updatePreviewSocialsFromForm();
             updatePreviewPrimaryButtonsFromForm();
+            updateUpsellButton(post_id);
+
+            // Show company design button or "no company" message
+            if (current.company_id) {
+                $('#meEditCompanyDesignBtn').show();
+                $('#meNoCompanyMsg').hide();
+            } else {
+                $('#meEditCompanyDesignBtn').hide();
+                $('#meNoCompanyMsg').show();
+            }
+            $('#meEditCompanyDesignWarning').hide();
 
         }).fail(function(xhr){
             console.error('Profile load AJAX error', xhr && xhr.responseText);

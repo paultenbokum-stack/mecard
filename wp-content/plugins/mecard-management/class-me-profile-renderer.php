@@ -37,27 +37,28 @@ class Module {
      */
     public static function render_design_style( int $profile_id, array $company ): void {
         if ( empty( $company['design'] ) ) return;
-        $d  = $company['design'];
-        $id = (int) $profile_id;
+        $d     = $company['design'];
+        $id    = (int) $profile_id;
+        $scope = '.pro-profile-container.post-' . $id;
         ?>
         <style>
-            .pro-profile-container.post-<?php echo $id; ?> {
+            <?php echo $scope; ?> {
                 color: <?php echo esc_attr( $d['body_color'] ); ?>;
                 font-family: <?php echo esc_attr( $d['body_font'] ); ?>;
             }
-            .pro-profile-container.post-<?php echo $id; ?> h1,
-            .pro-profile-container.post-<?php echo $id; ?> h2,
-            .pro-profile-container.post-<?php echo $id; ?> h3,
-            .pro-profile-container.post-<?php echo $id; ?> h4,
-            .pro-profile-container.post-<?php echo $id; ?> h5,
-            .pro-profile-container.post-<?php echo $id; ?> h6 {
+            <?php echo $scope; ?> h1,
+            <?php echo $scope; ?> h2,
+            <?php echo $scope; ?> h3,
+            <?php echo $scope; ?> h4,
+            <?php echo $scope; ?> h5,
+            <?php echo $scope; ?> h6 {
                 font-family: <?php echo esc_attr( $d['heading_font'] ); ?>;
                 color: <?php echo esc_attr( $d['heading_color'] ); ?>;
             }
-            .pro-profile-container.post-<?php echo $id; ?> :not(button) a {
+            <?php echo $scope; ?> :not(button) a {
                 color: <?php echo esc_attr( $d['accent'] ); ?>;
             }
-            .pro-profile-container button:not(.mecard-share-fab) {
+            <?php echo $scope; ?> button:not(.mecard-share-fab) {
                 background-color: <?php echo esc_attr( $d['accent'] ); ?>;
                 color: <?php echo esc_attr( $d['button_text'] ); ?>;
                 border: 0;
@@ -70,8 +71,24 @@ class Module {
                 font-family: <?php echo esc_attr( $d['body_font'] ); ?>;
                 text-decoration: none;
             }
-            <?php if ( ! empty( $company['custom_css'] ) ) echo $company['custom_css']; // phpcs:ignore WordPress.Security.EscapeOutput ?>
+            <?php if ( ! empty( $company['custom_css'] ) ) echo self::scope_css( $company['custom_css'], $scope ); // phpcs:ignore WordPress.Security.EscapeOutput ?>
         </style>
         <?php
+    }
+
+    /**
+     * Prefixes every selector in a CSS string with $scope so rules don't bleed outside
+     * the intended container. Handles simple rule sets; skips @-rules.
+     */
+    private static function scope_css( string $css, string $scope ): string {
+        return preg_replace_callback(
+            '/([^{}@]+)\{/',
+            function ( $m ) use ( $scope ) {
+                $selectors = array_filter( array_map( 'trim', explode( ',', $m[1] ) ) );
+                $prefixed  = array_map( fn( $s ) => $scope . ' ' . $s, $selectors );
+                return implode( ', ', $prefixed ) . ' {';
+            },
+            $css
+        ) ?? $css;
     }
 }

@@ -35,6 +35,21 @@ $social_icons = [
 ?>
 <div class="standard-profile-container">
 
+    <?php if ( ! $is_public ) :
+        $logo_id  = get_theme_mod( 'custom_logo' );
+        $logo_url = $logo_id ? wp_get_attachment_image_url( $logo_id, 'medium' ) : '';
+        $site_name = get_bloginfo( 'name' );
+    ?>
+    <div class="pro-logo">
+        <?php if ( $logo_url ) : ?>
+            <img src="<?php echo esc_url( $logo_url ); ?>"
+                 alt="<?php echo esc_attr( $site_name ); ?>">
+        <?php else : ?>
+            <span style="display:block;padding:16px;font-weight:700;font-size:16px;"><?php echo esc_html( $site_name ); ?></span>
+        <?php endif; ?>
+    </div>
+    <?php endif; ?>
+
     <h1 class="has-text-align-center">
         <span data-me-field="first"><?php echo esc_html( $first ?: ( $is_public ? '' : 'First' ) ); ?></span>
         <span data-me-field="last"><?php echo esc_html( $last ?: ( $is_public ? '' : 'Last' ) ); ?></span>
@@ -123,27 +138,28 @@ $social_icons = [
         </div>
 
         <!-- Company buttons -->
-        <div class="d-flex flex-row justify-content-start">
+        <div>
 
-            <div class="p-1" data-me-field="btn-website"<?php if ( ! $company_website ) echo ' style="display:none"'; ?>>
+            <div data-me-field="btn-website"<?php if ( ! $company_website ) echo ' style="display:none"'; ?>>
                 <a data-me-field="company-website"
                    href="<?php echo $company_website ? esc_url( $company_website ) : '#'; ?>"
-                   target="_blank" rel="noopener">
+                   target="_blank" rel="noopener" style="display:block">
                     <button class="company website" type="button">Website</button>
                 </a>
             </div>
 
-            <div class="p-1" data-me-field="btn-phone"<?php if ( ! $company_tel ) echo ' style="display:none"'; ?>>
+            <div data-me-field="btn-phone"<?php if ( ! $company_tel ) echo ' style="display:none"'; ?>>
                 <a data-me-field="company-phone"
-                   href="<?php echo $company_tel ? esc_url( 'tel:' . $company_tel ) : '#'; ?>">
+                   href="<?php echo $company_tel ? esc_url( 'tel:' . $company_tel ) : '#'; ?>"
+                   style="display:block">
                     <button class="company phone" type="button">Call</button>
                 </a>
             </div>
 
-            <div class="p-1" data-me-field="btn-directions"<?php if ( ! $company_address ) echo ' style="display:none"'; ?>>
+            <div data-me-field="btn-directions"<?php if ( ! $company_address ) echo ' style="display:none"'; ?>>
                 <a data-me-field="company-directions"
                    href="<?php echo $company_address ? esc_url( 'https://www.google.com/maps/search/?api=1&query=' . rawurlencode( $company_address ) ) : '#'; ?>"
-                   target="_blank" rel="noopener">
+                   target="_blank" rel="noopener" style="display:block">
                     <button class="company directions" type="button">Directions</button>
                 </a>
             </div>

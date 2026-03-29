@@ -99,7 +99,7 @@
 /* Company action buttons (full-width) */
 button.company {
     width: 100%;
-    display: inline-flex;
+    display: flex;
     align-items: center;
     justify-content: center;
     gap: 8px;
@@ -180,7 +180,7 @@ button.company {
 #mePreviewProPane .vcard-download {
     background-color: var(--me-download, #30b030);
 }
-#mePreviewProPane [data-me-field="vcard-button"] a {
+#mePreviewProPane .pro-profile-container [data-me-field="vcard-button"] a {
     color: var(--me-download-text, #000);
     font-family: var(--me-body-font, "Montserrat", sans-serif);
     text-decoration: none;

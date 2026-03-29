@@ -48,6 +48,23 @@ class Module {
             true
         );
 
+        // Company editor — needed so "Edit company design" can open #companyEditModal
+        if ( ! wp_script_is( 'me-company-edit-js', 'registered' ) ) {
+            wp_register_script(
+                'me-company-edit-js',
+                $js_url . 'me-company-edit.js',
+                ['jquery'],
+                defined('ME_PLUGIN_VER') ? ME_PLUGIN_VER : '1.0',
+                true
+            );
+        }
+        wp_enqueue_script( 'me-company-edit-js' );
+        wp_localize_script( 'me-company-edit-js', 'MECARD_COMPANY', [
+            'ajaxurl' => admin_url( 'admin-ajax.php' ),
+            'nonce'   => wp_create_nonce( 'me-company-edit-nonce' ),
+            'faIcons' => [],
+        ] );
+
         wp_localize_script(
             'me-editor-shell',
             'ME',
@@ -125,6 +142,8 @@ class Module {
         $logo_url = $logo_id ? wp_get_attachment_image_url( $logo_id, 'medium' ) : '';
         $site_name = get_bloginfo( 'name' );
         ?>
+        <?php echo do_shortcode( '[me_company_edit_modal]' ); ?>
+
         <div id="meMobilePreviewOverlay" class="me-mob-preview">
             <div class="me-mob-preview__head">
                 <?php if ( $logo_url ) : ?>
@@ -377,8 +396,11 @@ private static function render_preview_toggle() : void {
             Pro
         </button>
 
-        <a href="<?php echo esc_url( defined('MECARD_PROFILE_UPGRADE_PRODUCT_ID') ? get_permalink( MECARD_PROFILE_UPGRADE_PRODUCT_ID ) : '#' ); ?>"
-           class="btn btn-warning btn-sm me-upsell-btn"
+        <a href="#"
+           class="ajax_add_to_cart add_to_cart_button profile-add-to-cart btn btn-warning btn-sm me-upsell-btn"
+           data-product_id=""
+           data-cart_item_key=""
+           data-product_sku=""
            data-me-preview-upsell>
             Upgrade to Pro &mdash; R199
         </a>
@@ -396,6 +418,22 @@ private static function render_pro_preview_markup() : void {
             <div class="me-phone-frame">
                 <div class="me-phone-screen">
                     <?php \Me\Profile_Renderer\Module::render_pro( [], [], 'preview' ); ?>
+                </div>
+            </div>
+        </div>
+
+        <div class="text-center mt-2">
+            <button type="button" class="btn btn-link btn-sm text-secondary" id="meEditCompanyDesignBtn" style="display:none;">
+                <i class="fas fa-palette"></i> Edit company design
+            </button>
+            <p id="meNoCompanyMsg" class="small text-muted mt-2 px-2" style="display:none;">
+                You have no company linked &mdash; link a company to configure your profile look and feel.
+            </p>
+            <div id="meEditCompanyDesignWarning" class="alert alert-warning mt-2 text-left p-2" style="display:none;">
+                <p class="mb-2 small"><strong>This will stop editing the profile.</strong><br>Any unsaved changes will be lost.</p>
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-warning btn-sm" id="meEditCompanyDesignConfirm">Got it</button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" id="meEditCompanyDesignCancel">Cancel</button>
                 </div>
             </div>
         </div>
@@ -504,6 +542,7 @@ private static function render_standard_preview_markup() : void {
             'direct_line'    => $m('wpcf-work-phone-number') ?: '',
             'type'           => $m('wpcf-profile-type') ?: 'standard',
             'company_parent' => $company_id, // ✅ Toolset only
+            'photo_id'       => (int) get_post_thumbnail_id( $profile_id ) ?: 0,
             'photo_url'      => get_the_post_thumbnail_url($profile_id, 'medium') ?: '',
             'soc'            => [
                 'facebook'  => $m('wpcf-facebook-url') ?: '',
