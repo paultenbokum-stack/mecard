@@ -26,8 +26,8 @@ class Module {
             defined('ME_PLUGIN_VER') ? ME_PLUGIN_VER : '1.0'
         );
         wp_enqueue_style(
-            'me-preview',
-            $css_url . 'new_me-preview.css',
+            'me-profile',
+            $css_url . 'me-profile.css',
             [],
             defined('ME_PLUGIN_VER') ? ME_PLUGIN_VER : '1.0'
         );
@@ -105,6 +105,9 @@ class Module {
 
 
                     <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-primary d-md-none" id="meMobilePreviewBtn">
+                            Preview
+                        </button>
                         <button type="button" class="btn btn-secondary js-me-close" data-dismiss="modal">
                             Close
                         </button>
@@ -114,6 +117,28 @@ class Module {
                     </div>
 
                 </div>
+            </div>
+        </div>
+
+        <?php
+        $logo_id  = get_theme_mod( 'custom_logo' );
+        $logo_url = $logo_id ? wp_get_attachment_image_url( $logo_id, 'medium' ) : '';
+        $site_name = get_bloginfo( 'name' );
+        ?>
+        <div id="meMobilePreviewOverlay" class="me-mob-preview">
+            <div class="me-mob-preview__head">
+                <?php if ( $logo_url ) : ?>
+                    <img src="<?php echo esc_url( $logo_url ); ?>"
+                         alt="<?php echo esc_attr( $site_name ); ?>"
+                         class="me-mob-preview__logo">
+                <?php else : ?>
+                    <span class="me-mob-preview__logo-text"><?php echo esc_html( $site_name ); ?></span>
+                <?php endif; ?>
+                <button type="button" id="meMobilePreviewClose" class="me-mob-preview__close"
+                        aria-label="Close preview">&times;</button>
+            </div>
+            <div id="meMobilePreviewBody" class="me-mob-preview__body">
+                <!-- #mePreviewSwitcher is moved here by JS when overlay opens -->
             </div>
         </div>
         <?php
@@ -352,359 +377,45 @@ private static function render_preview_toggle() : void {
             Pro
         </button>
 
-        <div class="me-preview-upsell" data-me-preview-upsell>
-            Upgrade to Pro to unlock custom branding and design.
+        <a href="<?php echo esc_url( defined('MECARD_PROFILE_UPGRADE_PRODUCT_ID') ? get_permalink( MECARD_PROFILE_UPGRADE_PRODUCT_ID ) : '#' ); ?>"
+           class="btn btn-warning btn-sm me-upsell-btn"
+           data-me-preview-upsell>
+            Upgrade to Pro &mdash; R199
+        </a>
+    </div>
+    <?php
+}
+
+/**
+ * Pro preview pane — uses the canonical renderer with empty data so JS can hydrate via data-me-field.
+ */
+private static function render_pro_preview_markup() : void {
+    ?>
+    <div id="mePreviewProPane" class="me-preview-pane is-active" data-me-preview-pane="pro">
+        <div class="preview-scope is-pro">
+            <div class="me-phone-frame">
+                <div class="me-phone-screen">
+                    <?php \Me\Profile_Renderer\Module::render_pro( [], [], 'preview' ); ?>
+                </div>
+            </div>
         </div>
     </div>
     <?php
 }
 
 /**
- * Existing Pro preview markup extracted into its own function so we can add new features
- * without touching or re-styling the Pro preview itself.
- */
-private static function render_pro_preview_markup() : void {
-    ?>
-    <div id="proPreview" class="me-preview-pane is-active" data-me-preview-pane="pro">
-        <div class="preview-scope is-pro">
-            <div class="me-phone-frame">
-                <div class="me-phone-screen">
-
-                    <div class="pro-profile-container">
-
-                        <!-- Company logo -->
-                        <div class="pro-logo">
-                            <img id="pv-company-logo" src="" alt="">
-                        </div>
-
-                        <!-- Profile image -->
-                        <div class="profile-image pro">
-                            <picture class="attachment-medium size-medium wp-post-image">
-                                <img id="mePreviewPic" src="" alt="Profile picture">
-                            </picture>
-                        </div>
-
-                        <div style="height:20px" aria-hidden="true" class="wp-block-spacer"></div>
-
-                        <h1 class="has-text-align-center">
-                            <span id="pv-first">First</span> <span id="pv-last">Last</span>
-                        </h1>
-
-                        <div class="job-title">
-                            <span id="pv-job">Job title</span>
-                        </div>
-
-                        <!-- Social icons + 3 profile buttons (mirrors shortcode output) -->
-                        <div class="container-md">
-                            <div class="row">
-                                <div class="col col-12 mecard-centered mecard-social" id="pv-socials">
-
-                                    <div class="mecard-social-item" id="soc-facebook" style="display:none;">
-                                        <a id="pv-facebook" href="#" target="_blank" rel="noopener">
-                                            <i class="fab fa-facebook-square"></i>
-                                        </a>
-                                    </div>
-
-                                    <div class="mecard-social-item" id="soc-instagram" style="display:none;">
-                                        <a id="pv-instagram" href="#" target="_blank" rel="noopener">
-                                            <i class="fab fa-instagram-square"></i>
-                                        </a>
-                                    </div>
-
-                                    <div class="mecard-social-item" id="soc-linkedin" style="display:none;">
-                                        <a id="pv-linkedin" href="#" target="_blank" rel="noopener">
-                                            <i class="fab fa-linkedin"></i>
-                                        </a>
-                                    </div>
-
-                                    <div class="mecard-social-item" id="soc-youtube" style="display:none;">
-                                        <a id="pv-youtube" href="#" target="_blank" rel="noopener">
-                                            <i class="fab fa-youtube-square"></i>
-                                        </a>
-                                    </div>
-
-                                    <div class="mecard-social-item" id="soc-twitter" style="display:none;">
-                                        <a id="pv-twitter" href="#" target="_blank" rel="noopener">
-                                            <i class="fab fa-twitter-square"></i>
-                                        </a>
-                                    </div>
-
-                                    <div class="mecard-social-item" id="soc-tiktok" style="display:none;">
-                                        <a id="pv-tiktok" href="#" target="_blank" rel="noopener">
-                                            <i class="fab fa-tiktok"></i>
-                                        </a>
-                                    </div>
-
-                                </div>
-                            </div>
-
-                            <div class="row profile-buttons">
-                                <div class="col col-4">
-                                    <a id="pv-call" href="#">
-                                        <button type="button" class="phone" aria-label="Call">
-                                            <i class="fas fa-mobile-alt"></i>
-                                        </button>
-                                    </a>
-                                </div>
-                                <div class="col col-4">
-                                    <a id="pv-email" href="#">
-                                        <button type="button" class="email" aria-label="Email">
-                                            <i class="fas fa-envelope"></i>
-                                        </button>
-                                    </a>
-                                </div>
-                                <div class="col col-4">
-                                    <a id="pv-wa" href="#">
-                                        <button type="button" class="whatsapp" aria-label="WhatsApp">
-                                            <i class="fab fa-whatsapp"></i>
-                                        </button>
-                                    </a>
-                                </div>
-                            </div>
-
-
-                            <div style="height:50px" aria-hidden="true" class="wp-block-spacer"></div>
-
-                            <!-- Personal details -->
-                            <div class="row">
-                                <div class="col col-12 mecard-section">Personal Details</div>
-                            </div>
-
-                            <div class="row">
-                                <div class="col col-4">Email:</div>
-                                <div class="col col-8"><span id="pv-email-text"></span></div>
-                            </div>
-
-                            <div class="row">
-                                <div class="col col-4">Mobile:</div>
-                                <div class="col col-8"><span id="pv-mobile-text"></span></div>
-                            </div>
-
-                            <div class="row" id="pv-wa-row" style="display:none;">
-                                <div class="col col-4">WhatsApp:</div>
-                                <div class="col col-8"><span id="pv-wa-text"></span></div>
-                            </div>
-
-                            <div style="height:50px" aria-hidden="true" class="wp-block-spacer"></div>
-
-                            <!-- Work -->
-                            <div class="row">
-                                <div class="col col-12 mecard-section">Work</div>
-                            </div>
-
-                            <div class="row">
-                                <div class="col col-sm-12">
-                                    <h3 class="company" id="pv-company-name">Company</h3>
-                                </div>
-                            </div>
-
-                            <div class="row" id="pv-company-address-row" style="display:none;">
-                                <div class="col col-12">
-                                    <div id="pv-company-address"></div>
-                                </div>
-                            </div>
-
-                            <div style="height:50px" aria-hidden="true" class="wp-block-spacer"></div>
-
-                            <!-- Company action buttons -->
-                            <div class="row">
-                                <div class="col col-sm-12">
-
-                                    <a id="pv-company-website" href="#" target="_blank" rel="noopener" style="display:none;">
-                                        <button type="button" class="company website">
-                                            <i class="fas fa-globe"></i>&nbsp;Visit Website
-                                        </button>
-                                    </a>
-
-                                    <a id="pv-company-phone" href="#" style="display:none;">
-                                        <button type="button" class="company phone">
-                                            <i class="fas fa-phone-alt"></i>&nbsp;Call the Office
-                                        </button>
-                                    </a>
-
-                                    <a id="pv-direct-line" href="#" style="display:none;">
-                                        <button type="button" class="company phone">
-                                            <i class="fas fa-phone-alt"></i>&nbsp;Direct Line
-                                        </button>
-                                    </a>
-
-                                    <a id="pv-company-directions" href="#" target="_blank" rel="noopener" style="display:none;">
-                                        <button type="button" class="company directions">
-                                            <i class="fas fa-map-marker"></i>&nbsp;Directions
-                                        </button>
-                                    </a>
-
-                                </div>
-                            </div>
-
-                        </div><!-- /.container-md -->
-
-                        <div class="row">
-                            <div class="col col-12">
-                                <div class="mecard-swipe-hint d-sm-none" aria-hidden="true" style="text-align:center;opacity:.7;margin-top:10px;">
-                                    <small>Tip: swipe left/right for more sharing options</small>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div style="height:50px" aria-hidden="true" class="wp-block-spacer"></div>
-
-                        <!-- Download bar -->
-                        <div id="pv-vcard-wrap">
-                            <div class="vcard-download">
-                                <div class="vcard-button" id="pv-vcard-button">
-                                    <a id="pv-vcard-link" href="#">Download Contact Card</a>
-                                </div>
-                            </div>
-                        </div>
-
-                    </div><!-- /.pro-profile-container -->
-
-                </div><!-- /.me-phone-screen -->
-            </div><!-- /.me-phone-frame -->
-        </div><!-- /.preview-scope -->
-    </div>
-    <?php
-}
-
-/**
- * Standard preview markup. Uses existing site style.css for most presentation.
- * All IDs are unique so it cannot interfere with Pro preview behavior/styles.
+ * Standard preview pane — uses the canonical renderer with empty data so JS can hydrate via data-me-field.
  */
 private static function render_standard_preview_markup() : void {
     ?>
-    <div id="standardPreview" class="me-preview-pane" data-me-preview-pane="standard">
+    <div id="mePreviewStandardPane" class="me-preview-pane" data-me-preview-pane="standard">
         <div class="preview-scope is-standard">
             <div class="me-phone-frame">
                 <div class="me-phone-screen">
-
-                    <h1 class="has-text-align-center">
-                        <span id="std-first">First</span> <span id="std-last">Last</span>
-                    </h1>
-
-                    <div style="height:20px" aria-hidden="true" class="wp-block-spacer"></div>
-
-                    <div class="profile-image">
-                        <img id="stdPreviewPic" src="" alt="Profile picture">
-                    </div>
-
-                    <div class="job-title">
-                        <span id="std-job">Job title</span>
-                    </div>
-
-                    <!-- Social icons (same look as shortcode area) -->
-                    <div class="container-md">
-                        <div class="row">
-                            <div class="col col-12 mecard-centered mecard-social" id="std-socials">
-
-                                <div class="mecard-social-item" id="std-soc-facebook" style="display:none;">
-                                    <a id="std-facebook" href="#" target="_blank" rel="noopener">
-                                        <i class="fab fa-facebook-square"></i>
-                                    </a>
-                                </div>
-
-                                <div class="mecard-social-item" id="std-soc-instagram" style="display:none;">
-                                    <a id="std-instagram" href="#" target="_blank" rel="noopener">
-                                        <i class="fab fa-instagram-square"></i>
-                                    </a>
-                                </div>
-
-                                <div class="mecard-social-item" id="std-soc-linkedin" style="display:none;">
-                                    <a id="std-linkedin" href="#" target="_blank" rel="noopener">
-                                        <i class="fab fa-linkedin"></i>
-                                    </a>
-                                </div>
-
-                                <div class="mecard-social-item" id="std-soc-youtube" style="display:none;">
-                                    <a id="std-youtube" href="#" target="_blank" rel="noopener">
-                                        <i class="fab fa-youtube-square"></i>
-                                    </a>
-                                </div>
-
-                                <div class="mecard-social-item" id="std-soc-twitter" style="display:none;">
-                                    <a id="std-twitter" href="#" target="_blank" rel="noopener">
-                                        <i class="fab fa-twitter-square"></i>
-                                    </a>
-                                </div>
-
-                                <div class="mecard-social-item" id="std-soc-tiktok" style="display:none;">
-                                    <a id="std-tiktok" href="#" target="_blank" rel="noopener">
-                                        <i class="fab fa-tiktok"></i>
-                                    </a>
-                                </div>
-
-                            </div>
-                        </div>
-
-                        <div class="row">
-                            <div class="col col-12 mecard-section">Personal Details</div>
-                        </div>
-
-                        <div class="row">
-                            <div class="col col-4">Email:</div>
-                            <div class="col col-8"><span id="std-email-text"></span></div>
-                        </div>
-
-                        <div class="row">
-                            <div class="col col-4">Mobile:</div>
-                            <div class="col col-8"><span id="std-mobile-text"></span></div>
-                        </div>
-
-                        <div class="row" id="std-website-row" style="display:none;">
-                            <div class="col col-4">Website:</div>
-                            <div class="col col-8"><a id="std-website" href="#" target="_blank" rel="noopener"></a></div>
-                        </div>
-
-                        <div class="row">
-                            <div class="col col-sm-12 mecard-section">Work</div>
-                        </div>
-
-                        <div class="row">
-                            <div class="col col-sm-12">
-                                <h3 class="company" id="std-company-name">Company</h3>
-                                <p></p>
-                            </div>
-                        </div>
-
-                        <div class="row" id="std-company-address-row" style="display:none;">
-                            <div class="col col-sm-12" id="std-company-address"></div>
-                        </div>
-
-                        <div class="d-flex flex-row justify-content-start" id="std-company-buttons">
-                            <div class="p-1" id="std-btn-website" style="display:none;">
-                                <a id="std-company-website" href="#" target="_blank" rel="noopener">
-                                    <button class="company website" type="button">Website</button>
-                                </a>
-                            </div>
-
-                            <div class="p-1" id="std-btn-phone" style="display:none;">
-                                <a id="std-company-phone" href="#" rel="noopener">
-                                    <button class="company phone" type="button">Call</button>
-                                </a>
-                            </div>
-
-                            <div class="p-1" id="std-btn-directions" style="display:none;">
-                                <a id="std-company-directions" href="#" target="_blank" rel="noopener">
-                                    <button class="company directions" type="button">Directions</button>
-                                </a>
-                            </div>
-                        </div>
-
-                        <div style="height:30px" aria-hidden="true" class="wp-block-spacer"></div>
-
-                        <div id="std-vcard-wrap">
-                            <div class="vcard-download">
-                                <div class="vcard-button">
-                                    <a id="std-vcard-link" href="#">Download Contact Card</a>
-                                </div>
-                            </div>
-                        </div>
-
-                    </div><!-- /.container-md -->
-
-                </div><!-- /.me-phone-screen -->
-            </div><!-- /.me-phone-frame -->
-        </div><!-- /.preview-scope -->
+                    <?php \Me\Profile_Renderer\Module::render_standard( [], [], 'preview' ); ?>
+                </div>
+            </div>
+        </div>
     </div>
     <?php
 }

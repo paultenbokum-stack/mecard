@@ -156,7 +156,7 @@ $social_icons = [
     </div><!-- /.container-fluid -->
 
     <!-- vCard download bar -->
-    <div id="vcard-button-<?php echo (int) $profile_id; ?>" class="vcard-button" data-me-field="vcard-button">
+    <div data-me-field="vcard-button">
         <?php if ( $is_public && $profile_id ) : ?>
             <?php
             $auto = get_post_meta( $profile_id, 'wpcf-auto_download_vcard', true );

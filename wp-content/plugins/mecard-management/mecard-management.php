@@ -22,6 +22,7 @@ if (!defined('ME_PLUGIN_URL')) define('ME_PLUGIN_URL', plugin_dir_url(__FILE__))
 
 require_once ME_PLUGIN_DIR . 'class-me-company-editor.php';
 
+require_once ME_PLUGIN_DIR . 'class-me-profile-renderer.php';
 require_once ME_PLUGIN_DIR .'class-me-preview.php';
 require_once ME_PLUGIN_DIR .'class-me-profile-editor.php';
 

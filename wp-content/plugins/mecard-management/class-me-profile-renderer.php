@@ -57,7 +57,7 @@ class Module {
             .pro-profile-container.post-<?php echo $id; ?> :not(button) a {
                 color: <?php echo esc_attr( $d['accent'] ); ?>;
             }
-            .pro-profile-container.post-<?php echo $id; ?> button:not(.mecard-share-fab) {
+            .pro-profile-container button:not(.mecard-share-fab) {
                 background-color: <?php echo esc_attr( $d['accent'] ); ?>;
                 color: <?php echo esc_attr( $d['button_text'] ); ?>;
                 border: 0;
