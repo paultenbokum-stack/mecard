@@ -1,0 +1,314 @@
+/* ==========================================================================
+   me-profile.css — Consolidated profile styles
+   Covers: shared profile layout, CSS-var theming, editor phone frame,
+           preview switcher chrome, responsive.
+   Replaces new_me-preview.css for the editor context.
+   Public profile styles (also used by theme single-mecard-profile.php).
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. Shared profile layout
+   -------------------------------------------------------------------------- */
+
+/* Pro logo banner */
+.pro-logo {
+    margin: 0;
+    min-height: 120px;
+    border-bottom: 1px solid #000;
+    text-align: center;
+    background: #fff;
+}
+.pro-logo img {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    margin: 0 auto;
+}
+
+/* Profile photo */
+.profile-image.pro {
+    margin-top: -30px;
+    padding: 5px;
+    text-align: center;
+}
+.profile-image.pro img {
+    border: 1px solid #000;
+    padding: 5px;
+    background: #fff;
+    border-radius: 10px;
+}
+.profile-image img {
+    max-width: 120px;
+    height: auto;
+    border-radius: 999px;
+    display: block;
+    margin: 0 auto;
+}
+
+/* Job title */
+.job-title {
+    text-align: center;
+}
+
+/* Social icons */
+.mecard-social {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 10px;
+}
+.mecard-social-item {
+    display: inline-block;
+    margin: 0 .25rem;
+}
+.mecard-social-item a {
+    font-size: 22px;
+    text-decoration: none;
+}
+.mecard-social-item i.fab {
+    font-size: 1.3rem;
+    color: #000;
+}
+.mecard-social-item a:hover i.fab {
+    color: var(--me-accent, #0170b9);
+}
+
+/* Primary profile action buttons (call / email / whatsapp) */
+.profile-buttons {
+    margin-top: 4px;
+    margin-bottom: 10px;
+}
+.profile-buttons .col {
+    padding-left: 6px;
+    padding-right: 6px;
+}
+.profile-buttons button {
+    width: 100%;
+    height: 44px;
+    border-radius: 10px;
+    border: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+}
+
+/* Company action buttons (full-width) */
+button.company {
+    width: 100%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 14px;
+    border-radius: 12px;
+    margin: 0 0 10px;
+    border: 0;
+}
+
+/* vCard download bar */
+.vcard-download {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: #fff;
+    border-top: 1px solid rgba(0,0,0,.08);
+}
+.vcard-button {
+    padding: 14px;
+    text-align: center;
+}
+.vcard-button a {
+    text-decoration: none;
+    display: inline-block;
+    font-weight: 600;
+}
+
+/* Legacy phone-outline compat (public pages) */
+.phone-outline .vcard-download {
+    position: absolute;
+    bottom: 0;
+    left: 5px;
+    right: 0;
+    width: 96.5%;
+    border-bottom-left-radius: 0.3cm;
+    border-bottom-right-radius: 0.3cm;
+    z-index: 99;
+}
+.phone-outline .vcard-button {
+    background: var(--me-download, #30b030);
+    text-align: center;
+    padding: 12px 0;
+}
+.phone-outline .vcard-button a {
+    color: var(--me-download-text, #000);
+    font-weight: 700;
+    text-transform: uppercase;
+    text-decoration: none !important;
+}
+
+/* --------------------------------------------------------------------------
+   2. CSS-variable theming for Pro profiles
+   Scoped to the preview pane in editor context; inline <style> handles
+   per-post scoping on public pages (render_design_style()).
+   -------------------------------------------------------------------------- */
+
+#mePreviewProPane .pro-profile-container {
+    color: var(--me-body-color, #333);
+    font-family: var(--me-body-font, "Montserrat", sans-serif);
+}
+#mePreviewProPane .pro-profile-container h1,
+#mePreviewProPane .pro-profile-container h2,
+#mePreviewProPane .pro-profile-container h3,
+#mePreviewProPane .pro-profile-container h4,
+#mePreviewProPane .pro-profile-container h5,
+#mePreviewProPane .pro-profile-container h6 {
+    color: var(--me-heading-color, #000);
+    font-family: var(--me-heading-font, "Montserrat", sans-serif);
+}
+#mePreviewProPane .pro-profile-container :not(button) a {
+    color: var(--me-accent, #0170b9);
+}
+#mePreviewProPane .pro-profile-container button {
+    background-color: var(--me-accent, #0170b9);
+    color: var(--me-button-text, #fff);
+}
+#mePreviewProPane [data-me-field="vcard-button"] {
+    background-color: var(--me-download, #30b030);
+}
+#mePreviewProPane [data-me-field="vcard-button"] a {
+    color: var(--me-download-text, #000);
+    font-family: var(--me-body-font, "Montserrat", sans-serif);
+    text-decoration: none;
+}
+#mePreviewProPane .row {
+    margin-left: 0;
+    margin-right: 0;
+}
+
+/* --------------------------------------------------------------------------
+   3. Editor phone frame (preview context only; benign on public pages)
+   -------------------------------------------------------------------------- */
+
+.me-phone-frame {
+    max-width: 300px;
+    max-height: 70vh;
+    margin: 0 auto;
+    border: 1px solid rgba(0,0,0,.15);
+    border-radius: 26px;
+    background: #111;
+    padding: 12px;
+    box-shadow: 0 12px 30px rgba(0,0,0,.25);
+}
+.me-phone-screen {
+    background: #fff;
+    border-radius: 18px;
+    overflow: hidden;
+    position: relative;
+    height: 640px;
+    max-height: 65vh;
+    display: flex;
+    flex-direction: column;
+}
+.me-phone-screen > * {
+    flex: 0 0 auto;
+}
+.me-phone-screen .pro-profile-container,
+.me-phone-screen .standard-profile-container {
+    overflow-y: auto;
+    flex: 1;
+}
+.me-phone-screen .container-fluid,
+.me-phone-screen .container-md {
+    padding-left: 18px;
+    padding-right: 18px;
+    padding-bottom: 18px;
+}
+.me-phone-screen .vcard-download {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: #fff;
+    border-top: 1px solid rgba(0,0,0,.08);
+}
+
+/* --------------------------------------------------------------------------
+   4. Preview switcher chrome (editor only)
+   -------------------------------------------------------------------------- */
+
+.me-preview-shell {
+    /* container */
+}
+
+.me-preview-tabs {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin: 0 0 10px 0;
+    flex-wrap: wrap;
+}
+
+/* Tab buttons */
+.js-me-preview-tab {
+    border: 1px solid rgba(0,0,0,.15);
+    background: #fff;
+    border-radius: 999px;
+    padding: 6px 12px;
+    font-size: 13px;
+    line-height: 1.2;
+    cursor: pointer;
+}
+.js-me-preview-tab.is-active {
+    border-color: rgba(0,0,0,.35);
+    font-weight: 600;
+}
+
+/* Upsell banner */
+#meProUpsell {
+    margin-left: auto;
+    font-size: 12px;
+    opacity: .75;
+}
+
+/* Pane visibility (toggled by JS via is-active) */
+.me-preview-pane {
+    display: none;
+}
+.me-preview-pane.is-active {
+    display: block;
+}
+
+/* When profile is already Pro, Standard pane is hidden entirely
+   (.me-preview-shell.is-professional set by JS) */
+.me-preview-shell.is-professional #mePreviewTabStandard,
+.me-preview-shell.is-professional #mePreviewStandardPane {
+    display: none !important;
+}
+
+/* Placeholder text colour in preview context */
+.me-ph {
+    color: rgba(108,117,125,.85);
+    font-style: italic;
+}
+
+/* --------------------------------------------------------------------------
+   5. Responsive
+   -------------------------------------------------------------------------- */
+
+@media (max-width: 640px) {
+    .me-phone-frame {
+        max-width: 100%;
+    }
+    .phone-outline {
+        width: 100%;
+        height: 80vh;
+        border-radius: 16px;
+    }
+    .phone-outline .pro-profile-container {
+        width: 100%;
+        height: calc(80vh - 46px);
+    }
+}

@@ -1,0 +1,15 @@
+[
+  { "class": "fa-solid fa-globe", "label": "Website" },
+  { "class": "fa-solid fa-phone", "label": "Phone" },
+  { "class": "fa-solid fa-mobile-screen", "label": "Mobile" },
+  { "class": "fa-solid fa-envelope", "label": "Email" },
+  { "class": "fa-brands fa-whatsapp", "label": "WhatsApp" },
+  { "class": "fa-brands fa-linkedin", "label": "LinkedIn" },
+  { "class": "fa-brands fa-facebook", "label": "Facebook" },
+  { "class": "fa-brands fa-twitter", "label": "X / Twitter" },
+  { "class": "fa-brands fa-instagram", "label": "Instagram" },
+  { "class": "fa-solid fa-map-location-dot", "label": "Directions" },
+  { "class": "fa-solid fa-calendar-check", "label": "Calendar" },
+  { "class": "fa-solid fa-download", "label": "Download" }
+]
+

@@ -1,0 +1,161 @@
+.me-fa-grid  i {
+  color: #000 !important;
+}
+
+.sp-in-modal { z-index: 1062; } /* modal ~1060/1061 */
+
+/* FA picker overlay + panel (sit above Bootstrap modal/backdrop) */
+#me-fa-modal.me-fa-backdrop{
+  position: fixed;
+  inset: 0;                /* top:0;right:0;bottom:0;left:0 */
+  background: rgba(0,0,0,.4);
+  z-index: 1065;           /* > Bootstrap modal backdrop (1050) */
+}
+
+#me-fa-modal .me-fa-panel{
+  position: absolute;
+  top: 5%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(720px, 92vw);
+  max-height: 82vh;
+  overflow: auto;
+  background: #fff;
+  border-radius: 10px;
+  padding: 12px;
+  box-shadow: 0 10px 30px rgba(0,0,0,.25);
+}
+
+#me-fa-modal .me-fa-head{
+  display:flex;
+  align-items:center;
+  gap:.5rem;
+  padding-bottom:.5rem;
+  border-bottom:1px solid #eee;
+}
+
+#me-fa-modal .me-fa-filter{
+  flex:1 1 auto;
+  height: 34px;
+  padding: 6px 10px;
+  border:1px solid #ccc;
+  border-radius:6px;
+}
+
+#me-fa-modal .me-fa-grid{
+  display:grid;
+  gap:.5rem;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  padding-top:.75rem;
+}
+
+#me-fa-modal .me-fa-item{
+  display:flex;
+  align-items:center;
+  gap:.5rem;
+  padding:.5rem .6rem;
+  border:1px solid #e5e5e5;
+  border-radius:8px;
+  background:#fff;
+  cursor:pointer;
+}
+
+#me-fa-modal .me-fa-item i{
+  font-size: 18px;
+  color: #111;    /* make icons black */
+}
+
+
+/* Phone frame (exactly what you had, moved out of PHP) */
+.phone-outline {
+  position: relative;
+  width: 8cm;
+  height: 14cm;
+  margin: 0 auto;
+  border: 5px solid #000;
+  border-radius: 0.5cm;
+  padding: 3px;
+  background: #000;
+}
+.phone-outline .pro-profile-container {
+  overflow-y: auto;
+  overflow-x: hidden;
+  width: 7.5cm;
+  height: 13cm;
+  margin: 0 auto;
+  background: #fff;
+  border-radius: 0.2cm;
+}
+.phone-outline .vcard-download {
+  position: absolute;
+  bottom: 0;
+  left: 5px; right: 0;
+  width: 96.5%;
+  border-bottom-left-radius: 0.3cm;
+  border-bottom-right-radius: 0.3cm;
+  z-index: 99;
+}
+.phone-outline .vcard-button { background: #30b030; text-align: center; padding: 12px 0; }
+.phone-outline .vcard-button a { color: #000; font-weight: 700; text-transform: uppercase; text-decoration: none !important; }
+
+/* Pro preview reads design from CSS variables (same as before) */
+#proPreview .pro-profile-container {
+  color: var(--me-body-color, #333);
+  font-family: var(--me-body-font, "Montserrat", sans-serif);
+}
+#proPreview .pro-profile-container h1,
+#proPreview .pro-profile-container h2,
+#proPreview .pro-profile-container h3,
+#proPreview .pro-profile-container h4,
+#proPreview .pro-profile-container h5,
+#proPreview .pro-profile-container h6 {
+  color: var(--me-heading-color, #000);
+  font-family: var(--me-heading-font, "Montserrat", sans-serif);
+}
+#proPreview .pro-profile-container :not(button) a { color: var(--me-accent, #0170b9); }
+#proPreview .pro-profile-container button { background-color: var(--me-accent, #0170b9); color: var(--me-button-text, #fff); }
+#proPreview .vcard-button { background-color: var(--me-download, #30b030); }
+#proPreview .vcard-button a { color: var(--me-download-text, #000); }
+
+/* Pro logo block */
+.pro-logo { margin: 0; min-height: 120px; border-bottom: 1px solid #000; text-align: center; background: #fff; }
+.profile-image.pro { margin-top: -30px; padding: 5px; text-align: center; }
+.profile-image.pro img { border: 1px solid #000; padding: 5px; background: #fff; border-radius: 10px;
+  /*max-height: 150px; */
+}
+
+
+
+/* Narrow modal fallback */
+@media (max-width: 640px) {
+  .phone-outline { width: 100%; height: 80vh; border-radius: 16px; }
+  .phone-outline .pro-profile-container { width: 100%; height: calc(80vh - 46px); }
+}
+
+/* RFG UI */
+.me-rfg-list .me-rfg-row { cursor: default; }
+.me-rfg-drag { cursor: move; user-select: none; }
+.me-icon-picker .me-icon-preview { min-width: 2.2rem; display: inline-flex; align-items: center; justify-content: center; }
+
+/* Icon picker modal */
+.me-fa-backdrop {
+  position: fixed; inset: 0; background: rgba(0,0,0,.5);
+  z-index: 2000; display: flex; align-items: center; justify-content: center;
+}
+.me-fa-panel {
+  background: #fff; border-radius: 8px; width: min(900px, 92vw); max-height: 80vh; overflow: hidden; display: flex; flex-direction: column;
+  box-shadow: 0 10px 30px rgba(0,0,0,.3);
+}
+.me-fa-head { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-bottom: 1px solid #eee; }
+.me-fa-head input.me-fa-filter { flex: 1; }
+.me-fa-grid {
+  padding: 12px; overflow: auto; display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px;
+}
+.me-fa-item {
+  display: flex; align-items: center; gap: 8px; padding: 8px 10px; border: 1px solid #eee; border-radius: 6px; background: #fafafa; cursor: pointer;
+}
+.me-fa-item i { font-size: 18px; }
+.me-fa-item span { font-size: 12px; color: #333; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.me-fa-item:hover { background: #f0f0f0; }
+.me-fa-close { background: transparent; border: 0; font-size: 20px; line-height: 1; }

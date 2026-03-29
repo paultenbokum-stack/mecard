@@ -1,0 +1,215 @@
+/* Phone frame + scrollable content area */
+.phone-outline { position: relative; width: 8cm; height: 14cm; margin: 0 auto; border: 5px solid #000; border-radius: 0.5cm; padding: 3px; background: #000; }
+.phone-outline .pro-profile-container { overflow-y: auto; overflow-x: hidden; width: 7.5cm; height: 13cm; margin: 0 auto; background: #fff; border-radius: 0.2cm; }
+
+/* vCard download bar (matches both Standard and Pro) */
+.phone-outline .vcard-download { position: absolute; bottom: 0; left: 5px; right: 0; width: 96.5%; border-bottom-left-radius: 0.3cm; border-bottom-right-radius: 0.3cm; z-index: 99; }
+.phone-outline .vcard-button { background: var(--me-download, #30b030); text-align: center; padding: 12px 0; }
+.phone-outline .vcard-button a { color: var(--me-download-text, #000); font-weight: 700; text-transform: uppercase; text-decoration: none !important; }
+
+/* Vars-driven theme (Pro) */
+#proPreview .pro-profile-container { color: var(--me-body-color, #333); font-family: var(--me-body-font, "Montserrat", sans-serif); }
+#proPreview .pro-profile-container h1,
+#proPreview .pro-profile-container h2,
+#proPreview .pro-profile-container h3,
+#proPreview .pro-profile-container h4,
+#proPreview .pro-profile-container h5,
+#proPreview .pro-profile-container h6 { color: var(--me-heading-color, #000); font-family: var(--me-heading-font, "Montserrat", sans-serif); }
+#proPreview .pro-profile-container :not(button) a { color: var(--me-accent, #000); }
+#proPreview .pro-profile-container button { background-color: var(--me-accent, #0170b9); color: var(--me-button-text, #fff); }
+#proPreview #pv-vcard-button{
+    background-color: var(--me-download, #30b030);
+}
+
+#proPreview #pv-vcard-button a{
+    color: var(--me-download-text, #000);
+    font-family: var(--me-body-font, "Montserrat", sans-serif);
+    text-decoration: none;
+}
+
+
+/* Pro logo + profile image alignment */
+.pro-logo { margin: 0; min-height: 120px; border-bottom: 1px solid #000; text-align: center; background: #fff; }
+.profile-image.pro { margin-top: -30px; padding: 5px; text-align: center; }
+.profile-image.pro img { border: 1px solid #000; padding: 5px; background: #fff; border-radius: 10px; }
+
+/* Socials */
+.mecard-social-item { display:inline-block; margin: 0 .25rem; }
+.mecard-social-item i.fab { font-size: 1.3rem; color: #000; }
+.mecard-social-item a:hover i.fab { color: var(--me-accent, #0170b9); }
+
+/* Placeholders for add/missing data */
+.me-ph { color: rgba(108,117,125,.85); font-style: italic; }
+.preview-scope .job-title .me-ph,
+.preview-scope h1 .me-ph,
+.preview-scope .company-name .me-ph { font-weight: 500; }
+
+/* Phone frame */
+#proPreview .me-phone-frame{
+    max-width: 300px;
+    max-height: 70vh;
+    margin: 0 auto;
+    border: 1px solid rgba(0,0,0,.15);
+    border-radius: 26px;
+    background: #111;
+    padding: 12px;
+    box-shadow: 0 12px 30px rgba(0,0,0,.25);
+}
+#proPreview .me-phone-screen{
+    background: #fff;
+    border-radius: 18px;
+    overflow: hidden;
+    position: relative;     /* important */
+    height: 640px;          /* simulate phone height */
+    max-height: 65vh;
+    display: flex;
+    flex-direction: column;
+}
+
+#proPreview .pro-profile-container{
+    /*padding: 18px 16px 100px;  !* bottom padding for fixed bar *!*/
+    overflow-y: auto;
+    flex: 1;
+}
+
+#proPreview .vcard-download {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    /*padding: 12px 16px;*/
+    background: #fff;   /* ensures it doesn't look transparent */
+    border-top: 1px solid rgba(0,0,0,.08);
+}
+
+#proPreview #pv-vcard-button{
+    /*border-radius: 12px;*/
+    padding: 14px;
+    text-align: center;
+}
+
+ /*.pro-profile-container{ padding: 18px 16px 22px; }*/
+#proPreview .row {margin-left: 0; margin-right: 0}
+/* Images */
+#proPreview .pro-logo img{ display:block; max-width:100%; height:auto; margin:0 auto; }
+/*#proPreview #mePreviewPic{*/
+/*    width: 120px; height: 120px; object-fit: cover;*/
+/*    border-radius: 999px; display: inline-block;*/
+/*}*/
+#proPreview .profile-image.pro{ text-align:center; }
+
+/* Social + profile buttons to match shortcode output */
+#proPreview .mecard-social{
+    display:flex; justify-content:center; align-items:center;
+    gap:14px; margin-bottom: 10px;
+}
+#proPreview .mecard-social-item a{ font-size: 22px; text-decoration:none; }
+
+#proPreview .profile-buttons{ margin-top: 4px; margin-bottom: 10px; }
+#proPreview .profile-buttons .col{ padding-left:6px; padding-right:6px; }
+#proPreview .profile-buttons button{
+    width:100%; height:44px; border-radius:10px;
+    border:0; display:inline-flex; align-items:center; justify-content:center;
+    font-size:18px;
+}
+
+/* Company buttons (full-width) */
+#proPreview button.company{
+    width:100%;
+    display:inline-flex; align-items:center; justify-content:center;
+    gap:8px; padding:12px 14px;
+    border-radius:12px; margin:0 0 10px;
+    border:0;
+}
+
+/* vCard bar */
+#proPreview .vcard-button{
+    /*border-radius: 12px;*/
+    padding: 14px;
+    text-align: center;
+}
+#proPreview .vcard-button a{ text-decoration:none; display:inline-block; font-weight:600; }
+
+
+/* Mobile sizing */
+@media (max-width: 640px) {
+    .phone-outline { width: 100%; height: 80vh; border-radius: 16px; }
+    .phone-outline .pro-profile-container { width: 100%; height: calc(80vh - 46px); }
+}
+
+/* ------------------------------------------------------------------
+   Preview toggle + Standard pane (additive only; does not change Pro)
+   ------------------------------------------------------------------ */
+
+.me-preview-toggle{
+  display:flex;
+  gap:8px;
+  align-items:center;
+  margin: 0 0 10px 0;
+}
+
+.me-preview-tab{
+  border:1px solid rgba(0,0,0,.15);
+  background:#fff;
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 13px;
+  line-height: 1.2;
+  cursor: pointer;
+}
+
+.me-preview-tab.is-active{
+  border-color: rgba(0,0,0,.35);
+  font-weight: 600;
+}
+
+.me-preview-upsell{
+  margin-left:auto;
+  font-size: 12px;
+  opacity: .75;
+}
+
+.me-preview-panes .me-preview-pane{
+  display:none;
+}
+
+.me-preview-panes .me-preview-pane.is-active{
+  display:block;
+}
+
+/* Give Standard preview the same phone-frame treatment as Pro, but scoped */
+#standardPreview .me-phone-frame{
+  max-width: 300px;
+  max-height: 70vh;
+  margin: 0 auto;
+  border: 1px solid rgba(0,0,0,.15);
+  border-radius: 26px;
+  background: #111;
+  padding: 12px;
+  box-shadow: 0 12px 30px rgba(0,0,0,.25);
+}
+#standardPreview .me-phone-screen{
+  background: #fff;
+  border-radius: 18px;
+  overflow: hidden;
+  position: relative;
+  height: 640px;
+  max-height: 65vh;
+  display: flex;
+  flex-direction: column;
+}
+#standardPreview .me-phone-screen > *{
+  flex: 0 0 auto;
+}
+#standardPreview .container-md{
+  padding-left: 18px;
+  padding-right: 18px;
+  padding-bottom: 18px;
+}
+#standardPreview .profile-image img{
+  max-width: 120px;
+  height: auto;
+  border-radius: 999px;
+  display:block;
+  margin: 0 auto;
+}

@@ -1,0 +1,334 @@
+----------------------------------------------------
+-- Toolset single mecard-profile content template --
+----------------------------------------------------
+
+[wpv-conditional if="( $(wpcf-profile-type) eq 'professional' )"]
+[wpv-post-body view_template="single-pro-profile-content-template"]
+[/wpv-conditional]
+[wpv-conditional if="( $(wpcf-profile-type) ne 'professional' )"]
+[wpv-post-body view_template="standard-mecard-profile"]
+<div id="vcard-button-[wpv-post-id]">[mecard_vcard_button auto="[types field='auto_download_vcard' output='raw' item='$current_page'][/types]"]</div>
+[/wpv-conditional]
+[wpv-conditional if="( '[profile_edit_allowed]' )"]
+[toolset-edit-post-link content_template_slug='edit-profile' class='btn btn-primary btn-lg' style="width:100%" target='self']Edit Profile[/toolset-edit-post-link]
+[/wpv-conditional]
+
+----------------------------------------------------------
+-- single-pro-profile-content-template content template --
+----------------------------------------------------------
+
+<style>
+  /* Scope everything to this profile instance */
+  .pro-profile-container.post-[wpv-post-id]{
+    /* body text color & font */
+    color: [types field='normal-font-colour' item='@company-mecard-profile.parent'][/types];
+    font-family: [types field='normal-font' item='@company-mecard-profile.parent'][/types];
+  }
+
+  .pro-profile-container.post-[wpv-post-id] h1,
+  .pro-profile-container.post-[wpv-post-id] h2,
+  .pro-profile-container.post-[wpv-post-id] h3,
+  .pro-profile-container.post-[wpv-post-id] h4,
+  .pro-profile-container.post-[wpv-post-id] h5,
+  .pro-profile-container.post-[wpv-post-id] h6{
+    font-family: [types field='heading-font' item='@company-mecard-profile.parent'][/types];
+    color: [types field='heading-font-colour' item='@company-mecard-profile.parent'][/types];
+  }
+
+  /* Links pick up accent (but don't override button text) */
+  .pro-profile-container.post-[wpv-post-id] :not(button) a{
+    color: [types field='accent-colour' item='@company-mecard-profile.parent'][/types];
+  }
+
+  /* Buttons: background = accent, text = button-text-colour */
+  .pro-profile-container.post-[wpv-post-id] button:not(.mecard-share-fab){
+    background-color: [types field='accent-colour' item='@company-mecard-profile.parent'][/types];
+    color: [types field='button-text-colour' item='@company-mecard-profile.parent'][/types];
+    border: 0;
+  }
+
+  /* Download bar (container) background + its link text color */
+  #vcard-button-[wpv-post-id].vcard-button{
+    background-color: [types field='download-button-colour' item='@company-mecard-profile.parent'][/types];
+
+  }
+  #vcard-button-[wpv-post-id].vcard-button a{
+  color: [types field='download-button-text-colour' item='@company-mecard-profile.parent'][/types];
+    font-family: [types field='normal-font' item='@company-mecard-profile.parent'][/types];
+    text-decoration: none;
+  }
+
+  /* Allow site-specific extra CSS stored on the parent profile */
+  [types field='custom-css' output='raw' item='@company-mecard-profile.parent'][/types]
+</style>
+
+<div class="pro-profile-container post-[wpv-post-id]">
+
+  <!-- Company logo (parent featured image) -->
+  <div class="pro-logo">[wpv-post-featured-image size="custom" width="600" item="@company-mecard-profile.parent"]</div>
+
+  <!-- Person/profile image (this post's featured image) -->
+  <div class="profile-image pro">[wpv-post-featured-image size="medium"]</div>
+
+  <div style="height:20px" aria-hidden="true" class="wp-block-spacer"></div>
+
+  <h1 class="has-text-align-center">
+    [types field='first-name'][/types] [types field='last-name'][/types]
+  </h1>
+
+  <div class="job-title">[types field='job-title'][/types]</div>
+
+  [mecard_social_icons]
+
+  <div class="container-fluid">
+    <div style="height:50px" aria-hidden="true" class="wp-block-spacer"></div>
+
+    <div class="row">
+      <div class="col col-sm-12">
+        <h2 class="company">[wpv-post-title item="@company-mecard-profile.parent"]</h2>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col col-sm-12">
+        [wpv-conditional if="( $(wpcf-company-address).item(@company-mecard-profile.parent) ne '' )"]
+          <a href="https://www.google.com/maps/search/?api=1&query=[types field='company-address' item='@company-mecard-profile.parent' output='raw'][/types]"
+             target="_blank" rel="noopener" class="company-address" style="text-decoration:none">
+            [types field='company-address' item='@company-mecard-profile.parent'][/types]
+          </a>
+          <div style="height:20px" aria-hidden="true" class="wp-block-spacer"></div>
+        [/wpv-conditional]
+      </div>
+    </div>
+
+    <!-- Long description (rich HTML) -->
+    <div class="row">
+      <div class="col col-sm-12">
+        [types field='company-description' item='@company-mecard-profile.parent'][/types]
+      </div>
+    </div>
+
+    <div style="height:50px" aria-hidden="true" class="wp-block-spacer"></div>
+
+    <div class="row">
+      <div class="col col-sm-12">
+        [wpv-conditional if="( $(wpcf-company-website).item(@company-mecard-profile.parent) ne '' )"]
+          <a href="[types field='company-website' item='@company-mecard-profile.parent' output='raw'][/types]" target="_blank" rel="noopener">
+            <button class="company website"><i class="fas fa-globe"></i> Visit Website</button>
+          </a>
+        [/wpv-conditional]
+
+        [wpv-conditional if="( $(wpcf-company-telephone-number).item(@company-mecard-profile.parent) ne '' )"]
+          <a href="tel:[types field='company-telephone-number' item='@company-mecard-profile.parent' output='raw'][/types]">
+            <button class="company phone"><i class="fas fa-phone-alt"></i> Call the Office</button>
+          </a>
+        [/wpv-conditional]
+
+        [wpv-conditional if="( $(wpcf-work-phone-number) ne '' )"]
+          <a href="tel:[types field='work-phone-number' output='raw'][/types]">
+            <button class="company phone"><i class="fas fa-phone-alt"></i> Direct Line</button>
+          </a>
+        [/wpv-conditional]
+
+        [wpv-conditional if="( $(wpcf-company-address).item(@company-mecard-profile.parent) ne '' )"]
+          <a href="https://www.google.com/maps/search/?api=1&query=[types field='company-address' item='@company-mecard-profile.parent' output='raw'][/types]"
+             target="_blank" rel="noopener">
+            <button class="company directions"><i class="fas fa-map-marker"></i> Directions</button>
+          </a>
+        [/wpv-conditional]
+      </div>
+    </div>
+
+    [wpv-view name="more-links-company" company='[wpv-post-id item="@company-mecard-profile.parent"]']
+
+    [wpv-view name="more-links"]
+
+
+  </div>
+  <div class="row">
+    <div class = "col col-12">
+      <div class="mecard-swipe-hint d-sm-none" aria-hidden="true" style="text-align:center;opacity:.7;margin-top:10px;">
+          <small>Tip: swipe left/right for more sharing options</small>
+      </div>
+  	</div>
+  </div>
+
+  <div style="height:50px" aria-hidden="true" class="wp-block-spacer"></div>
+
+  [mecard_share_panel]
+
+  <!-- Download bar (scoped by unique ID so color rules above apply cleanly) -->
+  <div id="vcard-button-[wpv-post-id]">[mecard_vcard_button auto="[types field='auto_download_vcard' output='raw' item='$current_page'][/types]"]</div>
+
+
+</div>
+
+----------------------------------------------
+-- standard-mecard-profile content template --
+----------------------------------------------
+
+<!-- wp:heading {"textAlign":"center","level":1,"dynamicAttributes":{"toolsetDSVersion":"230000"}} -->
+<h1 class="has-text-align-center">[types field='first-name'][/types] [types field='last-name'][/types]</h1>
+<!-- /wp:heading --><!-- wp:spacer {"height":"20px"} -->
+<div style="height:20px" aria-hidden="true" class="wp-block-spacer"></div>
+<!-- /wp:spacer --><!-- wp:html -->
+<div class="profile-image">[wpv-post-featured-image]</div>
+<!-- /wp:html --><!-- wp:html -->
+<div class="job-title">[types field='job-title'][/types]</div>
+<!-- /wp:html --><!-- wp:shortcode -->
+[mecard_social_icons]
+<!-- /wp:shortcode --><!-- wp:html -->
+<div class="container-fluid">
+<div class="row">
+<div class="col col-12  mecard-section">Personal Details</div>
+</div>
+<div class="row">
+<div class="col col-4">Email:</div>
+<div class="col col-8">[types field='email-address'][/types]</div>
+</div>
+<div class="row">
+<div class="col col-4">Mobile:</div>
+<div class="col col-8">[types field='mobile-number'][/types]</div>
+</div>
+[wpv-conditional if="( $(wpcf-website) ne '' )"]
+<div class="row">
+<div class="col col-4">Website:</div>
+<div class="col col-8">[types field='website' target='_blank'][/types]</div>
+</div>
+  [/wpv-conditional]
+<div class="row">
+<div class="col col-sm-12  mecard-section">Work</div>
+</div>
+<div class="row">
+<div class="col col-sm-12">
+<h3 class="company">[wpv-post-title item="@company-mecard-profile.parent"]</h3>
+<p></p></div></div></div>
+<!-- /wp:html --><!-- wp:shortcode -->
+[types field='company-address' item='@company-mecard-profile.parent'][/types]
+<!-- /wp:shortcode --><!-- wp:html -->
+<div class="d-flex flex-row justify-content-start"></div>
+<!-- /wp:html --><!-- wp:shortcode -->
+[wpv-conditional if="( $(wpcf-company-website).item(@company-mecard-profile.parent) ne 'http://' )"]
+<div class="p-1"><a href="[types field='company-website' item='@company-mecard-profile.parent' output='raw'][/types]" target="_blank" rel="noopener"><button class="company website">Website</button></a></div>
+[/wpv-conditional]
+<!-- /wp:shortcode --><!-- wp:shortcode -->
+[wpv-conditional if="( $(wpcf-company-telephone-number).item(@company-mecard-profile.parent) ne '' )"]
+<div class="p-1"><a href="tel:[types field='company-telephone-number' item='@company-mecard-profile.parent'][/types]" target="_blank" rel="noopener"><button class="company phone">Call</button></a></div>
+[/wpv-conditional]
+<!-- /wp:shortcode --><!-- wp:shortcode -->
+[wpv-conditional if="( $(wpcf-company-address).item(@company-mecard-profile.parent) ne '' )"]
+<div class="p-1"><a href="https://www.google.com/maps/search/?api=1&query=[types field='company-address' item='@company-mecard-profile.parent'][/types]" target="_blank" rel="noopener"><button class="company directions">Directions</button></a></div>
+[/wpv-conditional]
+[wpv-conditional if=" NOT ( empty( '[wpv-post-id ]') ) " ]
+[wpv-view name="more-links"]
+[/wpv-conditional]
+
+----------------------------------------
+-- view: more-links-company --
+------------------------------
+
+[wpv-layout-start]
+	[wpv-items-found]
+	<!-- wpv-loop-start -->
+	<wpv-loop>
+      <div class="row">
+		[wpv-post-body view_template="loop-item-in-more-links-company"]
+      </div>
+	</wpv-loop>
+	<!-- wpv-loop-end -->
+	[/wpv-items-found]
+	[wpv-no-items-found]
+		<strong>[wpml-string context="wpv-views"][/wpml-string]</strong>
+	[/wpv-no-items-found]
+[wpv-layout-end]
+
+-- loop item --
+
+<div class="col-sm-12">
+<a class="" href="[types field="button-url" output='raw'][/types]">
+  <button class="btn company more-links">
+ [wpv-conditional if="( '[types field='button-icon' output='raw'][/types]' ne '' )"]
+    <i class="[types field='button-icon' output='raw'][/types]" aria-hidden="true"></i>
+  [/wpv-conditional]
+  <span class="btn-label">[types field="button-text" output='raw'][/types]</span>
+</button>
+</a>
+</div>
+
+----------------------------------
+-- view: more-links --
+----------------------------------
+
+[wpv-layout-start]
+	[wpv-items-found]
+
+  <div class="row">
+    <div class="col col-12 mecard-section">My Links</div>
+
+
+	<!-- wpv-loop-start -->
+    <wpv-loop>
+	[wpv-post-body view_template="loop-item-in-more-links"]
+       </wpv-loop>
+	<!-- wpv-loop-end -->
+    </div>
+
+	[/wpv-items-found]
+	[wpv-no-items-found]
+
+	[/wpv-no-items-found]
+
+[wpv-layout-end]
+
+-- loop item --
+
+<div class="col-sm-12">
+  <a href="[types field='site-url' output='raw'][/types]">
+   <button class="btn company more-links [wpv-conditional if="( '[more_links_edit_allowed]')"]editable[/wpv-conditional]">
+
+  <i class="fa fa-globe" aria-hidden="true"></i>
+     [types field="site-name"][/types]
+
+  </button></a>
+[wpv-conditional if="( '[more_links_edit_allowed]')"]
+    [cred-delete-post type='button' action='trash' onsuccess='self' class='btn btn-link btn-sm']<i class="far fa-trash-alt" aria-hidden="true"></i>[/cred-delete-post]
+[/wpv-conditional]
+
+</div>
+
+_______________________________________________
+
+Viewing profile via a tag
+
+-----------------------------------------
+-- view: single-me-card-profile --
+---------------------------------------
+
+[wpv-layout-start]
+	[wpv-items-found]
+	<!-- wpv-loop-start -->
+	<wpv-loop>
+      <br>
+
+      [wpv-post-body view_template="content-template-for-mecard-profiles"]
+
+	</wpv-loop>
+	<!-- wpv-loop-end -->
+	[/wpv-items-found]
+	[wpv-no-items-found]
+		<strong>[wpml-string context="wpv-views"]No items found[/wpml-string]</strong>
+	[/wpv-no-items-found]
+[wpv-layout-end]
+
+-- loop item --
+
+[wpv-conditional if="( $(wpcf-profile-type) eq 'professional' )"]
+[wpv-post-body view_template="single-pro-profile-content-template"]
+[/wpv-conditional]
+[wpv-conditional if="( $(wpcf-profile-type) ne 'professional' )"]
+[wpv-post-body view_template="standard-mecard-profile"]
+<div id="vcard-button-[wpv-post-id]">[mecard_vcard_button auto="[types field='auto_download_vcard' output='raw' item='$current_page'][/types]"]</div>
+[/wpv-conditional]
+[wpv-conditional if="( '[profile_edit_allowed]' )"]
+[toolset-edit-post-link content_template_slug='edit-profile' class='btn btn-primary btn-lg' style="width:100%" target='self']Edit Profile[/toolset-edit-post-link]
+[/wpv-conditional]

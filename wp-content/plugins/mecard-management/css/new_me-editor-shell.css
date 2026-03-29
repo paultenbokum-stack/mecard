@@ -1,0 +1,47 @@
+/* Fullscreen modal shell */
+/* Editor layout inside Bootstrap 4 modal */
+.me-editor {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
+
+/* we no longer control visibility with .is-open */
+.me-editor.is-open {}
+
+/* no custom backdrop/dialog – Bootstrap handles that */
+.me-editor__backdrop,
+.me-editor__dialog {
+    /* no styles needed anymore */
+}
+
+
+/* 2/3 – 1/3 layout */
+.me-editor__body { display: grid; grid-template-columns: 2fr 1fr; gap: 0; min-height: 60vh; }
+.me-editor__left { padding-left: 0; padding-right: 0; }
+.me-editor__right {  }
+
+.me-actions { display: flex; gap: 12px; align-items: center; }
+.js-me-save.is-saving { opacity: .8; pointer-events: none; }
+.me-loading { padding: 24px; color: #666; }
+
+/* Simple form grid */
+.grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 12px; }
+.cell { display: flex; flex-direction: column; gap: 6px; }
+.cell.full, fieldset.cell.full { grid-column: 1 / -1; }
+label { font-size: 12px; color: #333; }
+input, select, textarea { padding: 8px 10px; border: 1px solid #ddd; border-radius: 8px; }
+
+/* Mobile: tabs switch body/preview panes */
+.me-editor__tabs-mobile { display: none; gap: 8px; padding: 8px; border-bottom: 1px solid #eee; }
+.me-editor__tabs-mobile .js-me-tab { flex: 1; background: #f4f4f6; border: 0; padding: 8px; border-radius: 8px; }
+.me-editor__tabs-mobile .js-me-tab.is-active { background: #e9edf2; }
+
+@media (max-width: 991px) {
+    .me-editor__body { grid-template-columns: 1fr; }
+    .me-editor__right { display: none; }
+    .me-editor__tabs-mobile { display: flex; }
+    .me-editor.tab-preview .me-editor__left { display: none; }
+    .me-editor.tab-preview .me-editor__right { display: block; border-left: 0; }
+}

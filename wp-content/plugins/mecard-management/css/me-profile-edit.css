@@ -1,0 +1,60 @@
+.me-editor { position: fixed; inset: 0; display: none; z-index: 10000; }
+.me-editor.is-open { display: block; }
+.me-editor__backdrop { position: absolute; inset: 0; background: rgba(0,0,0,.45); }
+.me-editor__dialog { position: relative; margin: 2vh auto; width: min(1200px, 96vw); background: #fff; border-radius: 14px; overflow: hidden; display: flex; flex-direction: column; max-height: 96vh; }
+.me-editor__header { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid #eee; }
+.me-editor__title { display: flex; gap: 8px; align-items: baseline; }
+.me-editor__title .muted { color: #666; font-size: 12px; }
+.me-editor__close { background: none; border: 0; font-size: 24px; line-height: 1; cursor: pointer; }
+
+.me-editor__body { display: grid; grid-template-columns: 1fr 1fr; gap: 0; min-height: 100vh; }
+.me-editor__left {  }
+.me-editor__right {  }
+
+.me-actions { margin-top: 8px; display: flex; gap: 12px; align-items: center; }
+.js-me-save.is-saving { opacity: .8; pointer-events: none; }
+
+.me-loading { padding: 24px; color: #666; }
+
+.grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 12px; }
+.cell { display: flex; flex-direction: column; gap: 6px; }
+.cell.full, fieldset.cell.full { grid-column: 1 / -1; }
+label { font-size: 12px; color: #333; }
+input, select { padding: 8px 10px; border: 1px solid #ddd; border-radius: 8px; }
+
+.me-media { display: flex; align-items: center; gap: 12px; }
+.me-media__preview { width: 56px; height: 56px; border-radius: 50%; object-fit: cover; background: #eee; }
+
+.me-preview-card { background: #fff; border: 1px solid #eaeaea; border-radius: 12px; padding: 16px; }
+.me-preview-header { display: flex; gap: 12px; align-items: center; }
+.me-preview-avatar { width: 64px; height: 64px; border-radius: 50%; background-size: cover; background-position: center; position: relative; overflow: hidden; }
+.me-preview-avatar img { width: 100%; height: 100%; object-fit: cover; opacity: 0; } /* keep for accessibility */
+.me-preview-headings .me-preview-name { font-weight: 700; font-size: 18px; }
+.me-preview-job { font-size: 13px; color: #666; }
+.me-preview-company { font-size: 12px; color: #8a8a8a; margin-top: 2px; }
+
+.me-preview-actions { display: flex; gap: 8px; margin: 12px 0; }
+
+.me-preview-socials { display: flex; gap: 8px; flex-wrap: wrap; }
+.soc { font-size: 12px; padding: 6px 10px; border: 1px solid #ddd; border-radius: 999px; text-decoration: none; color: #333; background: #fff; }
+
+.me-upsell { margin-top: 12px; padding: 12px; background: #f1f7ff; border: 1px solid #d8eaff; border-radius: 10px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.me-design-link { display: inline-block; margin-top: 10px; font-size: 12px; color: #0170b9; text-decoration: none; }
+
+.me-editor__tabs-mobile { display: none; gap: 8px; padding: 8px; border-bottom: 1px solid #eee; }
+.me-editor__tabs-mobile .js-me-tab { flex: 1; background: #f4f4f6; border: 0; padding: 8px; border-radius: 8px; }
+.me-editor__tabs-mobile .js-me-tab.is-active { background: #e9edf2; }
+
+#meProfilePreview_mobile { display: none; }
+
+
+@media (max-width: 991px) {
+    #meProfilePreview_mobile { display: block; }
+    .me-editor__body { grid-template-columns: 1fr; }
+    .me-editor__right { display: none; }
+    .me-editor__tabs-mobile { display: flex; }
+    .me-editor.tab-preview .me-editor__left { display: none; }
+    .me-editor.tab-preview .me-editor__right { display: block; border-left: 0; }
+}
+
+
