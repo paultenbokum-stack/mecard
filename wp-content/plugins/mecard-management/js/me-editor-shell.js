@@ -269,9 +269,13 @@
         if (p.photo_url) {
             field($proPane, 'photo').attr('src', p.photo_url).show();
             field($stdPane, 'photo').attr('src', p.photo_url).show();
+            $proPane.find('.me-photo-placeholder').hide();
+            $stdPane.find('.me-photo-placeholder').hide();
         } else {
             field($proPane, 'photo').hide();
             field($stdPane, 'photo').hide();
+            $proPane.find('.me-photo-placeholder').show();
+            $stdPane.find('.me-photo-placeholder').show();
         }
 
         // Contact action buttons (pro pane)
@@ -508,6 +512,8 @@
             $('#meProfilePhotoPreview').attr('src', url).show();
             field($proPane, 'photo').attr('src', url).show();
             field($stdPane, 'photo').attr('src', url).show();
+            $proPane.find('.me-photo-placeholder').hide();
+            $stdPane.find('.me-photo-placeholder').hide();
 
             $('#newMeProfileForm').trigger('change');
         });

@@ -69,6 +69,9 @@ $social_icons = [
                  alt="Profile picture"
                  <?php if ( ! $photo_url ) echo 'style="display:none"'; ?>>
         </picture>
+        <div class="me-photo-placeholder"<?php if ( $photo_url ) echo ' style="display:none"'; ?>>
+            <i class="fas fa-user"></i>
+        </div>
     </div>
 
     <div style="height:20px" aria-hidden="true" class="wp-block-spacer"></div>

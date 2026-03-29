@@ -48,6 +48,9 @@ $social_icons = [
              src="<?php echo esc_url( $photo_url ); ?>"
              alt="Profile picture"
              <?php if ( ! $photo_url ) echo 'style="display:none"'; ?>>
+        <div class="me-photo-placeholder"<?php if ( $photo_url ) echo ' style="display:none"'; ?>>
+            <i class="fas fa-user"></i>
+        </div>
     </div>
 
     <div class="job-title">
