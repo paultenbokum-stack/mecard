@@ -1,0 +1,1342 @@
+/**
+Theme Name: Astra Child
+Author: MeCard
+Author URI: http://wpastra.com/about/
+Description: Astra is the fastest, fully customizable & beautiful theme suitable for blogs, personal portfolios and business websites. It is very lightweight (less than 50KB on frontend) and offers unparalleled speed. Built with SEO in mind, Astra comes with schema.org code integrated so search engines will love your site. Astra offers plenty of sidebar options and widget areas giving you a full control for customizations. Furthermore, we have included special features and templates so feel free to choose any of your favorite page builder plugin to create pages flexibly. Some of the other features: # WooCommerce Ready # Responsive # Compatible with major plugins # Translation Ready # Extendible with premium addons # Regularly updated # Designed, Developed, Maintained & Supported by Brainstorm Force. Looking for a perfect base theme? Look no further. Astra is fast, fully customizable and beautiful theme!
+Version: 1.0.0
+License: GNU General Public License v2 or later
+License URI: http://www.gnu.org/licenses/gpl-2.0.html
+Text Domain: astra-child
+Template: astra
+*/
+
+div.mecard-social-item {
+    display: inline-block;
+}
+
+
+
+div.mecard-social-item  i.fab {
+    font-size: 3em;
+    margin: 0 10px;
+    color: #000000;
+}
+
+div.mecard-social-item  i.fab.fa-tiktok {
+    height: 40px;
+    width: 40px;
+    padding-bottom: 10px;
+    font-size: 2.5em;
+    border: 1px solid black;
+    border-radius: 5px;
+    color: #ffffff;
+    background-color: #000;
+}
+
+p:empty {
+    display: none;
+}
+
+.mecard-centered, .single-mecard-profile .ast-single-post-order {
+    text-align: center;
+}
+
+.action-buttons {
+    margin-top: 20px;
+}
+
+.action-buttons > .col {
+    padding-right: 5px;
+    padding-left: 5px;
+}
+
+.action-buttons button,a.add-button, button.add-button, input[type="button"],input[type="submit"], div.add-button a {
+    text-transform: none;
+    /*width: 50%;*/
+    min-width: 150px;
+    max-width: 250px;
+    color: #ffffff;
+    border-radius: 5px;
+    border-color: var(--ast-global-color-0);
+    background-color: var(--ast-global-color-0);
+    font-size: 1rem;
+    padding-top: 15px;
+    padding-right: 30px;
+    padding-bottom: 15px;
+    padding-left: 30px;
+}
+
+.add-button-full a {
+    text-transform: none;
+    min-width: 150px;
+    /*max-width: 200px;*/
+    color: #ffffff;
+    border-radius: 5px;
+    border-color: var(--ast-global-color-0);
+    background-color: var(--ast-global-color-0);
+    font-size: 1rem;
+    padding-top: 15px;
+    padding-right: 30px;
+    padding-bottom: 15px;
+    padding-left: 30px;
+}
+
+.profile-buttons {
+    margin-top: 25px;
+}
+
+.profile-buttons button {
+    border-radius: 5px;
+    width: 100%;
+
+}
+
+.profile-buttons button.whatsapp {
+    background-color: #01e675;
+
+}
+
+.profile-buttons button.email {
+    background-color: #0170b9;
+
+}
+
+.profile-buttons a {
+    color: #ffffff;
+    text-decoration: none;
+    font-size: 2em;
+}
+
+
+.action-buttons button a {
+    color: #ffffff;
+    text-decoration: none;
+    font-size: 2em;
+}
+
+.profile-buttons button.phone {
+    background-color: #0AB14B;
+}
+
+
+
+h1.profile-heading {
+    margin-bottom: 0;
+    text-align: center;
+}
+
+div.job-title {
+    text-align: center;
+    font-style: italic;
+    margin-top: 10px;
+}
+
+.mecard-section {
+    margin: 20px 0;
+    border-bottom: 1px solid black;
+    border-top: 1px solid black;
+}
+
+.mecard-social {
+    margin-top: 20px;
+}
+
+div.profile-image {
+    margin: auto;
+    text-align: center;
+}
+
+div.profile-image.pro {
+    margin-top: -30px;
+    padding: 5px;
+    text-align: center;
+}
+
+div.profile-image img {
+    max-height: 150px;
+    max-width: 100%;
+    border-radius: 20px;
+}
+
+div.profile-image.pro img {
+    border: 1px solid black;
+    padding: 5px;
+    background-color: white;
+}
+
+
+
+button.company {
+    background-color: lightgrey;
+    border-radius: 5px;
+    color: black;
+    padding: 15px 15px;
+    width: 100%;
+    margin: 5px 0;
+}
+
+button.company i {
+    position: absolute;
+    left:  10%;
+}
+
+h3.company, h2.company{
+    margin-bottom: 0;
+}
+
+
+.vcard-download {
+
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    height: auto;
+}
+
+
+
+.vcard-button {
+    background-color: #30b030;
+    text-align: center;
+    padding: 20px 0px 20px 0px;
+    text-underline: none;
+}
+
+
+.vcard-button > a {
+    color: black;
+    font-size: 1em;
+    text-decoration: none;
+    text-transform: uppercase;
+    text-align: center;
+    font-weight: 700;
+    text-underline: none;
+    text-decoration: none !important;
+}
+
+div.phone-outline div.pro-profile-container::-webkit-scrollbar {
+    background-color: #f9f9f9;
+    width: 10px;
+}
+
+div.phone-outline div.pro-profile-container::-webkit-scrollbar-thumb {
+    background-color: silver;
+    border-radius: 10px;
+    border: 4px solid #f9f9f9;
+}
+
+div.phone-outline div.pro-profile-container::-webkit-scrollbar-button {
+    display: none;
+}
+
+div.phone-outline div.pro-profile-container::-webkit-scrollbar-track {
+    background-color: #ffffff;
+}
+
+.phone-outline .profile-buttons button {
+    width: inherit;
+
+}
+
+div.phone-outline div.vcard-download {
+    position: absolute;
+    z-index: 99;
+    border-bottom-left-radius: 0.3cm;
+    border-bottom-right-radius: 0.3cm;
+    bottom: 0.0cm;
+
+}
+
+/*div.phone-outline .vcard-button {*/
+/*    border-bottom-left-radius: 0.5cm;*/
+/*    border-bottom-right-radius: 0.5cm;*/
+/*    z-index: 9;*/
+/*}*/
+
+#download-message {
+    background-color: lightgrey;
+    border: 1px solid darkgrey;
+    color: #333333;
+    font-size: 13px;
+    font-weight: bold;
+    display: none;
+    padding: 10px;
+    position: relative;
+    bottom: 0px;
+    left: 0;
+    width: 100%;
+    height: 200px;
+    text-align: center;
+}
+
+#download-message > div {
+    text-align: center;
+    padding: 20px 10px 20px 10px;
+}
+
+.more-links {
+ background-color: lightgrey;
+    margin: 10px 0;
+    min-width: 100%;
+}
+
+.more-links.editable {
+    background-color: lightgrey;
+    margin: 10px 0;
+    min-width: 90%;
+}
+
+
+
+
+.more-links:hover {
+    background-color: lightgrey;
+    margin: 10px 0;
+}
+
+.more-links a {
+    text-decoration: none !important;
+}
+
+
+.btn-light {
+    color: #212529 !important;
+    background-color: #f8f9fa !important;
+    border-color: #f8f9fa !important;
+}
+
+
+.profile-card-image {
+    float: left;
+    display: inline-block;
+    margin: 10px;
+    border: 1px solid;
+    border-radius: 5px;
+    min-width: 150px;
+    min-height: 150px;
+    background-repeat: no-repeat;
+    text-align: center;
+    background-position: center;
+    background-size: cover;
+    max-width: 30%;
+}
+
+.profile-card-image img {
+    width: 150px;
+    height: auto;
+    border-radius: 5px;
+}
+
+.profile-tags {
+    margin: 10px;
+    border-top: 1px solid grey;
+    padding-top: 20px;
+}
+
+.profile-tags .keyring, .profile-tags .phonetag {
+    border: 1px solid black;
+    text-align: center;
+    border-radius: 3px;
+    height: 55px;
+    width: 100%;
+    margin: 0 auto;
+    background-color: white;
+}
+
+.profile-tags .keyring img, .profile-tags .phonetag img {
+    height: 50px;
+}
+
+.profile-tags h6 {
+    display: inline-flex;
+}
+
+.profile-tags a.assign-card {
+    font-size: 10px;
+    padding: 5px;
+}
+
+.profile-card-text {
+    display: inline-block;
+    font-size: 0.75em;
+    text-align: left;
+    padding: 10px;
+    max-width: 50%;
+    word-wrap: break-word;
+}
+
+.profile-card-text .name h6 {
+    margin-bottom: 0;
+    display: inline-block;
+}
+
+.profile-card-text .company {
+    font-style: italic;
+}
+
+.profile-card {
+    padding: 5px;
+    margin-top: 50px;
+    background-color: #e7e7e7;
+    position: relative;
+    /*width: 90%;*/
+    height: 95%;
+    min-height: 190px;
+    border-radius: 5px;
+}
+
+.profile-card-actions {
+    text-align: right;
+    padding: 10px;
+}
+
+.profile-card-actions a.dropdown-item {
+    text-decoration: none;
+}
+
+.profile-card-actions .dropdown-item.align-right {
+    text-align: right;
+}
+
+.profile-card:hover, .profile-card-empty:hover {
+    /*
+    background-color: lightgrey;
+    */
+}
+
+.profile-card-empty {
+    padding: 5px;
+    background-color: #e7e7e7;
+    position: relative;
+    width: 90%;
+    height: 120px;
+    border-radius: 5px;
+    text-align: center;
+    font-size: 1.75em;
+    padding-top: 30px;
+}
+
+
+
+.vcard-file {
+    font-size: 1.5em;
+    font-weight: 700;
+}
+
+div.me-card .wpt-credfile-preview img {
+
+    display: none !important;
+}
+
+.wpt-credfile-preview img {
+    max-height: 150px;
+    max-width: 100%;
+}
+
+.card-tags {
+    position: absolute;
+    top: 59px;
+    right: 47px;
+    display: block;
+    z-index: 99;
+
+}
+
+div.qr-container {
+    position: absolute;
+    display: inline-block;
+    top: 1.35cm;
+    left: 2.9cm;
+    min-width: 2cm;
+    min-height: 2cm;
+    width: 2.7cm;
+    height: 2.7cm;
+}
+
+div.qr-container.profile-qr {
+    position: initial;
+    display: block;
+    width: 100%;
+    height: 100%;
+    margin: 10px;
+    text-align: center;
+}
+
+div.profile-qr-code {
+    margin: auto;
+    text-align: center;
+    display: inline-block;
+}
+
+
+#qr-download-gif {
+    height: 20px;
+    width: auto;
+    margin-right: 10px;
+}
+
+#qr-download-gif img {
+    height: 100%;
+    width: auto;
+}
+
+div:not(.profile-card-actions) a.open-qr-modal {
+    width: 50px;
+    display: inline-block;
+    float: right;
+    margin: 10px;
+}
+
+div.qr-code {
+    min-height: 1.9cm;
+}
+
+.card-tag-container {
+    width: 30%;
+}
+
+.card-tag {
+    width: 86px;
+    height: 54px;
+    border: 1px solid black;
+    background-color: #FFFFFF;
+    border-radius: 3px;
+    text-align: center;
+    font-size: 1.75em;
+    color: lightslategray;
+    margin-bottom: 5px;
+    background-repeat: no-repeat !important;
+    background-size: contain !important;
+    background-position: center !important;
+
+}
+
+.card-preview {
+    width: 8.56cm;
+    height: 5.4cm;
+    border-radius: 0.3cm;
+    overflow: hidden;
+    box-shadow: 4px 4px 10px 4px #80808057;
+    position: relative;
+    margin-bottom: 10px;
+}
+
+div.card-preview img, div.preview-card-tile img {
+    max-width: 100% !important;
+    max-height: 100% !important;
+}
+
+.profile-preview {
+    position: absolute;
+    top: -10px;
+    left: -10px;
+    font-size: 24px;
+    z-index: 99;
+    background-color: white;
+}
+
+.profile-card .view-edit {
+    display: none;
+    position:  absolute;
+    top: 0;
+    left: 20%;
+    width: 60%;
+    height: 100%;
+    text-align: center;
+
+    z-index: 999;
+
+
+}
+
+.profile-card.hover .view-edit {
+    display: block;
+}
+
+.profile-card .view-edit a button {
+    margin: 10px 0;
+}
+
+.btn.add {
+    float: right;
+}
+
+div.preview-card-tile {
+    width: 100%;
+    height: auto;
+    margin: 20px;
+    border: 1px solid #9e9e9e;
+    border-radius: 5px;
+    background-color: #d3d3d369;
+    text-decoration: none;
+    text-align: center;
+}
+
+div.preview-card-tile h6 {
+    width: 80%;
+    margin: auto;
+}
+
+div.preview-card-tile h6,a.btn {
+    text-decoration: none !important;
+    padding: 5px 10px;
+}
+
+div.order-status-container {
+    height: 80px;
+}
+
+div.order-status {
+    width: 80%;
+    display: block;
+    text-align: left;
+    font-size: 0.75em;
+    margin: auto;
+}
+
+
+div.order-status i.fa-check {
+    color: green;
+}
+
+div.order-status i.fa-exclamation {
+    color: #ff9898;
+}
+
+div.order-status.design-received-1.no, div.order-status.design-submitted-1.no {
+    display: none;
+}
+
+
+div.order-status.design-received-0.yes, div.order-status.design-received-.yes, div.order-status.design-submitted-0.yes, div.order-status.design-submitted-.yes {
+    display: none;
+}
+
+div.tag-type-label, .tag-type-image {
+    width: 80%;
+    display: block;
+    font-size: 0.75em;
+    margin: auto;
+}
+
+.mytooltip {
+    position: relative;
+    display: inline-block;
+    /*border-bottom: 1px dotted black;*/
+}
+
+.mytooltip i {
+    color: #9e9e9e91;
+}
+
+.mytooltip.no-dots {
+    border-bottom: 0px;
+}
+
+.mytooltip .mytooltiptext {
+    visibility: hidden;
+    width: 200px;
+    background-color: black;
+    color: #fff;
+    text-align: center;
+    border-radius: 6px;
+    padding: 10px;
+
+    /* Position the tooltip */
+    position: absolute;
+    z-index: 1;
+}
+
+.mytooltip:hover .mytooltiptext {
+    visibility: visible;
+}
+
+.js-toolset-media-field-action {
+    max-width: 150px;
+    display: inline;
+}
+
+div.preview-card-tile img {
+/*    width: 30mm;
+    height: 18.75mm;
+    border-radius: 2mm;*/
+}
+
+div.card-front, div.card-back {
+    box-shadow: 4px 4px 10px 4px #80808057;
+    background-size: cover;
+    background-repeat: no-repeat;
+    border-radius: 0.3cm;
+    width: 8.56cm;
+    height: 5.4cm;
+    display: inline-block;
+    overflow: hidden;
+    position: relative;
+    text-align: center;
+    font-family: "Montserrat", sans-serif;
+}
+
+a div.card-front, a div.card-back {
+    color: #000000;
+}
+
+div.card-front i, div.card-back i, div.card-front button, div.card-back button {
+    margin: 0;
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+div.card-front.classic, div.card-back.classic {
+    background-color: #ffffff;
+}
+
+div.card-front.classic .classic-logo {
+    position: absolute;
+    top: 0.4cm;
+    height: 3.5cm;
+    width: 100%;
+    text-align: center;
+    padding: 0 0.4cm;
+}
+
+.select-card .classic-logo {
+    position: relative;
+    top: 10%;
+    height: 60%;
+    width: 100%;
+    text-align: center;
+    padding: 0 10%;
+}
+
+.select-card .classic-logo img {
+   height: 100%;
+    width: auto;
+    text-align: center;
+    margin: auto;
+}
+
+.select-card .classic-name {
+    margin-top: 5%;
+    position: relative;
+    height: 12%;
+    width: 100%;
+    text-align: center;
+    font-size: 0.5em;
+    font-weight: 600;
+
+}
+
+.select-card .classic-job-title {
+    position: relative;
+    height: 12%;
+    width: 100%;
+    text-align: center;
+    font-size: 0.5em;
+    font-weight: 600;
+}
+
+div.card-front.classic .classic-logo img {
+    max-height: 3.5cm;
+    position: relative;
+    top: 50%;
+    transform: translateY(-50%);
+    height: auto;
+}
+
+ .form-group div.card-front.classic .classic-logo img {
+    border: 1px dashed darkgrey;
+}
+
+
+div.card-front.classic .classic-name {
+    position: absolute;
+    bottom: 0.9cm;
+    height: 0.6cm;
+    width: 100%;
+    text-align: center;
+    font-size: 0.5cm;
+    font-weight: 600;
+
+}
+
+div.card-front.classic .classic-job-title {
+    position: absolute;
+    bottom: 0.4cm;
+    height: 0.5cm;
+    width: 100%;
+    text-align: center;
+    font-size: 0.4cm;
+    font-weight: 400;
+}
+
+div.select-card {
+
+    width: 172px;
+    height: 108px;
+    border-radius: 4px;
+    box-shadow: 4px 4px 10px 4px #80808057;
+    background-size: cover;
+    background-repeat: no-repeat;
+    margin-top: 20px;
+
+}
+
+ a > div.card-selected {
+    background-color: rgba(211, 211, 211, 0.75);
+     border: 1px solid darkgrey;
+     padding: 5px;
+     border-radius: 10px;
+}
+
+div.select-card img {
+    width: 172px;
+    height: 108px;
+    border-radius: 4px;
+}
+
+a.select-card-a hr {
+    margin: 20px 0 0 0;
+}
+
+a.select-card-a {
+    text-decoration: none !important;
+    color: #000000;
+}
+
+.select-card-a.card-selected hr {
+visibility: hidden;
+}
+
+
+
+img.qr-template {
+    margin-left: -15px;
+}
+
+.card-back {
+    /*display: none;*/
+}
+
+
+
+.delete-profile {
+
+    background-color: lightgrey;
+}
+
+.form-control, .form-group label, .wpv-form input, .wpv-form label{
+    font-size: 0.75rem;
+}
+
+ul.wpt-form-set-checkboxes.wpt-form-set-checkboxes-wpcf-checkboxes-field {
+    margin-left: 0;
+}
+
+a.edit-company {
+    text-decoration: none;
+}
+
+.card-label {
+    max-width: 300px;
+}
+
+.card-label-overlay {
+    position: absolute;
+    bottom: 6px;
+    left: 3px;
+    height: 20px;
+    font-size: 12px;
+    white-space: nowrap;
+    background-color: white;
+    color: black;
+}
+
+ a.added_to_cart {
+    display: inline-block !important;
+    margin-left: 10px;
+}
+
+form.checkout.woocommerce-checkout div.col-1, .woocommerce-column.col-1,.woocommerce-column.col-2 {
+    width: 100% !important;
+    flex: 100%;
+    max-width: 100%;
+}
+
+ button.woocommerce-button.woocommerce-form-login__submit {
+     margin-left: 10px !important;
+ }
+
+ .tag-edit .wpt-form-item-checkbox label {
+     display: none;
+ }
+
+ .tag-edit {
+     margin-top: 10px;
+     margin-bottom:0 ;
+ }
+
+.tag-edit:hover {
+     border-bottom: 1px solid darkgrey;
+ }
+
+.tag-edit .inline-form-submit {
+    background-color: transparent;
+    color: blue;
+    padding-top: 0px;
+    max-width: 50%;
+    display: inline-block;
+/*    padding-bottom: 20px;*/
+}
+
+ul.wpv-pagination-nav-links-container.pagination {
+    padding-top: 10px;
+}
+
+.tag-edit .inline-form-submit:hover {
+    background-color: transparent;
+    color: darkgrey;
+
+}
+
+ .mecard-box {
+    border-radius: 5px;
+    padding: 50px;
+    border: 1px solid #8dacc5;
+    background-color: #a0d4ff;
+     margin-bottom: 50px;
+}
+
+ .mecard-box.placeholder {
+     background-color: #9e9e9e29;
+ }
+
+div.mecard-box ol {
+    margin: 0 0 1.5em 1em;
+}
+
+div.mecard-box ol li {
+    margin-top: 1em;
+}
+
+div.mecard-table div.row {
+    border-bottom: 1px solid rgba(128, 128, 128, 0.2);
+    padding: 5px;
+    min-height: 50px;
+}
+
+div.mecard-table div.row.mecard-heading {
+    font-weight: 600;
+}
+
+.woocommerce-breadcrumb {
+    display: none;
+}
+
+body:not(.logged-in) .ast-header-woo-cart {
+    display: none;
+}
+
+iframe#vcard-download {
+    height: 0px;
+}
+
+body.views-template-professional-profile-template h1.profile-heading {
+    margin-top: 20px;
+}
+
+.profile-image-container {
+    position: relative;
+    bottom: 32px;
+    text-align: center;
+}
+
+#profile-image-bg {
+    position: relative;
+    display: inline-block;
+    margin: auto;
+    border: 1px solid lightgray;
+    padding: 10px;
+    background-color: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px #00000047;
+}
+
+#profile-image-bg .profile-image img {
+    border-radius: 10px;
+}
+
+article.mecard-profile h1.entry-title, article.type-t h1.entry-title {
+    display: none;
+}
+
+.design-submitted {
+    display: none;
+}
+
+.me-green {
+    color: green;
+}
+
+.me-orange {
+    color: orange;
+}
+
+input.save_submit {
+    background-color: #0AB14B;
+}
+
+table.table img {
+    height: 40px;
+    width: auto;
+}
+
+ img.tag-list, .configured-tag img {
+    max-height: 40px;
+    width: auto;
+}
+
+
+.table, .table td, .table th {
+    border-right: 0;
+    border-left: 0;
+    padding: 0.75rem;
+    vertical-align: top;
+    border-top: 0;
+}
+
+div.quantity.wooviews-template-quantity {
+    display: inline-block;
+
+}
+
+div.quantity.wooviews-template-quantity input {
+    padding: 0.5em;
+    width: 60px;
+    line-height: 36px;
+}
+
+div.quantity.wooviews-template-quantity button {
+    padding: 0.5em;
+    width: 80px;
+    line-height: 36px;
+}
+
+div.custom-add-to-cart, div.classic-add-to-cart {
+    text-align: center;
+}
+
+.u-column1.col-1.woocommerce-Address, .u-column2.col-2.woocommerce-Address {
+    min-width: 320px;
+}
+
+.modal-header {
+    position: sticky;
+    top: 0;
+    background-color: inherit; /* [1] */
+    z-index: 1055; /* [2] */
+}
+
+
+.modal-footer {
+    position: sticky;
+    bottom: 0;
+    background-color: inherit; /* [1] */
+    z-index: 1055; /* [2] */
+}
+
+ .profile-admin-loading {
+
+   position: relative;
+    height: 10vh;
+    width: 100%;
+     text-align: center;
+}
+
+.cardeditmodal {
+    position: fixed;
+    top: 10vh;
+    left: 10vh;
+}
+
+.nav-links {
+    margin-top: 40px;
+}
+
+.extra-links {
+    padding: 10px;
+}
+
+.extra-links H6 {
+    display: inline-block;
+}
+.extra-links a {
+    margin-left: 5px;
+}
+
+.extra-links .more-link a {
+    color: var(--ast-global-color-2);
+}
+
+
+
+.extra-links H6, .extra-links a {
+    font-size: 0.75rem;
+}
+
+/* riscura settings */
+
+article.riscura .vcard-download .vcard-button, article.riscura .riscura-submit {
+    background-color: #FF671D;
+}
+
+article.riscura input {
+    border-color: #FF671D;
+}
+
+article.riscura, article.riscura h2 {
+    font-family: 'Lato', sans-serif;
+}
+article.riscura h2 {
+    font-size: 2rem;
+}
+
+body.single-riscura header {
+    display: none;
+}
+
+
+button.riscura {
+    padding: 30px;
+
+}
+
+button.riscura.phone {
+    background-color: #003B71;
+}
+
+button.riscura.email {
+    background-color: #909288;
+}
+
+button.riscura.whatsapp {
+    background-color: #212322;
+}
+
+button.riscura i {
+    margin-right: 5px;
+}
+
+p.riscura-com {
+
+    font-size: 1.5rem;
+    font-style:italic;
+}
+
+article.riscura header.entry-header {
+    display: none
+}
+
+.tick-r- {
+    display: none;
+}
+
+.tick-r-1 {
+    display: block;
+    color: green;
+}
+
+article.riscura p.disclaimer {
+    margin-top: 20px;
+    font-style: italic;
+    font-size: 0.75rem;
+}
+
+article.riscura a.btn.riscura, input.btn.riscura {
+   background-color:  #FF671D;
+    border-color: #FF671D;
+    padding: 20px;
+    width: 90%;
+}
+
+article.riscura .open-qr-modal-riscura {
+    color: lightgrey;
+    text-align: center;
+    width: 100%;
+    display: inline-block;
+}
+
+input.riscura-search {
+    max-width: 30%;
+    height: 100px;
+    text-align: center;
+    display: inline;
+    font-size: 2rem;
+}
+
+a.btn.riscura-configure-tag {
+    background-color: #003B71;
+    border-color: #003B71;
+    padding: 20px;
+}
+
+ul.nav li.nav-item a {
+    text-decoration: none;
+}
+
+
+.modal.modal-fullscreen .modal-dialog {
+    width: 100vw;
+    height: 100vh;
+    margin: 0;
+    padding: 0;
+    max-width: none; }
+
+.modal.modal-fullscreen .modal-content {
+    height: auto;
+    height: 100vh;
+    border-radius: 0;
+    border: none; }
+
+.modal.modal-fullscreen .modal-body {
+    overflow-y: auto; }
+
+@media only screen and (min-width: 997px) {
+    article.mecard-profile, article.type-t {
+        max-width: 600px;
+        margin: auto;
+
+    }
+
+    #primary {
+        margin-top: 0;
+    }
+
+    .ast-archive-description {
+        border-bottom: 0;
+    }
+
+    ul.nav {
+        margin-left: 0;
+    }
+    div:not(.phone-outline) > .vcard-download {
+        position: relative;
+        border-radius: 5px;
+        width: 100%;
+        margin: auto;
+        margin-top: 20px;
+    }
+
+   div:not(.phone-outline) > .vcard-download .vcard-button {
+        border-radius: 5px;
+    }
+
+    div.phone-outline > .vcard-download .vcard-button {
+        border-bottom-left-radius: 0.3cm;
+        border-bottom-right-radius: 0.3cm;
+    }
+
+     .profile-buttons button {
+        width: 100%;
+
+    }
+
+    div.phone-outline {
+        position: relative;
+        z-index: 999;
+        width: 8cm;
+        height: 14cm;
+        margin: 0 auto;
+        border: 5px solid;
+        border-radius: 0.5cm;
+        padding: 3px;
+        background-color: black;
+    }
+
+
+    div.phone-outline div.pro-profile-container {
+        overflow-y: scroll;
+        overflow-x: hidden;
+        z-index: 999;
+        width: 7.5cm;
+        height: 13cm;
+        margin: 0 auto;
+        background-color: white;
+    }
+
+
+
+    /*div.pro-profile-container {*/
+    /*    position: relative;*/
+    /*    top: 0;*/
+    /*    left: 0;*/
+    /*    z-index: 99;*/
+    /*    width: 7.5cm;*/
+    /*    height: 12.5cm;*/
+    /*    overflow-x: hidden;*/
+    /*    overflow-y: scroll;*/
+    /*    margin: 0.2cm auto;*/
+    /*    background-color: white;*/
+    /*    border-radius: 0.2cm;*/
+    /*}*/
+
+    /*div.pro-profile-container::-webkit-scrollbar {*/
+    /*    background-color: #f9f9f9;*/
+    /*    width: 10px;*/
+    /*}*/
+
+    /*div.pro-profile-container::-webkit-scrollbar-thumb {*/
+    /*    background-color: silver;*/
+    /*    border-radius: 10px;*/
+    /*    border: 4px solid #f9f9f9;*/
+    /*}*/
+
+    /*div.pro-profile-container::-webkit-scrollbar-button {*/
+    /*    display: none;*/
+    /*}*/
+
+    /*div.pro-profile-container::-webkit-scrollbar-track {*/
+    /*    background-color: #ffffff;*/
+    /*}*/
+
+
+    div.pro-profile-container h1 {
+        font-size: 32px;
+    }
+
+    div.pro-profile-container h2 {
+        font-size: 26px;
+    }
+
+    article.type-mecard-profile div.entry-content, article.type-t div.entry-content {
+        border:  1px solid;
+        border-radius: 20px;
+        padding:20px;
+    }
+
+}
+
+@media only screen and (max-width: 640px) {
+
+    .vcard-download {
+        box-shadow: -1px -4px 15px 6px rgba(0, 0, 0, 0.25);
+    }
+
+    h1.entry-title {
+        text-align: center;
+    }
+    div.pro-logo {
+        margin: -50px -20px 0 -20px;
+        min-height: 150px;
+        border-bottom: 1px solid;
+    }
+    .profile-buttons .col {
+        padding-left: 5px;
+        padding-right: 5px;
+    }
+    p.woocommerce-store-notice {
+        display: none !important;
+    }
+}
