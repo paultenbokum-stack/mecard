@@ -12,6 +12,7 @@ include 'custom_product.php';
 // Define base paths if not already defined
 if (!defined('ME_PLUGIN_DIR')) define('ME_PLUGIN_DIR', plugin_dir_path(__FILE__));
 if (!defined('ME_PLUGIN_URL')) define('ME_PLUGIN_URL', plugin_dir_url(__FILE__));
+if (!defined('ME_PLUGIN_VER')) define('ME_PLUGIN_VER', '1.1');
 
 
 /**
@@ -250,12 +251,30 @@ function mecard_share_setup() {
 }
 
 // Our CSS
-wp_enqueue_style(
-    'me-company-edit-css',
-    plugin_dir_url(__FILE__) . 'css/me-company-edit.css',
-    [],
-    filemtime(plugin_dir_path(__FILE__) . 'css/me-company-edit.css')
-);
+add_action( 'wp_enqueue_scripts',    'mecard_enqueue_company_edit_css' );
+add_action( 'admin_enqueue_scripts', 'mecard_enqueue_company_edit_css' );
+function mecard_enqueue_company_edit_css() {
+    wp_enqueue_style(
+        'me-company-edit-css',
+        plugin_dir_url(__FILE__) . 'css/me-company-edit.css',
+        [],
+        filemtime(plugin_dir_path(__FILE__) . 'css/me-company-edit.css')
+    );
+}
+
+add_filter( 'user_has_cap', 'mecard_grant_profile_author_edit_cap', 10, 4 );
+function mecard_grant_profile_author_edit_cap( $caps, $cap, $args, $user ) {
+    $post_id = $args[2] ?? 0;
+    if ( ! $post_id ) return $caps;
+    $post = get_post( $post_id );
+    if ( ! $post || $post->post_type !== 'mecard-profile' ) return $caps;
+    if ( (int) $post->post_author === (int) $user->ID ) {
+        foreach ( $cap as $primitive ) {
+            $caps[ $primitive ] = true;
+        }
+    }
+    return $caps;
+}
 
 // Our JS
 add_action('wp_enqueue_scripts', function () {
