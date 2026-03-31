@@ -170,10 +170,11 @@
         root.style.setProperty('--me-heading-color', d.heading_color || '#000000');
         root.style.setProperty('--me-body-font',     d.body_font     || '"Montserrat", sans-serif');
         root.style.setProperty('--me-body-color',    d.body_color    || '#333333');
-        root.style.setProperty('--me-accent',        d.accent        || '#0170b9');
-        root.style.setProperty('--me-button-text',   d.button_text   || '#ffffff');
+        root.style.setProperty('--me-accent',        d.accent        || '#d3d3d3');
+        root.style.setProperty('--me-button-text',   d.button_text   || '#000000');
         root.style.setProperty('--me-download',      d.download      || '#30b030');
         root.style.setProperty('--me-download-text', d.download_text || '#000000');
+
 
         let styleEl = root.querySelector('style[data-me-custom-css="1"]');
         if (!styleEl) {

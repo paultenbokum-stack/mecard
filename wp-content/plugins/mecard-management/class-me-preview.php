@@ -23,19 +23,19 @@ class Module {
             'me-profile-edit',
             $css_url . 'me-profile-edit.css',
             [],
-            defined('ME_PLUGIN_VER') ? ME_PLUGIN_VER : '1.0'
+            defined('ME_PLUGIN_VER') ? ME_PLUGIN_VER : '1.1'
         );
         wp_enqueue_style(
             'me-profile',
             $css_url . 'me-profile.css',
             [],
-            defined('ME_PLUGIN_VER') ? ME_PLUGIN_VER : '1.0'
+            defined('ME_PLUGIN_VER') ? ME_PLUGIN_VER : '1.1'
         );
         wp_enqueue_style(
             'me-editor-shell',
             $css_url . 'new_me-editor-shell.css',
             [],
-            defined('ME_PLUGIN_VER') ? ME_PLUGIN_VER : '1.0'
+            defined('ME_PLUGIN_VER') ? ME_PLUGIN_VER : '1.1'
         );
 
         wp_enqueue_media();
@@ -44,7 +44,7 @@ class Module {
             'me-editor-shell',
             $js_url . 'me-editor-shell.js',
             ['jquery'],
-            defined('ME_PLUGIN_VER') ? ME_PLUGIN_VER : '1.0',
+            defined('ME_PLUGIN_VER') ? ME_PLUGIN_VER : '1.1',
             true
         );
 
@@ -54,7 +54,7 @@ class Module {
                 'me-company-edit-js',
                 $js_url . 'me-company-edit.js',
                 ['jquery'],
-                defined('ME_PLUGIN_VER') ? ME_PLUGIN_VER : '1.0',
+                defined('ME_PLUGIN_VER') ? ME_PLUGIN_VER : '1.1',
                 true
             );
         }
@@ -474,6 +474,7 @@ private static function render_standard_preview_markup() : void {
             $m[$k] = get_post_meta($company_id,$k,true);
         }
 
+
         return [
             'id'        => $company_id,
             'title'     => get_the_title($company_id),
@@ -489,8 +490,8 @@ private static function render_standard_preview_markup() : void {
                 'heading_color' => $m['wpcf-heading-font-colour'] ?: '#000000',
                 'body_font'     => self::font_to_stack($m['wpcf-normal-font'] ?? ''),
                 'body_color'    => $m['wpcf-normal-font-colour'] ?: '#333333',
-                'accent'        => $m['wpcf-accent-colour'] ?: '#0170b9',
-                'button_text'   => $m['wpcf-button-text-colour'] ?: '#ffffff',
+                'accent'        => $m['wpcf-accent-colour'] ?: '#d3d3d3',
+                'button_text'   => $m['wpcf-button-text-colour'] ?: '#000000',
                 'download'      => $m['wpcf-download-button-colour'] ?: '#30b030',
                 'download_text' => $m['wpcf-download-button-text-colour'] ?: '#000000',
             ],
@@ -512,7 +513,7 @@ private static function render_standard_preview_markup() : void {
             return get_post_meta($profile_id, $k, true);
         };
 
-        // Company via Toolset relationship ONLY
+        // Company ID — try Toolset relationship first, fall back to post meta
         $company_id = 0;
         if (function_exists('toolset_get_related_posts')) {
             $parents = toolset_get_related_posts(
@@ -530,6 +531,11 @@ private static function render_standard_preview_markup() : void {
                 $first = reset($parents);
                 $company_id = is_object($first) ? (int) $first->ID : (int) $first;
             }
+        }
+
+        // Fallback: profile editor saves company_parent to post meta
+        if (!$company_id) {
+            $company_id = (int) get_post_meta($profile_id, 'company_parent', true);
         }
 
         return [
