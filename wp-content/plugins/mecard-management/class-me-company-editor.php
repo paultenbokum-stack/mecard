@@ -102,7 +102,12 @@ class Module {
             wp_send_json_error(['message'=>'Invalid nonce.'], 403);
         }
         $post_id = isset($_POST['post_id']) ? absint($_POST['post_id']) : 0;
-        if (!$post_id || !current_user_can('edit_post',$post_id)) {
+        if (!$post_id) {
+            wp_send_json_error(['message'=>'No permission or invalid post.'], 403);
+        }
+        $company_post = get_post($post_id);
+        $is_owner = $company_post && (int) $company_post->post_author === get_current_user_id();
+        if (!$is_owner && !current_user_can('edit_post', $post_id)) {
             wp_send_json_error(['message'=>'No permission or invalid post.'], 403);
         }
 
