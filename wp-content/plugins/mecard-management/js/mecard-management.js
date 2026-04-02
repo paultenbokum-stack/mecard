@@ -673,7 +673,7 @@ jQuery(document).ready(function($) {
                 fab.innerHTML = '<i class="fas fa-times" aria-hidden="true"></i>';
                 scrim?.classList.add('is-visible');
             }
-            function closePanel(){ panel.classList.remove('is-open'); panel.setAttribute('data-visible','false'); panel.setAttribute('aria-hidden','true'); document.body.classList.remove('mecard-share-open'); fab.setAttribute('aria-expanded','false'); fab.innerHTML = '<i class="fas fa-share-alt" aria-hidden="true"></i>'; scrim?.classList.remove('is-visible'); }
+            function closePanel(){ clearWhatsappInput(); panel.classList.remove('is-open'); panel.setAttribute('data-visible','false'); panel.setAttribute('aria-hidden','true'); document.body.classList.remove('mecard-share-open'); fab.setAttribute('aria-expanded','false'); fab.innerHTML = '<i class="fas fa-share-alt" aria-hidden="true"></i>'; scrim?.classList.remove('is-visible'); }
             function togglePanel(){ panel.classList.contains('is-open') ? closePanel() : openPanel(); }
             fab.addEventListener('click', togglePanel);
             scrim?.addEventListener('click', closePanel);
@@ -694,9 +694,238 @@ jQuery(document).ready(function($) {
 
             // ===== Actions (copy/share/etc.) =====
             function enc(s){ return encodeURIComponent(s); }
+            const waInput = document.getElementById('mecard-wa-msisdn');
+            const waFeedback = document.getElementById('mecard-wa-feedback');
+            const waButton = panel.querySelector('button[data-action="whatsapp-number"]');
+            const waStorageCountryKey = 'mecard.share.whatsapp.country';
+            const defaultCountry = (cfg.defaultCountry || 'za').toLowerCase();
+            let waIti = null;
+            let waLastOpenAt = 0;
+
+            function getBrowserCountryHint() {
+                const lang = (navigator.languages && navigator.languages[0]) || navigator.language || '';
+                const localeMatch = String(lang).match(/-([A-Za-z]{2})$/);
+                if (localeMatch) return localeMatch[1].toLowerCase();
+
+                const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || '';
+                const tzMap = {
+                    'Africa/Johannesburg': 'za',
+                    'Europe/London': 'gb',
+                    'America/New_York': 'us',
+                    'America/Chicago': 'us',
+                    'America/Denver': 'us',
+                    'America/Los_Angeles': 'us',
+                    'Australia/Sydney': 'au',
+                    'Pacific/Auckland': 'nz'
+                };
+                return tzMap[tz] || '';
+            }
+
+            function setWaFeedback(message, isError) {
+                if (!waFeedback) return;
+                waFeedback.hidden = !message;
+                waFeedback.textContent = message || '';
+                waFeedback.classList.toggle('text-success', !!message && !isError);
+                waFeedback.classList.toggle('text-danger', !!message && !!isError);
+                if (waInput) {
+                    waInput.classList.toggle('is-invalid', !!message && !!isError);
+                    waInput.classList.toggle('is-valid', !!message && !isError);
+                }
+            }
+
+            function clearWhatsappInput() {
+                if (!waInput) return;
+                waInput.value = '';
+                setWaFeedback('', false);
+            }
+
+            function sanitizeInternationalValue(raw) {
+                return String(raw || '').trim().replace(/[^\d+]/g, '').replace(/^00/, '+');
+            }
+
+            function sanitizeNationalValue(raw) {
+                return String(raw || '').replace(/[^\d]/g, '');
+            }
+
+            function syncInputCountryFromValue() {
+                if (!waInput || !waIti) return;
+                const raw = sanitizeInternationalValue(waInput.value);
+                if (!raw) return;
+                if (raw.charAt(0) === '+') {
+                    waIti.setNumber(raw);
+                }
+            }
+
+            function fallbackWaNumber() {
+                if (!waInput || !waIti) return '';
+                const country = waIti.getSelectedCountryData() || {};
+                const national = sanitizeNationalValue(waInput.value);
+                if (!national || !country.dialCode) return '';
+
+                let local = national;
+                if (local.charAt(0) === '0') {
+                    local = local.slice(1);
+                }
+
+                const digits = `${country.dialCode}${local}`.replace(/[^\d]/g, '');
+                return digits.length >= 8 ? digits : '';
+            }
+
+            function getWhatsappDigits() {
+                if (!waInput || !waIti) return '';
+                syncInputCountryFromValue();
+
+                if (window.intlTelInputUtils && typeof waIti.getNumber === 'function') {
+                    const e164 = waIti.getNumber(window.intlTelInputUtils.numberFormat.E164) || '';
+                    return e164.replace(/[^\d]/g, '');
+                }
+
+                return fallbackWaNumber();
+            }
+
+            function validateWhatsappNumber(showValidState) {
+                if (!waInput || !waIti) return false;
+
+                if (!sanitizeNationalValue(waInput.value)) {
+                    setWaFeedback('', false);
+                    return false;
+                }
+
+                syncInputCountryFromValue();
+
+                if (window.intlTelInputUtils && typeof waIti.isValidNumber === 'function') {
+                    const isValid = waIti.isValidNumber();
+                    setWaFeedback(isValid ? (showValidState ? cfg.i18n.waValid : '') : cfg.i18n.invalidMsisdn, !isValid);
+                    return isValid;
+                }
+
+                const fallbackDigits = fallbackWaNumber();
+                const isFallbackValid = fallbackDigits.length >= 8;
+                setWaFeedback(isFallbackValid ? (showValidState ? cfg.i18n.waValid : '') : cfg.i18n.invalidMsisdn, !isFallbackValid);
+                return isFallbackValid;
+            }
+
+            function openWhatsappFromPanel(e) {
+                if (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }
+
+                if (!waInput || !waIti) {
+                    alert(cfg.i18n.invalidMsisdn);
+                    return;
+                }
+
+                const isValid = validateWhatsappNumber(true);
+                const waDigits = isValid ? getWhatsappDigits() : '';
+                if (!waDigits) {
+                    alert(cfg.i18n.invalidMsisdn);
+                    return;
+                }
+
+                if (window.localStorage) {
+                    const selected = waIti.getSelectedCountryData();
+                    if (selected && selected.iso2) {
+                        localStorage.setItem(waStorageCountryKey, selected.iso2);
+                    }
+                }
+
+                waLastOpenAt = Date.now();
+                clearWhatsappInput();
+                window.open(`https://wa.me/${waDigits}?text=${enc(`Hi, hereâ€™s my profile: ${cfg.url}`)}`,'_blank','noopener');
+            }
+
+            if (waInput && window.intlTelInput) {
+                const lastCountry = (window.localStorage && localStorage.getItem(waStorageCountryKey)) || '';
+                waIti = window.intlTelInput(waInput, {
+                    initialCountry: lastCountry || 'auto',
+                    preferredCountries: ['za', 'gb', 'us'],
+                    autoPlaceholder: 'polite',
+                    nationalMode: true,
+                    separateDialCode: true,
+                    utilsScript: cfg.intlTelInputUtilsUrl,
+                    geoIpLookup: function (success, failure) {
+                        const hintedCountry = getBrowserCountryHint();
+                        fetch('https://ipapi.co/json/')
+                            .then(function (response) {
+                                return response.ok ? response.json() : Promise.reject(new Error('geo lookup failed'));
+                            })
+                            .then(function (data) {
+                                success((data && data.country_code ? data.country_code : hintedCountry || defaultCountry).toLowerCase());
+                            })
+                            .catch(function () {
+                                if (hintedCountry) {
+                                    success(hintedCountry);
+                                    return;
+                                }
+                                success(defaultCountry);
+                                if (typeof failure === 'function') failure();
+                            });
+                    }
+                });
+
+                waInput.addEventListener('blur', function () {
+                    validateWhatsappNumber(true);
+                });
+                waInput.addEventListener('input', function () {
+                    setWaFeedback('', false);
+                });
+                waInput.addEventListener('change', function () {
+                    validateWhatsappNumber(false);
+                });
+                waInput.addEventListener('paste', function () {
+                    window.setTimeout(function () {
+                        syncInputCountryFromValue();
+                        validateWhatsappNumber(false);
+                    }, 0);
+                });
+                waInput.addEventListener('countrychange', function () {
+                    const selected = waIti.getSelectedCountryData();
+                    if (window.localStorage && selected && selected.iso2) {
+                        localStorage.setItem(waStorageCountryKey, selected.iso2);
+                    }
+                    validateWhatsappNumber(false);
+                });
+            }
+
+            waButton?.addEventListener('pointerdown', function (e) {
+                openWhatsappFromPanel(e);
+            });
+            waButton?.addEventListener('click', function (e) {
+                if ((Date.now() - waLastOpenAt) < 500) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    return;
+                }
+                e.preventDefault();
+                e.stopPropagation();
+
+                if (!waInput || !waIti) {
+                    alert(cfg.i18n.invalidMsisdn);
+                    return;
+                }
+
+                const isValid = validateWhatsappNumber(true);
+                const waDigits = isValid ? getWhatsappDigits() : '';
+                if (!waDigits) {
+                    alert(cfg.i18n.invalidMsisdn);
+                    return;
+                }
+
+                if (window.localStorage) {
+                    const selected = waIti.getSelectedCountryData();
+                    if (selected && selected.iso2) {
+                        localStorage.setItem(waStorageCountryKey, selected.iso2);
+                    }
+                }
+
+                window.open(`https://wa.me/${waDigits}?text=${enc(`Hi, hereâ€™s my profile: ${cfg.url}`)}`,'_blank','noopener');
+            });
+
             panel.addEventListener('click', function(e){
                 const btn = e.target.closest('button[data-action]'); if (!btn) return;
                 const action = btn.getAttribute('data-action');
+                if (action === 'whatsapp-number') return;
 
                 if (action === 'download-qr') {
                     const img = qrContainer.querySelector('img');

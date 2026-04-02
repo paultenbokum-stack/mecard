@@ -162,6 +162,19 @@ function install_scripts(): void
         [],
         '6.5.2'
     );
+    wp_enqueue_style(
+        'intl-tel-input',
+        'https://cdn.jsdelivr.net/npm/intl-tel-input@19.5.6/build/css/intlTelInput.css',
+        [],
+        '19.5.6'
+    );
+    wp_register_script(
+        'intl-tel-input',
+        'https://cdn.jsdelivr.net/npm/intl-tel-input@19.5.6/build/js/intlTelInput.min.js',
+        [],
+        '19.5.6'
+    );
+    wp_enqueue_script('intl-tel-input');
     wp_register_script( 'mecard_management', plugin_dir_url( __FILE__ ).'js/mecard-management.js' );
     wp_enqueue_script('mecard_management');
     wp_localize_script('mecard_management','MECARD_MGMT', [
@@ -239,11 +252,16 @@ function mecard_share_setup() {
             'url'            => $page_url,
             'accent'         => $accent ?: '#0066ff',
             'buttonText'     => $btn_text ?: '#ffffff',
+            'defaultCountry' => 'za',
+            'intlTelInputUtilsUrl' => 'https://cdn.jsdelivr.net/npm/intl-tel-input@19.5.6/build/js/utils.js',
             'i18n'           => [
                 'copySuccess' => 'Link copied',
                 'copyFail'    => 'Press and hold to copy',
                 'smsBodyNote' => 'If SMS does not prefill on your device, paste the link.',
-                'invalidMsisdn'=> 'Please enter a valid mobile number.',
+                'invalidMsisdn'=> 'Please enter a valid WhatsApp number.',
+                'countrySearch'=> 'Search for a country',
+                'waHint'       => 'Select the country, then enter the mobile number in local format.',
+                'waValid'      => 'Number looks good.',
             ],
         ]);
     }
@@ -2935,10 +2953,12 @@ add_shortcode('mecard_share_panel', function ($atts) {
                         <div class="card-body">
                             <h5 class="card-title mb-3"><i class="fab fa-whatsapp"></i> WhatsApp a number</h5>
                             <div class="form-group">
-                                <label for="mecard-wa-msisdn" class="mb-1">Mobile number (international format)</label>
-                                <input id="mecard-wa-msisdn" type="tel" inputmode="tel" class="form-control" placeholder="e.g. 2772xxxxxxx">
+                                <label for="mecard-wa-msisdn" class="mb-1">Mobile number</label>
+                                <input id="mecard-wa-msisdn" type="tel" inputmode="tel" class="form-control" autocomplete="tel" placeholder="Enter mobile number">
+                                <small id="mecard-wa-help" class="form-text text-muted">Select the country, then enter the number in local format. Your last choice will be remembered.</small>
+                                <div id="mecard-wa-feedback" class="invalid-feedback d-block" aria-live="polite" hidden></div>
                             </div>
-                            <button class="btn btn-success" data-action="whatsapp-number">
+                            <button class="btn btn-success" data-action="whatsapp-number" type="button">
                                 <i class="fab fa-whatsapp"></i> Open WhatsApp
                             </button>
                         </div>
