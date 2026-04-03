@@ -345,6 +345,29 @@ button.company {
     border-top: 1px solid rgba(0,0,0,.06);
 }
 
+@media (max-width: 767px) {
+    .mecard-public-card .pro-profile-container,
+    .mecard-public-card .standard-profile-container {
+        padding-bottom: 96px;
+    }
+
+    .mecard-public-card .vcard-download {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 10010;
+        width: 100%;
+        border-top: 1px solid rgba(0,0,0,.08);
+        box-shadow: 0 -6px 18px rgba(0,0,0,.12);
+        padding-bottom: env(safe-area-inset-bottom, 0);
+    }
+
+    .mecard-public-card .vcard-button {
+        padding: 14px 16px;
+    }
+}
+
 /* Profile photo placeholder */
 .me-photo-placeholder {
     width: 120px;
