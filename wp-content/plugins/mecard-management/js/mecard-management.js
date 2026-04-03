@@ -843,7 +843,6 @@ jQuery(document).ready(function($) {
                     autoPlaceholder: 'polite',
                     countrySearch: true,
                     dropdownContainer: document.body,
-                    useFullscreenPopup: false,
                     nationalMode: true,
                     separateDialCode: true,
                     utilsScript: cfg.intlTelInputUtilsUrl,

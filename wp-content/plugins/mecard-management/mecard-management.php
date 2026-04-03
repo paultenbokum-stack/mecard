@@ -164,15 +164,15 @@ function install_scripts(): void
     );
     wp_enqueue_style(
         'intl-tel-input',
-        'https://cdn.jsdelivr.net/npm/intl-tel-input@19.5.6/build/css/intlTelInput.css',
+        'https://cdn.jsdelivr.net/npm/intl-tel-input@25.15.0/build/css/intlTelInput.css',
         [],
-        '19.5.6'
+        '25.15.0'
     );
     wp_register_script(
         'intl-tel-input',
-        'https://cdn.jsdelivr.net/npm/intl-tel-input@19.5.6/build/js/intlTelInput.min.js',
+        'https://cdn.jsdelivr.net/npm/intl-tel-input@25.15.0/build/js/intlTelInput.min.js',
         [],
-        '19.5.6'
+        '25.15.0'
     );
     wp_enqueue_script('intl-tel-input');
     wp_register_script( 'mecard_management', plugin_dir_url( __FILE__ ).'js/mecard-management.js' );
@@ -228,8 +228,22 @@ function install_scripts(): void
 }
 
 add_action( 'wp_enqueue_scripts', 'install_scripts',99);
+add_action( 'wp_enqueue_scripts', 'mecard_enqueue_public_profile_styles', 99 );
 
 add_action( 'wp_enqueue_scripts', 'mecard_share_setup',99);
+
+function mecard_enqueue_public_profile_styles() {
+    if ( ! is_singular( [ 'mecard-profile', 't' ] ) ) {
+        return;
+    }
+
+    wp_enqueue_style(
+        'me-profile',
+        plugin_dir_url(__FILE__) . 'css/me-profile.css',
+        [],
+        defined('ME_PLUGIN_VER') ? ME_PLUGIN_VER : '1.1'
+    );
+}
 
 function mecard_share_setup() {
     // Localize runtime data for the current page
@@ -253,7 +267,7 @@ function mecard_share_setup() {
             'accent'         => $accent ?: '#0066ff',
             'buttonText'     => $btn_text ?: '#ffffff',
             'defaultCountry' => 'za',
-            'intlTelInputUtilsUrl' => 'https://cdn.jsdelivr.net/npm/intl-tel-input@19.5.6/build/js/utils.js',
+            'intlTelInputUtilsUrl' => 'https://cdn.jsdelivr.net/npm/intl-tel-input@25.15.0/build/js/utils.js',
             'i18n'           => [
                 'copySuccess' => 'Link copied',
                 'copyFail'    => 'Press and hold to copy',

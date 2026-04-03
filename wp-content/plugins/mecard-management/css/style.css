@@ -84,6 +84,10 @@ body.mecard-share-open{ overflow: hidden; }
     z-index: 10020;
 }
 
+.iti__arrow{
+    border: none;
+}
+
 .mecard-share-panel #mecard-wa-msisdn{
     width: 100%;
 }
