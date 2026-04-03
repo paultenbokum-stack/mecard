@@ -832,7 +832,7 @@ jQuery(document).ready(function($) {
 
                 waLastOpenAt = Date.now();
                 clearWhatsappInput();
-                window.open(`https://wa.me/${waDigits}?text=${enc(`Hi, hereâ€™s my profile: ${cfg.url}`)}`,'_blank','noopener');
+                window.open(`https://wa.me/${waDigits}?text=${enc(`Hi, here is my contact card: ${cfg.url}`)}`,'_blank','noopener');
             }
 
             if (waInput && window.intlTelInput) {
@@ -843,7 +843,6 @@ jQuery(document).ready(function($) {
                     autoPlaceholder: 'polite',
                     countrySearch: true,
                     dropdownContainer: document.body,
-                    useFullscreenPopup: false,
                     nationalMode: true,
                     separateDialCode: true,
                     utilsScript: cfg.intlTelInputUtilsUrl,

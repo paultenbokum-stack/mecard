@@ -29,7 +29,11 @@ if ( $profile_id ) {
     \Me\Profile_Renderer\Module::render_design_style( $profile_id, $company );
 
     // Render the canonical profile HTML
-    \Me\Profile_Renderer\Module::render( $profile, $company, 'public' );
+    ?>
+    <div class="mecard-public-card">
+        <?php \Me\Profile_Renderer\Module::render( $profile, $company, 'public' ); ?>
+    </div>
+    <?php
 }
 
 get_footer();
