@@ -80,6 +80,10 @@ body.mecard-share-open{ overflow: hidden; }
     z-index: 2;
 }
 
+.iti--container{
+    z-index: 10020;
+}
+
 .mecard-share-panel #mecard-wa-msisdn{
     width: 100%;
 }
