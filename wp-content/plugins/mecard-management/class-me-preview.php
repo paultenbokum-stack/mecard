@@ -546,6 +546,9 @@ private static function render_standard_preview_markup() : void {
             'mobile'         => $m('wpcf-mobile-number') ?: '',
             'wa'             => $m('wpcf-whatsapp-number') ?: '',
             'direct_line'    => $m('wpcf-work-phone-number') ?: '',
+            'company_name'   => $m('wpcf-company-r') ?: ($m('wpcf-company_name') ?: ''),
+            'company_logo_id'=> (int) $m('me_profile_company_logo_id') ?: 0,
+            'company_logo_url' => (($logo_id = (int) $m('me_profile_company_logo_id')) ? (wp_get_attachment_image_url($logo_id, 'medium') ?: '') : ''),
             'type'           => $m('wpcf-profile-type') ?: 'standard',
             'company_parent' => $company_id, // ✅ Toolset only
             'photo_id'       => (int) get_post_thumbnail_id( $profile_id ) ?: 0,
@@ -576,4 +579,5 @@ private static function render_standard_preview_markup() : void {
     }
 
 }
+
 

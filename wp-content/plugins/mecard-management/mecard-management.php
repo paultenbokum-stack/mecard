@@ -26,11 +26,13 @@ require_once ME_PLUGIN_DIR . 'class-me-company-editor.php';
 require_once ME_PLUGIN_DIR . 'class-me-profile-renderer.php';
 require_once ME_PLUGIN_DIR .'class-me-preview.php';
 require_once ME_PLUGIN_DIR .'class-me-profile-editor.php';
+require_once ME_PLUGIN_DIR . 'class-me-onboarding.php';
 
 add_action( 'init', function () {
     // These only add wp_ajax_* actions, no output/enqueue
     Me\Profile_Editor\Module::init();
     Me\Company_Editor\Module::init();
+    Me\Onboarding\Module::init();
 } );
 function mecard_init_modular_editors() {
     // Frontend only
@@ -300,7 +302,8 @@ function mecard_grant_profile_author_edit_cap( $caps, $cap, $args, $user ) {
     if ( ! $post_id ) return $caps;
     $post = get_post( $post_id );
     if ( ! $post || $post->post_type !== 'mecard-profile' ) return $caps;
-    if ( (int) $post->post_author === (int) $user->ID ) {
+    $owner_user_id = (int) get_post_meta( $post_id, 'me_profile_owner_user_id', true );
+    if ( (int) $post->post_author === (int) $user->ID || ( $owner_user_id > 0 && $owner_user_id === (int) $user->ID ) ) {
         foreach ( $cap as $primitive ) {
             $caps[ $primitive ] = true;
         }
@@ -1302,21 +1305,28 @@ function mecard_accept_profile_invite() {
     if ( ! wp_verify_nonce($nonce, 'myajax-next-nonce') ) {
         wp_send_json_error(['message' => 'Not allowed'], 403);
     }
+    if ( ! is_user_logged_in() ) {
+        wp_send_json_error(['message' => 'You must be signed in to accept this invite.'], 403);
+    }
     $request_id = $_POST['request_id'];
     $request = get_post_meta($request_id);
-    if (!$request['wpcf-request-status'][0] == 'accepted') {
+    if ( (($request['wpcf-request-status'][0] ?? '') !== 'accepted') ) {
         $profile_id = toolset_get_related_post($request_id,'mecard-profile-request');
-        $post_args = array(
-            'post_title' => $request['wpcf-recipient-email'][0].'-'.$profile_id,
-            'post_type' => 'user-role',
-            'post_status' => 'publish'
-        );
+        if ( ! $profile_id || get_post_type( $profile_id ) !== 'mecard-profile' ) {
+            wp_send_json_error(['message' => 'Invalid profile invite.'], 400);
+        }
+        $accepted_user_id = get_current_user_id();
+        $date = current_time('Y-m-d');
 
-        $user_role_id = wp_insert_post($post_args);
-        add_post_meta($user_role_id,'wpcf-role','profile-owner');
-        $date = date('Y-m-d');
-        add_post_meta($user_role_id,'wpcf-response-date',$date);
-        $output = toolset_connect_posts('user-role-mecard-profile',$user_role_id,$profile_id);
+        update_post_meta($profile_id, 'me_profile_owner_user_id', $accepted_user_id);
+        update_post_meta($profile_id, 'me_profile_owner_assigned_at', $date);
+        update_post_meta($profile_id, 'me_profile_owner_assigned_via', 'request_accept');
+
+        $output = array(
+            'success' => true,
+            'owner_user_id' => $accepted_user_id,
+            'profile_id' => (int) $profile_id,
+        );
         update_post_meta($request_id,'wpcf-request-status','accepted');
     } else {
         $output = array('success' => false,'error_code'=>'1', 'message' => 'This invite has already been accepted.');
@@ -3200,7 +3210,9 @@ function me_is_post_owner( $post_id, $user_id = 0, $resolve_revision = true ) : 
     $user_id = $user_id ? (int) $user_id : (int) get_current_user_id();
     if ( ! $user_id ) return false;
 
-    return ( (int) $post->post_author === $user_id );
+    $owner_user_id = (int) get_post_meta( $post->ID, 'me_profile_owner_user_id', true );
+
+    return ( (int) $post->post_author === $user_id ) || ( $owner_user_id > 0 && $owner_user_id === $user_id );
 }
 
 add_action('wp_enqueue_scripts', function () {

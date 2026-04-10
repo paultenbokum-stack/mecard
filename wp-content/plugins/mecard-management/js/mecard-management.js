@@ -1072,3 +1072,70 @@ async function downloadImage(imageSrc, filename,button) {
     link.click()
     document.body.removeChild(link)
 }
+
+/**
+ * mecard-homepage.js
+ * Homepage interactions for mecard.co.za
+ * Enqueue in child theme: wp_enqueue_script('mc-homepage', ..., [], '1.0', true)
+ * Dependencies: none (vanilla JS)
+ */
+
+(function () {
+    'use strict';
+
+    /* ── Scroll-reveal animation ── */
+    function initReveal() {
+        var els = document.querySelectorAll('.mc-reveal');
+        if (!els.length) return;
+
+        var observer = new IntersectionObserver(
+            function (entries) {
+                entries.forEach(function (entry) {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('is-visible');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            },
+            { threshold: 0.15, rootMargin: '0px 0px -40px 0px' }
+        );
+
+        els.forEach(function (el, i) {
+            /* Stagger sibling reveals slightly */
+            el.style.transitionDelay = (i % 3) * 80 + 'ms';
+            observer.observe(el);
+        });
+    }
+
+    /* ── Smooth scroll for on-page anchor links ── */
+    function initSmoothScroll() {
+        document.querySelectorAll('a[href^="#"]').forEach(function (a) {
+            a.addEventListener('click', function (e) {
+                var hash = this.getAttribute('href');
+                if (hash.length < 2) return; /* ignore bare "#" */
+
+                var target = document.querySelector(hash);
+                if (target) {
+                    e.preventDefault();
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+                    /* Update URL hash without jumping */
+                    if (history.pushState) {
+                        history.pushState(null, null, hash);
+                    }
+                }
+            });
+        });
+    }
+
+    /* ── Init on DOM ready ── */
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function () {
+            initReveal();
+            initSmoothScroll();
+        });
+    } else {
+        initReveal();
+        initSmoothScroll();
+    }
+})();

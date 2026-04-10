@@ -1,0 +1,411 @@
+
+<div style="padding: 1rem 0;">
+
+<div style="display: flex; align-items: center; gap: 12px; margin-bottom: 1.5rem;">
+  <span style="font-size: 13px; color: var(--color-text-secondary);">Screen</span>
+  <button id="prev-btn" style="padding: 4px 14px; font-size: 13px;" onclick="nav(-1)">&larr;</button>
+  <span id="screen-label" style="font-size: 14px; font-weight: 500; min-width: 180px; text-align: center;">1 / 7</span>
+  <button id="next-btn" style="padding: 4px 14px; font-size: 13px;" onclick="nav(1)">&rarr;</button>
+</div>
+
+<div style="display: flex; gap: 2rem; align-items: flex-start; flex-wrap: wrap;">
+
+<div style="background: var(--color-background-secondary); border-radius: var(--border-radius-lg); padding: 20px; display: inline-flex; flex-direction: column; align-items: center;">
+  <div id="phone" style="width: 320px; min-height: 568px; background: var(--color-background-primary); border-radius: 28px; border: 0.5px solid var(--color-border-secondary); overflow: hidden; position: relative; display: flex; flex-direction: column;">
+    <div style="height: 28px; display: flex; justify-content: center; align-items: flex-end; padding-bottom: 2px;">
+      <div style="width: 80px; height: 18px; background: var(--color-background-tertiary); border-radius: 0 0 12px 12px;"></div>
+    </div>
+    <div id="screen-content" style="flex: 1; overflow-y: auto; padding: 0;"></div>
+    <div style="height: 20px; display: flex; justify-content: center; align-items: center;">
+      <div style="width: 100px; height: 4px; background: var(--color-border-secondary); border-radius: 2px;"></div>
+    </div>
+  </div>
+</div>
+
+<div id="annotations" style="flex: 1; min-width: 240px; max-width: 360px;">
+</div>
+
+</div>
+</div>
+
+<script>
+const screens = [
+  {
+    title: "1. Landing page",
+    annotation: `<p style="font-size:14px;font-weight:500;margin:0 0 8px;">Landing — choose your path</p>
+<p style="font-size:13px;color:var(--color-text-secondary);margin:0 0 12px;">First impression. Sells the value prop in one line. Two clear paths: individual or team. "For me" goes to social login. "For my team" goes to a separate team onboarding flow (out of scope here).</p>
+<p style="font-size:13px;color:var(--color-text-secondary);margin:0 0 8px;">Design notes:</p>
+<ul style="font-size:13px;color:var(--color-text-secondary);margin:0;padding-left:18px;">
+<li>Hero illustration or short animation of card tap</li>
+<li>Social proof — "Join 5,000+ professionals"</li>
+<li>"For me" is primary CTA, "For my team" is secondary</li>
+<li>No mention of pricing yet — friction-free entry</li>
+</ul>`,
+    html: `
+<div style="display:flex;flex-direction:column;min-height:520px;padding:24px 20px 20px;">
+  <div style="text-align:center;margin-bottom:24px;">
+    <div style="width:56px;height:56px;border-radius:14px;background:var(--color-background-info);display:inline-flex;align-items:center;justify-content:center;margin-bottom:12px;">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-info)" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M12 12a3 3 0 100-6 3 3 0 000 6z"/><path d="M6 20c0-3 2.5-5 6-5s6 2 6 5"/></svg>
+    </div>
+    <p style="font-size:20px;font-weight:500;margin:0 0 6px;color:var(--color-text-primary);">Your digital business card</p>
+    <p style="font-size:13px;color:var(--color-text-secondary);margin:0;line-height:1.5;">Share your contact details instantly.<br>Leave a lasting impression.</p>
+  </div>
+
+  <div style="background:var(--color-background-secondary);border-radius:var(--border-radius-lg);padding:20px 16px;margin-bottom:16px;text-align:center;">
+    <div style="width:180px;height:110px;margin:0 auto 12px;border-radius:8px;border:0.5px solid var(--color-border-tertiary);background:var(--color-background-primary);display:flex;align-items:center;justify-content:center;">
+      <div style="text-align:center;">
+        <div style="width:32px;height:32px;border-radius:50%;background:var(--color-background-info);margin:0 auto 6px;"></div>
+        <div style="width:80px;height:6px;background:var(--color-border-tertiary);border-radius:3px;margin:0 auto 4px;"></div>
+        <div style="width:50px;height:4px;background:var(--color-border-tertiary);border-radius:2px;margin:0 auto;"></div>
+      </div>
+    </div>
+    <p style="font-size:11px;color:var(--color-text-secondary);margin:0;">Tap. Share. Connect.</p>
+  </div>
+
+  <div style="flex:1;"></div>
+
+  <div style="text-align:center;margin-bottom:8px;">
+    <p style="font-size:11px;color:var(--color-text-secondary);margin:0 0 12px;">Join 5,000+ professionals</p>
+  </div>
+
+  <div style="background:var(--color-background-info);color:var(--color-text-info);font-weight:500;font-size:15px;text-align:center;padding:14px;border-radius:var(--border-radius-md);margin-bottom:10px;cursor:pointer;" onclick="nav(1)">Get my free MeCard</div>
+
+  <div style="border:0.5px solid var(--color-border-secondary);font-size:14px;text-align:center;padding:12px;border-radius:var(--border-radius-md);color:var(--color-text-secondary);cursor:pointer;">For my team &rarr;</div>
+</div>`
+  },
+  {
+    title: "2. Sign up / Log in",
+    annotation: `<p style="font-size:14px;font-weight:500;margin:0 0 8px;">Social login — zero friction</p>
+<p style="font-size:13px;color:var(--color-text-secondary);margin:0 0 12px;">One-tap signup via Google or LinkedIn. No email/password forms. LinkedIn is strategic — it's where professionals already have their data, and we can pre-populate profile fields from it.</p>
+<ul style="font-size:13px;color:var(--color-text-secondary);margin:0;padding-left:18px;">
+<li>Google = widest reach, fastest login</li>
+<li>LinkedIn = pre-fills name, job title, company, photo</li>
+<li>Email fallback for users who prefer it</li>
+<li>WordPress handles auth via social login plugin</li>
+<li>On success → auto-create mecard-profile CPT post</li>
+</ul>`,
+    html: `
+<div style="display:flex;flex-direction:column;min-height:520px;padding:24px 20px 20px;">
+  <div style="text-align:center;margin-bottom:32px;">
+    <p style="font-size:18px;font-weight:500;margin:0 0 6px;color:var(--color-text-primary);">Create your MeCard</p>
+    <p style="font-size:13px;color:var(--color-text-secondary);margin:0;">Sign up in seconds — no passwords</p>
+  </div>
+
+  <div style="border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:14px 16px;display:flex;align-items:center;gap:12px;margin-bottom:12px;cursor:pointer;" onclick="nav(1)">
+    <svg width="20" height="20" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+    <span style="font-size:14px;font-weight:500;color:var(--color-text-primary);">Continue with Google</span>
+  </div>
+
+  <div style="border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:14px 16px;display:flex;align-items:center;gap:12px;margin-bottom:12px;cursor:pointer;">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="var(--color-text-info)"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+    <span style="font-size:14px;font-weight:500;color:var(--color-text-primary);">Continue with LinkedIn</span>
+  </div>
+
+  <div style="display:flex;align-items:center;gap:12px;margin:16px 0;">
+    <div style="flex:1;height:0.5px;background:var(--color-border-tertiary);"></div>
+    <span style="font-size:12px;color:var(--color-text-secondary);">or</span>
+    <div style="flex:1;height:0.5px;background:var(--color-border-tertiary);"></div>
+  </div>
+
+  <div style="border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:14px 16px;display:flex;align-items:center;gap:12px;cursor:pointer;">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-secondary)" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 4l-10 8L2 4"/></svg>
+    <span style="font-size:14px;color:var(--color-text-secondary);">Sign up with email</span>
+  </div>
+
+  <div style="flex:1;"></div>
+
+  <p style="font-size:11px;color:var(--color-text-tertiary);text-align:center;margin:0;">Already have an account? <span style="color:var(--color-text-info);">Log in</span></p>
+</div>`
+  },
+  {
+    title: "3. Quick profile — basics",
+    annotation: `<p style="font-size:14px;font-weight:500;margin:0 0 8px;">Step 1 of 3 — the essentials</p>
+<p style="font-size:13px;color:var(--color-text-secondary);margin:0 0 12px;">Pre-populated from Google/LinkedIn where possible. User only fills gaps. This maps to the existing profile fields: wpcf-first-name, wpcf-last-name, wpcf-job-title, featured image (profile photo).</p>
+<ul style="font-size:13px;color:var(--color-text-secondary);margin:0;padding-left:18px;">
+<li>Photo: camera icon taps to upload or take selfie</li>
+<li>Name fields pre-filled from OAuth</li>
+<li>Job title is optional but encouraged</li>
+<li>Progress indicator shows 3 steps total</li>
+<li>Creates mecard-profile post on "Next"</li>
+</ul>`,
+    html: `
+<div style="display:flex;flex-direction:column;min-height:520px;padding:20px;">
+  <div style="display:flex;gap:6px;margin-bottom:24px;">
+    <div style="flex:1;height:3px;border-radius:2px;background:var(--color-text-info);"></div>
+    <div style="flex:1;height:3px;border-radius:2px;background:var(--color-border-tertiary);"></div>
+    <div style="flex:1;height:3px;border-radius:2px;background:var(--color-border-tertiary);"></div>
+  </div>
+
+  <p style="font-size:18px;font-weight:500;margin:0 0 4px;color:var(--color-text-primary);">Let's set you up</p>
+  <p style="font-size:13px;color:var(--color-text-secondary);margin:0 0 24px;">This takes about 30 seconds</p>
+
+  <div style="text-align:center;margin-bottom:24px;">
+    <div style="width:80px;height:80px;border-radius:50%;background:var(--color-background-secondary);border:2px dashed var(--color-border-secondary);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-secondary)" stroke-width="1.5"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+    </div>
+    <p style="font-size:12px;color:var(--color-text-info);margin:6px 0 0;">Add photo</p>
+  </div>
+
+  <div style="margin-bottom:14px;">
+    <label style="font-size:12px;color:var(--color-text-secondary);display:block;margin-bottom:4px;">First name</label>
+    <div style="border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);padding:12px;font-size:14px;color:var(--color-text-primary);background:var(--color-background-primary);">Alessio</div>
+  </div>
+
+  <div style="margin-bottom:14px;">
+    <label style="font-size:12px;color:var(--color-text-secondary);display:block;margin-bottom:4px;">Last name</label>
+    <div style="border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);padding:12px;font-size:14px;color:var(--color-text-primary);background:var(--color-background-primary);">Martinez</div>
+  </div>
+
+  <div style="margin-bottom:14px;">
+    <label style="font-size:12px;color:var(--color-text-secondary);display:block;margin-bottom:4px;">Job title <span style="color:var(--color-text-tertiary);">(optional)</span></label>
+    <div style="border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:12px;font-size:14px;color:var(--color-text-tertiary);background:var(--color-background-primary);">e.g. Sales Manager</div>
+  </div>
+
+  <div style="flex:1;"></div>
+
+  <div style="background:var(--color-background-info);color:var(--color-text-info);font-weight:500;font-size:15px;text-align:center;padding:14px;border-radius:var(--border-radius-md);cursor:pointer;" onclick="nav(1)">Next</div>
+</div>`
+  },
+  {
+    title: "4. Contact & company",
+    annotation: `<p style="font-size:14px;font-weight:500;margin:0 0 8px;">Step 2 of 3 — contact details + company</p>
+<p style="font-size:13px;color:var(--color-text-secondary);margin:0 0 12px;">Email is pre-filled from OAuth. Mobile number is the key field — it's needed for WhatsApp sharing and vCard. Company is a simple text field here (not the full company CPT) — the system creates or links a company post behind the scenes.</p>
+<ul style="font-size:13px;color:var(--color-text-secondary);margin:0;padding-left:18px;">
+<li>Maps to: wpcf-email-address, wpcf-mobile-number, company_parent</li>
+<li>Company: autocomplete against existing company posts, or create new</li>
+<li>"Add a social link" is optional — keeps step lightweight</li>
+<li>Social links map to wpcf-linkedin-url, wpcf-instagram-user, etc.</li>
+</ul>`,
+    html: `
+<div style="display:flex;flex-direction:column;min-height:520px;padding:20px;">
+  <div style="display:flex;gap:6px;margin-bottom:24px;">
+    <div style="flex:1;height:3px;border-radius:2px;background:var(--color-text-info);"></div>
+    <div style="flex:1;height:3px;border-radius:2px;background:var(--color-text-info);"></div>
+    <div style="flex:1;height:3px;border-radius:2px;background:var(--color-border-tertiary);"></div>
+  </div>
+
+  <p style="font-size:18px;font-weight:500;margin:0 0 4px;color:var(--color-text-primary);">How can people reach you?</p>
+  <p style="font-size:13px;color:var(--color-text-secondary);margin:0 0 24px;">This goes on your digital card</p>
+
+  <div style="margin-bottom:14px;">
+    <label style="font-size:12px;color:var(--color-text-secondary);display:block;margin-bottom:4px;">Email</label>
+    <div style="border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);padding:12px;font-size:14px;color:var(--color-text-primary);background:var(--color-background-primary);">alessio@gmail.com</div>
+  </div>
+
+  <div style="margin-bottom:14px;">
+    <label style="font-size:12px;color:var(--color-text-secondary);display:block;margin-bottom:4px;">Mobile number</label>
+    <div style="border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:12px;font-size:14px;color:var(--color-text-tertiary);background:var(--color-background-primary);">+27 82 123 4567</div>
+  </div>
+
+  <div style="margin-bottom:14px;">
+    <label style="font-size:12px;color:var(--color-text-secondary);display:block;margin-bottom:4px;">Company <span style="color:var(--color-text-tertiary);">(optional)</span></label>
+    <div style="border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:12px;font-size:14px;color:var(--color-text-tertiary);background:var(--color-background-primary);">e.g. Acme Corp</div>
+  </div>
+
+  <div style="margin-bottom:14px;">
+    <div style="display:flex;align-items:center;gap:8px;padding:12px 0;cursor:pointer;">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-info)" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/></svg>
+      <span style="font-size:13px;color:var(--color-text-info);">Add a social link (LinkedIn, Instagram...)</span>
+    </div>
+  </div>
+
+  <div style="flex:1;"></div>
+
+  <div style="background:var(--color-background-info);color:var(--color-text-info);font-weight:500;font-size:15px;text-align:center;padding:14px;border-radius:var(--border-radius-md);cursor:pointer;" onclick="nav(1)">Next</div>
+  <div style="font-size:13px;text-align:center;padding:10px;color:var(--color-text-secondary);cursor:pointer;" onclick="nav(-1)">&larr; Back</div>
+</div>`
+  },
+  {
+    title: "5. Profile live!",
+    annotation: `<p style="font-size:14px;font-weight:500;margin:0 0 8px;">Step 3 of 3 — your card is live</p>
+<p style="font-size:13px;color:var(--color-text-secondary);margin:0 0 12px;">Instant gratification. Profile is published, shareable link generated. Big moment of delight — the user sees their card for the first time. Share button is primary CTA. "Add to home screen" is the key retention prompt.</p>
+<ul style="font-size:13px;color:var(--color-text-secondary);margin:0;padding-left:18px;">
+<li>Shows live profile preview (uses existing renderer)</li>
+<li>Share button triggers native share sheet or QR</li>
+<li>Profile URL: mecard.co.za/mecard-profile/alessio-martinez/</li>
+<li>"Get your own MeCard" CTA appears on this page for viewers</li>
+<li>Bottom: "Add to home screen" + "Make it Pro" teasers</li>
+</ul>`,
+    html: `
+<div style="display:flex;flex-direction:column;min-height:520px;padding:20px;">
+  <div style="display:flex;gap:6px;margin-bottom:16px;">
+    <div style="flex:1;height:3px;border-radius:2px;background:var(--color-text-info);"></div>
+    <div style="flex:1;height:3px;border-radius:2px;background:var(--color-text-info);"></div>
+    <div style="flex:1;height:3px;border-radius:2px;background:var(--color-text-info);"></div>
+  </div>
+
+  <p style="font-size:18px;font-weight:500;margin:0 0 4px;color:var(--color-text-primary);">You're live!</p>
+  <p style="font-size:13px;color:var(--color-text-secondary);margin:0 0:16px;">Your MeCard is ready to share</p>
+
+  <div style="background:var(--color-background-secondary);border-radius:var(--border-radius-lg);padding:20px;margin:16px 0;text-align:center;">
+    <div style="width:64px;height:64px;border-radius:50%;background:var(--color-background-info);margin:0 auto 10px;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:500;color:var(--color-text-info);">AM</div>
+    <p style="font-size:16px;font-weight:500;margin:0 0 2px;color:var(--color-text-primary);">Alessio Martinez</p>
+    <p style="font-size:13px;color:var(--color-text-secondary);margin:0 0 4px;">Sales Manager</p>
+    <p style="font-size:12px;color:var(--color-text-tertiary);margin:0 0 12px;">Acme Corp</p>
+    <div style="display:flex;gap:8px;justify-content:center;margin-bottom:8px;">
+      <div style="width:36px;height:36px;border-radius:50%;background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);display:flex;align-items:center;justify-content:center;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-secondary)" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6A19.79 19.79 0 012.12 4.18 2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
+      </div>
+      <div style="width:36px;height:36px;border-radius:50%;background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);display:flex;align-items:center;justify-content:center;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-secondary)" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 4l-10 8L2 4"/></svg>
+      </div>
+    </div>
+    <div style="background:var(--color-background-primary);border-radius:var(--border-radius-md);padding:8px 12px;display:inline-block;margin-top:4px;">
+      <p style="font-size:11px;color:var(--color-text-tertiary);margin:0;">mecard.co.za/mecard-profile/alessio-martinez</p>
+    </div>
+  </div>
+
+  <div style="background:var(--color-background-success);color:var(--color-text-success);font-weight:500;font-size:15px;text-align:center;padding:14px;border-radius:var(--border-radius-md);margin-bottom:10px;cursor:pointer;">
+    <span>Share your MeCard</span>
+  </div>
+
+  <div style="display:flex;gap:10px;">
+    <div style="flex:1;border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:10px;text-align:center;cursor:pointer;" onclick="nav(1)">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-secondary)" stroke-width="1.5" style="display:block;margin:0 auto 4px;"><rect x="5" y="2" width="14" height="20" rx="2"/><circle cx="12" cy="18" r="1"/></svg>
+      <span style="font-size:11px;color:var(--color-text-secondary);">Add to home screen</span>
+    </div>
+    <div style="flex:1;border:0.5px solid var(--color-border-warning);border-radius:var(--border-radius-md);padding:10px;text-align:center;cursor:pointer;" onclick="nav(2)">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-warning)" stroke-width="1.5" style="display:block;margin:0 auto 4px;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+      <span style="font-size:11px;color:var(--color-text-warning);">Make it Pro</span>
+    </div>
+  </div>
+</div>`
+  },
+  {
+    title: "6. Add to home screen",
+    annotation: `<p style="font-size:14px;font-weight:500;margin:0 0 8px;">PWA install prompt</p>
+<p style="font-size:13px;color:var(--color-text-secondary);margin:0 0 12px;">This is the key retention mechanism. The home screen shortcut means the user can share their profile anytime without opening a browser. Shows step-by-step instructions appropriate to their device (iOS vs Android).</p>
+<ul style="font-size:13px;color:var(--color-text-secondary);margin:0;padding-left:18px;">
+<li>Detect OS and show relevant instructions</li>
+<li>iOS: Safari share → Add to Home Screen</li>
+<li>Android: Chrome menu → Install app / Add to Home Screen</li>
+<li>PWA manifest already exists for pro profiles — extend to all</li>
+<li>"Skip" always available — don't force it</li>
+</ul>`,
+    html: `
+<div style="display:flex;flex-direction:column;min-height:520px;padding:20px;">
+  <p style="font-size:18px;font-weight:500;margin:0 0 4px;color:var(--color-text-primary);">Always one tap away</p>
+  <p style="font-size:13px;color:var(--color-text-secondary);margin:0 0 24px;">Add MeCard to your home screen so you can share your details instantly whenever you meet someone</p>
+
+  <div style="background:var(--color-background-secondary);border-radius:var(--border-radius-lg);padding:20px;margin-bottom:16px;">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+      <div style="width:32px;height:32px;border-radius:8px;background:var(--color-background-info);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:500;color:var(--color-text-info);flex-shrink:0;">1</div>
+      <div>
+        <p style="font-size:13px;font-weight:500;margin:0;color:var(--color-text-primary);">Tap the share button</p>
+        <p style="font-size:12px;color:var(--color-text-secondary);margin:2px 0 0;">The square with an arrow at the bottom of Safari</p>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+      <div style="width:32px;height:32px;border-radius:8px;background:var(--color-background-info);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:500;color:var(--color-text-info);flex-shrink:0;">2</div>
+      <div>
+        <p style="font-size:13px;font-weight:500;margin:0;color:var(--color-text-primary);">Scroll down and tap "Add to home screen"</p>
+        <p style="font-size:12px;color:var(--color-text-secondary);margin:2px 0 0;">It has a + icon next to it</p>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <div style="width:32px;height:32px;border-radius:8px;background:var(--color-background-info);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:500;color:var(--color-text-info);flex-shrink:0;">3</div>
+      <div>
+        <p style="font-size:13px;font-weight:500;margin:0;color:var(--color-text-primary);">Tap "Add"</p>
+        <p style="font-size:12px;color:var(--color-text-secondary);margin:2px 0 0;">MeCard will appear on your home screen</p>
+      </div>
+    </div>
+  </div>
+
+  <div style="background:var(--color-background-secondary);border-radius:var(--border-radius-lg);padding:16px;text-align:center;margin-bottom:16px;">
+    <div style="display:flex;justify-content:center;gap:16px;margin-bottom:8px;">
+      <div style="text-align:center;">
+        <div style="width:48px;height:48px;border-radius:12px;background:var(--color-background-info);display:flex;align-items:center;justify-content:center;margin:0 auto 4px;">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-info)" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M12 12a3 3 0 100-6 3 3 0 000 6z"/></svg>
+        </div>
+        <p style="font-size:11px;color:var(--color-text-secondary);margin:0;">MeCard</p>
+      </div>
+    </div>
+    <p style="font-size:11px;color:var(--color-text-tertiary);margin:0;">Your home screen will look like this</p>
+  </div>
+
+  <div style="flex:1;"></div>
+
+  <div style="background:var(--color-background-info);color:var(--color-text-info);font-weight:500;font-size:15px;text-align:center;padding:14px;border-radius:var(--border-radius-md);margin-bottom:10px;cursor:pointer;">Got it</div>
+  <div style="font-size:13px;text-align:center;padding:8px;color:var(--color-text-secondary);cursor:pointer;" onclick="nav(1)">Skip for now</div>
+</div>`
+  },
+  {
+    title: "7. Pro upgrade teaser",
+    annotation: `<p style="font-size:14px;font-weight:500;margin:0 0 8px;">Pro features — preview before you pay</p>
+<p style="font-size:13px;color:var(--color-text-secondary);margin:0 0 12px;">This is the upsell screen, reachable from the profile screen or "Make it Pro" button. Users can fill in pro fields (WhatsApp, direct line, company branding) and preview how their profile would look — but these fields only go live once they subscribe.</p>
+<ul style="font-size:13px;color:var(--color-text-secondary);margin:0;padding-left:18px;">
+<li>Maps to: wpcf-whatsapp-number, wpcf-work-phone-number, company design fields</li>
+<li>Existing profile type toggle (standard/pro) controls visibility</li>
+<li>Preview uses existing render_pro() from Profile Renderer</li>
+<li>Saves data to post meta immediately — but wpcf-profile-type stays "standard" until paid</li>
+<li>WooCommerce handles the subscription product</li>
+<li>Remove MeCard branding is a visible Pro benefit</li>
+</ul>`,
+    html: `
+<div style="display:flex;flex-direction:column;min-height:520px;padding:20px;">
+  <p style="font-size:18px;font-weight:500;margin:0 0 4px;color:var(--color-text-primary);">Unlock Pro features</p>
+  <p style="font-size:13px;color:var(--color-text-secondary);margin:0 0 20px;">Preview how your card will look — activate when you're ready</p>
+
+  <div style="background:var(--color-background-warning);border:0.5px solid var(--color-border-warning);border-radius:var(--border-radius-md);padding:10px 14px;margin-bottom:16px;display:flex;align-items:center;gap:8px;">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-warning)" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+    <span style="font-size:12px;color:var(--color-text-warning);">Preview mode — fill in your details now, activate anytime</span>
+  </div>
+
+  <div style="margin-bottom:12px;">
+    <label style="font-size:12px;color:var(--color-text-secondary);display:block;margin-bottom:4px;">WhatsApp number <span style="background:var(--color-background-warning);color:var(--color-text-warning);font-size:10px;padding:2px 6px;border-radius:4px;">pro</span></label>
+    <div style="border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:12px;font-size:14px;color:var(--color-text-tertiary);background:var(--color-background-primary);">+27 82 123 4567</div>
+  </div>
+
+  <div style="margin-bottom:12px;">
+    <label style="font-size:12px;color:var(--color-text-secondary);display:block;margin-bottom:4px;">Direct line <span style="background:var(--color-background-warning);color:var(--color-text-warning);font-size:10px;padding:2px 6px;border-radius:4px;">pro</span></label>
+    <div style="border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:12px;font-size:14px;color:var(--color-text-tertiary);background:var(--color-background-primary);">+27 11 234 5678</div>
+  </div>
+
+  <div style="margin-bottom:12px;">
+    <div style="display:flex;align-items:center;gap:8px;padding:10px 0;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-info)" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/></svg>
+      <span style="font-size:13px;color:var(--color-text-info);">Add company branding & colours</span>
+      <span style="background:var(--color-background-warning);color:var(--color-text-warning);font-size:10px;padding:2px 6px;border-radius:4px;">pro</span>
+    </div>
+  </div>
+
+  <div style="border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:14px;margin-bottom:16px;">
+    <p style="font-size:13px;font-weight:500;margin:0 0 10px;color:var(--color-text-primary);">Pro includes:</p>
+    <div style="display:flex;flex-direction:column;gap:8px;">
+      <div style="display:flex;align-items:center;gap:8px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-success)" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg><span style="font-size:12px;color:var(--color-text-secondary);">Remove MeCard branding</span></div>
+      <div style="display:flex;align-items:center;gap:8px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-success)" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg><span style="font-size:12px;color:var(--color-text-secondary);">WhatsApp sharing + direct line</span></div>
+      <div style="display:flex;align-items:center;gap:8px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-success)" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg><span style="font-size:12px;color:var(--color-text-secondary);">Company branding & custom colours</span></div>
+      <div style="display:flex;align-items:center;gap:8px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-success)" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg><span style="font-size:12px;color:var(--color-text-secondary);">Weekly sharing analytics email</span></div>
+      <div style="display:flex;align-items:center;gap:8px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-success)" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg><span style="font-size:12px;color:var(--color-text-secondary);">Lead capture — see who views your card</span></div>
+    </div>
+  </div>
+
+  <div style="flex:1;"></div>
+
+  <div style="background:var(--color-background-warning);color:var(--color-text-warning);font-weight:500;font-size:15px;text-align:center;padding:14px;border-radius:var(--border-radius-md);margin-bottom:8px;cursor:pointer;">Upgrade to Pro — R99/month</div>
+  <div style="font-size:13px;text-align:center;padding:8px;color:var(--color-text-secondary);cursor:pointer;">Preview my Pro profile first</div>
+</div>`
+  }
+];
+
+let currentScreen = 0;
+
+function render() {
+  const s = screens[currentScreen];
+  document.getElementById('screen-content').innerHTML = s.html;
+  document.getElementById('annotations').innerHTML = s.annotation;
+  document.getElementById('screen-label').textContent = s.title;
+  document.getElementById('prev-btn').disabled = currentScreen === 0;
+  document.getElementById('next-btn').disabled = currentScreen === screens.length - 1;
+}
+
+function nav(dir) {
+  const next = currentScreen + dir;
+  if (next >= 0 && next < screens.length) {
+    currentScreen = next;
+    render();
+  }
+}
+
+render();
+</script>
