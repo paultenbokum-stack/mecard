@@ -678,6 +678,40 @@ jQuery(document).ready(function($) {
             fab.addEventListener('click', togglePanel);
             scrim?.addEventListener('click', closePanel);
 
+            function maybeOpenGuidedShareInstall() {
+                try {
+                    const url = new URL(window.location.href);
+                    const shouldOpenShare = url.searchParams.get('me_share') === '1';
+                    const target = url.searchParams.get('me_share_target');
+                    if (!shouldOpenShare) return;
+
+                    window.setTimeout(function () {
+                        openPanel();
+
+                        if (target) {
+                            const targetEl = panel.querySelector(`[data-share-target="${target}"]`) || document.getElementById(target);
+                            if (targetEl) {
+                                window.setTimeout(function () {
+                                    targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                    targetEl.classList.add('is-guided-target');
+                                    window.setTimeout(function () {
+                                        targetEl.classList.remove('is-guided-target');
+                                    }, 2400);
+                                }, 180);
+                            }
+                        }
+                    }, 150);
+
+                    url.searchParams.delete('me_share');
+                    url.searchParams.delete('me_share_target');
+                    if (window.history && window.history.replaceState) {
+                        window.history.replaceState({}, document.title, `${url.pathname}${url.search}${url.hash}`);
+                    }
+                } catch (err) {
+                    // no-op
+                }
+            }
+
             // Swipe: open with left-swipe on profile; close with right-swipe on panel
             function isMobile(){ return window.matchMedia('(max-width: 767.98px)').matches; }
             let xStart=null, yStart=null;
@@ -1041,8 +1075,19 @@ jQuery(document).ready(function($) {
                 show(card); hide(iosWrap); hide(andrWrap); show(installedEl);
             });
 
+            const isDesktopReview = !isIOS && !window.matchMedia('(max-width: 767.98px)').matches;
+            let guidedInstallRequest = false;
+            try {
+                const parsedUrl = new URL(window.location.href);
+                guidedInstallRequest = parsedUrl.searchParams.get('me_share') === '1' && parsedUrl.searchParams.get('me_share_target') === 'install';
+            } catch (err) {
+                guidedInstallRequest = false;
+            }
+
             // iOS: show instructions if not installed
             if (isIOS && !isStandalone) { show(card); show(iosWrap); hide(andrWrap); }
+            if (isDesktopReview) { show(card); show(iosWrap); show(andrWrap); }
+            if (guidedInstallRequest && !isIOS && !isDesktopReview) { show(card); show(andrWrap); }
 
             // Install button (Android)
             installBtn?.addEventListener('click', async () => {
@@ -1054,6 +1099,8 @@ jQuery(document).ready(function($) {
                     hide(andrWrap); show(installedEl);
                 }
             });
+
+            maybeOpenGuidedShareInstall();
 
 
     }

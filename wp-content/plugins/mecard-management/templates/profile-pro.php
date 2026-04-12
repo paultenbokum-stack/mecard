@@ -23,6 +23,8 @@ $soc             = $profile['soc'] ?? [];
 
 $company_id      = $company['id'] ?? 0;
 $company_title   = $company['title'] ?? '';
+$profile_company = $profile['company_name'] ?? '';
+$company_label   = $company_title ?: $profile_company;
 $company_logo    = $company['logo_url'] ?? '';
 $company_address = $company['address'] ?? '';
 $company_tel     = $company['tel'] ?? '';
@@ -52,6 +54,9 @@ $social_icons = [
 ];
 ?>
 <div class="pro-profile-container<?php echo esc_attr( $post_class ); ?>">
+    <?php if ( $is_public && function_exists( 'mecard_single_editor_link_html' ) ) : ?>
+        <?php echo mecard_single_editor_link_html( $profile_id ); ?>
+    <?php endif; ?>
 
     <!-- Company logo -->
     <div class="pro-logo">
@@ -138,7 +143,7 @@ $social_icons = [
 
         <div class="row">
             <div class="col col-sm-12">
-                <h2 class="company" data-me-field="company-name"><?php echo esc_html( $company_title ); ?></h2>
+                <h2 class="company" data-me-field="company-name"><?php echo esc_html( $company_label ); ?></h2>
             </div>
         </div>
 

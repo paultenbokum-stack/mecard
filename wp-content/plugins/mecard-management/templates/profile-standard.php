@@ -18,6 +18,8 @@ $soc             = $profile['soc'] ?? [];
 
 $company_id      = $company['id'] ?? 0;
 $company_title   = $company['title'] ?? '';
+$profile_company = $profile['company_name'] ?? '';
+$company_label   = $company_title ?: $profile_company;
 $company_address = $company['address'] ?? '';
 $company_tel     = $company['tel'] ?? '';
 $company_website = $company['website'] ?? '';
@@ -34,6 +36,9 @@ $social_icons = [
 ];
 ?>
 <div class="standard-profile-container">
+    <?php if ( $is_public && function_exists( 'mecard_single_editor_link_html' ) ) : ?>
+        <?php echo mecard_single_editor_link_html( $profile_id ); ?>
+    <?php endif; ?>
 
     <?php if ( ! $is_public ) :
         $logo_id  = get_theme_mod( 'custom_logo' );
@@ -128,7 +133,7 @@ $social_icons = [
 
         <div class="row">
             <div class="col col-sm-12">
-                <h3 class="company" data-me-field="company-name"><?php echo esc_html( $company_title ); ?></h3>
+                <h3 class="company" data-me-field="company-name"><?php echo esc_html( $company_label ); ?></h3>
                 <p></p>
             </div>
         </div>
@@ -189,5 +194,9 @@ $social_icons = [
             </div>
         <?php endif; ?>
     </div>
+
+    <?php if ( $is_public ) : ?>
+        <?php echo do_shortcode( '[mecard_share_panel]' ); ?>
+    <?php endif; ?>
 
 </div><!-- /.standard-profile-container -->

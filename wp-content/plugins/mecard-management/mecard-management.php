@@ -27,12 +27,14 @@ require_once ME_PLUGIN_DIR . 'class-me-profile-renderer.php';
 require_once ME_PLUGIN_DIR .'class-me-preview.php';
 require_once ME_PLUGIN_DIR .'class-me-profile-editor.php';
 require_once ME_PLUGIN_DIR . 'class-me-onboarding.php';
+require_once ME_PLUGIN_DIR . 'class-me-single-editor.php';
 
 add_action( 'init', function () {
     // These only add wp_ajax_* actions, no output/enqueue
     Me\Profile_Editor\Module::init();
     Me\Company_Editor\Module::init();
     Me\Onboarding\Module::init();
+    Me\Single_Editor\Module::init();
 } );
 function mecard_init_modular_editors() {
     // Frontend only
@@ -544,6 +546,29 @@ function render_social_icons() {
 }
 
 add_shortcode('mecard_social_icons','render_social_icons');
+
+function mecard_single_editor_link_html( $profile_id = 0 ) {
+    $profile_id = (int) $profile_id;
+    if ( ! $profile_id || ! is_user_logged_in() ) {
+        return '';
+    }
+
+    if ( ! function_exists( 'me_is_post_owner' ) || ! me_is_post_owner( $profile_id ) ) {
+        return '';
+    }
+
+    if ( ! class_exists( '\Me\Single_Editor\Module' ) ) {
+        return '';
+    }
+
+    $user_profiles = \Me\Single_Editor\Module::get_self_owned_profiles( get_current_user_id() );
+    if ( count( $user_profiles ) !== 1 || (int) $user_profiles[0] !== $profile_id ) {
+        return '';
+    }
+
+    $url = \Me\Single_Editor\Module::editor_url( $profile_id );
+    return '<div class="mecard-owner-edit-link"><a href="' . esc_url( $url ) . '">Edit profile</a></div>';
+}
 
 function vcard_download_button($atts) {
 global $post;
@@ -2941,6 +2966,9 @@ function me_save_company_form_custom(){
 // === Shortcode: Fullscreen right-side share panel + floating FAB ===
 add_shortcode('mecard_share_panel', function ($atts) {
     $atts = shortcode_atts([], $atts, 'mecard_share_panel');
+    $ios_share_icon_url      = plugins_url('images/ios-share-icon.png', __FILE__);
+    $ios_view_more_shot_url  = plugins_url('images/ios-share-view-more.png', __FILE__);
+    $ios_add_to_home_shot_url = plugins_url('images/ios-add-to-home.png', __FILE__);
 
     ob_start(); ?>
     <!-- Floating Share FAB (icon only) -->
@@ -3032,7 +3060,7 @@ add_shortcode('mecard_share_panel', function ($atts) {
             <!-- Add to Home Screen (A2HS) -->
             <div class="row">
                 <div class="col-12">
-                    <div class="card mb-3" id="mecard-a2hs-card" style="display:none;">
+                    <div class="card mb-3" id="mecard-a2hs-card" data-share-target="install" style="display:none;">
                         <div class="card-body">
                             <h5 class="card-title mb-3"><i class="fas fa-home"></i> Add to Home Screen</h5>
 
@@ -3042,16 +3070,33 @@ add_shortcode('mecard_share_panel', function ($atts) {
                                 <button class="btn btn-primary" id="mecard-a2hs-install-btn">
                                     <i class="fas fa-download"></i> Install
                                 </button>
+
                             </div>
 
                             <!-- iOS: instructional steps (Apple blocks programmatic install) -->
                             <div id="mecard-a2hs-ios" style="display:none;">
-                                <p class="mb-2">On iPhone/iPad:</p>
-                                <ol class="mb-2">
-                                    <li>Tap <strong>Share</strong> <i class="fas fa-share-square"></i> in Safari.</li>
-                                    <li>Choose <strong>Add to Home Screen</strong>.</li>
-                                </ol>
-                                <small class="text-muted">You’ll get an icon on your home screen that opens this profile for easy sharing.</small>
+                                <p class="mb-2">Install this profile to your home screen to launch and share with people you meet.</p>
+                                <div class="mecard-install-ios-steps">
+                                    <div class="mecard-install-ios-step">
+                                        <div class="mecard-install-ios-step__title">1. Tap share</div>
+                                        <div class="mecard-install-shot mecard-install-shot--crop-bottom">
+                                            <img class="class="mecard-install-shot" src="<?php echo esc_url( $ios_share_icon_url ); ?>" alt="iPhone share icon">
+                                        </div>
+                                    </div>
+                                    <div class="mecard-install-ios-step">
+                                        <div class="mecard-install-ios-step__title">2. Tap view more</div>
+                                        <div class="mecard-install-shot mecard-install-shot--crop-bottom">
+                                            <img class="mecard-install-shot__image" src="<?php echo esc_url( $ios_view_more_shot_url ); ?>" alt="iPhone share sheet showing the View More option">
+                                        </div>
+                                    </div>
+                                    <div class="mecard-install-ios-step">
+                                        <div class="mecard-install-ios-step__title">3. Tap add to home</div>
+                                        <div class="mecard-install-shot mecard-install-shot--crop-home">
+                                            <img class="mecard-install-shot__image" src="<?php echo esc_url( $ios_add_to_home_shot_url ); ?>" alt="iPhone share options showing Add to Home Screen">
+                                        </div>
+                                    </div>
+                                </div>
+
                             </div>
 
                             <!-- Already installed -->
@@ -3104,7 +3149,7 @@ add_action('rest_api_init', function () {
             $short = mecard_make_short_label($label, 12);
 
             // Always open the profile itself
-            $start = add_query_arg(['from' => 'a2hs'], get_permalink($profile_id));
+            $start = get_permalink($profile_id);
 
             $manifest = [
                 'id'               => $start,       // helps dedupe installs

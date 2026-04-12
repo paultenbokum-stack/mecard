@@ -80,6 +80,97 @@ body.mecard-share-open{ overflow: hidden; }
     z-index: 2;
 }
 
+.mecard-share-panel .is-guided-target{
+    box-shadow: 0 0 0 3px rgba(30, 115, 190, .2);
+    border-radius: 12px;
+    animation: mecardGuidedPulse 1.2s ease 2;
+}
+
+.mecard-install-shot{
+    margin-top: 14px;
+    padding: 12px;
+    border: 1px solid #d8e1eb;
+    border-radius: 14px;
+    background: linear-gradient(180deg, #fbfdff 0%, #f3f8fd 100%);
+    overflow: hidden;
+}
+
+.mecard-install-shot__title{
+    margin-bottom: 10px;
+    color: #657284;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.mecard-install-shot__steps{
+    display: grid;
+    gap: 10px;
+}
+
+.mecard-install-shot__steps span{
+    display: inline-flex;
+    align-items: center;
+    min-height: 38px;
+    padding: 0 14px;
+    border-radius: 999px;
+    background: #fff;
+    border: 1px solid #d8e1eb;
+    color: #1f2937;
+    font-weight: 600;
+}
+
+.mecard-install-shot__image{
+    display: block;
+    width: 100%;
+    height: auto;
+    border-radius: 10px;
+}
+
+.mecard-install-ios-steps{
+    display: grid;
+    gap: 18px;
+    margin-bottom: 12px;
+}
+
+.mecard-install-ios-step__title{
+    margin-bottom: 10px;
+    color: #1f2937;
+    font-size: 16px;
+    font-weight: 700;
+}
+
+.mecard-install-ios-step__icon{
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    min-height: 52px;
+}
+
+.mecard-install-ios-step__icon img{
+    display: block;
+    width: 28px;
+    height: 28px;
+}
+
+.mecard-install-shot--crop-bottom{
+    max-height: 240px;
+    padding: 0;
+}
+
+
+.mecard-install-shot--crop-home{
+    max-height: 340px;
+    padding: 0;
+}
+
+
+
+@keyframes mecardGuidedPulse{
+    0% { box-shadow: 0 0 0 0 rgba(30, 115, 190, .2); }
+    70% { box-shadow: 0 0 0 10px rgba(30, 115, 190, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(30, 115, 190, 0); }
+}
+
 .iti--container{
     z-index: 10020;
 }
@@ -583,6 +674,24 @@ div.phone-outline div.vcard-download {
 
 .more-links a {
     text-decoration: none !important;
+}
+
+.mecard-owner-edit-link {
+    text-align: right;
+    margin: 0 0 12px;
+}
+
+.mecard-owner-edit-link a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 14px;
+    border-radius: 999px;
+    background: rgba(255,255,255,.92);
+    border: 1px solid rgba(18, 44, 73, .12);
+    text-decoration: none;
+    color: #19324d;
+    box-shadow: 0 10px 24px rgba(16, 36, 58, 0.10);
 }
 
 

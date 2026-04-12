@@ -234,7 +234,7 @@
     // ---------- Update company block in both panes ----------
     function updateCompanyBlock(company) {
         // -- Pro pane --
-        field($proPane, 'company-name').text(company && company.title ? company.title : '');
+        field($proPane, 'company-name').text((company && company.title) ? company.title : (p.company_name || ''));
 
         if (company && company.logo_url) {
             field($proPane, 'company-logo').attr('src', company.logo_url).show();
@@ -269,7 +269,7 @@
         }
 
         // -- Standard pane --
-        field($stdPane, 'company-name').text(company && company.title ? company.title : '');
+        field($stdPane, 'company-name').text((company && company.title) ? company.title : (p.company_name || ''));
 
         if (addr) {
             const mapsStd = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(addr);
