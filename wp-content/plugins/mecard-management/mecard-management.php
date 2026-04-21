@@ -28,6 +28,8 @@ require_once ME_PLUGIN_DIR .'class-me-preview.php';
 require_once ME_PLUGIN_DIR .'class-me-profile-editor.php';
 require_once ME_PLUGIN_DIR . 'class-me-onboarding.php';
 require_once ME_PLUGIN_DIR . 'class-me-single-editor.php';
+require_once ME_PLUGIN_DIR . 'class-me-single-cards.php';
+require_once ME_PLUGIN_DIR . 'class-me-single-manage.php';
 
 add_action( 'init', function () {
     // These only add wp_ajax_* actions, no output/enqueue
@@ -35,6 +37,8 @@ add_action( 'init', function () {
     Me\Company_Editor\Module::init();
     Me\Onboarding\Module::init();
     Me\Single_Editor\Module::init();
+    Me\Single_Cards\Module::init();
+    Me\Single_Manage\Module::init();
 } );
 function mecard_init_modular_editors() {
     // Frontend only
@@ -469,7 +473,7 @@ function render_social_icons() {
 
     $editable = ($current_user_id == $user_id) ? true : false;
 
-    $edit_link = '<a href="'.get_site_url() .'/edit-profile/" class="mecard-edit">edit</a>';
+    $edit_link = '<a href="'.get_site_url() .'/manage/profile/" class="mecard-edit">edit</a>';
 
     $headings = array(
         "name" => "Name",

@@ -54,10 +54,6 @@ $social_icons = [
 ];
 ?>
 <div class="pro-profile-container<?php echo esc_attr( $post_class ); ?>">
-    <?php if ( $is_public && function_exists( 'mecard_single_editor_link_html' ) ) : ?>
-        <?php echo mecard_single_editor_link_html( $profile_id ); ?>
-    <?php endif; ?>
-
     <!-- Company logo -->
     <div class="pro-logo">
         <img data-me-field="company-logo"

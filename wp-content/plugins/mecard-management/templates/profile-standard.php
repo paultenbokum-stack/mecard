@@ -12,6 +12,7 @@ $last            = $profile['last'] ?? '';
 $job             = $profile['job'] ?? '';
 $email           = $profile['email'] ?? '';
 $mobile          = $profile['mobile'] ?? '';
+$wa_raw          = $profile['wa'] ?? '';
 $website         = $profile['website'] ?? '';
 $photo_url       = $profile['photo_url'] ?? '';
 $soc             = $profile['soc'] ?? [];
@@ -26,6 +27,15 @@ $company_website = $company['website'] ?? '';
 
 $is_public  = ( $context === 'public' );
 
+$wa_int = '';
+if ( $wa_raw ) {
+    $wa_norm = preg_replace( '/\s+/', '', $wa_raw );
+    if ( substr( $wa_norm, 0, 1 ) === '0' ) {
+        $wa_norm = '+27' . substr( $wa_norm, 1 );
+    }
+    $wa_int = preg_replace( '/[^\d]/', '', $wa_norm );
+}
+
 $social_icons = [
     'facebook'  => 'fab fa-facebook-square',
     'instagram' => 'fab fa-instagram-square',
@@ -36,22 +46,25 @@ $social_icons = [
 ];
 ?>
 <div class="standard-profile-container">
-    <?php if ( $is_public && function_exists( 'mecard_single_editor_link_html' ) ) : ?>
-        <?php echo mecard_single_editor_link_html( $profile_id ); ?>
-    <?php endif; ?>
-
     <?php if ( ! $is_public ) :
         $logo_id  = get_theme_mod( 'custom_logo' );
         $logo_url = $logo_id ? wp_get_attachment_image_url( $logo_id, 'medium' ) : '';
         $site_name = get_bloginfo( 'name' );
     ?>
-    <div class="pro-logo">
-        <?php if ( $logo_url ) : ?>
-            <img src="<?php echo esc_url( $logo_url ); ?>"
-                 alt="<?php echo esc_attr( $site_name ); ?>">
-        <?php else : ?>
-            <span style="display:block;padding:16px;font-weight:700;font-size:16px;"><?php echo esc_html( $site_name ); ?></span>
-        <?php endif; ?>
+    <div class="standard-topbar">
+        <div class="standard-topbar__brand" aria-hidden="true">
+            <?php if ( $logo_url ) : ?>
+                <img src="<?php echo esc_url( $logo_url ); ?>"
+                     alt="<?php echo esc_attr( $site_name ); ?>">
+            <?php else : ?>
+                <span class="standard-topbar__text"><?php echo esc_html( $site_name ); ?></span>
+            <?php endif; ?>
+        </div>
+        <span class="standard-topbar__burger" aria-hidden="true">
+            <span></span>
+            <span></span>
+            <span></span>
+        </span>
     </div>
     <?php endif; ?>
 
@@ -93,6 +106,29 @@ $social_icons = [
                         </a>
                     </div>
                     <?php endforeach; ?>
+                </div>
+            </div>
+            <div class="row profile-buttons">
+                <div class="col col-4">
+                    <a data-me-field="call" href="<?php echo $mobile ? esc_url( 'tel:' . $mobile ) : '#'; ?>">
+                        <button type="button" class="phone" aria-label="Call">
+                            <i class="fas fa-mobile-alt"></i>
+                        </button>
+                    </a>
+                </div>
+                <div class="col col-4">
+                    <a data-me-field="email" href="<?php echo $email ? esc_url( 'mailto:' . $email ) : '#'; ?>">
+                        <button type="button" class="email" aria-label="Email">
+                            <i class="fas fa-envelope"></i>
+                        </button>
+                    </a>
+                </div>
+                <div class="col col-4">
+                    <a data-me-field="wa" href="<?php echo $wa_int ? esc_url( 'https://wa.me/' . $wa_int ) : '#'; ?>">
+                        <button type="button" class="whatsapp" aria-label="WhatsApp">
+                            <i class="fab fa-whatsapp"></i>
+                        </button>
+                    </a>
                 </div>
             </div>
         </div>

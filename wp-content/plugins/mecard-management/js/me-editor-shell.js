@@ -538,13 +538,27 @@
 
     // ---------- Open modal helper (matches existing button calls) ----------
     window.NewMeOpenProfileEditor = function(post_id){
-        $('#meProfileEditorModal').modal('show');
-        setLoading(true);
+        const targetId = parseInt(post_id, 10) || 0;
+        const siteUrl = (window.MECARD_MGMT && MECARD_MGMT.siteurl)
+            ? String(MECARD_MGMT.siteurl).replace(/\/$/, '')
+            : (window.location.origin || '');
+        const baseUrl = (window.ME_SINGLE_EDITOR && ME_SINGLE_EDITOR.editProfileUrl)
+            ? ME_SINGLE_EDITOR.editProfileUrl
+            : (siteUrl + '/manage/profile/');
 
-        loadProfile(post_id)
-            .always(function(){
-                setLoading(false);
-            });
+        try {
+            const nextUrl = new URL(baseUrl, window.location.origin);
+            if (targetId) {
+                nextUrl.searchParams.set('profile_id', String(targetId));
+            }
+            window.location.assign(nextUrl.toString());
+        } catch (error) {
+            let fallback = '/manage/profile/';
+            if (targetId) {
+                fallback += '?profile_id=' + encodeURIComponent(String(targetId));
+            }
+            window.location.assign(fallback);
+        }
     };
 
     // ---------- Media frame for profile photo ----------
