@@ -517,16 +517,14 @@ function render_social_icons() {
     }
 
     $html = ' <div class="container-md">
-                <div class="row">
-                    <div class="col col-12 mecard-centered mecard-social">';
+                <div class="row justify-content-center mecard-social">';
 
                         foreach ($profile_values['social'] as $key=>$profile_value) {
                             if ($profile_value) {
-                                $html .= '<div class="mecard-social-item"><a href="'.$profile_value.'" target="_blank">'.$headings[$key].'</a></div>';
+                                $html .= '<div class="col-2 text-center mecard-social-item"><a href="'.$profile_value.'" target="_blank">'.$headings[$key].'</a></div>';
                             }
                         }
                        $html .= ' </div>
-                </div>
                <div class="row profile-buttons">
                     
                         <div class="col col-4"><a href="tel:'.$profile_values['personal']['mobile_number'].'"><button class="phone"><i class="fas fa-mobile-alt"></i></button></a></div>

@@ -52,27 +52,19 @@
     text-align: center;
 }
 
-/* Social icons */
+/* Social icons — Bootstrap row/col-2 handles layout */
 .mecard-social {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 14px;
     margin-bottom: 10px;
 }
-.mecard-social-item {
-    display: inline-block;
-    margin: 0 .25rem;
-}
 .mecard-social-item a {
-    font-size: 22px;
     text-decoration: none;
 }
-.mecard-social-item i.fab {
-    font-size: 1.3rem;
+/* Override style.css `div.mecard-social-item i.fab { font-size: 3em }` (specificity 0,2,2) */
+.mecard-social .mecard-social-item i.fab {
+    /*font-size: 2rem;*/
     color: #000;
 }
-.mecard-social-item a:hover i.fab {
+.mecard-social .mecard-social-item a:hover i.fab {
     color: var(--me-accent, #0170b9);
 }
 

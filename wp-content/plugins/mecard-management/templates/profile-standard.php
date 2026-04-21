@@ -77,18 +77,16 @@ $social_icons = [
         <?php echo do_shortcode( '[mecard_social_icons]' ); ?>
     <?php else : ?>
         <div class="container-md">
-            <div class="row">
-                <div class="col col-12 mecard-centered mecard-social">
-                    <?php foreach ( $social_icons as $net => $icon_class ) :
-                        $url = $soc[ $net ] ?? '';
-                    ?>
-                    <div class="mecard-social-item" data-me-field="soc-<?php echo esc_attr( $net ); ?>"<?php if ( ! $url ) echo ' style="display:none"'; ?>>
-                        <a href="<?php echo $url ? esc_url( $url ) : '#'; ?>" target="_blank" rel="noopener">
-                            <i class="<?php echo esc_attr( $icon_class ); ?>"></i>
-                        </a>
-                    </div>
-                    <?php endforeach; ?>
+            <div class="row justify-content-center mecard-social">
+                <?php foreach ( $social_icons as $net => $icon_class ) :
+                    $url = $soc[ $net ] ?? '';
+                ?>
+                <div class="col-2 text-center mecard-social-item" data-me-field="soc-<?php echo esc_attr( $net ); ?>"<?php if ( ! $url ) echo ' style="display:none"'; ?>>
+                    <a href="<?php echo $url ? esc_url( $url ) : '#'; ?>" target="_blank" rel="noopener">
+                        <i class="<?php echo esc_attr( $icon_class ); ?>"></i>
+                    </a>
                 </div>
+                <?php endforeach; ?>
             </div>
         </div>
     <?php endif; ?>
