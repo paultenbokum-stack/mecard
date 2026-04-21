@@ -1,0 +1,465 @@
+<style>
+  .mecard-wireframes {
+    --color-background-primary: #ffffff;
+    --color-background-secondary: #f5f8fb;
+    --color-background-tertiary: #e8eef5;
+    --color-background-info: #1e73be;
+    --color-background-success: #e8f7ef;
+    --color-background-warning: #fff4df;
+    --color-text-primary: #1f2937;
+    --color-text-secondary: #5f6b7a;
+    --color-text-tertiary: #8a94a3;
+    --color-text-info: #ffffff;
+    --color-text-success: #167a45;
+    --color-text-warning: #9a5b00;
+    --color-border-secondary: #cfd8e3;
+    --color-border-tertiary: #dbe3ec;
+    --color-border-warning: #f0cd8a;
+    --border-radius-md: 12px;
+    --border-radius-lg: 18px;
+    font-family: "Segoe UI", Arial, sans-serif;
+    color: var(--color-text-primary);
+  }
+
+  .mecard-wireframes * {
+    box-sizing: border-box;
+  }
+
+  .mecard-wireframes button {
+    border: 0.5px solid var(--color-border-secondary);
+    border-radius: 999px;
+    background: var(--color-background-primary);
+    color: var(--color-text-primary);
+    cursor: pointer;
+    transition: background 0.15s ease, opacity 0.15s ease;
+  }
+
+  .mecard-wireframes button:hover:not(:disabled) {
+    background: var(--color-background-secondary);
+  }
+
+  .mecard-wireframes button:disabled {
+    opacity: 0.45;
+    cursor: default;
+  }
+
+  .mecard-wireframes #phone {
+    box-shadow: 0 16px 40px rgba(17, 24, 39, 0.08);
+  }
+
+  .mecard-wireframes #annotations {
+    background: var(--color-background-primary);
+    border: 1px solid var(--color-border-tertiary);
+    border-radius: var(--border-radius-lg);
+    padding: 18px;
+    box-shadow: 0 10px 30px rgba(17, 24, 39, 0.04);
+  }
+
+  .mecard-wireframes #annotations p:first-child {
+    color: var(--color-text-primary);
+  }
+
+  .mecard-wireframes #annotations ul {
+    margin-top: 0;
+    margin-bottom: 0;
+  }
+
+  .mecard-wireframes #screen-content {
+    background:
+      radial-gradient(circle at top right, rgba(30, 115, 190, 0.05), transparent 28%),
+      linear-gradient(180deg, #ffffff 0%, #fbfcfe 100%);
+  }
+</style>
+
+<div class="mecard-wireframes" style="padding: 1rem 0;">
+<div style="display: flex; align-items: center; gap: 12px; margin-bottom: 1.5rem;">
+  <span style="font-size: 13px; color: var(--color-text-secondary);">Screen</span>
+  <button id="prev-btn" style="padding: 4px 14px; font-size: 13px;" onclick="nav(-1)">&larr;</button>
+  <span id="screen-label" style="font-size: 14px; font-weight: 500; min-width: 180px; text-align: center;">1 / 8</span>
+  <button id="next-btn" style="padding: 4px 14px; font-size: 13px;" onclick="nav(1)">&rarr;</button>
+</div>
+<div style="display: flex; gap: 2rem; align-items: flex-start; flex-wrap: wrap;">
+  <div style="background: var(--color-background-secondary); border-radius: var(--border-radius-lg); padding: 20px; display: inline-flex; flex-direction: column; align-items: center;">
+    <div id="phone" style="width: 320px; min-height: 568px; background: var(--color-background-primary); border-radius: 28px; border: 0.5px solid var(--color-border-secondary); overflow: hidden; position: relative; display: flex; flex-direction: column;">
+      <div style="height: 28px; display: flex; justify-content: center; align-items: flex-end; padding-bottom: 2px;">
+        <div style="width: 80px; height: 18px; background: var(--color-background-tertiary); border-radius: 0 0 12px 12px;"></div>
+      </div>
+      <div id="screen-content" style="flex: 1; overflow-y: auto; padding: 0;"></div>
+      <div style="height: 20px; display: flex; justify-content: center; align-items: center;">
+        <div style="width: 100px; height: 4px; background: var(--color-border-secondary); border-radius: 2px;"></div>
+      </div>
+    </div>
+  </div>
+  <div id="annotations" style="flex: 1; min-width: 240px; max-width: 380px;"></div>
+</div>
+</div>
+
+<script>
+const screens = [
+  {
+    title: "1. Landing page",
+    annotation: `<p style="font-size:14px;font-weight:500;margin:0 0 8px;">Landing - individual first, teams still visible</p>
+<p style="font-size:13px;color:var(--color-text-secondary);margin:0 0 12px;">This keeps the two-path entry but reframes the personal journey around fast digital value. The profile is the product first; card ordering comes later.</p>
+<ul style="font-size:13px;color:var(--color-text-secondary);margin:0;padding-left:18px;">
+<li>Primary promise is speed: live in 60 seconds</li>
+<li>No pricing friction on first screen</li>
+<li>Team path remains available but secondary</li>
+<li>Sets up free profile before upgrades</li>
+</ul>`,
+    html: `
+<div style="display:flex;flex-direction:column;min-height:520px;padding:24px 20px 20px;">
+  <div style="text-align:center;margin-bottom:20px;">
+    <div style="width:56px;height:56px;border-radius:16px;background:var(--color-background-info);display:inline-flex;align-items:center;justify-content:center;margin-bottom:12px;">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-info)" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M8 9h8"/><path d="M8 13h5"/><circle cx="17" cy="16.5" r="2.5"/></svg>
+    </div>
+    <p style="font-size:21px;font-weight:600;margin:0 0 6px;color:var(--color-text-primary);">Your digital business card. Free. Instant.</p>
+    <p style="font-size:13px;color:var(--color-text-secondary);margin:0;line-height:1.5;">Create your profile in under a minute<br>and start sharing before you ever order a card.</p>
+  </div>
+  <div style="background:var(--color-background-secondary);border-radius:var(--border-radius-lg);padding:18px 16px;margin-bottom:16px;">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+      <div style="width:42px;height:42px;border-radius:12px;background:var(--color-background-primary);display:flex;align-items:center;justify-content:center;border:0.5px solid var(--color-border-tertiary);">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-info)" stroke-width="2"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+      </div>
+      <div style="text-align:left;">
+        <p style="font-size:13px;font-weight:500;margin:0;color:var(--color-text-primary);">Start free</p>
+        <p style="font-size:11px;color:var(--color-text-secondary);margin:2px 0 0;">Profile, QR and WhatsApp sharing, PWA install</p>
+      </div>
+    </div>
+    <div style="width:100%;height:120px;border-radius:14px;background:linear-gradient(135deg,var(--color-background-primary),var(--color-background-tertiary));border:0.5px solid var(--color-border-tertiary);display:flex;align-items:center;justify-content:center;">
+      <div style="width:170px;height:96px;border-radius:12px;background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);padding:12px;box-sizing:border-box;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div style="width:32px;height:32px;border-radius:50%;background:var(--color-background-info);"></div>
+          <div style="flex:1;">
+            <div style="height:7px;width:78px;background:var(--color-border-tertiary);border-radius:3px;margin-bottom:5px;"></div>
+            <div style="height:5px;width:52px;background:var(--color-border-tertiary);border-radius:3px;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div style="flex:1;"></div>
+  <p style="font-size:11px;color:var(--color-text-secondary);text-align:center;margin:0 0 12px;">Join 5,000+ professionals already sharing with MeCard</p>
+  <div style="background:var(--color-background-info);color:var(--color-text-info);font-weight:600;font-size:15px;text-align:center;padding:14px;border-radius:var(--border-radius-md);margin-bottom:10px;cursor:pointer;" onclick="nav(1)">Create my free MeCard</div>
+  <div style="border:0.5px solid var(--color-border-secondary);font-size:14px;text-align:center;padding:12px;border-radius:var(--border-radius-md);color:var(--color-text-secondary);cursor:pointer;">For my team &rarr;</div>
+</div>`
+  },
+  {
+    title: "2. Sign up / Log in",
+    annotation: `<p style="font-size:14px;font-weight:500;margin:0 0 8px;">Zero-friction account creation</p>
+<p style="font-size:13px;color:var(--color-text-secondary);margin:0 0 12px;">This should feel like a quick handoff into the wizard, not a traditional auth wall.</p>
+<ul style="font-size:13px;color:var(--color-text-secondary);margin:0;padding-left:18px;">
+<li>Google and LinkedIn stay the main entry points</li>
+<li>LinkedIn best supports professional auto-fill</li>
+<li>Email fallback exists, but is de-emphasized</li>
+<li>Successful auth routes directly into onboarding</li>
+</ul>`,
+    html: `
+<div style="display:flex;flex-direction:column;min-height:520px;padding:24px 20px 20px;">
+  <div style="text-align:center;margin-bottom:28px;">
+    <p style="font-size:18px;font-weight:600;margin:0 0 6px;color:var(--color-text-primary);">Create your MeCard</p>
+    <p style="font-size:13px;color:var(--color-text-secondary);margin:0;">Sign up in seconds. No passwords by default.</p>
+  </div>
+  <div style="border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:14px 16px;display:flex;align-items:center;gap:12px;margin-bottom:12px;cursor:pointer;" onclick="nav(1)">
+    <svg width="20" height="20" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+    <span style="font-size:14px;font-weight:500;color:var(--color-text-primary);">Continue with Google</span>
+  </div>
+  <div style="border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:14px 16px;display:flex;align-items:center;gap:12px;margin-bottom:12px;cursor:pointer;">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="var(--color-text-info)"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+    <span style="font-size:14px;font-weight:500;color:var(--color-text-primary);">Continue with LinkedIn</span>
+  </div>
+  <div style="display:flex;align-items:center;gap:12px;margin:16px 0;">
+    <div style="flex:1;height:0.5px;background:var(--color-border-tertiary);"></div>
+    <span style="font-size:12px;color:var(--color-text-secondary);">or</span>
+    <div style="flex:1;height:0.5px;background:var(--color-border-tertiary);"></div>
+  </div>
+  <div style="border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:14px 16px;display:flex;align-items:center;gap:12px;cursor:pointer;">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-secondary)" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 4l-10 8L2 4"/></svg>
+    <span style="font-size:14px;color:var(--color-text-secondary);">Sign up with email</span>
+  </div>
+  <div style="flex:1;"></div>
+  <p style="font-size:11px;color:var(--color-text-tertiary);text-align:center;margin:0;">Already have an account? <span style="color:var(--color-text-info);">Log in</span></p>
+</div>`
+  },
+  {
+    title: "3. Quick profile - basics",
+    annotation: `<p style="font-size:14px;font-weight:500;margin:0 0 8px;">Step 1 of 2 - just enough to go live</p>
+<p style="font-size:13px;color:var(--color-text-secondary);margin:0 0 12px;">The visible flow is reduced to two collection steps to better match the "zero to sharing in 60 seconds" goal.</p>
+<ul style="font-size:13px;color:var(--color-text-secondary);margin:0;padding-left:18px;">
+<li>Name and selfie create identity fast</li>
+<li>Job title stays optional</li>
+<li>OAuth-prepopulation removes most typing</li>
+<li>Should save progressively</li>
+</ul>`,
+    html: `
+<div style="display:flex;flex-direction:column;min-height:520px;padding:20px;">
+  <div style="display:flex;gap:6px;margin-bottom:24px;">
+    <div style="flex:1;height:3px;border-radius:2px;background:var(--color-text-info);"></div>
+    <div style="flex:1;height:3px;border-radius:2px;background:var(--color-border-tertiary);"></div>
+  </div>
+  <p style="font-size:18px;font-weight:600;margin:0 0 4px;color:var(--color-text-primary);">Let's get you live</p>
+  <p style="font-size:13px;color:var(--color-text-secondary);margin:0 0 24px;">This should take under a minute</p>
+  <div style="text-align:center;margin-bottom:24px;">
+    <div style="width:82px;height:82px;border-radius:50%;background:var(--color-background-secondary);border:2px dashed var(--color-border-secondary);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-secondary)" stroke-width="1.5"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+    </div>
+    <p style="font-size:12px;color:var(--color-text-info);margin:6px 0 0;">Add a selfie or photo</p>
+  </div>
+  <div style="margin-bottom:14px;">
+    <label style="font-size:12px;color:var(--color-text-secondary);display:block;margin-bottom:4px;">First name</label>
+    <div style="border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);padding:12px;font-size:14px;color:var(--color-text-primary);background:var(--color-background-primary);">Alessio</div>
+  </div>
+  <div style="margin-bottom:14px;">
+    <label style="font-size:12px;color:var(--color-text-secondary);display:block;margin-bottom:4px;">Last name</label>
+    <div style="border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);padding:12px;font-size:14px;color:var(--color-text-primary);background:var(--color-background-primary);">Martinez</div>
+  </div>
+  <div style="margin-bottom:18px;">
+    <label style="font-size:12px;color:var(--color-text-secondary);display:block;margin-bottom:4px;">Job title <span style="color:var(--color-text-tertiary);">(optional)</span></label>
+    <div style="border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:12px;font-size:14px;color:var(--color-text-tertiary);background:var(--color-background-primary);">e.g. Sales Manager</div>
+  </div>
+  <div style="background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:12px 14px;margin-bottom:20px;">
+    <p style="font-size:12px;font-weight:500;margin:0 0 4px;color:var(--color-text-primary);">Why so little?</p>
+    <p style="font-size:11px;color:var(--color-text-secondary);margin:0;">You can add company details, branding and extras later. The goal here is to get you sharing fast.</p>
+  </div>
+  <div style="flex:1;"></div>
+  <div style="background:var(--color-background-info);color:var(--color-text-info);font-weight:600;font-size:15px;text-align:center;padding:14px;border-radius:var(--border-radius-md);cursor:pointer;" onclick="nav(1)">Next</div>
+</div>`
+  },
+  {
+    title: "4. Contact details",
+    annotation: `<p style="font-size:14px;font-weight:500;margin:0 0 8px;">Step 2 of 2 - enough to share well</p>
+<p style="font-size:13px;color:var(--color-text-secondary);margin:0 0 12px;">Company setup is kept light so the profile can publish fast and deeper admin work can wait.</p>
+<ul style="font-size:13px;color:var(--color-text-secondary);margin:0;padding-left:18px;">
+<li>Phone and email are the must-have share fields</li>
+<li>One social link is optional but useful</li>
+<li>Company can be deferred or entered lightly</li>
+<li>Completing this step publishes the profile</li>
+</ul>`,
+    html: `
+<div style="display:flex;flex-direction:column;min-height:520px;padding:20px;">
+  <div style="display:flex;gap:6px;margin-bottom:24px;">
+    <div style="flex:1;height:3px;border-radius:2px;background:var(--color-text-info);"></div>
+    <div style="flex:1;height:3px;border-radius:2px;background:var(--color-text-info);"></div>
+  </div>
+  <p style="font-size:18px;font-weight:600;margin:0 0 4px;color:var(--color-text-primary);">How should people reach you?</p>
+  <p style="font-size:13px;color:var(--color-text-secondary);margin:0 0 24px;">These details power your card, QR and WhatsApp share flow</p>
+  <div style="margin-bottom:14px;">
+    <label style="font-size:12px;color:var(--color-text-secondary);display:block;margin-bottom:4px;">Email</label>
+    <div style="border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);padding:12px;font-size:14px;color:var(--color-text-primary);background:var(--color-background-primary);">alessio@gmail.com</div>
+  </div>
+  <div style="margin-bottom:14px;">
+    <label style="font-size:12px;color:var(--color-text-secondary);display:block;margin-bottom:4px;">Mobile number</label>
+    <div style="border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);padding:12px;font-size:14px;color:var(--color-text-primary);background:var(--color-background-primary);">+27 82 123 4567</div>
+  </div>
+  <div style="margin-bottom:14px;">
+    <label style="font-size:12px;color:var(--color-text-secondary);display:block;margin-bottom:4px;">Company <span style="color:var(--color-text-tertiary);">(optional)</span></label>
+    <div style="border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:12px;font-size:14px;color:var(--color-text-tertiary);background:var(--color-background-primary);">e.g. Acme Corp</div>
+  </div>
+  <div style="margin-bottom:16px;">
+    <div style="display:flex;align-items:center;gap:8px;padding:12px 0;cursor:pointer;">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-info)" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/></svg>
+      <span style="font-size:13px;color:var(--color-text-info);">Add one social link</span>
+    </div>
+  </div>
+  <div style="background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:12px 14px;margin-bottom:20px;">
+    <p style="font-size:12px;font-weight:500;margin:0 0 4px;color:var(--color-text-primary);">Free includes</p>
+    <p style="font-size:11px;color:var(--color-text-secondary);margin:0;">Shareable link, QR code, WhatsApp sharing and save-to-home-screen access from day one.</p>
+  </div>
+  <div style="flex:1;"></div>
+  <div style="background:var(--color-background-info);color:var(--color-text-info);font-weight:600;font-size:15px;text-align:center;padding:14px;border-radius:var(--border-radius-md);cursor:pointer;" onclick="nav(1)">Finish and go live</div>
+  <div style="font-size:13px;text-align:center;padding:10px;color:var(--color-text-secondary);cursor:pointer;" onclick="nav(-1)">&larr; Back</div>
+</div>`
+  },
+  {
+    title: "5. You're live",
+    annotation: `<p style="font-size:14px;font-weight:500;margin:0 0 8px;">Immediate payoff before monetization</p>
+<p style="font-size:13px;color:var(--color-text-secondary);margin:0 0 12px;">This is the emotional high point. The user has a working profile and can share instantly. The next guided step is the PWA install.</p>
+<ul style="font-size:13px;color:var(--color-text-secondary);margin:0;padding-left:18px;">
+<li>Primary CTA is still sharing, not buying</li>
+<li>QR and WhatsApp are visible to reinforce utility</li>
+<li>The next guided step is PWA install</li>
+<li>Upsells wait until after the retention prompt</li>
+</ul>`,
+    html: `
+<div style="display:flex;flex-direction:column;min-height:520px;padding:20px;">
+  <div style="background:var(--color-background-success);color:var(--color-text-success);border-radius:999px;padding:6px 12px;font-size:11px;font-weight:600;display:inline-flex;align-self:flex-start;margin-bottom:14px;">Live now</div>
+  <p style="font-size:20px;font-weight:600;margin:0 0 4px;color:var(--color-text-primary);">You're ready to share</p>
+  <p style="font-size:13px;color:var(--color-text-secondary);margin:0 0 16px;">Your free MeCard profile is live and can be shared right away</p>
+  <div style="background:var(--color-background-secondary);border-radius:var(--border-radius-lg);padding:18px;margin-bottom:14px;text-align:center;">
+    <div style="width:64px;height:64px;border-radius:50%;background:var(--color-background-info);margin:0 auto 10px;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:600;color:var(--color-text-info);">AM</div>
+    <p style="font-size:16px;font-weight:600;margin:0 0 2px;color:var(--color-text-primary);">Alessio Martinez</p>
+    <p style="font-size:13px;color:var(--color-text-secondary);margin:0 0 4px;">Sales Manager</p>
+    <p style="font-size:12px;color:var(--color-text-tertiary);margin:0 0 12px;">Acme Corp</p>
+    <div style="display:flex;justify-content:center;gap:8px;margin-bottom:12px;">
+      <div style="padding:8px 10px;border-radius:999px;background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);font-size:11px;color:var(--color-text-secondary);">QR</div>
+      <div style="padding:8px 10px;border-radius:999px;background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);font-size:11px;color:var(--color-text-secondary);">WhatsApp</div>
+      <div style="padding:8px 10px;border-radius:999px;background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);font-size:11px;color:var(--color-text-secondary);">vCard</div>
+    </div>
+    <div style="background:var(--color-background-primary);border-radius:var(--border-radius-md);padding:8px 12px;display:inline-block;">
+      <p style="font-size:11px;color:var(--color-text-tertiary);margin:0;">mecard.co.za/mecard-profile/alessio-martinez</p>
+    </div>
+  </div>
+  <div style="background:var(--color-background-success);color:var(--color-text-success);font-weight:600;font-size:15px;text-align:center;padding:14px;border-radius:var(--border-radius-md);margin-bottom:10px;cursor:pointer;">Share my MeCard</div>
+  <div style="background:var(--color-background-info);color:var(--color-text-info);font-weight:600;font-size:14px;text-align:center;padding:13px;border-radius:var(--border-radius-md);margin-bottom:10px;cursor:pointer;" onclick="nav(1)">Save it to my home screen</div>
+  <p style="font-size:11px;color:var(--color-text-tertiary);text-align:center;margin:0;">Free public profiles keep the subtle "Get your own MeCard" viral CTA.</p>
+</div>`
+  },
+  {
+    title: "6. Add to home screen",
+    annotation: `<p style="font-size:14px;font-weight:500;margin:0 0 8px;">Retention step comes before upsell</p>
+<p style="font-size:13px;color:var(--color-text-secondary);margin:0 0 12px;">This is the biggest structural change from the previous mockups. Install the PWA while excitement is high and before asking for money.</p>
+<ul style="font-size:13px;color:var(--color-text-secondary);margin:0;padding-left:18px;">
+<li>Primary goal is one-tap future access</li>
+<li>OS-specific instructions remain necessary</li>
+<li>Android can trigger native install when available</li>
+<li>Paid upgrades follow after this step</li>
+</ul>`,
+    html: `
+<div style="display:flex;flex-direction:column;min-height:520px;padding:20px;">
+  <p style="font-size:18px;font-weight:600;margin:0 0 4px;color:var(--color-text-primary);">Always one tap away</p>
+  <p style="font-size:13px;color:var(--color-text-secondary);margin:0 0 18px;">Add MeCard to your home screen now so you can share it instantly when you meet someone</p>
+  <div style="background:var(--color-background-secondary);border-radius:var(--border-radius-lg);padding:18px;margin-bottom:14px;">
+    <div style="display:flex;align-items:flex-start;gap:12px;margin-bottom:14px;">
+      <div style="width:30px;height:30px;border-radius:8px;background:var(--color-background-info);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:var(--color-text-info);flex-shrink:0;">1</div>
+      <div>
+        <p style="font-size:13px;font-weight:500;margin:0;color:var(--color-text-primary);">Tap the Share button</p>
+        <p style="font-size:12px;color:var(--color-text-secondary);margin:2px 0 0;">On iPhone, use Safari's square-with-arrow button</p>
+      </div>
+    </div>
+    <div style="display:flex;align-items:flex-start;gap:12px;margin-bottom:14px;">
+      <div style="width:30px;height:30px;border-radius:8px;background:var(--color-background-info);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:var(--color-text-info);flex-shrink:0;">2</div>
+      <div>
+        <p style="font-size:13px;font-weight:500;margin:0;color:var(--color-text-primary);">Choose "Add to Home Screen"</p>
+        <p style="font-size:12px;color:var(--color-text-secondary);margin:2px 0 0;">On Android, this can become "Install app"</p>
+      </div>
+    </div>
+    <div style="display:flex;align-items:flex-start;gap:12px;">
+      <div style="width:30px;height:30px;border-radius:8px;background:var(--color-background-info);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:var(--color-text-info);flex-shrink:0;">3</div>
+      <div>
+        <p style="font-size:13px;font-weight:500;margin:0;color:var(--color-text-primary);">Tap Add</p>
+        <p style="font-size:12px;color:var(--color-text-secondary);margin:2px 0 0;">Now your profile behaves like a lightweight app shortcut</p>
+      </div>
+    </div>
+  </div>
+  <div style="background:var(--color-background-secondary);border-radius:var(--border-radius-lg);padding:16px;text-align:center;margin-bottom:16px;">
+    <div style="width:50px;height:50px;border-radius:14px;background:var(--color-background-info);display:flex;align-items:center;justify-content:center;margin:0 auto 6px;">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-info)" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="4"/><path d="M8 12h8"/><path d="M12 8v8"/></svg>
+    </div>
+    <p style="font-size:11px;color:var(--color-text-secondary);margin:0 0 4px;">MeCard</p>
+    <p style="font-size:11px;color:var(--color-text-tertiary);margin:0;">This becomes your quick-access share tool</p>
+  </div>
+  <div style="flex:1;"></div>
+  <div style="background:var(--color-background-info);color:var(--color-text-info);font-weight:600;font-size:15px;text-align:center;padding:14px;border-radius:var(--border-radius-md);margin-bottom:10px;cursor:pointer;" onclick="nav(1)">I've added it</div>
+  <div style="font-size:13px;text-align:center;padding:8px;color:var(--color-text-secondary);cursor:pointer;" onclick="nav(1)">Skip for now</div>
+</div>`
+  },
+  {
+    title: "7. Card upsell",
+    annotation: `<p style="font-size:14px;font-weight:500;margin:0 0 8px;">Physical card becomes the first paid accessory</p>
+<p style="font-size:13px;color:var(--color-text-secondary);margin:0 0 12px;">The card is now positioned as a premium accelerator for in-person sharing, not a prerequisite.</p>
+<ul style="font-size:13px;color:var(--color-text-secondary);margin:0;padding-left:18px;">
+<li>Classic card should be the easiest choice</li>
+<li>Profile data should auto-fill the order</li>
+<li>Position it as "share faster in person"</li>
+<li>Offer a defer option so the user is not trapped</li>
+</ul>`,
+    html: `
+<div style="display:flex;flex-direction:column;min-height:520px;padding:20px;">
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+    <div style="padding:6px 10px;border-radius:999px;background:var(--color-background-secondary);font-size:11px;color:var(--color-text-secondary);">Optional upgrade</div>
+    <div style="padding:6px 10px;border-radius:999px;background:var(--color-background-warning);font-size:11px;color:var(--color-text-warning);">Most popular</div>
+  </div>
+  <p style="font-size:19px;font-weight:600;margin:0 0 4px;color:var(--color-text-primary);">Add an NFC card later, or now</p>
+  <p style="font-size:13px;color:var(--color-text-secondary);margin:0 0 18px;">Your profile already works digitally. A MeCard makes in-person sharing even faster.</p>
+  <div style="background:linear-gradient(160deg,#ffffff,#f4f6f8);border:0.5px solid var(--color-border-tertiary);border-radius:18px;padding:16px;margin-bottom:14px;">
+    <div style="width:100%;height:122px;border-radius:14px;background:#ffffff;border:0.5px solid #d9dfe6;padding:14px;box-sizing:border-box;">
+      <p style="font-size:12px;color:#6b7280;margin:0 0 26px;">Classic NFC Card</p>
+      <p style="font-size:16px;font-weight:600;color:#111827;margin:0 0 2px;">Alessio Martinez</p>
+      <p style="font-size:12px;color:#6b7280;margin:0;">Sales Manager</p>
+    </div>
+  </div>
+  <div style="border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:14px;margin-bottom:16px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+      <p style="font-size:14px;font-weight:600;margin:0;color:var(--color-text-primary);">Classic card</p>
+      <p style="font-size:14px;font-weight:600;margin:0;color:var(--color-text-primary);">R299</p>
+    </div>
+    <p style="font-size:12px;color:var(--color-text-secondary);margin:0 0 10px;">White card with your name and logo. Fastest to manufacture and easiest to fulfil.</p>
+    <div style="display:flex;flex-direction:column;gap:8px;">
+      <div style="font-size:12px;color:var(--color-text-secondary);">Auto-filled from your profile details</div>
+      <div style="font-size:12px;color:var(--color-text-secondary);">Tap on compatible phones to open your profile</div>
+      <div style="font-size:12px;color:var(--color-text-secondary);">Works with your free or Pro profile</div>
+    </div>
+  </div>
+  <div style="flex:1;"></div>
+  <div style="background:var(--color-background-info);color:var(--color-text-info);font-weight:600;font-size:15px;text-align:center;padding:14px;border-radius:var(--border-radius-md);margin-bottom:8px;cursor:pointer;" onclick="nav(1)">Order my card</div>
+  <div style="font-size:13px;text-align:center;padding:8px;color:var(--color-text-secondary);cursor:pointer;" onclick="nav(1)">I'll do this later</div>
+</div>`
+  },
+  {
+    title: "8. Pro profile upsell",
+    annotation: `<p style="font-size:14px;font-weight:500;margin:0 0 8px;">Recurring revenue upsell after free value and card accessory</p>
+<p style="font-size:13px;color:var(--color-text-secondary);margin:0 0 12px;">This screen separates the software subscription cleanly from the physical card. It should focus on outcomes: brand control, analytics and lead capture.</p>
+<ul style="font-size:13px;color:var(--color-text-secondary);margin:0;padding-left:18px;">
+<li>Free remains obviously useful</li>
+<li>Pro is sold on outcomes, not only fields</li>
+<li>Lead capture and analytics are the strongest hooks</li>
+<li>Annual pricing aligns with the spec better than monthly copy</li>
+</ul>`,
+    html: `
+<div style="display:flex;flex-direction:column;min-height:520px;padding:20px;">
+  <p style="font-size:19px;font-weight:600;margin:0 0 4px;color:var(--color-text-primary);">Upgrade your profile when you're ready</p>
+  <p style="font-size:13px;color:var(--color-text-secondary);margin:0 0 16px;">Free gets you sharing. Pro helps you look sharper, capture leads and measure what happens next.</p>
+  <div style="background:var(--color-background-warning);border:0.5px solid var(--color-border-warning);border-radius:var(--border-radius-md);padding:10px 14px;margin-bottom:16px;display:flex;align-items:center;gap:8px;">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-warning)" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+    <span style="font-size:12px;color:var(--color-text-warning);">MeCard Pro - annual plan with room for referral discounts over time</span>
+  </div>
+  <div style="border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:14px;margin-bottom:14px;">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;">
+      <div>
+        <p style="font-size:14px;font-weight:600;margin:0;color:var(--color-text-primary);">Pro profile</p>
+        <p style="font-size:11px;color:var(--color-text-secondary);margin:2px 0 0;">Billed annually</p>
+      </div>
+      <div style="text-align:right;">
+        <p style="font-size:18px;font-weight:700;margin:0;color:var(--color-text-primary);">R199/yr</p>
+        <p style="font-size:11px;color:var(--color-text-secondary);margin:2px 0 0;">about R17/month</p>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px;">
+      <div style="display:flex;align-items:center;gap:8px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-success)" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg><span style="font-size:12px;color:var(--color-text-secondary);">Remove MeCard branding from your public profile</span></div>
+      <div style="display:flex;align-items:center;gap:8px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-success)" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg><span style="font-size:12px;color:var(--color-text-secondary);">Lead capture and richer sharing analytics</span></div>
+      <div style="display:flex;align-items:center;gap:8px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-success)" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg><span style="font-size:12px;color:var(--color-text-secondary);">Company branding, custom colours, WhatsApp and direct-line extras</span></div>
+      <div style="display:flex;align-items:center;gap:8px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-success)" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg><span style="font-size:12px;color:var(--color-text-secondary);">Weekly performance email and future team features</span></div>
+    </div>
+  </div>
+  <div style="background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:12px 14px;margin-bottom:16px;">
+    <p style="font-size:12px;font-weight:500;margin:0 0 4px;color:var(--color-text-primary);">Free still works great</p>
+    <p style="font-size:11px;color:var(--color-text-secondary);margin:0;">If you skip this, you still keep your live profile, QR, PWA shortcut and basic sharing tools.</p>
+  </div>
+  <div style="flex:1;"></div>
+  <div style="background:var(--color-background-warning);color:var(--color-text-warning);font-weight:600;font-size:15px;text-align:center;padding:14px;border-radius:var(--border-radius-md);margin-bottom:8px;cursor:pointer;">Upgrade to MeCard Pro</div>
+  <div style="font-size:13px;text-align:center;padding:8px;color:var(--color-text-secondary);cursor:pointer;">Keep my free profile for now</div>
+</div>`
+  }
+];
+
+let currentScreen = 0;
+
+function render() {
+  const s = screens[currentScreen];
+  document.getElementById('screen-content').innerHTML = s.html;
+  document.getElementById('annotations').innerHTML = s.annotation;
+  document.getElementById('screen-label').textContent = s.title;
+  document.getElementById('prev-btn').disabled = currentScreen === 0;
+  document.getElementById('next-btn').disabled = currentScreen === screens.length - 1;
+}
+
+function nav(dir) {
+  const next = currentScreen + dir;
+  if (next >= 0 && next < screens.length) {
+    currentScreen = next;
+    render();
+  }
+}
+
+render();
+</script>
+

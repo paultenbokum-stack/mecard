@@ -58,6 +58,7 @@
 }
 .mecard-social-item a {
     text-decoration: none;
+    margin-left: -15px;
 }
 /* Override style.css `div.mecard-social-item i.fab { font-size: 3em }` (specificity 0,2,2) */
 .mecard-social .mecard-social-item i.fab {
