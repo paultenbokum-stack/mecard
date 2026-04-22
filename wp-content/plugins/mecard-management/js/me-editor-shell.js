@@ -548,15 +548,9 @@
 
         try {
             const nextUrl = new URL(baseUrl, window.location.origin);
-            if (targetId) {
-                nextUrl.searchParams.set('profile_id', String(targetId));
-            }
             window.location.assign(nextUrl.toString());
         } catch (error) {
             let fallback = '/manage/profile/';
-            if (targetId) {
-                fallback += '?profile_id=' + encodeURIComponent(String(targetId));
-            }
             window.location.assign(fallback);
         }
     };

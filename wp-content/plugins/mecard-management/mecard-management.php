@@ -27,6 +27,7 @@ require_once ME_PLUGIN_DIR . 'class-me-profile-renderer.php';
 require_once ME_PLUGIN_DIR .'class-me-preview.php';
 require_once ME_PLUGIN_DIR .'class-me-profile-editor.php';
 require_once ME_PLUGIN_DIR . 'class-me-onboarding.php';
+require_once ME_PLUGIN_DIR . 'class-me-entitlements.php';
 require_once ME_PLUGIN_DIR . 'class-me-single-editor.php';
 require_once ME_PLUGIN_DIR . 'class-me-single-cards.php';
 require_once ME_PLUGIN_DIR . 'class-me-single-manage.php';
@@ -36,6 +37,7 @@ add_action( 'init', function () {
     Me\Profile_Editor\Module::init();
     Me\Company_Editor\Module::init();
     Me\Onboarding\Module::init();
+    Me\Entitlements\Module::init();
     Me\Single_Editor\Module::init();
     Me\Single_Cards\Module::init();
     Me\Single_Manage\Module::init();

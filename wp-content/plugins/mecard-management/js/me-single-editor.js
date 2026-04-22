@@ -12,6 +12,8 @@
     const $sheetBackdrop = $('#me_single_sheet_backdrop');
     const $sheetForm = $('#me_single_sheet_form');
     const placeholderImages = CFG.images || {};
+    const forcePro = String($page.data('force-pro') || '0') === '1';
+    const serverInitialMode = String($page.data('initial-mode') || '');
     const DESCRIPTION_EDITOR_ID = 'me_single_company_description_editor';
     const SOCIAL_ORDER = ['linkedin', 'instagram', 'facebook', 'twitter', 'youtube', 'tiktok'];
     const SOCIAL_META = {
@@ -51,7 +53,6 @@
     function buildEditorUrl(mode) {
         const fallbackBase = (window.location.origin || '') + '/manage/profile/';
         const url = new URL(CFG.editProfileUrl || fallbackBase, window.location.origin);
-        url.searchParams.set('profile_id', profileId);
         if (mode === 'pro') {
             url.searchParams.set('mode', 'pro');
         } else {
@@ -69,6 +70,9 @@
     }
 
     function renderUpgradePanel() {
+        if (forcePro) {
+            return;
+        }
         const basket = state.basket || {};
         const isProfessional = String((state.profile && state.profile.type) || '').toLowerCase() === 'professional';
         const showUpgrade = currentMode === 'pro' && !isProfessional;
@@ -106,6 +110,9 @@
     }
 
     function setMode(mode) {
+        if (forcePro) {
+            mode = 'pro';
+        }
         currentMode = mode === 'pro' ? 'pro' : 'standard';
         $('.me-single-editor__mode-btn').removeClass('is-active');
         $('.me-single-editor__mode-btn[data-mode="' + currentMode + '"]').addClass('is-active');
@@ -616,9 +623,11 @@
             profileUrl = data.profileUrl || '';
             $('#me_single_done').attr('href', data.doneUrl || profileUrl || '#');
             const requestedMode = new URLSearchParams(window.location.search).get('mode');
-            const initialMode = requestedMode === 'pro'
+            const initialMode = forcePro
                 ? 'pro'
-                : ((state.profile.type || 'standard').toLowerCase() === 'professional' ? 'pro' : 'standard');
+                : (requestedMode === 'pro'
+                    ? 'pro'
+                    : (serverInitialMode === 'pro' ? 'pro' : ((state.profile.type || 'standard').toLowerCase() === 'professional' ? 'pro' : 'standard')));
             setMode(initialMode);
             syncForm();
             hydrateAll();

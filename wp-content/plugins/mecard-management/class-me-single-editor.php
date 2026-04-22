@@ -117,8 +117,7 @@ class Module {
     }
 
     public static function editor_url( int $profile_id = 0 ) : string {
-        $url = site_url( '/manage/profile/' );
-        return $profile_id ? add_query_arg( 'profile_id', $profile_id, $url ) : $url;
+        return site_url( '/manage/profile/' );
     }
 
     public static function dashboard_url() : string {
@@ -279,32 +278,46 @@ class Module {
             exit;
         }
 
+        $bundle_journey = Single_Manage_Module::get_bundle_journey( $profile_id );
+        $is_bundle_journey = ! empty( $bundle_journey['active'] );
+        $profile_type   = strtolower( (string) get_post_meta( $profile_id, 'wpcf-profile-type', true ) );
+        $is_pro_profile = $is_bundle_journey || in_array( $profile_type, [ 'professional', 'pro' ], true );
+        $initial_mode   = $is_pro_profile ? 'pro' : 'standard';
+
         ob_start();
         ?>
-        <div class="me-single-editor-page" data-profile-id="<?php echo esc_attr( $profile_id ); ?>">
+        <div class="me-single-editor-page" data-profile-id="<?php echo esc_attr( $profile_id ); ?>" data-force-pro="<?php echo $is_pro_profile ? '1' : '0'; ?>" data-initial-mode="<?php echo esc_attr( $initial_mode ); ?>">
             <div class="me-single-editor__header">
                 <div>
                     <p class="me-single-editor__eyebrow">Edit profile</p>
                     <h1>Manage your MeCard profile</h1>
                     <p class="me-single-editor__intro">Tap your name, photo, company name, or buttons to edit them.</p>
-                    <p class="me-single-editor__intro">Use Standard and Pro to preview how each version will look.</p>
+                    <?php if ( $is_bundle_journey ) : ?>
+                        <p class="me-single-editor__intro">Step 1 of 3: Configure your Pro profile, then confirm your bundle items before checkout.</p>
+                    <?php elseif ( ! $is_pro_profile ) : ?>
+                        <p class="me-single-editor__intro">Use Standard and Pro to preview how each version will look.</p>
+                    <?php endif; ?>
                 </div>
             </div>
 
-            <div class="me-single-editor__mode-switch" role="tablist" aria-label="Profile template preview">
-                <button type="button" class="me-single-editor__mode-btn is-active" data-mode="standard">Standard</button>
-                <button type="button" class="me-single-editor__mode-btn" data-mode="pro">Upgrade to Pro</button>
-            </div>
+            <?php if ( ! $is_pro_profile ) : ?>
+                <div class="me-single-editor__mode-switch" role="tablist" aria-label="Profile template preview">
+                    <button type="button" class="me-single-editor__mode-btn is-active" data-mode="standard">Standard</button>
+                    <button type="button" class="me-single-editor__mode-btn" data-mode="pro">Upgrade to Pro</button>
+                </div>
+            <?php endif; ?>
 
-            <div class="me-single-editor__upgrade-benefits" id="me_single_upgrade_benefits" hidden>
-                <p>All standard features +</p>
-                <ul class="me-single-editor__upgrade-points">
-                    <li>Rich company details</li>
-                    <li>Company branding</li>
-                    <li>Analytics</li>
-                    <li>Team management and sharing</li>
-                </ul>
-            </div>
+            <?php if ( ! $is_pro_profile ) : ?>
+                <div class="me-single-editor__upgrade-benefits" id="me_single_upgrade_benefits" hidden>
+                    <p>All standard features +</p>
+                    <ul class="me-single-editor__upgrade-points">
+                        <li>Rich company details</li>
+                        <li>Company branding</li>
+                        <li>Analytics</li>
+                        <li>Team management and sharing</li>
+                    </ul>
+                </div>
+            <?php endif; ?>
 
             <form id="meSingleEditorForm" class="me-single-editor__form" hidden>
                 <input type="hidden" name="post_id" value="<?php echo esc_attr( $profile_id ); ?>">
@@ -343,12 +356,12 @@ class Module {
             </form>
 
             <div class="me-single-editor__canvas">
-                <div id="meSinglePreviewStandard" class="me-single-editor__pane is-active" data-mode="standard">
+                <div id="meSinglePreviewStandard" class="me-single-editor__pane <?php echo $is_pro_profile ? '' : 'is-active'; ?>" data-mode="standard">
                     <div class="mecard-public-card me-single-editor__preview-card">
                             <?php Profile_Renderer_Module::render_standard( [], [], 'preview' ); ?>
                     </div>
                 </div>
-                <div id="meSinglePreviewPro" class="me-single-editor__pane" data-mode="pro">
+                <div id="meSinglePreviewPro" class="me-single-editor__pane <?php echo $is_pro_profile ? 'is-active' : ''; ?>" data-mode="pro">
                     <div class="mecard-public-card me-single-editor__preview-card">
                             <?php Profile_Renderer_Module::render_pro( [], [], 'preview' ); ?>
                     </div>
@@ -357,18 +370,35 @@ class Module {
 
             <div class="me-single-editor__status" id="me_single_status" aria-live="polite"></div>
 
-            <div class="me-single-editor__panel me-single-editor__upgrade-panel" id="me_single_upgrade_cta" hidden>
-                <div class="me-single-editor__panel-head">
-                    <p class="me-single-editor__panel-kicker">Upgrade Now</p>
-                    <h2>Pro profile - R199 per year</h2>
-                    <p>Unlock branding, company details, richer buttons, and analytics.</p>
-                </div>
-                <div class="me-single-editor__panel-body" id="me_single_upgrade_panel_body">
-                    <div class="me-single-editor__panel-actions">
-                        <a class="me-single-editor__panel-button me-single-editor__panel-button--primary" id="me_single_upgrade_now" href="#">Add to basket</a>
+            <?php if ( ! $is_pro_profile ) : ?>
+                <div class="me-single-editor__panel me-single-editor__upgrade-panel" id="me_single_upgrade_cta" hidden>
+                    <div class="me-single-editor__panel-head">
+                        <p class="me-single-editor__panel-kicker">Upgrade Now</p>
+                        <h2>Pro profile - R199 per year</h2>
+                        <p>Unlock branding, company details, richer buttons, and analytics.</p>
+                    </div>
+                    <div class="me-single-editor__panel-body" id="me_single_upgrade_panel_body">
+                        <div class="me-single-editor__panel-actions">
+                            <a class="me-single-editor__panel-button me-single-editor__panel-button--primary" id="me_single_upgrade_now" href="#">Add to basket</a>
+                        </div>
                     </div>
                 </div>
-            </div>
+            <?php endif; ?>
+
+            <?php if ( $is_bundle_journey ) : ?>
+                <div class="me-single-editor__panel me-single-editor__journey-panel">
+                    <div class="me-single-editor__panel-head">
+                        <p class="me-single-editor__panel-kicker">Bundle in progress</p>
+                        <h2>Step 1 of 3: Configure your Pro profile</h2>
+                        <p>Your classic bundle is already in your basket. Once this looks right, confirm the card and phone tag, then checkout.</p>
+                    </div>
+                    <div class="me-single-editor__panel-actions">
+                        <a class="me-single-editor__panel-button me-single-editor__panel-button--primary" href="<?php echo esc_url( Single_Manage_Module::bundle_cards_url( $profile_id ) ); ?>">Next: Confirm bundle items</a>
+                        <a class="me-single-editor__panel-button" href="<?php echo esc_url( wc_get_checkout_url() ); ?>">Checkout</a>
+                        <a class="me-single-editor__panel-button me-single-editor__panel-button--secondary" href="<?php echo esc_url( Single_Manage_Module::bundle_remove_url( $profile_id ) ); ?>">Remove bundle</a>
+                    </div>
+                </div>
+            <?php endif; ?>
 
             <div class="me-single-editor__footer">
                 <a class="me-single-editor__back me-single-editor__back--bottom" id="me_single_done" href="<?php echo esc_url( self::dashboard_url() ); ?>">Back to My MeCard Home</a>
