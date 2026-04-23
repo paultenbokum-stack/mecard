@@ -206,7 +206,6 @@ class Module {
               <label>Mobile number
                 <input type="text" name="mobile" value="' . esc_attr($values['mobile']) . '" autocomplete="tel" required>
               </label>
-              <div class="me-auth-form__note">A secure password is generated automatically for now. In the next phase we can switch this to a magic-link or code-based flow.</div>
               ' . wp_nonce_field('me_email_signup', 'me_email_signup_nonce', true, false) . '
               <button class="me-auth-form__submit" type="submit">Create my free MeCard</button>
             </form>

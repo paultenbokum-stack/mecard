@@ -188,7 +188,6 @@
           <div class="me-step__field">
             <label>Profile photo <span class="me-step__optional">optional</span></label>
             ${mediaMarkup("photo", state.profile.photoUrl, state.profile.photoUrl ? "Change photo" : "Choose photo")}
-            <p class="me-step__hint">If the user signed in with Google, reuse that avatar as the starting point.</p>
           </div>
         </div>
         <div class="me-step__actions">
@@ -218,11 +217,11 @@
           <div class="me-step__field">
             <label>Company logo</label>
             ${mediaMarkup("logo", state.profile.companyLogoUrl, state.profile.companyLogoUrl ? "Change logo" : "Choose logo")}
-            <p class="me-step__hint">Store the logo on the profile so the classic card can be prefilled without a company record.</p>
           </div>
           <div class="me-step__field">
             <label for="me-linkedin">LinkedIn URL</label>
             <input id="me-linkedin" name="wpcf-linkedin-url" value="${escapeHtml(state.profile.linkedin)}" placeholder="Optional" />
+            <p class="me-step__hint">You can add more social links later by editing your profile.</p>
           </div>
         </div>
         <div class="me-step__actions">
