@@ -50,6 +50,14 @@
         $('#me_single_status').text(text || '').toggleClass('is-error', !!isError);
     }
 
+    function setUpgradeButtonState(label, disabled) {
+        const $button = $('#me_single_upgrade_now');
+        if (!$button.length) return;
+        $button.text(label);
+        $button.toggleClass('is-disabled', !!disabled);
+        $button.attr('aria-disabled', disabled ? 'true' : 'false');
+    }
+
     function buildEditorUrl(mode) {
         const fallbackBase = (window.location.origin || '') + '/manage/profile/';
         const url = new URL(CFG.editProfileUrl || fallbackBase, window.location.origin);
@@ -58,14 +66,6 @@
         } else {
             url.searchParams.delete('mode');
         }
-        return url.toString();
-    }
-
-    function buildAddToCartUrl(productId, mode) {
-        const id = parseInt(productId, 10) || 0;
-        if (!id) return '#';
-        const url = new URL(buildEditorUrl(mode), window.location.origin);
-        url.searchParams.set('add-to-cart', id);
         return url.toString();
     }
 
@@ -101,11 +101,13 @@
                 '</div>'
             );
         } else {
+            const addUrl = basket.upgradeAddUrl || '#';
             $body.html(
                 '<div class="me-single-editor__panel-actions">' +
-                    '<a class="me-single-editor__panel-button me-single-editor__panel-button--primary" id="me_single_upgrade_now" href="' + esc(buildAddToCartUrl(profileId, 'pro')) + '">Add to basket</a>' +
+                    '<a class="me-single-editor__panel-button me-single-editor__panel-button--primary" id="me_single_upgrade_now" href="' + esc(addUrl) + '">Add to basket</a>' +
                 '</div>'
             );
+            setUpgradeButtonState('Add to basket', false);
         }
     }
 
@@ -944,6 +946,38 @@
 
     $(document).on('click', '.me-single-editor__mode-btn', function() {
         setMode($(this).data('mode'));
+    });
+
+    $(document).on('click', '#me_single_upgrade_now', function(event) {
+        event.preventDefault();
+
+        const $button = $(event.currentTarget);
+        if ($button.attr('aria-disabled') === 'true') {
+            return;
+        }
+
+        setUpgradeButtonState('Adding...', true);
+        setStatus('');
+
+        $.post(CFG.ajaxurl, {
+            action: 'me_single_editor_add_upgrade',
+            _wpnonce: CFG.nonce,
+            post_id: profileId
+        }).done(function(response) {
+            const data = response && response.success && response.data ? response.data : {};
+            if (data.basket) {
+                state.basket = data.basket;
+            }
+            renderUpgradePanel();
+            setStatus(data.message || 'Pro profile upgrade added.');
+        }).fail(function(xhr) {
+            let message = 'Could not add the Pro upgrade to your basket.';
+            if (xhr && xhr.responseJSON && xhr.responseJSON.data && xhr.responseJSON.data.message) {
+                message = xhr.responseJSON.data.message;
+            }
+            renderUpgradePanel();
+            setStatus(message, true);
+        });
     });
 
     $(document).on('click', '[data-edit-sheet]', function(event) {

@@ -14,8 +14,10 @@ class Module {
         add_action( 'wp_enqueue_scripts', [ __CLASS__, 'enqueue' ] );
         add_action( 'template_redirect', [ __CLASS__, 'maybe_redirect_dashboard' ] );
         add_action( 'template_redirect', [ __CLASS__, 'maybe_redirect_legacy_toolset_edit' ], 5 );
+        add_action( 'template_redirect', [ __CLASS__, 'handle_editor_actions' ], 6 );
         add_action( 'wp_ajax_me_single_editor_load', [ __CLASS__, 'ajax_load' ] );
         add_action( 'wp_ajax_me_single_editor_save', [ __CLASS__, 'ajax_save' ] );
+        add_action( 'wp_ajax_me_single_editor_add_upgrade', [ __CLASS__, 'ajax_add_upgrade' ] );
         add_filter( 'the_content', [ __CLASS__, 'replace_edit_profile_page' ], 20 );
         add_filter( 'ajax_query_attachments_args', [ __CLASS__, 'filter_editor_media_query' ] );
         add_filter( 'get_edit_post_link', [ __CLASS__, 'filter_profile_edit_link' ], 20, 3 );
@@ -183,6 +185,51 @@ class Module {
         }
 
         wp_safe_redirect( self::editor_url( $profile_id ) );
+        exit;
+    }
+
+    public static function handle_editor_actions() : void {
+        if ( ! is_user_logged_in() || is_admin() || ! is_page( 'profile' ) ) {
+            return;
+        }
+
+        $action = isset( $_GET['me_editor_action'] ) ? sanitize_text_field( wp_unslash( $_GET['me_editor_action'] ) ) : '';
+        if ( $action !== 'add-upgrade' ) {
+            return;
+        }
+
+        $profile_id = self::resolve_single_profile_id( get_current_user_id() );
+        if ( ! $profile_id || ! self::user_can_edit_profile( $profile_id ) ) {
+            return;
+        }
+
+        $nonce = isset( $_GET['_wpnonce'] ) ? sanitize_text_field( wp_unslash( $_GET['_wpnonce'] ) ) : '';
+        if ( ! wp_verify_nonce( $nonce, 'me-single-editor-add-upgrade-' . $profile_id ) ) {
+            wp_die( 'This upgrade link has expired. Please try again.' );
+        }
+
+        if ( ! function_exists( 'WC' ) || ! WC()->cart ) {
+            return;
+        }
+
+        $upgrade_product_id = defined( 'MECARD_PROFILE_UPGRADE_PRODUCT_ID' ) ? (int) MECARD_PROFILE_UPGRADE_PRODUCT_ID : 0;
+        if ( $upgrade_product_id <= 0 ) {
+            return;
+        }
+
+        if ( ! self::find_upgrade_cart_item_key( $profile_id ) ) {
+            WC()->cart->add_to_cart(
+                $upgrade_product_id,
+                1,
+                0,
+                [],
+                [
+                    'mecard_profile_id' => $profile_id,
+                ]
+            );
+        }
+
+        wp_safe_redirect( add_query_arg( 'mode', 'pro', self::editor_url( $profile_id ) ) );
         exit;
     }
 
@@ -379,7 +426,7 @@ class Module {
                     </div>
                     <div class="me-single-editor__panel-body" id="me_single_upgrade_panel_body">
                         <div class="me-single-editor__panel-actions">
-                            <a class="me-single-editor__panel-button me-single-editor__panel-button--primary" id="me_single_upgrade_now" href="#">Add to basket</a>
+                            <a class="me-single-editor__panel-button me-single-editor__panel-button--primary" id="me_single_upgrade_now" href="<?php echo esc_url( self::upgrade_add_url( $profile_id ) ); ?>">Add to basket</a>
                         </div>
                     </div>
                 </div>
@@ -516,6 +563,50 @@ class Module {
         ) );
     }
 
+    public static function ajax_add_upgrade() : void {
+        self::verify_request();
+
+        $profile_id = isset( $_POST['post_id'] ) ? absint( $_POST['post_id'] ) : self::resolve_single_profile_id( get_current_user_id() );
+        if ( ! self::user_can_edit_profile( $profile_id ) ) {
+            wp_send_json_error( [ 'message' => 'No permission to edit this profile.' ], 403 );
+        }
+
+        if ( ! function_exists( 'WC' ) || ! WC()->cart ) {
+            wp_send_json_error( [ 'message' => 'Basket is not available right now.' ], 500 );
+        }
+
+        $upgrade_product_id = defined( 'MECARD_PROFILE_UPGRADE_PRODUCT_ID' ) ? (int) MECARD_PROFILE_UPGRADE_PRODUCT_ID : 0;
+        if ( $upgrade_product_id <= 0 ) {
+            wp_send_json_error( [ 'message' => 'Upgrade product is not configured.' ], 500 );
+        }
+
+        $existing_key = self::find_upgrade_cart_item_key( $profile_id );
+        if ( ! $existing_key ) {
+            $added_key = WC()->cart->add_to_cart(
+                $upgrade_product_id,
+                1,
+                0,
+                [],
+                [
+                    'mecard_profile_id' => $profile_id,
+                ]
+            );
+
+            if ( ! $added_key ) {
+                wp_send_json_error( [ 'message' => 'Could not add the Pro upgrade to your basket.' ], 500 );
+            }
+
+            $existing_key = (string) $added_key;
+        }
+
+        wp_send_json_success( [
+            'message'     => 'Pro profile upgrade added to your basket.',
+            'cartItemKey' => $existing_key,
+            'basket'      => self::build_basket_summary( $profile_id ),
+            'redirect'    => add_query_arg( 'mode', 'pro', self::editor_url( $profile_id ) ),
+        ] );
+    }
+
     private static function verify_request() : void {
         if ( ! is_user_logged_in() ) {
             wp_send_json_error( [ 'message' => 'Please sign in first.' ], 403 );
@@ -549,12 +640,13 @@ class Module {
             'availableCards' => self::load_available_cards( get_current_user_id() ),
             'profileUrl'     => get_permalink( $profile_id ),
             'doneUrl'        => self::dashboard_url(),
-            'upgradeUrl'     => add_query_arg( 'add-to-cart', $profile_id, add_query_arg( 'mode', 'pro', self::editor_url( $profile_id ) ) ),
+            'upgradeUrl'     => self::upgrade_add_url( $profile_id ),
             'basket'         => self::build_basket_summary( $profile_id ),
         ];
     }
 
     private static function build_basket_summary( int $profile_id ) : array {
+        $upgrade_product_id = defined( 'MECARD_PROFILE_UPGRADE_PRODUCT_ID' ) ? (int) MECARD_PROFILE_UPGRADE_PRODUCT_ID : 0;
         $classic_product_id = defined( 'MECARD_CLASSIC_PRODUCT_ID' ) ? (int) MECARD_CLASSIC_PRODUCT_ID : 0;
         $custom_product_id  = defined( 'MECARD_PRODUCT_ID' ) ? (int) MECARD_PRODUCT_ID : 0;
 
@@ -563,8 +655,10 @@ class Module {
             'checkoutUrl'      => function_exists( 'wc_get_checkout_url' ) ? wc_get_checkout_url() : '',
             'cardsUrl'         => self::cards_url(),
             'customDesignUrl'  => add_query_arg( 'flow', 'custom', self::cards_url() ),
+            'upgradeProductId' => $upgrade_product_id,
             'classicProductId' => $classic_product_id,
             'customProductId'  => $custom_product_id,
+            'upgradeAddUrl'    => self::upgrade_add_url( $profile_id ),
             'upgradeInCart'    => false,
             'classicInCart'    => false,
             'customInCart'     => false,
@@ -578,7 +672,7 @@ class Module {
         }
 
         $relevant_product_ids = array_filter(
-            [ $profile_id, $classic_product_id, $custom_product_id ],
+            [ $upgrade_product_id, $profile_id, $classic_product_id, $custom_product_id ],
             static function ( $id ) {
                 return $id > 0;
             }
@@ -592,8 +686,12 @@ class Module {
 
             $quantity = max( 1, (int) ( $item['quantity'] ?? 1 ) );
             $label    = '';
+            $item_profile_id = isset( $item['mecard_profile_id'] ) ? absint( $item['mecard_profile_id'] ) : 0;
 
-            if ( $product_id === $profile_id ) {
+            if ( $product_id === $upgrade_product_id && $item_profile_id === $profile_id ) {
+                $label = 'Pro profile upgrade';
+                $summary['upgradeInCart'] = true;
+            } elseif ( $product_id === $profile_id ) {
                 $label = 'Pro profile upgrade';
                 $summary['upgradeInCart'] = true;
             } elseif ( $product_id === $classic_product_id ) {
@@ -621,6 +719,41 @@ class Module {
         }
 
         return $summary;
+    }
+
+    private static function upgrade_add_url( int $profile_id ) : string {
+        $url = add_query_arg(
+            [
+                'mode'             => 'pro',
+                'me_editor_action' => 'add-upgrade',
+            ],
+            self::editor_url( $profile_id )
+        );
+
+        return wp_nonce_url( $url, 'me-single-editor-add-upgrade-' . $profile_id );
+    }
+
+    private static function find_upgrade_cart_item_key( int $profile_id ) : string {
+        if ( ! function_exists( 'WC' ) || ! WC()->cart ) {
+            return '';
+        }
+
+        $upgrade_product_id = defined( 'MECARD_PROFILE_UPGRADE_PRODUCT_ID' ) ? (int) MECARD_PROFILE_UPGRADE_PRODUCT_ID : 0;
+
+        foreach ( WC()->cart->get_cart() as $cart_item_key => $item ) {
+            $product_id      = (int) ( $item['product_id'] ?? 0 );
+            $item_profile_id = isset( $item['mecard_profile_id'] ) ? absint( $item['mecard_profile_id'] ) : 0;
+
+            if ( $upgrade_product_id > 0 && $product_id === $upgrade_product_id && $item_profile_id === $profile_id ) {
+                return (string) $cart_item_key;
+            }
+
+            if ( $product_id === $profile_id ) {
+                return (string) $cart_item_key;
+            }
+        }
+
+        return '';
     }
 
     private static function user_can_edit_profile( int $profile_id ) : bool {

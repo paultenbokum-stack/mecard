@@ -417,15 +417,39 @@ jQuery(document).ready(function($) {
         }
     );
 
-    $( document.body ).on( 'click', 'a.remove.remove_from_cart_button:not(.remove-profile-from-cart), td.product-remove a.remove',function(event) {
-        if( ! confirm( 'Are you sure you want to remove this product? It will also remove all the related cards and tags from your console.' ) ) {
+    function mecardShouldConfirmCartRemoval($link) {
+        const href = String($link.attr('href') || '');
+        if (href.indexOf('me_bundle_action=remove') !== -1) {
+            return true;
+        }
+
+        const productIds = Array.isArray(MECARD_MGMT.mecardProductIds) ? MECARD_MGMT.mecardProductIds.map(function(id) {
+            return parseInt(id, 10);
+        }).filter(function(id) {
+            return !Number.isNaN(id) && id > 0;
+        }) : [];
+
+        const productId = parseInt(
+            $link.attr('data-product_id')
+            || $link.data('product_id')
+            || $link.data('product-id')
+            || 0,
+            10
+        );
+
+        return !Number.isNaN(productId) && productIds.indexOf(productId) !== -1;
+    }
+
+    $( document.body ).on( 'click', 'a.remove.remove_from_cart_button, td.product-remove a.remove, a[href*="me_bundle_action=remove"]', function(event) {
+        const $link = $(this);
+        if (!mecardShouldConfirmCartRemoval($link)) {
+            return;
+        }
+
+        if( ! confirm( MECARD_MGMT.removeConfirmText || 'Are you sure you want to remove this item?' ) ) {
             event.preventDefault();
             event.stopPropagation();
         }
-        setTimeout(function() {
-            //$('input.hidden-refresh').click();
-            window.location.reload();
-        }, 2000);
     });
 
     $(document).on('change','input[name="wpcf-card-front"]',function() {

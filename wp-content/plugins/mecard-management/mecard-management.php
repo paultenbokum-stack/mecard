@@ -32,6 +32,211 @@ require_once ME_PLUGIN_DIR . 'class-me-single-editor.php';
 require_once ME_PLUGIN_DIR . 'class-me-single-cards.php';
 require_once ME_PLUGIN_DIR . 'class-me-single-manage.php';
 
+function mecard_cart_cleanup_guard_key( string $cart_item_key, int $user_id ) : string {
+    return $cart_item_key . '|' . $user_id;
+}
+
+function mecard_mark_cart_cleanup_in_progress( string $cart_item_key, int $user_id, bool $active ) : void {
+    $key = mecard_cart_cleanup_guard_key( $cart_item_key, $user_id );
+    if ( ! isset( $GLOBALS['mecard_cart_cleanup_guards'] ) || ! is_array( $GLOBALS['mecard_cart_cleanup_guards'] ) ) {
+        $GLOBALS['mecard_cart_cleanup_guards'] = [];
+    }
+
+    if ( $active ) {
+        $GLOBALS['mecard_cart_cleanup_guards'][ $key ] = true;
+    } else {
+        unset( $GLOBALS['mecard_cart_cleanup_guards'][ $key ] );
+    }
+}
+
+function mecard_is_cart_cleanup_in_progress( string $cart_item_key, int $user_id ) : bool {
+    $key = mecard_cart_cleanup_guard_key( $cart_item_key, $user_id );
+    return ! empty( $GLOBALS['mecard_cart_cleanup_guards'][ $key ] );
+}
+
+function mecard_legacy_dashboard_url() : string {
+    return site_url( '/manage-mecard-profiles/dashboard/' );
+}
+
+function mecard_user_home_url( int $user_id = 0 ) : string {
+    $user_id = $user_id > 0 ? $user_id : get_current_user_id();
+    if ( $user_id > 0 && class_exists( '\\Me\\Single_Editor\\Module' ) ) {
+        $profile_id = \Me\Single_Editor\Module::resolve_single_profile_id( $user_id );
+        if ( $profile_id > 0 ) {
+            return \Me\Single_Manage\Module::manage_url();
+        }
+    }
+
+    return mecard_legacy_dashboard_url();
+}
+
+function mecard_cleanup_cart_item_related_objects( string $cart_item_key, int $user_id = 0 ) : array {
+    $user_id = $user_id > 0 ? $user_id : get_current_user_id();
+    $result  = [
+        'cart_item_key'          => $cart_item_key,
+        'user_id'                => $user_id,
+        'entitlements_cancelled' => 0,
+        'trashed_tags'           => 0,
+        'skipped_ordered_tags'   => 0,
+    ];
+
+    if ( $cart_item_key === '' || $user_id <= 0 ) {
+        return $result;
+    }
+
+    if ( method_exists( '\\Me\\Entitlements\\Module', 'cancel_cart_entitlements_for_user' ) ) {
+        $result['entitlements_cancelled'] = \Me\Entitlements\Module::cancel_cart_entitlements_for_user( $cart_item_key, $user_id );
+    }
+
+    $args = [
+        'post_type'      => 't',
+        'posts_per_page' => -1,
+        'author'         => $user_id,
+        'post_status'    => [ 'publish', 'draft', 'pending', 'private', 'future', 'trash' ],
+        'meta_query'     => [
+            [
+                'key'   => 'wpcf-cart-item-key',
+                'value' => $cart_item_key . '-' . $user_id,
+            ],
+        ],
+    ];
+
+    $tags = get_posts( $args );
+    foreach ( $tags as $tag ) {
+        if ( ! $tag instanceof \WP_Post || $tag->post_status === 'trash' ) {
+            continue;
+        }
+
+        if ( get_tag_order_id( $tag->ID ) > 0 ) {
+            $result['skipped_ordered_tags']++;
+            continue;
+        }
+
+        if ( wp_trash_post( $tag->ID ) ) {
+            $result['trashed_tags']++;
+        }
+    }
+
+    return $result;
+}
+
+function mecard_remove_cart_item_and_related_objects( string $cart_item_key, int $user_id = 0 ) : array {
+    $user_id = $user_id > 0 ? $user_id : get_current_user_id();
+    $result  = [
+        'cart_removed' => false,
+        'cart_item_key' => $cart_item_key,
+        'user_id' => $user_id,
+        'entitlements_cancelled' => 0,
+        'trashed_tags' => 0,
+        'skipped_ordered_tags' => 0,
+    ];
+
+    if ( $cart_item_key === '' || $user_id <= 0 ) {
+        return $result;
+    }
+
+    if ( mecard_is_cart_cleanup_in_progress( $cart_item_key, $user_id ) ) {
+        return $result;
+    }
+
+    mecard_mark_cart_cleanup_in_progress( $cart_item_key, $user_id, true );
+    try {
+        if ( function_exists( 'WC' ) && WC()->cart ) {
+            $result['cart_removed'] = (bool) WC()->cart->remove_cart_item( $cart_item_key );
+            WC()->cart->calculate_totals();
+            WC()->cart->set_session();
+            WC()->cart->maybe_set_cart_cookies();
+        }
+
+        $cleanup = mecard_cleanup_cart_item_related_objects( $cart_item_key, $user_id );
+        $result  = array_merge( $result, $cleanup );
+    } finally {
+        mecard_mark_cart_cleanup_in_progress( $cart_item_key, $user_id, false );
+    }
+
+    return $result;
+}
+
+function mecard_profile_upgrade_product_id(): int {
+    return (int) ( defined( 'MECARD_PROFILE_UPGRADE_PRODUCT_ID' ) ? MECARD_PROFILE_UPGRADE_PRODUCT_ID : 0 );
+}
+
+function mecard_product_ids() : array {
+    return array_values( array_filter( array_map( 'intval', [
+        defined( 'MECARD_CLASSIC_PRODUCT_ID' ) ? MECARD_CLASSIC_PRODUCT_ID : 0,
+        defined( 'MECARD_CLASSIC_BUNDLE_PRODUCT_ID' ) ? MECARD_CLASSIC_BUNDLE_PRODUCT_ID : 0,
+        defined( 'MECARD_PRODUCT_ID' ) ? MECARD_PRODUCT_ID : 0,
+        defined( 'MECARD_BUNDLE_PRODUCT_ID' ) ? MECARD_BUNDLE_PRODUCT_ID : 0,
+        defined( 'MECARD_KEYRING_PRODUCT_ID' ) ? MECARD_KEYRING_PRODUCT_ID : 0,
+        defined( 'MECARD_PHONETAG_PRODUCT_ID' ) ? MECARD_PHONETAG_PRODUCT_ID : 0,
+        defined( 'MECARD_PROFILE_UPGRADE_PRODUCT_ID' ) ? MECARD_PROFILE_UPGRADE_PRODUCT_ID : 0,
+    ] ) ) );
+}
+
+function mecard_is_product_id( int $product_id ) : bool {
+    return $product_id > 0 && in_array( $product_id, mecard_product_ids(), true );
+}
+
+function mecard_mark_removed_notice_as_mecard( bool $active ) : void {
+    $GLOBALS['mecard_strip_undo_notice'] = $active;
+}
+
+function mecard_should_strip_removed_undo_notice() : bool {
+    return ! empty( $GLOBALS['mecard_strip_undo_notice'] );
+}
+
+function mecard_is_profile_upgrade_product( $product ): bool {
+    if ( ! class_exists( 'WC_Product' ) || ! $product instanceof WC_Product ) {
+        return false;
+    }
+
+    $upgrade_product_id = mecard_profile_upgrade_product_id();
+    if ( $upgrade_product_id > 0 && (int) $product->get_id() === $upgrade_product_id ) {
+        return true;
+    }
+
+    return $product->get_type() === 'mecard-profile';
+}
+
+function mecard_force_virtual_profile_upgrades( $is_virtual, $product ) {
+    if ( mecard_is_profile_upgrade_product( $product ) ) {
+        return true;
+    }
+
+    return $is_virtual;
+}
+add_filter( 'woocommerce_is_virtual', 'mecard_force_virtual_profile_upgrades', 20, 2 );
+
+function mecard_force_no_shipping_for_profile_upgrades( $needs_shipping, $product ) {
+    if ( mecard_is_profile_upgrade_product( $product ) ) {
+        return false;
+    }
+
+    return $needs_shipping;
+}
+add_filter( 'woocommerce_product_needs_shipping', 'mecard_force_no_shipping_for_profile_upgrades', 20, 2 );
+
+function mecard_sync_profile_upgrade_shipping_defaults(): void {
+    $upgrade_product_id = mecard_profile_upgrade_product_id();
+    if ( $upgrade_product_id <= 0 || get_post_type( $upgrade_product_id ) !== 'product' ) {
+        return;
+    }
+
+    $done_key = 'me_mecard_profile_upgrade_shipping_defaults_v1';
+    if ( get_option( $done_key ) ) {
+        return;
+    }
+
+    update_post_meta( $upgrade_product_id, '_virtual', 'yes' );
+
+    if ( function_exists( 'wc_delete_product_transients' ) ) {
+        wc_delete_product_transients( $upgrade_product_id );
+    }
+
+    update_option( $done_key, 1, false );
+}
+add_action( 'init', 'mecard_sync_profile_upgrade_shipping_defaults', 15 );
+
 add_action( 'init', function () {
     // These only add wp_ajax_* actions, no output/enqueue
     Me\Profile_Editor\Module::init();
@@ -42,6 +247,56 @@ add_action( 'init', function () {
     Me\Single_Cards\Module::init();
     Me\Single_Manage\Module::init();
 } );
+
+add_action( 'wp', 'mecard_customize_empty_cart_state', 20 );
+
+function mecard_customize_empty_cart_state() : void {
+    if ( is_admin() || ! function_exists( 'is_cart' ) || ! is_cart() ) {
+        return;
+    }
+
+    remove_action( 'woocommerce_cart_is_empty', 'wc_empty_cart_message', 10 );
+    add_action( 'woocommerce_cart_is_empty', 'mecard_empty_cart_message', 10 );
+}
+
+function mecard_empty_cart_target_url() : string {
+    return mecard_user_home_url();
+}
+
+function mecard_empty_cart_target_text() : string {
+    $target_url = mecard_empty_cart_target_url();
+
+    if ( is_user_logged_in() && class_exists( '\\Me\\Single_Manage\\Module' ) && $target_url === \Me\Single_Manage\Module::manage_url() ) {
+        return 'Back to My MeCard Home';
+    }
+
+    return 'Go to dashboard';
+}
+
+function mecard_empty_cart_message() : void {
+    echo '<div class="wc-empty-cart-message mecard-empty-cart-message">';
+    echo '<h2>Your basket is empty</h2>';
+    echo '<p>There are no MeCard items waiting to be checked out right now.</p>';
+    echo '</div>';
+}
+
+function mecard_empty_cart_return_url( $url ) {
+    if ( function_exists( 'is_cart' ) && is_cart() && function_exists( 'WC' ) && WC()->cart && WC()->cart->is_empty() ) {
+        return mecard_empty_cart_target_url();
+    }
+
+    return $url;
+}
+add_filter( 'woocommerce_return_to_shop_redirect', 'mecard_empty_cart_return_url', 20 );
+
+function mecard_empty_cart_return_text( $text ) {
+    if ( function_exists( 'is_cart' ) && is_cart() && function_exists( 'WC' ) && WC()->cart && WC()->cart->is_empty() ) {
+        return mecard_empty_cart_target_text();
+    }
+
+    return $text;
+}
+add_filter( 'woocommerce_return_to_shop_text', 'mecard_empty_cart_return_text', 20 );
 function mecard_init_modular_editors() {
     // Frontend only
     if ( is_admin() ) {
@@ -192,6 +447,16 @@ function install_scripts(): void
         'nonce'     => wp_create_nonce('myajax-next-nonce'),
         'siteurl'   => site_url(),
         'cred_edit_company_form_id' => CRED_EDIT_COMPANY_FORM_ID,
+        'mecardProductIds' => array_values( array_filter( array_map( 'intval', [
+            defined( 'MECARD_CLASSIC_PRODUCT_ID' ) ? MECARD_CLASSIC_PRODUCT_ID : 0,
+            defined( 'MECARD_CLASSIC_BUNDLE_PRODUCT_ID' ) ? MECARD_CLASSIC_BUNDLE_PRODUCT_ID : 0,
+            defined( 'MECARD_PRODUCT_ID' ) ? MECARD_PRODUCT_ID : 0,
+            defined( 'MECARD_BUNDLE_PRODUCT_ID' ) ? MECARD_BUNDLE_PRODUCT_ID : 0,
+            defined( 'MECARD_KEYRING_PRODUCT_ID' ) ? MECARD_KEYRING_PRODUCT_ID : 0,
+            defined( 'MECARD_PHONETAG_PRODUCT_ID' ) ? MECARD_PHONETAG_PRODUCT_ID : 0,
+            defined( 'MECARD_PROFILE_UPGRADE_PRODUCT_ID' ) ? MECARD_PROFILE_UPGRADE_PRODUCT_ID : 0,
+        ] ) ) ),
+        'removeConfirmText' => 'Are you sure you want to remove this item? This will also remove its related cards, tags, or bundle setup from your basket.',
     ]);
 
     wp_register_script(
@@ -989,29 +1254,28 @@ function add_profile_to_account($cart_item_key, $product_id, $quantity, $variati
 
 // define the woocommerce_remove_cart_item callback
 function action_woocommerce_remove_cart_item( $cart_item_key, $instance ) {
-    $args = array(
-        'post_type'  => 't',
-        'posts_per_page' => -1,
-        'author' => get_current_user_id(),
-        'meta_query' => array(
-            array(
-                'key'   => 'wpcf-cart-item-key',
-                'value' => $cart_item_key.'-'.get_current_user_id()
-            )
-        )
-    );
-    $tags = get_posts($args);
-    if (!empty($tags)) {
-        //safeguard: if the first tag has a related order, then all tags already have an order, don't trash any of them
-        if (!get_tag_order_id($tags[0]->ID) > 0) {
-            foreach ($tags as $tag) {
-                $result = wp_trash_post($tag->ID);
-            }
-        }
+    $user_id = get_current_user_id();
+    if ( $user_id <= 0 || mecard_is_cart_cleanup_in_progress( (string) $cart_item_key, $user_id ) ) {
+        return;
     }
 
+    $removed_item = ( is_object( $instance ) && isset( $instance->removed_cart_contents[ $cart_item_key ] ) && is_array( $instance->removed_cart_contents[ $cart_item_key ] ) )
+        ? $instance->removed_cart_contents[ $cart_item_key ]
+        : [];
+    $removed_product_id = isset( $removed_item['product_id'] ) ? (int) $removed_item['product_id'] : 0;
+    $is_mecard_removed_item = mecard_is_product_id( $removed_product_id )
+        || ! empty( $removed_item['mecard_profile_id'] );
 
+    if ( $is_mecard_removed_item ) {
+        mecard_mark_removed_notice_as_mecard( true );
+    }
 
+    mecard_mark_cart_cleanup_in_progress( (string) $cart_item_key, $user_id, true );
+    try {
+        mecard_cleanup_cart_item_related_objects( (string) $cart_item_key, $user_id );
+    } finally {
+        mecard_mark_cart_cleanup_in_progress( (string) $cart_item_key, $user_id, false );
+    }
 };
 
 add_action( 'woocommerce_after_cart_item_quantity_update', 'add_remove_cards', 20, 4 );
@@ -1059,6 +1323,23 @@ function add_remove_cards( $cart_item_key, $quantity, $old_quantity, $cart ){
 
 // add the action
 add_action( 'woocommerce_remove_cart_item', 'action_woocommerce_remove_cart_item', 10, 2 );
+
+add_filter( 'woocommerce_add_success', 'mecard_strip_undo_link_from_removed_notice', 20 );
+function mecard_strip_undo_link_from_removed_notice( $message ) {
+    if ( ! mecard_should_strip_removed_undo_notice() ) {
+        return $message;
+    }
+
+    mecard_mark_removed_notice_as_mecard( false );
+
+    if ( ! is_string( $message ) || strpos( $message, 'restore-item' ) === false ) {
+        return $message;
+    }
+
+    $message = preg_replace( '#\s*<a[^>]*class="restore-item"[^>]*>.*?</a>#i', '', $message );
+
+    return is_string( $message ) ? trim( $message ) : $message;
+}
 
 add_filter( 'wc_add_to_cart_params', function( $params ) {
 // Don't modify params if we're on a WooCommerce page (delete if not needed).
