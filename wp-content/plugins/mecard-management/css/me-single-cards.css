@@ -79,13 +79,20 @@
     background: #ffffff;
     color: #173a63;
     font-weight: 600;
-    text-decoration: none;
+    text-decoration: none !important;
 }
 
 .me-single-cards__button--primary,
 .me-single-manage__button--primary {
     background: #1673d1;
     border-color: #1673d1;
+    color: #ffffff;
+}
+
+.me-single-cards__button--cta,
+.me-single-manage__button--cta {
+    background: #1a9e5c;
+    border-color: #1a9e5c;
     color: #ffffff;
 }
 
@@ -332,17 +339,13 @@
 .me-bundle-custom__preview-shell {
     position: absolute;
     inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 18px;
 }
 
 .me-bundle-custom__preview-shell img {
     display: block;
-    max-width: 100%;
-    max-height: 100%;
-    object-fit: contain;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
 }
 
 .me-bundle-custom__form {
@@ -363,6 +366,17 @@
 
 .me-bundle-custom__spec--hint {
     margin-bottom: 14px;
+}
+
+.me-bundle-custom__artwork-notice {
+    margin: 0;
+    padding: 10px 14px;
+    background: #fff8e1;
+    border: 1px solid #f0c040;
+    border-radius: 10px;
+    color: #7a5800;
+    font-size: 0.875em;
+    line-height: 1.5;
 }
 
 .me-bundle-custom__qr-stage {
@@ -397,8 +411,104 @@
     background: #fff;
 }
 
-.me-bundle-custom__form input[type="color"] {
-    padding: 6px;
+/* Colour field — trigger + inline panel (native picker + hex input + eyedropper) */
+.me-colour-field {
+    display: grid;
+    gap: 6px;
+}
+
+.me-colour-field__trigger {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 44px;
+    padding: 8px 14px;
+    border: 1px solid #cbd8e5;
+    border-radius: 12px;
+    background: #fff;
+    cursor: pointer;
+    text-align: left;
+    width: 100%;
+}
+
+.me-colour-field__trigger[aria-expanded="true"] {
+    border-color: #1673d1;
+}
+
+.me-colour-field__preview {
+    display: inline-block;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 1px solid rgba(0,0,0,0.15);
+    flex-shrink: 0;
+}
+
+.me-colour-field__hex {
+    font-size: 0.875em;
+    color: #40546c;
+    font-family: monospace;
+}
+
+.me-colour-field__panel {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px;
+    background: #f4f7fb;
+    border-radius: 10px;
+}
+
+/* The native colour input is the primary picker — make it large and tappable */
+.me-colour-field__native {
+    width: 48px;
+    height: 44px;
+    padding: 2px;
+    border: 1px solid #cbd8e5;
+    border-radius: 10px;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.me-colour-field__text {
+    flex: 1;
+    min-width: 0;
+    height: 44px;
+    padding: 0 12px;
+    border: 1px solid #cbd8e5;
+    border-radius: 10px;
+    background: #fff;
+    font-family: monospace;
+    font-size: 0.9em;
+}
+
+.me-colour-field__text:focus {
+    outline: none;
+    border-color: #1673d1;
+}
+
+.me-colour-field__eyedropper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border: 1px solid #cbd8e5;
+    border-radius: 10px;
+    background: #fff;
+    cursor: pointer;
+    flex-shrink: 0;
+    color: #40546c;
+}
+
+.me-colour-field__eyedropper:hover {
+    border-color: #1673d1;
+    color: #1673d1;
+}
+
+/* Hide eyedropper button when API not available */
+.me-colour-field__eyedropper[hidden] {
+    display: none;
 }
 
 .me-bundle-custom__back-artwork {
@@ -406,9 +516,6 @@
     inset: 0;
 }
 
-.me-bundle-custom__back-artwork .me-bundle-custom__preview-shell {
-    padding: 0;
-}
 
 .me-bundle-custom__qr {
     position: absolute;
@@ -416,11 +523,10 @@
     left: 32px;
     width: 140px;
     height: 140px;
-    border: 2px solid var(--me-qr-colour, #000000);
+    border: 1px solid rgba(0,0,0,0.12);
     background: var(--me-qr-fill, #ffffff);
-    border-radius: 12px;
+    border-radius: 0;
     overflow: hidden;
-    box-shadow: 0 10px 24px rgba(13, 31, 56, 0.18);
     z-index: 2;
     cursor: move;
 }

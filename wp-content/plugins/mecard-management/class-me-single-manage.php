@@ -102,11 +102,43 @@ class Module {
                     <div class="me-single-manage__actions">
                         <a class="me-single-manage__button me-single-manage__button--primary" href="<?php echo esc_url( self::bundle_profile_url( $profile_id, $bundle['bundle_type'] ) ); ?>">Continue profile setup</a>
                         <a class="me-single-manage__button" href="<?php echo esc_url( self::bundle_cards_url( $profile_id, $bundle['bundle_type'] ) ); ?>">Confirm bundle items</a>
-                        <a class="me-single-manage__button" href="<?php echo esc_url( wc_get_checkout_url() ); ?>">Checkout</a>
+                        <a class="me-single-manage__button me-single-manage__button--cta" href="<?php echo esc_url( wc_get_checkout_url() ); ?>">Checkout</a>
                         <a class="me-single-manage__button me-single-manage__button--secondary" href="<?php echo esc_url( self::bundle_remove_url( $profile_id, $bundle['bundle_type'] ) ); ?>">Remove bundle</a>
                     </div>
                 </section>
             <?php elseif ( $has_cards ) : ?>
+                <?php
+                $has_basket_cards   = ! empty( $active_cards['basket'] );
+                $has_editable_cards = $has_basket_cards && ! ( $active_cards['basket'][0]['submitted'] ?? false );
+                ?>
+
+                <?php if ( ! $is_pro ) : ?>
+                    <section class="me-single-manage__panel me-single-manage__panel--upsell">
+                        <p class="me-single-manage__kicker">Upgrade to Pro</p>
+                        <h2>Supercharge your Profile</h2>
+                        <div class="me-single-manage__compare">
+                            <div class="me-single-manage__compare-image">
+                                <img src="<?php echo esc_url( plugin_dir_url( __FILE__ ) . 'images/alessio-standard-profile-phone.png' ); ?>" alt="Standard profile preview">
+                            </div>
+                            <div class="me-single-manage__compare-arrow" aria-hidden="true">A &rarr; B</div>
+                            <div class="me-single-manage__compare-image">
+                                <img src="<?php echo esc_url( plugin_dir_url( __FILE__ ) . 'images/alessio-pro-profile.png' ); ?>" alt="Pro profile preview">
+                            </div>
+                        </div>
+                        <ul class="me-single-manage__benefits">
+                            <li>Customise look and feel to your company branding</li>
+                            <li>Add company info</li>
+                            <li>Extra buttons and links</li>
+                            <li>Team contact sharing</li>
+                            <li>Sharing analytics</li>
+                        </ul>
+                        <p class="me-single-manage__price"><?php echo esc_html( self::PRO_PRICE ); ?></p>
+                        <div class="me-single-manage__actions">
+                            <a class="me-single-manage__button me-single-manage__button--primary" href="<?php echo esc_url( add_query_arg( 'mode', 'pro', $edit_url ) ); ?>">Design Pro Profile</a>
+                        </div>
+                    </section>
+                <?php endif; ?>
+
                 <section class="me-single-manage__panel">
                     <h2>Your current cards</h2>
                     <p>These cards are already in your basket, in progress, or live.</p>
@@ -120,9 +152,16 @@ class Module {
                         ?>
                     </div>
                     <div class="me-single-manage__actions">
-                        <a class="me-single-manage__button me-single-manage__button--primary" href="<?php echo esc_url( $cards_url ); ?>">Manage cards</a>
+                        <?php if ( $has_basket_cards ) : ?>
+                            <a class="me-single-manage__button me-single-manage__button--cta" href="<?php echo esc_url( wc_get_checkout_url() ); ?>">Checkout</a>
+                        <?php endif; ?>
+                        <?php if ( $has_editable_cards ) : ?>
+                            <a class="me-single-manage__button" href="<?php echo esc_url( $cards_url ); ?>">Configure card</a>
+                        <?php endif; ?>
+                        <a class="me-single-manage__button me-single-manage__button--secondary" href="<?php echo esc_url( $cards_url ); ?>">Manage cards</a>
                     </div>
                 </section>
+
             <?php else : ?>
                 <?php echo self::render_bundle_offer_panel( $profile_id, $cards_url ); ?>
 

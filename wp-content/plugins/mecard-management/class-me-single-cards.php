@@ -13,6 +13,16 @@ class Module {
         add_filter( 'the_content', [ __CLASS__, 'replace_cards_page' ], 20 );
         add_action( 'wp_ajax_me_single_cards_save_bundle_classic', [ __CLASS__, 'ajax_save_bundle_classic' ] );
         add_action( 'wp_ajax_me_single_cards_save_bundle_custom', [ __CLASS__, 'ajax_save_bundle_custom' ] );
+        add_filter( 'ajax_query_attachments_args', [ __CLASS__, 'filter_cards_media_query' ] );
+    }
+
+    public static function filter_cards_media_query( array $query = [] ) : array {
+        if ( ! is_user_logged_in() || empty( $query['mecard_owned_only'] ) ) {
+            return $query;
+        }
+        $query['author']         = get_current_user_id();
+        $query['post_mime_type'] = 'image';
+        return $query;
     }
 
     public static function enqueue() : void {
@@ -47,9 +57,10 @@ class Module {
         );
 
         wp_localize_script( 'me-single-cards', 'ME_SINGLE_CARDS', [
-            'ajaxurl' => admin_url( 'admin-ajax.php' ),
-            'nonce'   => wp_create_nonce( 'me-single-cards-nonce' ),
-            'assets'  => [
+            'ajaxurl'       => admin_url( 'admin-ajax.php' ),
+            'nonce'         => wp_create_nonce( 'me-single-cards-nonce' ),
+            'currentUserId' => get_current_user_id(),
+            'assets'        => [
                 'uploadPlaceholder' => plugin_dir_url( __FILE__ ) . 'images/upload.png',
             ],
         ] );
@@ -111,18 +122,59 @@ class Module {
                         <div class="me-single-cards__grid">
                             <?php foreach ( $groups[ $group_key ] as $card ) : ?>
                                 <article class="me-single-cards__item">
-                                    <?php echo self::render_card_preview( $card ); ?>
-                                    <div class="me-single-cards__item-meta">
-                                        <strong><?php echo esc_html( $card['label'] ); ?></strong>
-                                        <span><?php echo esc_html( $card['status_label'] ); ?></span>
-                                    </div>
+                                    <?php if ( $group_key === 'basket' && $card['kind'] === 'classic' && ! ( $card['submitted'] ?? false ) ) : ?>
+                                        <?php $classic_card_data = self::bundle_classic_card_data( $card['profile_id'] ?? 0, $card['id'] ?? 0 ); ?>
+                                        <div class="me-bundle-card" data-card-id="<?php echo esc_attr( $card['id'] ); ?>">
+                                            <div class="me-bundle-card__preview">
+                                                <?php echo self::render_card_preview( $card ); ?>
+                                            </div>
+                                            <div class="me-bundle-card__actions">
+                                                <button type="button" class="me-single-cards__button" data-bundle-edit-toggle>Edit card details</button>
+                                            </div>
+                                            <form class="me-bundle-card__form" data-bundle-card-form hidden>
+                                                <input type="hidden" name="card_id" value="<?php echo esc_attr( $card['id'] ); ?>">
+                                                <input type="hidden" name="logo_id" value="<?php echo esc_attr( $classic_card_data['logo_id'] ?? 0 ); ?>">
+                                                <input type="hidden" name="logo_url" value="<?php echo esc_attr( $classic_card_data['front_url'] ?? '' ); ?>">
+                                                <label>
+                                                    <span>Logo</span>
+                                                    <div class="me-bundle-card__logo-field">
+                                                        <img class="me-bundle-card__logo-preview" src="<?php echo esc_url( $classic_card_data['front_url'] ?: ( plugin_dir_url( __FILE__ ) . 'images/image-placeholder.jpg' ) ); ?>" alt="Classic card logo preview">
+                                                        <button type="button" class="me-single-cards__button" data-bundle-card-pick-logo>Choose logo</button>
+                                                    </div>
+                                                </label>
+                                                <label>
+                                                    <span>Name on card</span>
+                                                    <input type="text" name="name" value="<?php echo esc_attr( $classic_card_data['name'] ?? '' ); ?>">
+                                                </label>
+                                                <label>
+                                                    <span>Job title on card</span>
+                                                    <input type="text" name="job_title" value="<?php echo esc_attr( $classic_card_data['job_title'] ?? '' ); ?>">
+                                                </label>
+                                                <div class="me-bundle-card__form-actions">
+                                                    <button type="submit" class="me-single-cards__button me-single-cards__button--primary">Save card details</button>
+                                                </div>
+                                                <div class="me-bundle-card__status" data-bundle-card-status aria-live="polite"></div>
+                                            </form>
+                                        </div>
+                                    <?php else : ?>
+                                        <?php echo self::render_card_preview( $card ); ?>
+                                        <div class="me-single-cards__item-meta">
+                                            <strong><?php echo esc_html( $card['label'] ); ?></strong>
+                                            <span><?php echo esc_html( $card['status_label'] ); ?></span>
+                                        </div>
+                                        <?php if ( $group_key === 'basket' && ( $card['kind'] ?? '' ) === 'custom' && ! ( $card['submitted'] ?? false ) ) : ?>
+                                            <div class="me-single-cards__item-actions">
+                                                <a class="me-single-cards__button me-single-cards__button--primary" href="<?php echo esc_url( add_query_arg( 'flow', 'custom', self::cards_url() ) ); ?>">Configure card</a>
+                                            </div>
+                                        <?php endif; ?>
+                                    <?php endif; ?>
                                 </article>
                             <?php endforeach; ?>
                         </div>
 
                         <?php if ( $group_key === 'basket' ) : ?>
                             <div class="me-single-cards__stage-actions">
-                                <a class="me-single-cards__button me-single-cards__button--primary" href="<?php echo esc_url( wc_get_cart_url() ); ?>">View basket</a>
+                                <a class="me-single-cards__button me-single-cards__button--cta" href="<?php echo esc_url( wc_get_checkout_url() ); ?>">View basket and checkout</a>
                             </div>
                         <?php endif; ?>
                     </section>
@@ -327,7 +379,7 @@ class Module {
                 </div>
                 <div class="me-single-cards__stage-actions">
                     <a class="me-single-cards__button" href="<?php echo esc_url( Single_Manage_Module::bundle_profile_url( $profile_id, $bundle_type ) ); ?>">Back to profile</a>
-                    <a class="me-single-cards__button me-single-cards__button--primary" href="<?php echo esc_url( wc_get_checkout_url() ); ?>">Continue to checkout</a>
+                    <a class="me-single-cards__button me-single-cards__button--cta" href="<?php echo esc_url( wc_get_checkout_url() ); ?>">Continue to checkout</a>
                     <a class="me-single-cards__button me-single-cards__button--secondary" href="<?php echo esc_url( Single_Manage_Module::bundle_remove_url( $profile_id, $bundle_type ) ); ?>">Remove bundle</a>
                 </div>
             </section>
@@ -359,7 +411,7 @@ class Module {
                 </div>
                 <div class="me-single-cards__stage-actions">
                     <a class="me-single-cards__button" href="<?php echo esc_url( Single_Manage_Module::bundle_profile_url( $profile_id, $bundle_type ) ); ?>">Back to profile</a>
-                    <a class="me-single-cards__button me-single-cards__button--primary" href="<?php echo esc_url( wc_get_checkout_url() ); ?>">Continue to checkout</a>
+                    <a class="me-single-cards__button me-single-cards__button--cta" href="<?php echo esc_url( wc_get_checkout_url() ); ?>">Continue to checkout</a>
                     <a class="me-single-cards__button me-single-cards__button--secondary" href="<?php echo esc_url( Single_Manage_Module::bundle_remove_url( $profile_id, $bundle_type ) ); ?>">Remove bundle</a>
                 </div>
             </section>
@@ -385,7 +437,7 @@ class Module {
                 <?php echo self::render_custom_card_editor( $profile_id, $card_data ); ?>
                 <div class="me-single-cards__stage-actions">
                     <a class="me-single-cards__button" href="<?php echo esc_url( Single_Manage_Module::manage_url( $profile_id ) ); ?>">Back to My MeCard Home</a>
-                    <a class="me-single-cards__button me-single-cards__button--primary" href="<?php echo esc_url( wc_get_cart_url() ); ?>">View basket</a>
+                    <a class="me-single-cards__button me-single-cards__button--cta" href="<?php echo esc_url( wc_get_checkout_url() ); ?>">View basket and checkout</a>
                 </div>
             </section>
         </section>
@@ -569,6 +621,22 @@ class Module {
         }
 
         $profile_id    = self::profile_id_for_card( (int) $post->ID );
+
+        if ( $profile_id <= 0 && (int) $post->post_author > 0 ) {
+            $author_profiles = get_posts( [
+                'post_type'      => 'mecard-profile',
+                'author'         => (int) $post->post_author,
+                'post_status'    => [ 'publish', 'draft', 'pending', 'private' ],
+                'posts_per_page' => 1,
+                'orderby'        => 'date',
+                'order'          => 'ASC',
+                'fields'         => 'ids',
+            ] );
+            if ( ! empty( $author_profiles[0] ) ) {
+                $profile_id = (int) $author_profiles[0];
+            }
+        }
+
         $profile_title = $profile_id > 0 ? get_the_title( $profile_id ) : $post->post_title;
         $job_title     = '';
 
@@ -630,6 +698,7 @@ class Module {
             'status_label' => $status_label,
             'profile_id'   => $profile_id,
             'order_id'     => $order_id,
+            'submitted'    => $submitted === '1',
         ];
     }
 
@@ -787,11 +856,33 @@ class Module {
                         </label>
                         <label>
                             <span>QR code colour</span>
-                            <input type="color" name="wpcf-qr-code-colour" value="<?php echo esc_attr( $custom_card['qr_code_colour'] ); ?>">
+                            <div class="me-colour-field" data-colour-field>
+                                <input type="hidden" name="wpcf-qr-code-colour" value="<?php echo esc_attr( $custom_card['qr_code_colour'] ); ?>">
+                                <button type="button" class="me-colour-field__trigger" data-colour-trigger aria-expanded="false">
+                                    <span class="me-colour-field__preview" style="background:<?php echo esc_attr( $custom_card['qr_code_colour'] ); ?>"></span>
+                                    <span class="me-colour-field__hex"><?php echo esc_html( $custom_card['qr_code_colour'] ); ?></span>
+                                </button>
+                                <div class="me-colour-field__panel" hidden>
+                                    <input type="color" class="me-colour-field__native" value="<?php echo esc_attr( $custom_card['qr_code_colour'] ); ?>" tabindex="-1">
+                                    <input type="text" class="me-colour-field__text" value="<?php echo esc_attr( $custom_card['qr_code_colour'] ); ?>" maxlength="7" placeholder="#000000" autocomplete="off">
+                                    <button type="button" class="me-colour-field__eyedropper" data-eyedropper title="Pick colour from screen" aria-label="Eyedropper"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19l7-7-3-3-7 7v3z"/><path d="M18 9l-1-1 2-2-3-3-2 2-1-1a2 2 0 0 0-2.83 0L3 12l3 3"/></svg></button>
+                                </div>
+                            </div>
                         </label>
                         <label>
                             <span>QR fill colour</span>
-                            <input type="color" name="wpcf-qr-fill-colour" value="<?php echo esc_attr( $custom_card['qr_fill_colour'] ); ?>">
+                            <div class="me-colour-field" data-colour-field>
+                                <input type="hidden" name="wpcf-qr-fill-colour" value="<?php echo esc_attr( $custom_card['qr_fill_colour'] ); ?>">
+                                <button type="button" class="me-colour-field__trigger" data-colour-trigger aria-expanded="false">
+                                    <span class="me-colour-field__preview" style="background:<?php echo esc_attr( $custom_card['qr_fill_colour'] ); ?>"></span>
+                                    <span class="me-colour-field__hex"><?php echo esc_html( $custom_card['qr_fill_colour'] ); ?></span>
+                                </button>
+                                <div class="me-colour-field__panel" hidden>
+                                    <input type="color" class="me-colour-field__native" value="<?php echo esc_attr( $custom_card['qr_fill_colour'] ); ?>" tabindex="-1">
+                                    <input type="text" class="me-colour-field__text" value="<?php echo esc_attr( $custom_card['qr_fill_colour'] ); ?>" maxlength="7" placeholder="#ffffff" autocomplete="off">
+                                    <button type="button" class="me-colour-field__eyedropper" data-eyedropper title="Pick colour from screen" aria-label="Eyedropper"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19l7-7-3-3-7 7v3z"/><path d="M18 9l-1-1 2-2-3-3-2 2-1-1a2 2 0 0 0-2.83 0L3 12l3 3"/></svg></button>
+                                </div>
+                            </div>
                         </label>
                         <input type="hidden" name="wpcf-qr-x" value="<?php echo esc_attr( $custom_card['qr_x'] ); ?>">
                         <input type="hidden" name="wpcf-qr-y" value="<?php echo esc_attr( $custom_card['qr_y'] ); ?>">
@@ -865,9 +956,11 @@ class Module {
         ?>
         <div class="me-bundle-card__preview me-bundle-card__preview--back me-bundle-custom__back-preview" data-bundle-custom-back-preview data-tag_id="<?php echo esc_attr( $card_id ); ?>">
             <div class="me-bundle-custom__back-artwork" data-bundle-custom-back-artwork>
+                <?php if ( $back_url !== '' ) : ?>
                 <div class="me-bundle-custom__preview-shell">
-                    <img src="<?php echo esc_url( $back_url !== '' ? $back_url : $placeholder ); ?>" alt="Custom card back artwork">
+                    <img src="<?php echo esc_url( $back_url ); ?>" alt="Custom card back artwork">
                 </div>
+                <?php endif; ?>
             </div>
             <div class="me-bundle-custom__qr qr-container editable" data-bundle-custom-qr style="<?php echo esc_attr( sprintf( 'width:%1$dpx; top:%2$dpx; left:%3$dpx;', $qr_width, $qr_y, $qr_x ) ); ?>">
                 <div id="me_bundle_custom_qr_<?php echo esc_attr( $card_id ); ?>" class="me-bundle-custom__qr-code qr-code" data-url="<?php echo esc_url( $profile_url ); ?>" data-qr_colour="<?php echo esc_attr( $qr_colour ); ?>" data-qr_bg="<?php echo esc_attr( $qr_fill ); ?>" data-tag="<?php echo esc_attr( $card_id ); ?>"></div>

@@ -15,6 +15,36 @@
         return fallback;
     }
 
+    // Returns an array of warning strings for a wp.media file object.
+    // Checks aspect ratio (856×540) and file size (2 MB max).
+    function validateCardArtwork(file) {
+        const warnings = [];
+        const maxBytes = 2 * 1024 * 1024;
+        if (file.filesizeInBytes && file.filesizeInBytes > maxBytes) {
+            warnings.push('This image is ' + (file.filesizeHumanReadable || 'too large') + '. Please use an image under 2 MB.');
+        }
+        if (file.width && file.height) {
+            const expected = 856 / 540;
+            const actual   = file.width / file.height;
+            if (Math.abs(actual - expected) / expected > 0.02) {
+                warnings.push('This image is ' + file.width + '×' + file.height + 'px. For best results use 856×540px (or the same aspect ratio).');
+            }
+        }
+        return warnings;
+    }
+
+    function showArtworkWarnings($form, warnings) {
+        var $notice = $form.find('.me-bundle-custom__artwork-notice');
+        if (!$notice.length) {
+            $notice = $('<p class="me-bundle-custom__artwork-notice" role="alert"></p>').prependTo($form);
+        }
+        if (warnings.length) {
+            $notice.html(warnings.map(function(w) { return '<span>' + w + '</span>'; }).join('<br>')).show();
+        } else {
+            $notice.hide();
+        }
+    }
+
     function updateBundleCustomThumb($form, side, url) {
         const selector = side === 'front' ? '[data-bundle-custom-front-artwork]' : '[data-bundle-custom-back-artwork-card]';
         const $thumb = $form.closest('.me-bundle-card').find(selector).first();
@@ -39,9 +69,8 @@
     function updateBundleCustomBackPreview($form, url) {
         updateBundleCustomThumb($form, 'back', url);
         const $shell = $form.closest('.me-bundle-card').find('[data-bundle-custom-back-artwork]').first();
-        const src = url || uploadPlaceholder || '';
         if ($shell.length) {
-            $shell.html('<div class="me-bundle-custom__preview-shell"><img src="' + src + '" alt="Custom card back artwork"></div>');
+            $shell.html(url ? '<div class="me-bundle-custom__preview-shell"><img src="' + url + '" alt="Custom card back artwork"></div>' : '');
         }
     }
 
@@ -92,7 +121,6 @@
             height: (parseInt(data.qr_width || 140, 10) || 140) + 'px',
             left: (parseInt(data.qr_x || 32, 10) || 32) + 'px',
             top: (parseInt(data.qr_y || 32, 10) || 32) + 'px',
-            borderColor: data.qr_code_colour || '#000000',
             backgroundColor: data.qr_fill_colour || '#ffffff'
         });
 
@@ -139,28 +167,80 @@
             });
         }
 
+        // Touch drag and resize — handled manually so page scroll is never affected.
+        var touchState = null;
+
+        $qr[0].addEventListener('touchstart', function(e) {
+            if (e.touches.length !== 1) { return; }
+            e.preventDefault();
+            var t = e.touches[0];
+            var isHandle = $(e.target).hasClass('ui-resizable-se') || $(e.target).closest('.ui-resizable-se').length;
+            touchState = {
+                mode:      isHandle ? 'resize' : 'drag',
+                startX:    t.clientX,
+                startY:    t.clientY,
+                startLeft: parseInt($qr.css('left'), 10)  || 0,
+                startTop:  parseInt($qr.css('top'), 10)   || 0,
+                startSize: parseInt($qr.css('width'), 10) || 140
+            };
+        }, { passive: false });
+
+        $qr[0].addEventListener('touchmove', function(e) {
+            if (!touchState || e.touches.length !== 1) { return; }
+            e.preventDefault();
+            var t = e.touches[0];
+            var dx = t.clientX - touchState.startX;
+            var dy = t.clientY - touchState.startY;
+            var pW = $preview.width();
+            var pH = $preview.height();
+
+            if (touchState.mode === 'drag') {
+                var newLeft = Math.max(0, Math.min(pW - $qr.width(),  touchState.startLeft + dx));
+                var newTop  = Math.max(0, Math.min(pH - $qr.height(), touchState.startTop  + dy));
+                $qr.css({ left: newLeft, top: newTop });
+            } else {
+                var delta   = (dx + dy) / 2;
+                var newSize = Math.max(40, Math.min(Math.min(pW, pH), touchState.startSize + delta));
+                $qr.css({ width: newSize, height: newSize });
+            }
+        }, { passive: false });
+
+        $qr[0].addEventListener('touchend', function() {
+            if (!touchState) { return; }
+            if (touchState.mode === 'drag') {
+                $form.find('input[name="wpcf-qr-x"]').val(Math.round(parseInt($qr.css('left'), 10)));
+                $form.find('input[name="wpcf-qr-y"]').val(Math.round(parseInt($qr.css('top'), 10)));
+            } else {
+                var size = Math.round(parseInt($qr.css('width'), 10));
+                $form.find('input[name="wpcf-qr-width"]').val(size);
+            }
+            touchState = null;
+        });
+
         syncBundleCustomQrPreview($form);
         $card.data('bundleCustomReady', hasDraggable && hasResizable);
     }
 
     function openBundleCustomMediaPicker($card, side) {
+        const userId = Number(ME_SINGLE_CARDS.currentUserId || 0);
         const frame = wp.media({
             title: side === 'front' ? 'Select front artwork' : 'Select back artwork',
             button: { text: 'Use this artwork' },
             multiple: false,
-            library: { type: ['image'], author: 0, mecard_owned_only: true }
+            library: { type: 'image', author: userId, mecard_owned_only: true }
         });
 
         frame.on('open', function() {
-            const props = frame.state().props || null;
-            if (props) {
-                props.set('mecard_owned_only', true);
-                props.set('type', 'image');
+            // Default to the library/browse tab, not the upload tab.
+            if (typeof frame.content.mode === 'function' && frame.content.mode() !== 'browse') {
+                frame.content.mode('browse');
             }
+            const props = frame.state().get('library').props;
+            props.set({ author: userId, mecard_owned_only: true, type: 'image' });
         });
 
         frame.on('select', function() {
-            const file = frame.state().get('selection').first().toJSON();
+            const file  = frame.state().get('selection').first().toJSON();
             const $form = $card.find('[data-bundle-custom-form]').first();
             $form.find('input[name="wpcf-card-' + side + '"]').val(file.url || '');
             updateBundleCustomThumb($form, side, file.url || '');
@@ -170,6 +250,7 @@
                 updateBundleCustomBackPreview($form, file.url || '');
             }
             syncBundleCustomQrPreview($form);
+            showArtworkWarnings($form, validateCardArtwork(file));
         });
 
         frame.open();
@@ -223,19 +304,20 @@
 
     $(document).on('click', '[data-bundle-card-pick-logo]', function() {
         const $card = $(this).closest('.me-bundle-card');
+        const userId = Number(ME_SINGLE_CARDS.currentUserId || 0);
         const frame = wp.media({
             title: 'Select logo',
             button: { text: 'Use this logo' },
             multiple: false,
-            library: { type: ['image'], author: 0, mecard_owned_only: true }
+            library: { type: 'image', author: userId, mecard_owned_only: true }
         });
 
         frame.on('open', function() {
-            const props = frame.state().props || null;
-            if (props) {
-                props.set('mecard_owned_only', true);
-                props.set('type', 'image');
+            if (typeof frame.content.mode === 'function' && frame.content.mode() !== 'browse') {
+                frame.content.mode('browse');
             }
+            const props = frame.state().get('library').props;
+            props.set({ author: userId, mecard_owned_only: true, type: 'image' });
         });
 
         frame.on('select', function() {
@@ -310,6 +392,94 @@
         syncBundleCustomQrPreview($(this).closest('[data-bundle-custom-form]'));
     });
 
+    // Colour field — helpers.
+    function colourFieldApply($field, hex) {
+        if (!/^#[0-9a-fA-F]{6}$/.test(hex)) { return; }
+        const $hidden  = $field.find('input[type="hidden"]').first();
+        const $native  = $field.find('.me-colour-field__native').first();
+        const $text    = $field.find('.me-colour-field__text').first();
+        const $preview = $field.find('.me-colour-field__preview').first();
+        const $hexSpan = $field.find('.me-colour-field__hex').first();
+        $hidden.val(hex).trigger('change');
+        $native.val(hex);
+        $text.val(hex);
+        $preview.css('background', hex);
+        $hexSpan.text(hex);
+    }
+
+    function colourFieldClose($field) {
+        $field.find('.me-colour-field__panel').prop('hidden', true);
+        $field.find('[data-colour-trigger]').attr('aria-expanded', 'false');
+    }
+
+    // Hide eyedropper button in browsers that don't support the API.
+    if (!('EyeDropper' in window)) {
+        $(document).find('[data-eyedropper]').prop('hidden', true);
+        $(document).on('DOMNodeInserted', '[data-eyedropper]', function() {
+            $(this).prop('hidden', true);
+        });
+    }
+
+    // Trigger: open / close panel.
+    $(document).on('click', '[data-colour-trigger]', function() {
+        const $field = $(this).closest('[data-colour-field]');
+        const $panel = $field.find('.me-colour-field__panel').first();
+        const open   = !$panel.prop('hidden');
+        $panel.prop('hidden', open);
+        $(this).attr('aria-expanded', String(!open));
+        if (!open) {
+            // Hide eyedropper if not supported (covers dynamically rendered fields).
+            if (!('EyeDropper' in window)) {
+                $field.find('[data-eyedropper]').prop('hidden', true);
+            }
+        }
+    });
+
+    // Native colour input: live preview on input, close panel on change (user confirmed).
+    $(document).on('input', '.me-colour-field__native', function() {
+        colourFieldApply($(this).closest('[data-colour-field]'), $(this).val());
+    });
+    $(document).on('change', '.me-colour-field__native', function() {
+        const $field = $(this).closest('[data-colour-field]');
+        colourFieldApply($field, $(this).val());
+        colourFieldClose($field);
+    });
+
+    // Hex text input: live update as user types valid hex; close on blur.
+    $(document).on('input', '.me-colour-field__text', function() {
+        const val = $(this).val().trim();
+        const hex = val.startsWith('#') ? val : '#' + val;
+        if (/^#[0-9a-fA-F]{6}$/.test(hex)) {
+            colourFieldApply($(this).closest('[data-colour-field]'), hex);
+        }
+    });
+    $(document).on('blur', '.me-colour-field__text', function() {
+        colourFieldClose($(this).closest('[data-colour-field]'));
+    });
+    $(document).on('keydown', '.me-colour-field__text', function(e) {
+        if (e.key === 'Enter') {
+            colourFieldClose($(this).closest('[data-colour-field]'));
+        }
+    });
+
+    // Eyedropper button.
+    $(document).on('click', '[data-eyedropper]', function() {
+        if (!('EyeDropper' in window)) { return; }
+        const $field = $(this).closest('[data-colour-field]');
+        // eslint-disable-next-line no-undef
+        new EyeDropper().open().then(function(result) {
+            colourFieldApply($field, result.sRGBHex);
+            colourFieldClose($field);
+        }).catch(function() {});
+    });
+
+    // Close when clicking outside.
+    $(document).on('click', function(e) {
+        if (!$(e.target).closest('[data-colour-field]').length) {
+            $('[data-colour-field]').each(function() { colourFieldClose($(this)); });
+        }
+    });
+
     $(document).on('submit', '[data-bundle-custom-form]', function(event) {
         event.preventDefault();
         const $form = $(this);
@@ -340,8 +510,14 @@
             $form.find('input[name="wpcf-qr-width"]').val(card.qr_width || 140);
             $form.find('input[name="wpcf-qr-x"]').val(card.qr_x || 32);
             $form.find('input[name="wpcf-qr-y"]').val(card.qr_y || 32);
-            $form.find('input[name="wpcf-qr-code-colour"]').val(normalizeHex(card.qr_code_colour, '#000000'));
-            $form.find('input[name="wpcf-qr-fill-colour"]').val(normalizeHex(card.qr_fill_colour, '#ffffff'));
+            var dotColour  = normalizeHex(card.qr_code_colour, '#000000');
+            var fillColour = normalizeHex(card.qr_fill_colour, '#ffffff');
+            // Sync colour fields after save.
+            $form.find('[data-colour-field]').each(function() {
+                var name   = $(this).find('input[type="hidden"]').attr('name');
+                var colour = name === 'wpcf-qr-code-colour' ? dotColour : fillColour;
+                colourFieldApply($(this), colour);
+            });
             updateBundleCustomThumb($form, 'front', card.front_url || '');
             updateBundleCustomThumb($form, 'back', card.back_url || '');
             updateBundleCustomFrontPreview($form, card.front_url || '');
