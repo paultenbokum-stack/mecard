@@ -701,7 +701,7 @@
             title: 'Select image',
             button: { text: 'Use this image' },
             multiple: false,
-            library: { type: ['image'], author: CFG.currentUserId || 0, mecard_owned_only: true }
+            library: { type: ['image'], mecard_owned_only: true }
         });
         frame.on('open', function() {
             const selection = frame.state().get('selection');
@@ -713,11 +713,9 @@
                 attachment.fetch();
                 selection.reset([attachment]);
             }
-            const props = frame.state().props || null;
-            if (props) {
-                props.set('author', CFG.currentUserId || 0);
-                props.set('mecard_owned_only', true);
-                props.set('type', 'image');
+            const libraryProps = frame.state().get('library') && frame.state().get('library').props;
+            if (libraryProps) {
+                libraryProps.set({ mecard_owned_only: true, type: 'image' });
             }
         });
         frame.on('select', function() {

@@ -86,7 +86,8 @@ class Module {
             return $query;
         }
 
-        if ( empty( $query['mecard_owned_only'] ) ) {
+        $raw = isset( $_REQUEST['query'] ) ? (array) wp_unslash( $_REQUEST['query'] ) : [];
+        if ( empty( $raw['mecard_owned_only'] ) ) {
             return $query;
         }
 

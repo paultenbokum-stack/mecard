@@ -13,6 +13,7 @@ class Module {
         add_shortcode( 'me_single_manage', [ __CLASS__, 'render_shortcode' ] );
         add_action( 'wp_enqueue_scripts', [ __CLASS__, 'enqueue' ] );
         add_filter( 'the_content', [ __CLASS__, 'replace_manage_page' ], 20 );
+        add_action( 'template_redirect', [ __CLASS__, 'maybe_redirect_logged_out' ], 1 );
         add_action( 'template_redirect', [ __CLASS__, 'handle_offer_actions' ], 5 );
     }
 
@@ -56,11 +57,15 @@ class Module {
         return site_url( '/manage/' );
     }
 
-    public static function render_shortcode() : string {
-        if ( ! is_user_logged_in() ) {
-            return '<div class="me-single-manage__notice"><p>Please log in to manage your MeCard.</p></div>';
+    public static function maybe_redirect_logged_out() : void {
+        if ( is_user_logged_in() || ! is_page( 'manage' ) ) {
+            return;
         }
+        wp_safe_redirect( wc_get_page_permalink( 'myaccount' ) );
+        exit;
+    }
 
+    public static function render_shortcode() : string {
         $user_id      = get_current_user_id();
         $profile_id   = self::resolve_profile_id( $user_id );
         $profile_url  = $profile_id > 0 ? get_permalink( $profile_id ) : site_url( '/' );
@@ -161,6 +166,9 @@ class Module {
                         <a class="me-single-manage__button me-single-manage__button--secondary" href="<?php echo esc_url( $cards_url ); ?>">Manage cards</a>
                     </div>
                 </section>
+
+                <?php echo self::render_bundle_offer_panel( $profile_id, $cards_url ); ?>
+                <?php echo self::render_card_offer_panel( $profile_id ); ?>
 
             <?php else : ?>
                 <?php echo self::render_bundle_offer_panel( $profile_id, $cards_url ); ?>

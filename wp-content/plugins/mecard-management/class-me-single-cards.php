@@ -17,7 +17,8 @@ class Module {
     }
 
     public static function filter_cards_media_query( array $query = [] ) : array {
-        if ( ! is_user_logged_in() || empty( $query['mecard_owned_only'] ) ) {
+        $raw = isset( $_REQUEST['query'] ) ? (array) wp_unslash( $_REQUEST['query'] ) : [];
+        if ( ! is_user_logged_in() || empty( $raw['mecard_owned_only'] ) ) {
             return $query;
         }
         $query['author']         = get_current_user_id();

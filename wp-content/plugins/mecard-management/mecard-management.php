@@ -1594,6 +1594,25 @@ function mecard_cred_autologin( $post_id, $form_data ){
     }
 }
 
+add_filter( 'woocommerce_login_redirect', 'mecard_woocommerce_login_redirect', 10, 2 );
+function mecard_woocommerce_login_redirect( $redirect, $user ) : string {
+    $user_id = $user instanceof \WP_User ? $user->ID : 0;
+    if ( $user_id <= 0 || ! class_exists( '\\Me\\Single_Editor\\Module' ) ) {
+        return $redirect;
+    }
+    // Only override when WooCommerce would redirect to the generic my-account page.
+    // If the user is mid-checkout or has a specific destination, leave it alone.
+    $myaccount = wc_get_page_permalink( 'myaccount' );
+    if ( function_exists( 'untrailingslashit' ) && untrailingslashit( $redirect ) !== untrailingslashit( $myaccount ) ) {
+        return $redirect;
+    }
+    $profile_id = \Me\Single_Editor\Module::resolve_single_profile_id( $user_id );
+    if ( $profile_id > 0 ) {
+        return \Me\Single_Manage\Module::manage_url();
+    }
+    return $redirect;
+}
+
 add_filter('woocommerce_login_form_end', 'my_show_nextend_social_on_woo_login');
 function my_show_nextend_social_on_woo_login() {
     // This shortcode is typically what Nextend uses for login buttons:

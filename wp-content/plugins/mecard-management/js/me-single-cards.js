@@ -227,7 +227,7 @@
             title: side === 'front' ? 'Select front artwork' : 'Select back artwork',
             button: { text: 'Use this artwork' },
             multiple: false,
-            library: { type: 'image', author: userId, mecard_owned_only: true }
+            library: { type: 'image', mecard_owned_only: true }
         });
 
         frame.on('open', function() {
@@ -236,7 +236,7 @@
                 frame.content.mode('browse');
             }
             const props = frame.state().get('library').props;
-            props.set({ author: userId, mecard_owned_only: true, type: 'image' });
+            props.set({ mecard_owned_only: true, type: 'image' });
         });
 
         frame.on('select', function() {
@@ -309,7 +309,7 @@
             title: 'Select logo',
             button: { text: 'Use this logo' },
             multiple: false,
-            library: { type: 'image', author: userId, mecard_owned_only: true }
+            library: { type: 'image', mecard_owned_only: true }
         });
 
         frame.on('open', function() {
@@ -317,7 +317,7 @@
                 frame.content.mode('browse');
             }
             const props = frame.state().get('library').props;
-            props.set({ author: userId, mecard_owned_only: true, type: 'image' });
+            props.set({ mecard_owned_only: true, type: 'image' });
         });
 
         frame.on('select', function() {
