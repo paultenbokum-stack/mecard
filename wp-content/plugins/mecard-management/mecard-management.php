@@ -1090,26 +1090,111 @@ function filter_relationship_custom_fn( $query_args, $view_settings ) {
 
 add_filter('woocommerce_thankyou_order_received_text', 'woo_change_order_received_text', 10, 2 );
 function woo_change_order_received_text( $str, $order ) {
-    $is_mecard = 1;
-    /*foreach ($order->get_items() as $item_id => $item) {
-        if (strpos( strtolower($item->get_name()),'mecard')) {
-            $is_mecard = 1;
-        }
-    }*/
-    if ($is_mecard) {
-        $str = sprintf( '<div class="mecard-box"><h3>Thanks for your MeCard order, %s!</h3>', esc_html( $order->get_billing_first_name() ) );
-        //$str = '<div class="mecard-box"><h3>Thanks for your MeCard order, '.esc_html( $order->get_billing_first_name()).'</h3>' ;
-        $str .= '<br/><p>What next?</p>';
-        $str .='<ol>
-                <li>If you haven\'t done so yet, pay for this order using the account details below</li>
-                <li>Upload your card designs in the <a href="'.site_url().'/manage-mecard-profiles/new-cards-and-tags/">management console</a> (also accessible via the "Manage Mecard Profiles" link in the top navigation)</li>
-                <li>We\'ll check your designs for issues and feed back if we find any</li>
-                <li>Your order will be manufactured and shipped to the address on this order</li>
-                </ol>
-                </div>
-                ';
+    if ( ! $order instanceof WC_Order ) {
+        return $str;
     }
-    //$str = '';
+
+    // --- Derive order context ---
+    $is_paid = in_array( $order->get_status(), [ 'processing', 'completed' ], true );
+
+    $card_product_ids = array_filter( [
+        defined( 'MECARD_PRODUCT_ID' )                ? (int) MECARD_PRODUCT_ID                : 0,
+        defined( 'MECARD_CLASSIC_PRODUCT_ID' )        ? (int) MECARD_CLASSIC_PRODUCT_ID        : 0,
+        defined( 'MECARD_BUNDLE_PRODUCT_ID' )         ? (int) MECARD_BUNDLE_PRODUCT_ID         : 0,
+        defined( 'MECARD_CLASSIC_BUNDLE_PRODUCT_ID' ) ? (int) MECARD_CLASSIC_BUNDLE_PRODUCT_ID : 0,
+        defined( 'MECARD_KEYRING_PRODUCT_ID' )        ? (int) MECARD_KEYRING_PRODUCT_ID        : 0,
+        defined( 'MECARD_PHONETAG_PRODUCT_ID' )       ? (int) MECARD_PHONETAG_PRODUCT_ID       : 0,
+        defined( 'MECARD_CLASSIC_CORP_PRODUCT_ID' )   ? (int) MECARD_CLASSIC_CORP_PRODUCT_ID   : 0,
+    ] );
+
+    $upgrade_product_id = defined( 'MECARD_PROFILE_UPGRADE_PRODUCT_ID' ) ? (int) MECARD_PROFILE_UPGRADE_PRODUCT_ID : 0;
+
+    $has_cards    = false;
+    $has_upgrades = false;
+    $cart_keys    = [];
+
+    foreach ( $order->get_items() as $item ) {
+        if ( ! $item instanceof WC_Order_Item_Product ) {
+            continue;
+        }
+        $pid = (int) $item->get_product_id();
+        if ( in_array( $pid, $card_product_ids, true ) ) {
+            $has_cards = true;
+            $key = (string) $item->get_meta( '_mecard_cart_item_key', true );
+            if ( $key !== '' ) {
+                $cart_keys[] = $key;
+            }
+        }
+        if ( $upgrade_product_id > 0 && $pid === $upgrade_product_id ) {
+            $has_upgrades = true;
+        }
+    }
+
+    // --- Check design submission status ---
+    $total_card_count  = count( $cart_keys );
+    $designs_submitted = 0;
+
+    if ( $has_cards && ! empty( $cart_keys ) ) {
+        global $wpdb;
+        $placeholders = implode( ',', array_fill( 0, count( $cart_keys ), '%s' ) );
+        // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+        $tag_ids = $wpdb->get_col(
+            $wpdb->prepare(
+                "SELECT pm.post_id FROM {$wpdb->postmeta} pm
+                 INNER JOIN {$wpdb->posts} p ON p.ID = pm.post_id
+                 WHERE pm.meta_key = 'wpcf-cart-item-key'
+                 AND pm.meta_value IN ($placeholders)
+                 AND p.post_type = 't'",
+                ...$cart_keys
+            )
+        );
+        foreach ( $tag_ids as $tag_id ) {
+            if ( get_post_meta( (int) $tag_id, 'wpcf-design-submitted', true ) === '1' ) {
+                $designs_submitted++;
+            }
+        }
+    }
+
+    $all_designs_done = $has_cards && $total_card_count > 0 && $designs_submitted >= $total_card_count;
+    $some_designs_done = $has_cards && $designs_submitted > 0 && ! $all_designs_done;
+
+    // --- Build output ---
+    $name       = esc_html( $order->get_billing_first_name() );
+    $manage_url = esc_url( site_url( '/manage-mecard-profiles/new-cards-and-tags/' ) );
+
+    $str  = '<div class="mecard-box">';
+    $str .= '<h3 class="mecard-box__heading">Thanks for your MeCard order, ' . $name . '!</h3>';
+    $str .= '<p class="mecard-box__subheading">What&rsquo;s next?</p>';
+    $str .= '<ol class="mecard-box__steps">';
+
+    // Payment step
+    if ( $is_paid ) {
+        $str .= '<li class="mecard-box__step mecard-box__step--done">Payment received &mdash; thank you</li>';
+    } else {
+        $str .= '<li class="mecard-box__step">Pay for this order using the account details below</li>';
+    }
+
+    // Card design steps
+    if ( $has_cards ) {
+        if ( $all_designs_done ) {
+            $str .= '<li class="mecard-box__step mecard-box__step--done">Card designs received</li>';
+        } elseif ( $some_designs_done ) {
+            $str .= '<li class="mecard-box__step">Continue uploading your remaining card designs in the <a href="' . $manage_url . '">management console</a></li>';
+        } else {
+            $str .= '<li class="mecard-box__step">Upload your card designs in the <a href="' . $manage_url . '">management console</a></li>';
+        }
+        $str .= '<li class="mecard-box__step">We\'ll check your designs for issues and give feedback if we find any</li>';
+        $str .= '<li class="mecard-box__step">Your order will be manufactured and shipped to the address on this order</li>';
+    }
+
+    // Upgrade note
+    if ( $has_upgrades ) {
+        $str .= '<li class="mecard-box__step mecard-box__step--note">Your profile upgrades will be applied automatically as your profiles are created or updated</li>';
+    }
+
+    $str .= '</ol>';
+    $str .= '</div>';
+
     return $str;
 }
 
