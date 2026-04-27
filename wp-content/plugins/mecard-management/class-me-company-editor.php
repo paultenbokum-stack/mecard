@@ -10,7 +10,7 @@ class Module {
         add_action('wp_ajax_me_new_load_company_preview', [__CLASS__, 'ajax_load_preview']);
         add_action('wp_ajax_me_new_save_company_form',    [__CLASS__, 'ajax_save']);
     }
-
+// random comment
     public static function ajax_load_form() : void {
         if (!check_ajax_referer('me-company-edit-nonce', '_wpnonce', false)) {
             wp_send_json_error(['message'=>'Invalid company nonce.'], 403);

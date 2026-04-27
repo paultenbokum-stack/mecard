@@ -43,9 +43,16 @@ class Module {
         );
 
         wp_enqueue_style(
+            'me-single-manage',
+            plugin_dir_url( __FILE__ ) . 'css/me-single-manage.css',
+            [],
+            filemtime( plugin_dir_path( __FILE__ ) . 'css/me-single-manage.css' )
+        );
+
+        wp_enqueue_style(
             'me-single-cards',
             plugin_dir_url( __FILE__ ) . 'css/me-single-cards.css',
-            [],
+            [ 'me-single-manage' ],
             filemtime( plugin_dir_path( __FILE__ ) . 'css/me-single-cards.css' )
         );
 
@@ -98,6 +105,7 @@ class Module {
         }
 
         ob_start();
+        echo Single_Manage_Module::render_subnav( 'cards' );
         ?>
         <section class="me-single-cards">
             <header class="me-single-cards__header">

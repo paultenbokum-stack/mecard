@@ -1,3 +1,40 @@
+.me-subnav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 12px 0;
+    border-bottom: 1px solid #e5e9f0;
+    margin-bottom: 24px;
+}
+
+.me-subnav__link {
+    display: inline-block;
+    padding: 6px 16px;
+    border-radius: 20px;
+    text-decoration: none;
+    font-size: 0.875em;
+    font-weight: 500;
+    color: #555;
+    background: #f0f4f8;
+    transition: background 0.15s, color 0.15s;
+}
+
+.me-subnav__link:hover {
+    background: #dde8f5;
+    color: #1a73e8;
+    text-decoration: none;
+}
+
+.me-subnav__link--active {
+    background: #1a73e8;
+    color: #ffffff;
+}
+
+.me-subnav__link--active:hover {
+    background: #1558c0;
+    color: #ffffff;
+}
+
 .me-single-manage__panel--offer {
     background: linear-gradient(180deg, #f8fbff 0%, #eef5ff 100%);
 }

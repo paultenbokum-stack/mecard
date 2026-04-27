@@ -7,7 +7,7 @@ use Me\Single_Editor\Module as Single_Editor_Module;
 if ( ! defined( 'ABSPATH' ) ) exit;
 
 class Module {
-    private const PRO_PRICE = 'R199 per year';
+    private const PRO_PRICE = 'R199 once off';
 
     public static function init() : void {
         add_shortcode( 'me_single_manage', [ __CLASS__, 'render_shortcode' ] );
@@ -57,6 +57,21 @@ class Module {
         return site_url( '/manage/' );
     }
 
+    public static function render_subnav( string $active ) : string {
+        $links = [
+            'home'    => [ 'label' => 'Home',         'url' => site_url( '/manage/' ) ],
+            'profile' => [ 'label' => 'Edit Profile',  'url' => site_url( '/manage/profile/' ) ],
+            'cards'   => [ 'label' => 'My Cards',      'url' => site_url( '/manage/cards/' ) ],
+        ];
+        $html = '<nav class="me-subnav">';
+        foreach ( $links as $key => $link ) {
+            $class = 'me-subnav__link' . ( $active === $key ? ' me-subnav__link--active' : '' );
+            $html .= '<a class="' . esc_attr( $class ) . '" href="' . esc_url( $link['url'] ) . '">' . esc_html( $link['label'] ) . '</a>';
+        }
+        $html .= '</nav>';
+        return $html;
+    }
+
     public static function maybe_redirect_logged_out() : void {
         if ( is_user_logged_in() || ! is_page( 'manage' ) ) {
             return;
@@ -77,6 +92,7 @@ class Module {
         $is_pro       = self::is_pro_profile( $profile_id );
 
         ob_start();
+        echo self::render_subnav( 'home' );
         ?>
         <section class="me-single-manage">
             <header class="me-single-manage__header">
@@ -134,8 +150,6 @@ class Module {
                             <li>Customise look and feel to your company branding</li>
                             <li>Add company info</li>
                             <li>Extra buttons and links</li>
-                            <li>Team contact sharing</li>
-                            <li>Sharing analytics</li>
                         </ul>
                         <p class="me-single-manage__price"><?php echo esc_html( self::PRO_PRICE ); ?></p>
                         <div class="me-single-manage__actions">
@@ -190,8 +204,6 @@ class Module {
                             <li>Customise look and feel to your company branding</li>
                             <li>Add company info</li>
                             <li>Extra buttons and links</li>
-                            <li>Team contact sharing</li>
-                            <li>Sharing analytics</li>
                         </ul>
                         <p class="me-single-manage__price"><?php echo esc_html( self::PRO_PRICE ); ?></p>
                         <div class="me-single-manage__actions">

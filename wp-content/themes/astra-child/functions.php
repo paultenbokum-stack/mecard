@@ -100,3 +100,21 @@ function forgot_password_link() {
 
 add_shortcode('lost_pass_link','forgot_password_link');
 
+add_filter( 'wp_nav_menu_objects', 'mecard_fix_single_profile_nav_link', 10, 2 );
+function mecard_fix_single_profile_nav_link( $items, $args ) {
+    if ( ! is_user_logged_in() || ! class_exists( '\Me\Single_Editor\Module' ) ) {
+        return $items;
+    }
+    $profile_id = \Me\Single_Editor\Module::resolve_single_profile_id( get_current_user_id() );
+    if ( $profile_id <= 0 ) {
+        return $items;
+    }
+    $legacy = trailingslashit( home_url( '/manage-mecard-profiles/dashboard' ) );
+    foreach ( $items as &$item ) {
+        if ( trailingslashit( $item->url ) === $legacy ) {
+            $item->url = home_url( '/manage/' );
+        }
+    }
+    return $items;
+}
+

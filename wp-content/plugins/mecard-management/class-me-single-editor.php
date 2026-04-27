@@ -45,9 +45,16 @@ class Module {
         }
 
         wp_enqueue_style(
+            'me-single-manage',
+            plugin_dir_url( __FILE__ ) . 'css/me-single-manage.css',
+            [],
+            filemtime( plugin_dir_path( __FILE__ ) . 'css/me-single-manage.css' )
+        );
+
+        wp_enqueue_style(
             'me-single-editor',
             plugin_dir_url( __FILE__ ) . 'css/me-single-editor.css',
-            [ 'me-profile', 'me-editor-shell' ],
+            [ 'me-profile', 'me-editor-shell', 'me-single-manage' ],
             filemtime( plugin_dir_path( __FILE__ ) . 'css/me-single-editor.css' )
         );
 
@@ -333,6 +340,7 @@ class Module {
         $initial_mode   = $is_pro_profile ? 'pro' : 'standard';
 
         ob_start();
+        echo Single_Manage_Module::render_subnav( 'profile' );
         ?>
         <div class="me-single-editor-page" data-profile-id="<?php echo esc_attr( $profile_id ); ?>" data-force-pro="<?php echo $is_pro_profile ? '1' : '0'; ?>" data-initial-mode="<?php echo esc_attr( $initial_mode ); ?>">
             <div class="me-single-editor__header">
