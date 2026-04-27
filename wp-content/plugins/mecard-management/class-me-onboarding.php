@@ -632,7 +632,7 @@ class Module {
     }
 
     public static function get_dashboard_url(): string {
-        return (string) apply_filters('mecard_onboarding_dashboard_url', Single_Manage_Module::manage_url());
+        return (string) apply_filters('mecard_onboarding_dashboard_url', mecard_user_home_url());
     }
 
     public static function get_signup_url(): string {

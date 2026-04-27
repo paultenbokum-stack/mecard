@@ -2348,10 +2348,12 @@ ul.nav li.nav-item a {
 /* ── CTA banner ── */
 
 .mc-cta-banner {
-    background: var(--mc-dark);
+    background: linear-gradient(135deg, #fff 0%, var(--mc-blue-lt) 100%);
+    border: 1px solid var(--mc-gray-100);
     border-radius: var(--mc-radius-lg);
     padding: 56px 40px;
-    color: #fff;
+    color: var(--mc-gray-800);
+    box-shadow: 0 12px 40px rgba(0,102,255,0.12);
     position: relative;
     overflow: hidden;
 }
@@ -2363,12 +2365,12 @@ ul.nav li.nav-item a {
     width: 240px;
     height: 240px;
     border-radius: 50%;
-    background: rgba(0,102,255,0.15);
+    background: rgba(0,102,255,0.18);
     pointer-events: none;
 }
 
-.mc-cta-heading { font-size: clamp(1.5rem, 3vw, 2rem); font-weight: 700; }
-.mc-cta-text    { color: rgba(255,255,255,0.7); max-width: 420px; }
+.mc-cta-heading { font-size: clamp(1.5rem, 3vw, 2rem); font-weight: 700; color: var(--mc-dark); }
+.mc-cta-text    { color: var(--mc-gray-600); max-width: 420px; }
 
 @media (max-width: 767px) {
     .mc-cta-banner {
