@@ -26,12 +26,277 @@ require_once ME_PLUGIN_DIR . 'class-me-company-editor.php';
 require_once ME_PLUGIN_DIR . 'class-me-profile-renderer.php';
 require_once ME_PLUGIN_DIR .'class-me-preview.php';
 require_once ME_PLUGIN_DIR .'class-me-profile-editor.php';
+require_once ME_PLUGIN_DIR . 'class-me-onboarding.php';
+require_once ME_PLUGIN_DIR . 'class-me-entitlements.php';
+require_once ME_PLUGIN_DIR . 'class-me-single-editor.php';
+require_once ME_PLUGIN_DIR . 'class-me-single-cards.php';
+require_once ME_PLUGIN_DIR . 'class-me-single-manage.php';
+
+function mecard_cart_cleanup_guard_key( string $cart_item_key, int $user_id ) : string {
+    return $cart_item_key . '|' . $user_id;
+}
+
+function mecard_mark_cart_cleanup_in_progress( string $cart_item_key, int $user_id, bool $active ) : void {
+    $key = mecard_cart_cleanup_guard_key( $cart_item_key, $user_id );
+    if ( ! isset( $GLOBALS['mecard_cart_cleanup_guards'] ) || ! is_array( $GLOBALS['mecard_cart_cleanup_guards'] ) ) {
+        $GLOBALS['mecard_cart_cleanup_guards'] = [];
+    }
+
+    if ( $active ) {
+        $GLOBALS['mecard_cart_cleanup_guards'][ $key ] = true;
+    } else {
+        unset( $GLOBALS['mecard_cart_cleanup_guards'][ $key ] );
+    }
+}
+
+function mecard_is_cart_cleanup_in_progress( string $cart_item_key, int $user_id ) : bool {
+    $key = mecard_cart_cleanup_guard_key( $cart_item_key, $user_id );
+    return ! empty( $GLOBALS['mecard_cart_cleanup_guards'][ $key ] );
+}
+
+function mecard_legacy_dashboard_url() : string {
+    return site_url( '/manage-mecard-profiles/dashboard/' );
+}
+
+function mecard_user_home_url( int $user_id = 0 ) : string {
+    $user_id = $user_id > 0 ? $user_id : get_current_user_id();
+    if ( $user_id > 0 && class_exists( '\\Me\\Single_Editor\\Module' ) ) {
+        $profile_id = \Me\Single_Editor\Module::resolve_single_profile_id( $user_id );
+        if ( $profile_id > 0 ) {
+            return \Me\Single_Manage\Module::manage_url();
+        }
+    }
+
+    return mecard_legacy_dashboard_url();
+}
+
+function mecard_cleanup_cart_item_related_objects( string $cart_item_key, int $user_id = 0 ) : array {
+    $user_id = $user_id > 0 ? $user_id : get_current_user_id();
+    $result  = [
+        'cart_item_key'          => $cart_item_key,
+        'user_id'                => $user_id,
+        'entitlements_cancelled' => 0,
+        'trashed_tags'           => 0,
+        'skipped_ordered_tags'   => 0,
+    ];
+
+    if ( $cart_item_key === '' || $user_id <= 0 ) {
+        return $result;
+    }
+
+    if ( method_exists( '\\Me\\Entitlements\\Module', 'cancel_cart_entitlements_for_user' ) ) {
+        $result['entitlements_cancelled'] = \Me\Entitlements\Module::cancel_cart_entitlements_for_user( $cart_item_key, $user_id );
+    }
+
+    $args = [
+        'post_type'      => 't',
+        'posts_per_page' => -1,
+        'author'         => $user_id,
+        'post_status'    => [ 'publish', 'draft', 'pending', 'private', 'future', 'trash' ],
+        'meta_query'     => [
+            [
+                'key'   => 'wpcf-cart-item-key',
+                'value' => $cart_item_key . '-' . $user_id,
+            ],
+        ],
+    ];
+
+    $tags = get_posts( $args );
+    foreach ( $tags as $tag ) {
+        if ( ! $tag instanceof \WP_Post || $tag->post_status === 'trash' ) {
+            continue;
+        }
+
+        if ( get_tag_order_id( $tag->ID ) > 0 ) {
+            $result['skipped_ordered_tags']++;
+            continue;
+        }
+
+        if ( wp_trash_post( $tag->ID ) ) {
+            $result['trashed_tags']++;
+        }
+    }
+
+    return $result;
+}
+
+function mecard_remove_cart_item_and_related_objects( string $cart_item_key, int $user_id = 0 ) : array {
+    $user_id = $user_id > 0 ? $user_id : get_current_user_id();
+    $result  = [
+        'cart_removed' => false,
+        'cart_item_key' => $cart_item_key,
+        'user_id' => $user_id,
+        'entitlements_cancelled' => 0,
+        'trashed_tags' => 0,
+        'skipped_ordered_tags' => 0,
+    ];
+
+    if ( $cart_item_key === '' || $user_id <= 0 ) {
+        return $result;
+    }
+
+    if ( mecard_is_cart_cleanup_in_progress( $cart_item_key, $user_id ) ) {
+        return $result;
+    }
+
+    mecard_mark_cart_cleanup_in_progress( $cart_item_key, $user_id, true );
+    try {
+        if ( function_exists( 'WC' ) && WC()->cart ) {
+            $result['cart_removed'] = (bool) WC()->cart->remove_cart_item( $cart_item_key );
+            WC()->cart->calculate_totals();
+            WC()->cart->set_session();
+            WC()->cart->maybe_set_cart_cookies();
+        }
+
+        $cleanup = mecard_cleanup_cart_item_related_objects( $cart_item_key, $user_id );
+        $result  = array_merge( $result, $cleanup );
+    } finally {
+        mecard_mark_cart_cleanup_in_progress( $cart_item_key, $user_id, false );
+    }
+
+    return $result;
+}
+
+function mecard_profile_upgrade_product_id(): int {
+    return (int) ( defined( 'MECARD_PROFILE_UPGRADE_PRODUCT_ID' ) ? MECARD_PROFILE_UPGRADE_PRODUCT_ID : 0 );
+}
+
+function mecard_product_ids() : array {
+    return array_values( array_filter( array_map( 'intval', [
+        defined( 'MECARD_CLASSIC_PRODUCT_ID' ) ? MECARD_CLASSIC_PRODUCT_ID : 0,
+        defined( 'MECARD_CLASSIC_BUNDLE_PRODUCT_ID' ) ? MECARD_CLASSIC_BUNDLE_PRODUCT_ID : 0,
+        defined( 'MECARD_PRODUCT_ID' ) ? MECARD_PRODUCT_ID : 0,
+        defined( 'MECARD_BUNDLE_PRODUCT_ID' ) ? MECARD_BUNDLE_PRODUCT_ID : 0,
+        defined( 'MECARD_KEYRING_PRODUCT_ID' ) ? MECARD_KEYRING_PRODUCT_ID : 0,
+        defined( 'MECARD_PHONETAG_PRODUCT_ID' ) ? MECARD_PHONETAG_PRODUCT_ID : 0,
+        defined( 'MECARD_PROFILE_UPGRADE_PRODUCT_ID' ) ? MECARD_PROFILE_UPGRADE_PRODUCT_ID : 0,
+    ] ) ) );
+}
+
+function mecard_is_product_id( int $product_id ) : bool {
+    return $product_id > 0 && in_array( $product_id, mecard_product_ids(), true );
+}
+
+function mecard_mark_removed_notice_as_mecard( bool $active ) : void {
+    $GLOBALS['mecard_strip_undo_notice'] = $active;
+}
+
+function mecard_should_strip_removed_undo_notice() : bool {
+    return ! empty( $GLOBALS['mecard_strip_undo_notice'] );
+}
+
+function mecard_is_profile_upgrade_product( $product ): bool {
+    if ( ! class_exists( 'WC_Product' ) || ! $product instanceof WC_Product ) {
+        return false;
+    }
+
+    $upgrade_product_id = mecard_profile_upgrade_product_id();
+    if ( $upgrade_product_id > 0 && (int) $product->get_id() === $upgrade_product_id ) {
+        return true;
+    }
+
+    return $product->get_type() === 'mecard-profile';
+}
+
+function mecard_force_virtual_profile_upgrades( $is_virtual, $product ) {
+    if ( mecard_is_profile_upgrade_product( $product ) ) {
+        return true;
+    }
+
+    return $is_virtual;
+}
+add_filter( 'woocommerce_is_virtual', 'mecard_force_virtual_profile_upgrades', 20, 2 );
+
+function mecard_force_no_shipping_for_profile_upgrades( $needs_shipping, $product ) {
+    if ( mecard_is_profile_upgrade_product( $product ) ) {
+        return false;
+    }
+
+    return $needs_shipping;
+}
+add_filter( 'woocommerce_product_needs_shipping', 'mecard_force_no_shipping_for_profile_upgrades', 20, 2 );
+
+function mecard_sync_profile_upgrade_shipping_defaults(): void {
+    $upgrade_product_id = mecard_profile_upgrade_product_id();
+    if ( $upgrade_product_id <= 0 || get_post_type( $upgrade_product_id ) !== 'product' ) {
+        return;
+    }
+
+    $done_key = 'me_mecard_profile_upgrade_shipping_defaults_v1';
+    if ( get_option( $done_key ) ) {
+        return;
+    }
+
+    update_post_meta( $upgrade_product_id, '_virtual', 'yes' );
+
+    if ( function_exists( 'wc_delete_product_transients' ) ) {
+        wc_delete_product_transients( $upgrade_product_id );
+    }
+
+    update_option( $done_key, 1, false );
+}
+add_action( 'init', 'mecard_sync_profile_upgrade_shipping_defaults', 15 );
 
 add_action( 'init', function () {
     // These only add wp_ajax_* actions, no output/enqueue
     Me\Profile_Editor\Module::init();
     Me\Company_Editor\Module::init();
+    Me\Onboarding\Module::init();
+    Me\Entitlements\Module::init();
+    Me\Single_Editor\Module::init();
+    Me\Single_Cards\Module::init();
+    Me\Single_Manage\Module::init();
 } );
+
+add_action( 'wp', 'mecard_customize_empty_cart_state', 20 );
+
+function mecard_customize_empty_cart_state() : void {
+    if ( is_admin() || ! function_exists( 'is_cart' ) || ! is_cart() ) {
+        return;
+    }
+
+    remove_action( 'woocommerce_cart_is_empty', 'wc_empty_cart_message', 10 );
+    add_action( 'woocommerce_cart_is_empty', 'mecard_empty_cart_message', 10 );
+}
+
+function mecard_empty_cart_target_url() : string {
+    return mecard_user_home_url();
+}
+
+function mecard_empty_cart_target_text() : string {
+    $target_url = mecard_empty_cart_target_url();
+
+    if ( is_user_logged_in() && class_exists( '\\Me\\Single_Manage\\Module' ) && $target_url === \Me\Single_Manage\Module::manage_url() ) {
+        return 'Back to My MeCard Home';
+    }
+
+    return 'Go to dashboard';
+}
+
+function mecard_empty_cart_message() : void {
+    echo '<div class="wc-empty-cart-message mecard-empty-cart-message">';
+    echo '<h2>Your basket is empty</h2>';
+    echo '<p>There are no MeCard items waiting to be checked out right now.</p>';
+    echo '</div>';
+}
+
+function mecard_empty_cart_return_url( $url ) {
+    if ( function_exists( 'is_cart' ) && is_cart() && function_exists( 'WC' ) && WC()->cart && WC()->cart->is_empty() ) {
+        return mecard_empty_cart_target_url();
+    }
+
+    return $url;
+}
+add_filter( 'woocommerce_return_to_shop_redirect', 'mecard_empty_cart_return_url', 20 );
+
+function mecard_empty_cart_return_text( $text ) {
+    if ( function_exists( 'is_cart' ) && is_cart() && function_exists( 'WC' ) && WC()->cart && WC()->cart->is_empty() ) {
+        return mecard_empty_cart_target_text();
+    }
+
+    return $text;
+}
+add_filter( 'woocommerce_return_to_shop_text', 'mecard_empty_cart_return_text', 20 );
 function mecard_init_modular_editors() {
     // Frontend only
     if ( is_admin() ) {
@@ -182,6 +447,16 @@ function install_scripts(): void
         'nonce'     => wp_create_nonce('myajax-next-nonce'),
         'siteurl'   => site_url(),
         'cred_edit_company_form_id' => CRED_EDIT_COMPANY_FORM_ID,
+        'mecardProductIds' => array_values( array_filter( array_map( 'intval', [
+            defined( 'MECARD_CLASSIC_PRODUCT_ID' ) ? MECARD_CLASSIC_PRODUCT_ID : 0,
+            defined( 'MECARD_CLASSIC_BUNDLE_PRODUCT_ID' ) ? MECARD_CLASSIC_BUNDLE_PRODUCT_ID : 0,
+            defined( 'MECARD_PRODUCT_ID' ) ? MECARD_PRODUCT_ID : 0,
+            defined( 'MECARD_BUNDLE_PRODUCT_ID' ) ? MECARD_BUNDLE_PRODUCT_ID : 0,
+            defined( 'MECARD_KEYRING_PRODUCT_ID' ) ? MECARD_KEYRING_PRODUCT_ID : 0,
+            defined( 'MECARD_PHONETAG_PRODUCT_ID' ) ? MECARD_PHONETAG_PRODUCT_ID : 0,
+            defined( 'MECARD_PROFILE_UPGRADE_PRODUCT_ID' ) ? MECARD_PROFILE_UPGRADE_PRODUCT_ID : 0,
+        ] ) ) ),
+        'removeConfirmText' => 'Are you sure you want to remove this item? This will also remove its related cards, tags, or bundle setup from your basket.',
     ]);
 
     wp_register_script(
@@ -300,7 +575,8 @@ function mecard_grant_profile_author_edit_cap( $caps, $cap, $args, $user ) {
     if ( ! $post_id ) return $caps;
     $post = get_post( $post_id );
     if ( ! $post || $post->post_type !== 'mecard-profile' ) return $caps;
-    if ( (int) $post->post_author === (int) $user->ID ) {
+    $owner_user_id = (int) get_post_meta( $post_id, 'me_profile_owner_user_id', true );
+    if ( (int) $post->post_author === (int) $user->ID || ( $owner_user_id > 0 && $owner_user_id === (int) $user->ID ) ) {
         foreach ( $cap as $primitive ) {
             $caps[ $primitive ] = true;
         }
@@ -464,7 +740,7 @@ function render_social_icons() {
 
     $editable = ($current_user_id == $user_id) ? true : false;
 
-    $edit_link = '<a href="'.get_site_url() .'/edit-profile/" class="mecard-edit">edit</a>';
+    $edit_link = '<a href="'.get_site_url() .'/manage/profile/" class="mecard-edit">edit</a>';
 
     $headings = array(
         "name" => "Name",
@@ -539,6 +815,29 @@ function render_social_icons() {
 }
 
 add_shortcode('mecard_social_icons','render_social_icons');
+
+function mecard_single_editor_link_html( $profile_id = 0 ) {
+    $profile_id = (int) $profile_id;
+    if ( ! $profile_id || ! is_user_logged_in() ) {
+        return '';
+    }
+
+    if ( ! function_exists( 'me_is_post_owner' ) || ! me_is_post_owner( $profile_id ) ) {
+        return '';
+    }
+
+    if ( ! class_exists( '\Me\Single_Editor\Module' ) ) {
+        return '';
+    }
+
+    $user_profiles = \Me\Single_Editor\Module::get_self_owned_profiles( get_current_user_id() );
+    if ( count( $user_profiles ) !== 1 || (int) $user_profiles[0] !== $profile_id ) {
+        return '';
+    }
+
+    $url = \Me\Single_Editor\Module::editor_url( $profile_id );
+    return '<div class="mecard-owner-edit-link"><a href="' . esc_url( $url ) . '">Edit profile</a></div>';
+}
 
 function vcard_download_button($atts) {
 global $post;
@@ -789,26 +1088,111 @@ function filter_relationship_custom_fn( $query_args, $view_settings ) {
 
 add_filter('woocommerce_thankyou_order_received_text', 'woo_change_order_received_text', 10, 2 );
 function woo_change_order_received_text( $str, $order ) {
-    $is_mecard = 1;
-    /*foreach ($order->get_items() as $item_id => $item) {
-        if (strpos( strtolower($item->get_name()),'mecard')) {
-            $is_mecard = 1;
-        }
-    }*/
-    if ($is_mecard) {
-        $str = sprintf( '<div class="mecard-box"><h3>Thanks for your MeCard order, %s!</h3>', esc_html( $order->get_billing_first_name() ) );
-        //$str = '<div class="mecard-box"><h3>Thanks for your MeCard order, '.esc_html( $order->get_billing_first_name()).'</h3>' ;
-        $str .= '<br/><p>What next?</p>';
-        $str .='<ol>
-                <li>If you haven\'t done so yet, pay for this order using the account details below</li>
-                <li>Upload your card designs in the <a href="'.site_url().'/manage-mecard-profiles/new-cards-and-tags/">management console</a> (also accessible via the "Manage Mecard Profiles" link in the top navigation)</li>
-                <li>We\'ll check your designs for issues and feed back if we find any</li>
-                <li>Your order will be manufactured and shipped to the address on this order</li>
-                </ol>
-                </div>
-                ';
+    if ( ! $order instanceof WC_Order ) {
+        return $str;
     }
-    //$str = '';
+
+    // --- Derive order context ---
+    $is_paid = in_array( $order->get_status(), [ 'processing', 'completed' ], true );
+
+    $card_product_ids = array_filter( [
+        defined( 'MECARD_PRODUCT_ID' )                ? (int) MECARD_PRODUCT_ID                : 0,
+        defined( 'MECARD_CLASSIC_PRODUCT_ID' )        ? (int) MECARD_CLASSIC_PRODUCT_ID        : 0,
+        defined( 'MECARD_BUNDLE_PRODUCT_ID' )         ? (int) MECARD_BUNDLE_PRODUCT_ID         : 0,
+        defined( 'MECARD_CLASSIC_BUNDLE_PRODUCT_ID' ) ? (int) MECARD_CLASSIC_BUNDLE_PRODUCT_ID : 0,
+        defined( 'MECARD_KEYRING_PRODUCT_ID' )        ? (int) MECARD_KEYRING_PRODUCT_ID        : 0,
+        defined( 'MECARD_PHONETAG_PRODUCT_ID' )       ? (int) MECARD_PHONETAG_PRODUCT_ID       : 0,
+        defined( 'MECARD_CLASSIC_CORP_PRODUCT_ID' )   ? (int) MECARD_CLASSIC_CORP_PRODUCT_ID   : 0,
+    ] );
+
+    $upgrade_product_id = defined( 'MECARD_PROFILE_UPGRADE_PRODUCT_ID' ) ? (int) MECARD_PROFILE_UPGRADE_PRODUCT_ID : 0;
+
+    $has_cards    = false;
+    $has_upgrades = false;
+    $cart_keys    = [];
+
+    foreach ( $order->get_items() as $item ) {
+        if ( ! $item instanceof WC_Order_Item_Product ) {
+            continue;
+        }
+        $pid = (int) $item->get_product_id();
+        if ( in_array( $pid, $card_product_ids, true ) ) {
+            $has_cards = true;
+            $key = (string) $item->get_meta( '_mecard_cart_item_key', true );
+            if ( $key !== '' ) {
+                $cart_keys[] = $key;
+            }
+        }
+        if ( $upgrade_product_id > 0 && $pid === $upgrade_product_id ) {
+            $has_upgrades = true;
+        }
+    }
+
+    // --- Check design submission status ---
+    $total_card_count  = count( $cart_keys );
+    $designs_submitted = 0;
+
+    if ( $has_cards && ! empty( $cart_keys ) ) {
+        global $wpdb;
+        $placeholders = implode( ',', array_fill( 0, count( $cart_keys ), '%s' ) );
+        // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+        $tag_ids = $wpdb->get_col(
+            $wpdb->prepare(
+                "SELECT pm.post_id FROM {$wpdb->postmeta} pm
+                 INNER JOIN {$wpdb->posts} p ON p.ID = pm.post_id
+                 WHERE pm.meta_key = 'wpcf-cart-item-key'
+                 AND pm.meta_value IN ($placeholders)
+                 AND p.post_type = 't'",
+                ...$cart_keys
+            )
+        );
+        foreach ( $tag_ids as $tag_id ) {
+            if ( get_post_meta( (int) $tag_id, 'wpcf-design-submitted', true ) === '1' ) {
+                $designs_submitted++;
+            }
+        }
+    }
+
+    $all_designs_done = $has_cards && $total_card_count > 0 && $designs_submitted >= $total_card_count;
+    $some_designs_done = $has_cards && $designs_submitted > 0 && ! $all_designs_done;
+
+    // --- Build output ---
+    $name       = esc_html( $order->get_billing_first_name() );
+    $manage_url = esc_url( site_url( '/manage-mecard-profiles/new-cards-and-tags/' ) );
+
+    $str  = '<div class="mecard-box">';
+    $str .= '<h3 class="mecard-box__heading">Thanks for your MeCard order, ' . $name . '!</h3>';
+    $str .= '<p class="mecard-box__subheading">What&rsquo;s next?</p>';
+    $str .= '<ol class="mecard-box__steps">';
+
+    // Payment step
+    if ( $is_paid ) {
+        $str .= '<li class="mecard-box__step mecard-box__step--done">Payment received &mdash; thank you</li>';
+    } else {
+        $str .= '<li class="mecard-box__step">Pay for this order using the account details below</li>';
+    }
+
+    // Card design steps
+    if ( $has_cards ) {
+        if ( $all_designs_done ) {
+            $str .= '<li class="mecard-box__step mecard-box__step--done">Card designs received</li>';
+        } elseif ( $some_designs_done ) {
+            $str .= '<li class="mecard-box__step">Continue uploading your remaining card designs in the <a href="' . $manage_url . '">management console</a></li>';
+        } else {
+            $str .= '<li class="mecard-box__step">Upload your card designs in the <a href="' . $manage_url . '">management console</a></li>';
+        }
+        $str .= '<li class="mecard-box__step">We\'ll check your designs for issues and give feedback if we find any</li>';
+        $str .= '<li class="mecard-box__step">Your order will be manufactured and shipped to the address on this order</li>';
+    }
+
+    // Upgrade note
+    if ( $has_upgrades ) {
+        $str .= '<li class="mecard-box__step mecard-box__step--note">Your profile upgrades will be applied automatically as your profiles are created or updated</li>';
+    }
+
+    $str .= '</ol>';
+    $str .= '</div>';
+
     return $str;
 }
 
@@ -953,29 +1337,28 @@ function add_profile_to_account($cart_item_key, $product_id, $quantity, $variati
 
 // define the woocommerce_remove_cart_item callback
 function action_woocommerce_remove_cart_item( $cart_item_key, $instance ) {
-    $args = array(
-        'post_type'  => 't',
-        'posts_per_page' => -1,
-        'author' => get_current_user_id(),
-        'meta_query' => array(
-            array(
-                'key'   => 'wpcf-cart-item-key',
-                'value' => $cart_item_key.'-'.get_current_user_id()
-            )
-        )
-    );
-    $tags = get_posts($args);
-    if (!empty($tags)) {
-        //safeguard: if the first tag has a related order, then all tags already have an order, don't trash any of them
-        if (!get_tag_order_id($tags[0]->ID) > 0) {
-            foreach ($tags as $tag) {
-                $result = wp_trash_post($tag->ID);
-            }
-        }
+    $user_id = get_current_user_id();
+    if ( $user_id <= 0 || mecard_is_cart_cleanup_in_progress( (string) $cart_item_key, $user_id ) ) {
+        return;
     }
 
+    $removed_item = ( is_object( $instance ) && isset( $instance->removed_cart_contents[ $cart_item_key ] ) && is_array( $instance->removed_cart_contents[ $cart_item_key ] ) )
+        ? $instance->removed_cart_contents[ $cart_item_key ]
+        : [];
+    $removed_product_id = isset( $removed_item['product_id'] ) ? (int) $removed_item['product_id'] : 0;
+    $is_mecard_removed_item = mecard_is_product_id( $removed_product_id )
+        || ! empty( $removed_item['mecard_profile_id'] );
 
+    if ( $is_mecard_removed_item ) {
+        mecard_mark_removed_notice_as_mecard( true );
+    }
 
+    mecard_mark_cart_cleanup_in_progress( (string) $cart_item_key, $user_id, true );
+    try {
+        mecard_cleanup_cart_item_related_objects( (string) $cart_item_key, $user_id );
+    } finally {
+        mecard_mark_cart_cleanup_in_progress( (string) $cart_item_key, $user_id, false );
+    }
 };
 
 add_action( 'woocommerce_after_cart_item_quantity_update', 'add_remove_cards', 20, 4 );
@@ -1023,6 +1406,23 @@ function add_remove_cards( $cart_item_key, $quantity, $old_quantity, $cart ){
 
 // add the action
 add_action( 'woocommerce_remove_cart_item', 'action_woocommerce_remove_cart_item', 10, 2 );
+
+add_filter( 'woocommerce_add_success', 'mecard_strip_undo_link_from_removed_notice', 20 );
+function mecard_strip_undo_link_from_removed_notice( $message ) {
+    if ( ! mecard_should_strip_removed_undo_notice() ) {
+        return $message;
+    }
+
+    mecard_mark_removed_notice_as_mecard( false );
+
+    if ( ! is_string( $message ) || strpos( $message, 'restore-item' ) === false ) {
+        return $message;
+    }
+
+    $message = preg_replace( '#\s*<a[^>]*class="restore-item"[^>]*>.*?</a>#i', '', $message );
+
+    return is_string( $message ) ? trim( $message ) : $message;
+}
 
 add_filter( 'wc_add_to_cart_params', function( $params ) {
 // Don't modify params if we're on a WooCommerce page (delete if not needed).
@@ -1277,6 +1677,25 @@ function mecard_cred_autologin( $post_id, $form_data ){
     }
 }
 
+add_filter( 'woocommerce_login_redirect', 'mecard_woocommerce_login_redirect', 10, 2 );
+function mecard_woocommerce_login_redirect( $redirect, $user ) : string {
+    $user_id = $user instanceof \WP_User ? $user->ID : 0;
+    if ( $user_id <= 0 || ! class_exists( '\\Me\\Single_Editor\\Module' ) ) {
+        return $redirect;
+    }
+    // Only override when WooCommerce would redirect to the generic my-account page.
+    // If the user is mid-checkout or has a specific destination, leave it alone.
+    $myaccount = wc_get_page_permalink( 'myaccount' );
+    if ( function_exists( 'untrailingslashit' ) && untrailingslashit( $redirect ) !== untrailingslashit( $myaccount ) ) {
+        return $redirect;
+    }
+    $profile_id = \Me\Single_Editor\Module::resolve_single_profile_id( $user_id );
+    if ( $profile_id > 0 ) {
+        return \Me\Single_Manage\Module::manage_url();
+    }
+    return $redirect;
+}
+
 add_filter('woocommerce_login_form_end', 'my_show_nextend_social_on_woo_login');
 function my_show_nextend_social_on_woo_login() {
     // This shortcode is typically what Nextend uses for login buttons:
@@ -1300,21 +1719,28 @@ function mecard_accept_profile_invite() {
     if ( ! wp_verify_nonce($nonce, 'myajax-next-nonce') ) {
         wp_send_json_error(['message' => 'Not allowed'], 403);
     }
+    if ( ! is_user_logged_in() ) {
+        wp_send_json_error(['message' => 'You must be signed in to accept this invite.'], 403);
+    }
     $request_id = $_POST['request_id'];
     $request = get_post_meta($request_id);
-    if (!$request['wpcf-request-status'][0] == 'accepted') {
+    if ( (($request['wpcf-request-status'][0] ?? '') !== 'accepted') ) {
         $profile_id = toolset_get_related_post($request_id,'mecard-profile-request');
-        $post_args = array(
-            'post_title' => $request['wpcf-recipient-email'][0].'-'.$profile_id,
-            'post_type' => 'user-role',
-            'post_status' => 'publish'
-        );
+        if ( ! $profile_id || get_post_type( $profile_id ) !== 'mecard-profile' ) {
+            wp_send_json_error(['message' => 'Invalid profile invite.'], 400);
+        }
+        $accepted_user_id = get_current_user_id();
+        $date = current_time('Y-m-d');
 
-        $user_role_id = wp_insert_post($post_args);
-        add_post_meta($user_role_id,'wpcf-role','profile-owner');
-        $date = date('Y-m-d');
-        add_post_meta($user_role_id,'wpcf-response-date',$date);
-        $output = toolset_connect_posts('user-role-mecard-profile',$user_role_id,$profile_id);
+        update_post_meta($profile_id, 'me_profile_owner_user_id', $accepted_user_id);
+        update_post_meta($profile_id, 'me_profile_owner_assigned_at', $date);
+        update_post_meta($profile_id, 'me_profile_owner_assigned_via', 'request_accept');
+
+        $output = array(
+            'success' => true,
+            'owner_user_id' => $accepted_user_id,
+            'profile_id' => (int) $profile_id,
+        );
         update_post_meta($request_id,'wpcf-request-status','accepted');
     } else {
         $output = array('success' => false,'error_code'=>'1', 'message' => 'This invite has already been accepted.');
@@ -1898,9 +2324,17 @@ add_shortcode('management_console_nav', function($atts) {
     );
     $co_pro = get_posts($args);
     $counter = array('new_tags' => 0, 'mecard-profile' => 0, 'company' => 0,'live_tags' => 0);
+    $has_pro_profile = false;
     foreach ($co_pro as $mypost) {
         $counter[$mypost->post_type]++;
+        if ( $mypost->post_type === 'mecard-profile' ) {
+            $ptype = strtolower( (string) get_post_meta( $mypost->ID, 'wpcf-profile-type', true ) );
+            if ( in_array( $ptype, [ 'pro', 'professional' ], true ) ) {
+                $has_pro_profile = true;
+            }
+        }
     }
+    $company_tab_relevant = $counter['company'] > 0 || $has_pro_profile;
 
     $args = array(
         'post_type'  => 't',
@@ -1962,7 +2396,7 @@ add_shortcode('management_console_nav', function($atts) {
 
 
     $tab = $atts['tab'];
-    $activetab = array();
+    $activetab = array( 'dashboard' => '', 'new' => '', 'live' => '', 'companies' => '', 'profiles' => '' );
     $activetab[$tab] = 'active';
     $path = site_url().'/manage-mecard-profiles';
 
@@ -1977,7 +2411,7 @@ add_shortcode('management_console_nav', function($atts) {
                 <a class="nav-link '.$activetab['live'].'" href="'.$path.'/live-cards-and-tags" id="new-tab"  type="button" role="tab" aria-controls="profile" aria-selected="false">Live Cards and Tags <span class="badge">'.$counter['live_tags'].'</span></a>
               </li>
               <li class="nav-item" role="presentation">
-                <a class="nav-link '.$activetab['companies'].'" href="'.$path.'/companies/" id="companies_tab"  type="button" role="tab" aria-controls="contact" aria-selected="false">Companies <span class="badge">'.$counter['company'].'</span></a>
+                <a class="nav-link '.$activetab['companies'].'" href="'.$path.'/companies/" id="companies_tab"  type="button" role="tab" aria-controls="contact" aria-selected="false">Companies <span class="badge">'.$counter['company'].'</span>'.( ! $company_tab_relevant ? ' <span class="badge badge-secondary" style="font-size:0.7em;vertical-align:middle;">Pro only</span>' : '' ).'</a>
               </li>
             <li class="nav-item" role="presentation">
                 <a class="nav-link '.$activetab['profiles'].'" href="'.$path.'/profiles" id="profile_tab"  type="button" role="tab" aria-controls="contact" aria-selected="false">Profiles <span class="badge">'.$counter['mecard-profile'].'</span></a>
@@ -2929,6 +3363,9 @@ function me_save_company_form_custom(){
 // === Shortcode: Fullscreen right-side share panel + floating FAB ===
 add_shortcode('mecard_share_panel', function ($atts) {
     $atts = shortcode_atts([], $atts, 'mecard_share_panel');
+    $ios_share_icon_url      = plugins_url('images/ios-share-icon.png', __FILE__);
+    $ios_view_more_shot_url  = plugins_url('images/ios-share-view-more.png', __FILE__);
+    $ios_add_to_home_shot_url = plugins_url('images/ios-add-to-home.png', __FILE__);
 
     ob_start(); ?>
     <!-- Floating Share FAB (icon only) -->
@@ -3020,7 +3457,7 @@ add_shortcode('mecard_share_panel', function ($atts) {
             <!-- Add to Home Screen (A2HS) -->
             <div class="row">
                 <div class="col-12">
-                    <div class="card mb-3" id="mecard-a2hs-card" style="display:none;">
+                    <div class="card mb-3" id="mecard-a2hs-card" data-share-target="install" style="display:none;">
                         <div class="card-body">
                             <h5 class="card-title mb-3"><i class="fas fa-home"></i> Add to Home Screen</h5>
 
@@ -3030,16 +3467,33 @@ add_shortcode('mecard_share_panel', function ($atts) {
                                 <button class="btn btn-primary" id="mecard-a2hs-install-btn">
                                     <i class="fas fa-download"></i> Install
                                 </button>
+
                             </div>
 
                             <!-- iOS: instructional steps (Apple blocks programmatic install) -->
                             <div id="mecard-a2hs-ios" style="display:none;">
-                                <p class="mb-2">On iPhone/iPad:</p>
-                                <ol class="mb-2">
-                                    <li>Tap <strong>Share</strong> <i class="fas fa-share-square"></i> in Safari.</li>
-                                    <li>Choose <strong>Add to Home Screen</strong>.</li>
-                                </ol>
-                                <small class="text-muted">You’ll get an icon on your home screen that opens this profile for easy sharing.</small>
+                                <p class="mb-2">Install this profile to your home screen to launch and share with people you meet.</p>
+                                <div class="mecard-install-ios-steps">
+                                    <div class="mecard-install-ios-step">
+                                        <div class="mecard-install-ios-step__title">1. Tap share</div>
+                                        <div class="mecard-install-shot mecard-install-shot--crop-bottom">
+                                            <img class="class="mecard-install-shot" src="<?php echo esc_url( $ios_share_icon_url ); ?>" alt="iPhone share icon">
+                                        </div>
+                                    </div>
+                                    <div class="mecard-install-ios-step">
+                                        <div class="mecard-install-ios-step__title">2. Tap view more</div>
+                                        <div class="mecard-install-shot mecard-install-shot--crop-bottom">
+                                            <img class="mecard-install-shot__image" src="<?php echo esc_url( $ios_view_more_shot_url ); ?>" alt="iPhone share sheet showing the View More option">
+                                        </div>
+                                    </div>
+                                    <div class="mecard-install-ios-step">
+                                        <div class="mecard-install-ios-step__title">3. Tap add to home</div>
+                                        <div class="mecard-install-shot mecard-install-shot--crop-home">
+                                            <img class="mecard-install-shot__image" src="<?php echo esc_url( $ios_add_to_home_shot_url ); ?>" alt="iPhone share options showing Add to Home Screen">
+                                        </div>
+                                    </div>
+                                </div>
+
                             </div>
 
                             <!-- Already installed -->
@@ -3092,7 +3546,7 @@ add_action('rest_api_init', function () {
             $short = mecard_make_short_label($label, 12);
 
             // Always open the profile itself
-            $start = add_query_arg(['from' => 'a2hs'], get_permalink($profile_id));
+            $start = get_permalink($profile_id);
 
             $manifest = [
                 'id'               => $start,       // helps dedupe installs
@@ -3198,7 +3652,9 @@ function me_is_post_owner( $post_id, $user_id = 0, $resolve_revision = true ) : 
     $user_id = $user_id ? (int) $user_id : (int) get_current_user_id();
     if ( ! $user_id ) return false;
 
-    return ( (int) $post->post_author === $user_id );
+    $owner_user_id = (int) get_post_meta( $post->ID, 'me_profile_owner_user_id', true );
+
+    return ( (int) $post->post_author === $user_id ) || ( $owner_user_id > 0 && $owner_user_id === $user_id );
 }
 
 add_action('wp_enqueue_scripts', function () {

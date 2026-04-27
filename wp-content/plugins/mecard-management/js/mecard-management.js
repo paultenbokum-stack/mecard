@@ -417,15 +417,39 @@ jQuery(document).ready(function($) {
         }
     );
 
-    $( document.body ).on( 'click', 'a.remove.remove_from_cart_button:not(.remove-profile-from-cart), td.product-remove a.remove',function(event) {
-        if( ! confirm( 'Are you sure you want to remove this product? It will also remove all the related cards and tags from your console.' ) ) {
+    function mecardShouldConfirmCartRemoval($link) {
+        const href = String($link.attr('href') || '');
+        if (href.indexOf('me_bundle_action=remove') !== -1) {
+            return true;
+        }
+
+        const productIds = Array.isArray(MECARD_MGMT.mecardProductIds) ? MECARD_MGMT.mecardProductIds.map(function(id) {
+            return parseInt(id, 10);
+        }).filter(function(id) {
+            return !Number.isNaN(id) && id > 0;
+        }) : [];
+
+        const productId = parseInt(
+            $link.attr('data-product_id')
+            || $link.data('product_id')
+            || $link.data('product-id')
+            || 0,
+            10
+        );
+
+        return !Number.isNaN(productId) && productIds.indexOf(productId) !== -1;
+    }
+
+    $( document.body ).on( 'click', 'a.remove.remove_from_cart_button, td.product-remove a.remove, a[href*="me_bundle_action=remove"]', function(event) {
+        const $link = $(this);
+        if (!mecardShouldConfirmCartRemoval($link)) {
+            return;
+        }
+
+        if( ! confirm( MECARD_MGMT.removeConfirmText || 'Are you sure you want to remove this item?' ) ) {
             event.preventDefault();
             event.stopPropagation();
         }
-        setTimeout(function() {
-            //$('input.hidden-refresh').click();
-            window.location.reload();
-        }, 2000);
     });
 
     $(document).on('change','input[name="wpcf-card-front"]',function() {
@@ -677,6 +701,40 @@ jQuery(document).ready(function($) {
             function togglePanel(){ panel.classList.contains('is-open') ? closePanel() : openPanel(); }
             fab.addEventListener('click', togglePanel);
             scrim?.addEventListener('click', closePanel);
+
+            function maybeOpenGuidedShareInstall() {
+                try {
+                    const url = new URL(window.location.href);
+                    const shouldOpenShare = url.searchParams.get('me_share') === '1';
+                    const target = url.searchParams.get('me_share_target');
+                    if (!shouldOpenShare) return;
+
+                    window.setTimeout(function () {
+                        openPanel();
+
+                        if (target) {
+                            const targetEl = panel.querySelector(`[data-share-target="${target}"]`) || document.getElementById(target);
+                            if (targetEl) {
+                                window.setTimeout(function () {
+                                    targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                    targetEl.classList.add('is-guided-target');
+                                    window.setTimeout(function () {
+                                        targetEl.classList.remove('is-guided-target');
+                                    }, 2400);
+                                }, 180);
+                            }
+                        }
+                    }, 150);
+
+                    url.searchParams.delete('me_share');
+                    url.searchParams.delete('me_share_target');
+                    if (window.history && window.history.replaceState) {
+                        window.history.replaceState({}, document.title, `${url.pathname}${url.search}${url.hash}`);
+                    }
+                } catch (err) {
+                    // no-op
+                }
+            }
 
             // Swipe: open with left-swipe on profile; close with right-swipe on panel
             function isMobile(){ return window.matchMedia('(max-width: 767.98px)').matches; }
@@ -1041,8 +1099,19 @@ jQuery(document).ready(function($) {
                 show(card); hide(iosWrap); hide(andrWrap); show(installedEl);
             });
 
+            const isDesktopReview = !isIOS && !window.matchMedia('(max-width: 767.98px)').matches;
+            let guidedInstallRequest = false;
+            try {
+                const parsedUrl = new URL(window.location.href);
+                guidedInstallRequest = parsedUrl.searchParams.get('me_share') === '1' && parsedUrl.searchParams.get('me_share_target') === 'install';
+            } catch (err) {
+                guidedInstallRequest = false;
+            }
+
             // iOS: show instructions if not installed
             if (isIOS && !isStandalone) { show(card); show(iosWrap); hide(andrWrap); }
+            if (isDesktopReview) { show(card); show(iosWrap); show(andrWrap); }
+            if (guidedInstallRequest && !isIOS && !isDesktopReview) { show(card); show(andrWrap); }
 
             // Install button (Android)
             installBtn?.addEventListener('click', async () => {
@@ -1054,6 +1123,8 @@ jQuery(document).ready(function($) {
                     hide(andrWrap); show(installedEl);
                 }
             });
+
+            maybeOpenGuidedShareInstall();
 
 
     }
@@ -1072,3 +1143,70 @@ async function downloadImage(imageSrc, filename,button) {
     link.click()
     document.body.removeChild(link)
 }
+
+/**
+ * mecard-homepage.js
+ * Homepage interactions for mecard.co.za
+ * Enqueue in child theme: wp_enqueue_script('mc-homepage', ..., [], '1.0', true)
+ * Dependencies: none (vanilla JS)
+ */
+
+(function () {
+    'use strict';
+
+    /* ── Scroll-reveal animation ── */
+    function initReveal() {
+        var els = document.querySelectorAll('.mc-reveal');
+        if (!els.length) return;
+
+        var observer = new IntersectionObserver(
+            function (entries) {
+                entries.forEach(function (entry) {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('is-visible');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            },
+            { threshold: 0.15, rootMargin: '0px 0px -40px 0px' }
+        );
+
+        els.forEach(function (el, i) {
+            /* Stagger sibling reveals slightly */
+            el.style.transitionDelay = (i % 3) * 80 + 'ms';
+            observer.observe(el);
+        });
+    }
+
+    /* ── Smooth scroll for on-page anchor links ── */
+    function initSmoothScroll() {
+        document.querySelectorAll('a[href^="#"]').forEach(function (a) {
+            a.addEventListener('click', function (e) {
+                var hash = this.getAttribute('href');
+                if (hash.length < 2) return; /* ignore bare "#" */
+
+                var target = document.querySelector(hash);
+                if (target) {
+                    e.preventDefault();
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+                    /* Update URL hash without jumping */
+                    if (history.pushState) {
+                        history.pushState(null, null, hash);
+                    }
+                }
+            });
+        });
+    }
+
+    /* ── Init on DOM ready ── */
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function () {
+            initReveal();
+            initSmoothScroll();
+        });
+    } else {
+        initReveal();
+        initSmoothScroll();
+    }
+})();

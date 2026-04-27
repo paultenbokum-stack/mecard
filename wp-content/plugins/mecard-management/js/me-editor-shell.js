@@ -232,9 +232,9 @@
     }
 
     // ---------- Update company block in both panes ----------
-    function updateCompanyBlock(company) {
+    function updateCompanyBlock(company, profile) {
         // -- Pro pane --
-        field($proPane, 'company-name').text(company && company.title ? company.title : '');
+        field($proPane, 'company-name').text((company && company.title) ? company.title : ((profile && profile.company_name) || ''));
 
         if (company && company.logo_url) {
             field($proPane, 'company-logo').attr('src', company.logo_url).show();
@@ -269,7 +269,7 @@
         }
 
         // -- Standard pane --
-        field($stdPane, 'company-name').text(company && company.title ? company.title : '');
+        field($stdPane, 'company-name').text((company && company.title) ? company.title : ((profile && profile.company_name) || ''));
 
         if (addr) {
             const mapsStd = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(addr);
@@ -358,6 +358,7 @@
     function loadProfile(post_id){
         current.post_id = post_id;
         setSaveUI('idle');
+        setLoading(true);
 
         const data = {
             action: 'me_profile_load',
@@ -379,21 +380,41 @@
             populateProfileForm(profile);
             syncPreviewVisibilityFromType(profile.type);
             applyCompanyDesignToPreview(company);
-            updateCompanyBlock(company);
+            updateCompanyBlock(company, profile);
             populatePreview(profile, company);
             updatePreviewSocialsFromForm();
             updatePreviewPrimaryButtonsFromForm();
             updateUpsellButton(post_id);
 
-            // Show company design button or "no company" message
-            if (current.company_id) {
-                $('#meEditCompanyDesignBtn').show();
-                $('#meNoCompanyMsg').hide();
+            // Lock or unlock company section based on profile type / existing link
+            var companyLinkEnabled = !!profile.company_link_enabled;
+            var $companySelect     = $('#company_parent');
+            var $companyTextInput  = $('#wpcf-company-r');
+            var $companyLabel      = $('#company_parent_label');
+            var $upgradeHint       = $('.me-company-upgrade-hint');
+
+            if (companyLinkEnabled) {
+                $companySelect.show().prop('disabled', false).closest('.form-group').removeClass('me-company-group--locked');
+                $companyTextInput.hide();
+                $companyLabel.text('Company (parent)');
+                $upgradeHint.hide();
+                if (current.company_id) {
+                    $('#meEditCompanyDesignBtn').show();
+                    $('#meNoCompanyMsg').hide();
+                } else {
+                    $('#meEditCompanyDesignBtn').hide();
+                    $('#meNoCompanyMsg').show();
+                }
             } else {
+                $companySelect.hide().prop('disabled', true).closest('.form-group').addClass('me-company-group--locked');
+                $companyTextInput.show();
+                $companyLabel.text('Company name');
+                $upgradeHint.show();
                 $('#meEditCompanyDesignBtn').hide();
-                $('#meNoCompanyMsg').show();
+                $('#meNoCompanyMsg').hide();
             }
             $('#meEditCompanyDesignWarning').hide();
+            setLoading(false);
 
         }).fail(function(xhr){
             console.error('Profile load AJAX error', xhr && xhr.responseText);
@@ -413,6 +434,7 @@
         $('#wpcf-work-phone-number').val(p.direct_line || '');
         $('#wpcf-profile-type').val(p.type || 'standard');
         $('#company_parent').val(p.company_parent || 0);
+        $('#wpcf-company-r').val(p.company_name || '');
 
         const soc = p.soc || {};
         $('#wpcf-facebook-url').val(soc.facebook || '');
@@ -538,13 +560,19 @@
 
     // ---------- Open modal helper (matches existing button calls) ----------
     window.NewMeOpenProfileEditor = function(post_id){
-        $('#meProfileEditorModal').modal('show');
-        setLoading(true);
-
-        loadProfile(post_id)
-            .always(function(){
-                setLoading(false);
-            });
+        const targetId = parseInt(post_id, 10) || 0;
+        const $modal = $('#meProfileEditorModal');
+        if ($modal.length) {
+            // Legacy multi-profile modal editor
+            loadProfile(targetId);
+            $modal.modal('show');
+            return;
+        }
+        // Single-profile flow: navigate to the inline editor page
+        const baseUrl = (window.ME_SINGLE_EDITOR && ME_SINGLE_EDITOR.editProfileUrl)
+            ? ME_SINGLE_EDITOR.editProfileUrl
+            : '/manage/profile/';
+        window.location.assign(baseUrl);
     };
 
     // ---------- Media frame for profile photo ----------

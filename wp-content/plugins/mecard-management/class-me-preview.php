@@ -234,8 +234,8 @@ class Module {
                             <label for="wpcf-job-title">Job title</label>
                             <input type="text" class="form-control" name="wpcf-job-title" id="wpcf-job-title" value="">
                         </div>
-                        <div class="form-group col-md-6">
-                            <label for="company_parent">Company (parent)</label>
+                        <div class="form-group col-md-6" id="company_parent_group">
+                            <label for="company_parent" id="company_parent_label">Company (parent)</label>
                             <select class="form-control" name="company_parent" id="company_parent">
                                 <option value="0"><?php esc_html_e('— No company —'); ?></option>
                                 <?php foreach ($companies as $company): ?>
@@ -244,6 +244,8 @@ class Module {
                                     </option>
                                 <?php endforeach; ?>
                             </select>
+                            <input type="text" class="form-control" name="wpcf-company-r" id="wpcf-company-r" placeholder="Your company name" style="display:none;">
+                            <p class="me-company-upgrade-hint" style="display:none;">&#128274; <a href="#">Upgrade to Pro</a> to link rich company details.</p>
                         </div>
                     </div>
 
@@ -546,8 +548,16 @@ private static function render_standard_preview_markup() : void {
             'mobile'         => $m('wpcf-mobile-number') ?: '',
             'wa'             => $m('wpcf-whatsapp-number') ?: '',
             'direct_line'    => $m('wpcf-work-phone-number') ?: '',
+            'company_name'   => $m('wpcf-company-r') ?: ($m('wpcf-company_name') ?: ''),
+            'company_logo_id'=> (int) $m('me_profile_company_logo_id') ?: 0,
+            'company_logo_url' => (($logo_id = (int) $m('me_profile_company_logo_id')) ? (wp_get_attachment_image_url($logo_id, 'medium') ?: '') : ''),
             'type'           => $m('wpcf-profile-type') ?: 'standard',
-            'company_parent' => $company_id, // ✅ Toolset only
+            'company_parent'      => $company_id, // ✅ Toolset only
+            'company_link_enabled' => $company_id > 0 || in_array(
+                strtolower( $m('wpcf-profile-type') ?: 'standard' ),
+                [ 'pro', 'professional' ],
+                true
+            ),
             'photo_id'       => (int) get_post_thumbnail_id( $profile_id ) ?: 0,
             'photo_url'      => get_the_post_thumbnail_url($profile_id, 'medium') ?: '',
             'soc'            => [
@@ -576,4 +586,5 @@ private static function render_standard_preview_markup() : void {
     }
 
 }
+
 

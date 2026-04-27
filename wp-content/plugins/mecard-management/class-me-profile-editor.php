@@ -74,6 +74,8 @@ class Module {
             'wpcf-whatsapp-number',
             'wpcf-work-phone-number',
             'wpcf-profile-type',
+            'wpcf-company-r',
+            'wpcf-company_name',
             'wpcf-facebook-url',
             'wpcf-twitter-url',
             'wpcf-linkedin-url',
@@ -96,6 +98,15 @@ class Module {
             $photo_id = absint( $_POST['me_profile_photo_id'] );
             if ( $photo_id ) {
                 set_post_thumbnail( $post_id, $photo_id );
+            }
+        }
+
+        if ( isset( $_POST['me_profile_company_logo_id'] ) ) {
+            $company_logo_id = absint( $_POST['me_profile_company_logo_id'] );
+            if ( $company_logo_id ) {
+                update_post_meta( $post_id, 'me_profile_company_logo_id', $company_logo_id );
+            } else {
+                delete_post_meta( $post_id, 'me_profile_company_logo_id' );
             }
         }
 
