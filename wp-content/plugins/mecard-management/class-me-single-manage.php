@@ -214,6 +214,16 @@ class Module {
 
                 <?php echo self::render_card_offer_panel( $profile_id ); ?>
             <?php endif; ?>
+
+            <section class="me-single-manage__panel me-single-manage__panel--team">
+                <p class="me-single-manage__kicker">For teams</p>
+                <h2>Managing cards for a team?</h2>
+                <p>Set up company branding, assign profiles to colleagues, and manage everything centrally from the team dashboard.</p>
+                <div class="me-single-manage__actions">
+                    <a class="me-single-manage__button me-single-manage__button--secondary" href="<?php echo esc_url( site_url( '/manage-mecard-profiles/profiles' ) ); ?>">Create a team</a>
+                </div>
+            </section>
+
         </section>
         <?php
         return (string) ob_get_clean();

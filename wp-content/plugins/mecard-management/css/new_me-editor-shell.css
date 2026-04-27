@@ -1,5 +1,24 @@
 /* Fullscreen modal shell */
 /* Editor layout inside Bootstrap 4 modal */
+
+/* Company linking — locked state for standard profiles */
+.me-company-group--locked select {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.me-company-upgrade-hint {
+    font-size: 0.85em;
+    color: #666;
+    margin-top: 6px;
+    margin-bottom: 0;
+}
+
+.me-company-upgrade-hint a {
+    color: #1a73e8;
+    text-decoration: underline;
+}
 .me-editor {
     position: relative;
     display: flex;

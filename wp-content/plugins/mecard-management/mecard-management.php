@@ -2326,9 +2326,17 @@ add_shortcode('management_console_nav', function($atts) {
     );
     $co_pro = get_posts($args);
     $counter = array('new_tags' => 0, 'mecard-profile' => 0, 'company' => 0,'live_tags' => 0);
+    $has_pro_profile = false;
     foreach ($co_pro as $mypost) {
         $counter[$mypost->post_type]++;
+        if ( $mypost->post_type === 'mecard-profile' ) {
+            $ptype = strtolower( (string) get_post_meta( $mypost->ID, 'wpcf-profile-type', true ) );
+            if ( in_array( $ptype, [ 'pro', 'professional' ], true ) ) {
+                $has_pro_profile = true;
+            }
+        }
     }
+    $company_tab_relevant = $counter['company'] > 0 || $has_pro_profile;
 
     $args = array(
         'post_type'  => 't',
@@ -2390,7 +2398,7 @@ add_shortcode('management_console_nav', function($atts) {
 
 
     $tab = $atts['tab'];
-    $activetab = array();
+    $activetab = array( 'dashboard' => '', 'new' => '', 'live' => '', 'companies' => '', 'profiles' => '' );
     $activetab[$tab] = 'active';
     $path = site_url().'/manage-mecard-profiles';
 
@@ -2405,7 +2413,7 @@ add_shortcode('management_console_nav', function($atts) {
                 <a class="nav-link '.$activetab['live'].'" href="'.$path.'/live-cards-and-tags" id="new-tab"  type="button" role="tab" aria-controls="profile" aria-selected="false">Live Cards and Tags <span class="badge">'.$counter['live_tags'].'</span></a>
               </li>
               <li class="nav-item" role="presentation">
-                <a class="nav-link '.$activetab['companies'].'" href="'.$path.'/companies/" id="companies_tab"  type="button" role="tab" aria-controls="contact" aria-selected="false">Companies <span class="badge">'.$counter['company'].'</span></a>
+                <a class="nav-link '.$activetab['companies'].'" href="'.$path.'/companies/" id="companies_tab"  type="button" role="tab" aria-controls="contact" aria-selected="false">Companies <span class="badge">'.$counter['company'].'</span>'.( ! $company_tab_relevant ? ' <span class="badge badge-secondary" style="font-size:0.7em;vertical-align:middle;">Pro only</span>' : '' ).'</a>
               </li>
             <li class="nav-item" role="presentation">
                 <a class="nav-link '.$activetab['profiles'].'" href="'.$path.'/profiles" id="profile_tab"  type="button" role="tab" aria-controls="contact" aria-selected="false">Profiles <span class="badge">'.$counter['mecard-profile'].'</span></a>
