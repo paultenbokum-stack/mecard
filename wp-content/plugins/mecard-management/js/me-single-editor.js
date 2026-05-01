@@ -697,11 +697,12 @@
         const currentPreview = target === 'profile'
             ? (state.profile && state.profile.photo_url) || (placeholderImages.profilePlaceholder || '')
             : ((state.company && state.company.logo_url) || (state.profile && state.profile.company_logo_url) || (placeholderImages.companyPlaceholder || ''));
+        const currentUserId = Number(ME_SINGLE_EDITOR.currentUserId || 0);
         const frame = wp.media({
             title: 'Select image',
             button: { text: 'Use this image' },
             multiple: false,
-            library: { type: ['image'], mecard_owned_only: true }
+            library: { type: 'image', author: currentUserId }
         });
         frame.on('open', function() {
             const selection = frame.state().get('selection');
@@ -715,9 +716,10 @@
             }
             const libraryProps = frame.state().get('library') && frame.state().get('library').props;
             if (libraryProps) {
-                libraryProps.set({ mecard_owned_only: true, type: 'image' });
+                libraryProps.set({ type: 'image', author: currentUserId });
             }
         });
+
         frame.on('select', function() {
             const file = frame.state().get('selection').first().toJSON();
             if (target === 'profile') {

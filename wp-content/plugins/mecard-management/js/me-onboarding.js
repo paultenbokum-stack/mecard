@@ -519,17 +519,10 @@
       library: {
         type: "image",
         author: Number(MECARD_ONBOARDING.currentUserId || 0),
-        mecard_owned_only: 1,
       },
       multiple: false,
     });
 
-    frame.on("content:activate:browse", function () {
-      var library = frame.state().get("library");
-      if (library) {
-        library.fetch({ reset: true });
-      }
-    });
 
     frame.on("select", function () {
       const attachment = frame.state().get("selection").first().toJSON();

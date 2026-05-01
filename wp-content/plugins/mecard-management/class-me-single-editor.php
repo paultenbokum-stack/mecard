@@ -94,10 +94,11 @@ class Module {
         }
 
         $raw = isset( $_REQUEST['query'] ) ? (array) wp_unslash( $_REQUEST['query'] ) : [];
-        if ( empty( $raw['mecard_owned_only'] ) ) {
+        if ( empty( $raw['author'] ) ) {
             return $query;
         }
 
+        // Always enforce current user — prevent client-side author manipulation.
         $query['author']         = get_current_user_id();
         $query['post_mime_type'] = 'image';
 
@@ -369,7 +370,6 @@ class Module {
                     <ul class="me-single-editor__upgrade-points">
                         <li>Rich company details</li>
                         <li>Company branding</li>
-                        <li>Analytics</li>
                         <li>Team management and sharing</li>
                     </ul>
                 </div>
@@ -430,8 +430,8 @@ class Module {
                 <div class="me-single-editor__panel me-single-editor__upgrade-panel" id="me_single_upgrade_cta" hidden>
                     <div class="me-single-editor__panel-head">
                         <p class="me-single-editor__panel-kicker">Upgrade Now</p>
-                        <h2>Pro profile - R199 per year</h2>
-                        <p>Unlock branding, company details, richer buttons, and analytics.</p>
+                        <h2>Pro profile - R199</h2>
+                        <p>Unlock branding, company details, and richer buttons.</p>
                     </div>
                     <div class="me-single-editor__panel-body" id="me_single_upgrade_panel_body">
                         <div class="me-single-editor__panel-actions">

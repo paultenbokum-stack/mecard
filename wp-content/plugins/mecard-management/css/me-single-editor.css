@@ -215,7 +215,9 @@
 
 .me-single-editor__preview-card {
     max-width: 480px;
-    margin: 0 auto;
+    width: 100%;
+    margin: 0;
+    overflow: hidden;
 }
 
 .me-single-editor__preview-card .standard-profile-container,
@@ -381,7 +383,7 @@
 
 .me-single-editor__footer {
     margin-top: 24px;
-    text-align: center;
+    text-align: left;
 }
 
 .me-single-editor__back--bottom {
@@ -663,4 +665,21 @@
     .me-single-editor__panel-button {
         width: 100%;
     }
+}
+
+/* Fix: theme/WooCommerce CSS bleeds into WP media modal tab colours */
+.media-modal .media-frame-menu .media-menu a {
+    color: #555d66 !important;
+}
+.media-modal .media-frame-menu .media-menu a.active,
+.media-modal .media-frame-menu .media-menu a:hover {
+    color: #191e23 !important;
+}
+/* Fix: router tabs (Upload Files / Media Library) text invisible */
+.media-modal .media-router button {
+    color: #555d66 !important;
+}
+.media-modal .media-router button.active,
+.media-modal .media-router button:hover {
+    color: #191e23 !important;
 }

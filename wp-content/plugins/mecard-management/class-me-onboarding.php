@@ -820,10 +820,12 @@ class Module {
             return $query;
         }
 
-        if (empty($query['mecard_owned_only'])) {
+        $raw = isset($_REQUEST['query']) ? (array) wp_unslash($_REQUEST['query']) : [];
+        if (empty($raw['author'])) {
             return $query;
         }
 
+        // Always enforce current user — prevent client-side author manipulation.
         $query['author'] = get_current_user_id();
         $query['post_mime_type'] = 'image';
 
