@@ -128,8 +128,19 @@ class Module {
                                     <?php if ( $card['kind'] === 'classic' && ( $card['design_editable'] ?? true ) ) : ?>
                                         <?php $classic_card_data = self::bundle_classic_card_data( $card['profile_id'] ?? 0, $card['id'] ?? 0 ); ?>
                                         <div class="me-bundle-card" data-card-id="<?php echo esc_attr( $card['id'] ); ?>">
-                                            <div class="me-bundle-card__preview">
-                                                <?php echo self::render_card_preview( $card ); ?>
+                                            <div class="me-bundle-card__toggle" role="tablist" aria-label="Classic card preview side">
+                                                <button type="button" class="me-bundle-card__toggle-btn is-active" data-card-side="front">Front</button>
+                                                <button type="button" class="me-bundle-card__toggle-btn" data-card-side="back">Back</button>
+                                            </div>
+                                            <div class="me-bundle-card__pane is-active" data-card-pane="front">
+                                                <div class="me-bundle-card__preview">
+                                                    <?php echo self::render_card_preview( $card ); ?>
+                                                </div>
+                                            </div>
+                                            <div class="me-bundle-card__pane" data-card-pane="back">
+                                                <div class="me-bundle-card__preview me-bundle-card__preview--back">
+                                                    <img src="<?php echo esc_url( plugin_dir_url( __FILE__ ) . 'images/classic-back.png' ); ?>" alt="Classic card back">
+                                                </div>
                                             </div>
                                             <div class="me-single-cards__item-meta">
                                                 <strong><?php echo esc_html( $card['label'] ); ?></strong>

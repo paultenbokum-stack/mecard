@@ -538,6 +538,22 @@
         attachment.url ||
         "";
 
+      // Snapshot any typed-but-unsaved field values before re-rendering.
+      var fieldMap = {
+        "wpcf-first-name":    "first",
+        "wpcf-last-name":     "last",
+        "wpcf-job-title":     "job",
+        "wpcf-email-address": "email",
+        "wpcf-mobile-number": "mobile",
+        "wpcf-linkedin-url":  "linkedin",
+        "wpcf-company-r":     "companyName",
+      };
+      panel.querySelectorAll("input[name]").forEach(function (el) {
+        if (fieldMap[el.name] !== undefined) {
+          state.profile[fieldMap[el.name]] = el.value;
+        }
+      });
+
       if (type === "photo") {
         state.profile.photoId = attachment.id || 0;
         state.profile.photoUrl = url;

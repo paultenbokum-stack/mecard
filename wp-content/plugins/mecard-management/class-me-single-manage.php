@@ -36,6 +36,7 @@ class Module {
             filemtime( plugin_dir_path( __FILE__ ) . 'js/me-single-cards.js' ),
             true
         );
+
     }
 
     public static function replace_manage_page( $content ) {
@@ -128,7 +129,7 @@ class Module {
                 <?php if ( ! $is_pro ) : ?>
                     <section class="me-single-manage__panel me-single-manage__panel--upsell">
                         <p class="me-single-manage__kicker">Upgrade to Pro</p>
-                        <h2>Supercharge your Profile</h2>
+                        <h2>Supercharge your profile</h2>
                         <div class="me-single-manage__compare">
                             <div class="me-single-manage__compare-image">
                                 <img src="<?php echo esc_url( plugin_dir_url( __FILE__ ) . 'images/alessio-standard-profile-phone.png' ); ?>" alt="Standard profile preview">
@@ -153,11 +154,43 @@ class Module {
                 <section class="me-single-manage__panel">
                     <h2>Your current cards</h2>
                     <p>These cards are already in your basket, in progress, or live.</p>
+                    <?php
+                    $has_classic_card = false;
+                    foreach ( [ 'basket', 'in_progress', 'live' ] as $group_key ) {
+                        foreach ( array_slice( $active_cards[ $group_key ], 0, 3 ) as $card ) {
+                            if ( ( $card['kind'] ?? '' ) === 'classic' ) {
+                                $has_classic_card = true;
+                                break 2;
+                            }
+                        }
+                    }
+                    ?>
                     <div class="me-single-manage__cards">
                         <?php
                         foreach ( [ 'basket', 'in_progress', 'live' ] as $group_key ) {
                             foreach ( array_slice( $active_cards[ $group_key ], 0, 3 ) as $card ) {
-                                echo Single_Cards_Module::render_card_preview( $card );
+                                if ( ( $card['kind'] ?? '' ) === 'classic' ) {
+                                    ?>
+                                    <div class="me-bundle-card">
+                                        <div class="me-bundle-card__toggle" role="tablist" aria-label="Classic card preview side">
+                                            <button type="button" class="me-bundle-card__toggle-btn is-active" data-card-side="front">Front</button>
+                                            <button type="button" class="me-bundle-card__toggle-btn" data-card-side="back">Back</button>
+                                        </div>
+                                        <div class="me-bundle-card__pane is-active" data-card-pane="front">
+                                            <div class="me-bundle-card__preview">
+                                                <?php echo Single_Cards_Module::render_card_preview( $card ); ?>
+                                            </div>
+                                        </div>
+                                        <div class="me-bundle-card__pane" data-card-pane="back">
+                                            <div class="me-bundle-card__preview me-bundle-card__preview--back">
+                                                <img src="<?php echo esc_url( plugin_dir_url( __FILE__ ) . 'images/classic-back.png' ); ?>" alt="Classic card back">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <?php
+                                } else {
+                                    echo Single_Cards_Module::render_card_preview( $card );
+                                }
                             }
                         }
                         ?>
@@ -179,7 +212,7 @@ class Module {
                 <?php if ( ! $is_pro ) : ?>
                     <section class="me-single-manage__panel me-single-manage__panel--upsell">
                         <p class="me-single-manage__kicker">Upgrade to Pro</p>
-                        <h2>Supercharge your Profile</h2>
+                        <h2>Supercharge your profile</h2>
                         <div class="me-single-manage__compare">
                             <div class="me-single-manage__compare-image">
                                 <img src="<?php echo esc_url( plugin_dir_url( __FILE__ ) . 'images/alessio-standard-profile-phone.png' ); ?>" alt="Standard profile preview">
@@ -275,6 +308,8 @@ class Module {
 
         if ( $action === 'classic-card' ) {
             WC()->cart->add_to_cart( (int) MECARD_CLASSIC_PRODUCT_ID, 1, 0, [], $cart_data );
+            wp_safe_redirect( Single_Cards_Module::cards_url( $profile_id ) );
+            exit;
         } elseif ( $action === 'custom-card' ) {
             WC()->cart->add_to_cart( (int) MECARD_PRODUCT_ID, 1, 0, [], $cart_data );
             wp_safe_redirect( add_query_arg( 'flow', 'custom', Single_Cards_Module::cards_url( $profile_id ) ) );
@@ -517,12 +552,28 @@ class Module {
                 </div>
                 <p>Fastest option. We&rsquo;ll use the details already on your profile.</p>
                 <div class="me-single-manage__classic-offer">
-                    <?php echo Single_Cards_Module::render_card_preview( self::build_classic_offer_preview( $profile_id ) ); ?>
+                    <div class="me-bundle-card">
+                        <div class="me-bundle-card__toggle" role="tablist" aria-label="Classic card preview side">
+                            <button type="button" class="me-bundle-card__toggle-btn is-active" data-card-side="front">Front</button>
+                            <button type="button" class="me-bundle-card__toggle-btn" data-card-side="back">Back</button>
+                        </div>
+                        <div class="me-bundle-card__pane is-active" data-card-pane="front">
+                            <div class="me-bundle-card__preview">
+                                <?php echo Single_Cards_Module::render_card_preview( self::build_classic_offer_preview( $profile_id ) ); ?>
+                            </div>
+                        </div>
+                        <div class="me-bundle-card__pane" data-card-pane="back">
+                            <div class="me-bundle-card__preview me-bundle-card__preview--back">
+                                <img src="<?php echo esc_url( plugin_dir_url( __FILE__ ) . 'images/classic-back.png' ); ?>" alt="Classic card back">
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 <div class="me-single-manage__offer-switch-row">
                     <button type="button" class="me-single-manage__button me-single-manage__button--secondary is-active" data-me-offer-toggle="classic">Classic</button>
                     <button type="button" class="me-single-manage__button me-single-manage__button--secondary" data-me-offer-toggle="custom">Custom</button>
                 </div>
+                <p class="me-single-manage__offer-note">You&rsquo;ll be able to update your logo, name and job title on the next screen before checking out.</p>
                 <div class="me-single-manage__actions">
                     <a class="me-single-manage__button me-single-manage__button--primary" data-me-basket-action="1" data-adding-label="Adding..." href="<?php echo esc_url( self::classic_card_url( $profile_id ) ); ?>">Add classic card</a>
                 </div>
