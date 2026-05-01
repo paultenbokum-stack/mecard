@@ -144,7 +144,24 @@
       })
       .join("");
 
-    progressTracker.innerHTML = `<ol class="me-progress__list">${items}</ol><div class="me-progress__extra">Add cards and configure more features</div>`;
+    const bundleImg = MECARD_ONBOARDING.customBundleImageUrl || '';
+    progressTracker.innerHTML = `
+      <ol class="me-progress__list">${items}</ol>
+      <div class="me-progress__extra">Then: Add Cards and configure more features</div>
+      <div class="me-progress-upsell">
+        <div class="me-progress-upsell__section">
+          <p class="me-progress-upsell__heading">Profile enhancements</p>
+          <ul class="me-progress-upsell__list">
+            <li>Custom branding &amp; colours</li>
+            <li>Pro layouts &amp; themes</li>
+            <li>Rich company information</li>
+          </ul>
+        </div>
+        <div class="me-progress-upsell__section">
+          <p class="me-progress-upsell__heading">Cards &amp; bundles</p>
+          <img class="me-progress-upsell__bundle-img" src="${bundleImg}" alt="MeCard custom card bundle">
+        </div>
+      </div>`;
   }
 
   function mediaMarkup(type, imageUrl, buttonLabel) {
@@ -492,6 +509,13 @@
         mecard_owned_only: 1,
       },
       multiple: false,
+    });
+
+    frame.on("content:activate:browse", function () {
+      var library = frame.state().get("library");
+      if (library) {
+        library.reset();
+      }
     });
 
     frame.on("select", function () {

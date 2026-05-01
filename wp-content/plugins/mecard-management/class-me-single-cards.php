@@ -13,6 +13,7 @@ class Module {
         add_filter( 'the_content', [ __CLASS__, 'replace_cards_page' ], 20 );
         add_action( 'wp_ajax_me_single_cards_save_bundle_classic', [ __CLASS__, 'ajax_save_bundle_classic' ] );
         add_action( 'wp_ajax_me_single_cards_save_bundle_custom', [ __CLASS__, 'ajax_save_bundle_custom' ] );
+        add_action( 'wp_ajax_me_single_cards_submit_design', [ __CLASS__, 'ajax_submit_design' ] );
         add_filter( 'ajax_query_attachments_args', [ __CLASS__, 'filter_cards_media_query' ] );
     }
 
@@ -47,13 +48,6 @@ class Module {
             plugin_dir_url( __FILE__ ) . 'css/me-single-manage.css',
             [],
             filemtime( plugin_dir_path( __FILE__ ) . 'css/me-single-manage.css' )
-        );
-
-        wp_enqueue_style(
-            'me-single-cards',
-            plugin_dir_url( __FILE__ ) . 'css/me-single-cards.css',
-            [ 'me-single-manage' ],
-            filemtime( plugin_dir_path( __FILE__ ) . 'css/me-single-cards.css' )
         );
 
         wp_enqueue_script(
@@ -131,12 +125,19 @@ class Module {
                         <div class="me-single-cards__grid">
                             <?php foreach ( $groups[ $group_key ] as $card ) : ?>
                                 <article class="me-single-cards__item">
-                                    <?php if ( $group_key === 'basket' && $card['kind'] === 'classic' && ! ( $card['submitted'] ?? false ) ) : ?>
+                                    <?php if ( $card['kind'] === 'classic' && ( $card['design_editable'] ?? true ) ) : ?>
                                         <?php $classic_card_data = self::bundle_classic_card_data( $card['profile_id'] ?? 0, $card['id'] ?? 0 ); ?>
                                         <div class="me-bundle-card" data-card-id="<?php echo esc_attr( $card['id'] ); ?>">
                                             <div class="me-bundle-card__preview">
                                                 <?php echo self::render_card_preview( $card ); ?>
                                             </div>
+                                            <div class="me-single-cards__item-meta">
+                                                <strong><?php echo esc_html( $card['label'] ); ?></strong>
+                                                <?php echo self::render_status_badge( $card ); ?>
+                                            </div>
+                                            <?php if ( $card['submitted'] ?? false ) : ?>
+                                                <p class="me-single-cards__design-note">You can still make changes until we confirm receipt.</p>
+                                            <?php endif; ?>
                                             <div class="me-bundle-card__actions">
                                                 <button type="button" class="me-single-cards__button" data-bundle-edit-toggle>Edit card details</button>
                                             </div>
@@ -161,6 +162,7 @@ class Module {
                                                 </label>
                                                 <div class="me-bundle-card__form-actions">
                                                     <button type="submit" class="me-single-cards__button me-single-cards__button--primary">Save card details</button>
+                                                    <button type="button" class="me-single-cards__button" data-bundle-submit-design data-card-id="<?php echo esc_attr( $card['id'] ); ?>"><?php echo ( $card['submitted'] ?? false ) ? 'Resubmit design' : 'Submit design'; ?></button>
                                                 </div>
                                                 <div class="me-bundle-card__status" data-bundle-card-status aria-live="polite"></div>
                                             </form>
@@ -169,11 +171,19 @@ class Module {
                                         <?php echo self::render_card_preview( $card ); ?>
                                         <div class="me-single-cards__item-meta">
                                             <strong><?php echo esc_html( $card['label'] ); ?></strong>
-                                            <span><?php echo esc_html( $card['status_label'] ); ?></span>
+                                            <?php echo self::render_status_badge( $card ); ?>
                                         </div>
-                                        <?php if ( $group_key === 'basket' && ( $card['kind'] ?? '' ) === 'custom' && ! ( $card['submitted'] ?? false ) ) : ?>
+                                        <?php if ( ( $card['design_editable'] ?? true ) && ( $card['kind'] ?? '' ) === 'custom' ) : ?>
+                                            <?php
+                                            $edit_url = add_query_arg( [ 'flow' => 'custom', 'card_id' => $card['id'] ], self::cards_url() );
+                                            ?>
                                             <div class="me-single-cards__item-actions">
-                                                <a class="me-single-cards__button me-single-cards__button--primary" href="<?php echo esc_url( add_query_arg( 'flow', 'custom', self::cards_url() ) ); ?>">Configure card</a>
+                                                <?php if ( $card['submitted'] ?? false ) : ?>
+                                                    <a class="me-single-cards__button" href="<?php echo esc_url( $edit_url ); ?>">Edit design</a>
+                                                    <p class="me-single-cards__design-note">You can still make changes until we confirm receipt.</p>
+                                                <?php else : ?>
+                                                    <a class="me-single-cards__button me-single-cards__button--primary" href="<?php echo esc_url( $edit_url ); ?>"><?php echo empty( $card['front_url'] ) ? 'Upload design' : 'Edit design'; ?></a>
+                                                <?php endif; ?>
                                             </div>
                                         <?php endif; ?>
                                     <?php endif; ?>
@@ -198,6 +208,60 @@ class Module {
         return (string) ob_get_clean();
     }
 
+    public static function ajax_submit_design() : void {
+        if ( ! is_user_logged_in() ) {
+            wp_send_json_error( [ 'message' => 'Please sign in first.' ], 403 );
+        }
+
+        if ( ! check_ajax_referer( 'me-single-cards-nonce', '_wpnonce', false ) ) {
+            wp_send_json_error( [ 'message' => 'Invalid request.' ], 403 );
+        }
+
+        $card_id = isset( $_POST['card_id'] ) ? absint( $_POST['card_id'] ) : 0;
+        if ( $card_id <= 0 || get_post_type( $card_id ) !== 't' ) {
+            wp_send_json_error( [ 'message' => 'Could not find that card.' ], 400 );
+        }
+
+        $post = get_post( $card_id );
+        if ( ! $post || (int) $post->post_author !== get_current_user_id() ) {
+            wp_send_json_error( [ 'message' => 'You cannot edit this card.' ], 403 );
+        }
+
+        if ( get_post_meta( $card_id, 'wpcf-design-received', true ) === '1' ) {
+            wp_send_json_error( [ 'message' => 'This design has already been received and can no longer be changed.' ], 403 );
+        }
+
+        update_post_meta( $card_id, 'wpcf-design-submitted', '1' );
+
+        wp_send_json_success( [ 'submitted' => true ] );
+    }
+
+    private static function render_status_badge( array $card ) : string {
+        $label    = esc_html( $card['status_label'] ?? '' );
+        $modifier = '';
+
+        if ( $card['design_received'] ?? false ) {
+            $modifier = 'received';
+        } elseif ( $card['submitted'] ?? false ) {
+            $modifier = 'submitted';
+        } elseif ( ( $card['design_editable'] ?? true ) && ( $card['status_group'] ?? '' ) === 'in_progress' ) {
+            if ( ! empty( $card['front_url'] ) ) {
+                $modifier = 'draft';
+                $label    = esc_html__( 'Draft saved' );
+            } else {
+                $modifier = 'needed';
+                $label    = esc_html__( 'Design needed' );
+            }
+        }
+
+        $class = 'me-single-cards__status-badge';
+        if ( $modifier ) {
+            $class .= ' me-single-cards__status-badge--' . $modifier;
+        }
+
+        return '<span class="' . esc_attr( $class ) . '">' . $label . '</span>';
+    }
+
     public static function ajax_save_bundle_classic() : void {
         if ( ! is_user_logged_in() ) {
             wp_send_json_error( [ 'message' => 'Please sign in first.' ], 403 );
@@ -215,6 +279,10 @@ class Module {
         $post = get_post( $card_id );
         if ( ! $post || (int) $post->post_author !== get_current_user_id() ) {
             wp_send_json_error( [ 'message' => 'You cannot edit this card.' ], 403 );
+        }
+
+        if ( get_post_meta( $card_id, 'wpcf-design-received', true ) === '1' ) {
+            wp_send_json_error( [ 'message' => 'This design has already been received and can no longer be changed.' ], 403 );
         }
 
         $logo_id = isset( $_POST['logo_id'] ) ? absint( $_POST['logo_id'] ) : 0;
@@ -259,6 +327,10 @@ class Module {
         $post = get_post( $card_id );
         if ( ! $post || (int) $post->post_author !== get_current_user_id() ) {
             wp_send_json_error( [ 'message' => 'You cannot edit this card.' ], 403 );
+        }
+
+        if ( get_post_meta( $card_id, 'wpcf-design-received', true ) === '1' ) {
+            wp_send_json_error( [ 'message' => 'This design has already been received and can no longer be changed.' ], 403 );
         }
 
         $front_url = isset( $_POST['wpcf-card-front'] ) ? esc_url_raw( wp_unslash( $_POST['wpcf-card-front'] ) ) : ( isset( $_POST['front_url'] ) ? esc_url_raw( wp_unslash( $_POST['front_url'] ) ) : '' );
@@ -430,8 +502,40 @@ class Module {
     }
 
     private static function render_custom_card_flow( int $profile_id, array $groups ) : string {
-        $custom_card = self::find_first_card_by_kind( $groups, 'custom' );
-        $card_data   = self::bundle_custom_card_data( $profile_id, $custom_card['id'] ?? 0 );
+        // Support targeting a specific card via ?card_id=X.
+        $requested_id = isset( $_GET['card_id'] ) ? absint( wp_unslash( $_GET['card_id'] ) ) : 0;
+
+        if ( $requested_id > 0 ) {
+            $custom_card = null;
+            foreach ( [ 'basket', 'in_progress', 'live' ] as $gk ) {
+                foreach ( $groups[ $gk ] ?? [] as $c ) {
+                    if ( (int) ( $c['id'] ?? 0 ) === $requested_id && ( $c['kind'] ?? '' ) === 'custom' ) {
+                        $custom_card = $c;
+                        break 2;
+                    }
+                }
+            }
+        } else {
+            $custom_card = self::find_first_card_by_kind( $groups, 'custom' );
+        }
+
+        // If the design has been received, editing is no longer allowed.
+        if ( $custom_card && ! ( $custom_card['design_editable'] ?? true ) ) {
+            ob_start();
+            echo Single_Manage_Module::render_subnav( 'cards' );
+            ?>
+            <section class="me-single-cards">
+                <p class="me-single-cards__notice">This design has already been received and can no longer be changed.</p>
+                <div class="me-single-cards__footer">
+                    <a class="me-single-cards__button" href="<?php echo esc_url( self::cards_url() ); ?>">Back to My Cards</a>
+                </div>
+            </section>
+            <?php
+            return (string) ob_get_clean();
+        }
+
+        $submitted = $custom_card['submitted'] ?? false;
+        $card_data = self::bundle_custom_card_data( $profile_id, $custom_card['id'] ?? 0 );
 
         ob_start();
         ?>
@@ -440,13 +544,18 @@ class Module {
                 <p class="me-single-cards__eyebrow">Custom card</p>
                 <h1>Set up your custom card</h1>
                 <p>Upload your front and back design files, then drag, resize and colour the QR code on the back.</p>
+                <?php if ( $submitted ) : ?>
+                    <p class="me-single-cards__design-note">You've already submitted this design. You can still make changes until we confirm receipt.</p>
+                <?php endif; ?>
             </header>
 
             <section class="me-single-cards__stage">
-                <?php echo self::render_custom_card_editor( $profile_id, $card_data ); ?>
+                <?php echo self::render_custom_card_editor( $profile_id, $card_data, $submitted ); ?>
                 <div class="me-single-cards__stage-actions">
-                    <a class="me-single-cards__button" href="<?php echo esc_url( Single_Manage_Module::manage_url( $profile_id ) ); ?>">Back to My MeCard Home</a>
-                    <a class="me-single-cards__button me-single-cards__button--cta" href="<?php echo esc_url( wc_get_checkout_url() ); ?>">View basket and checkout</a>
+                    <a class="me-single-cards__button" href="<?php echo esc_url( self::cards_url() ); ?>">Back to My Cards</a>
+                    <?php if ( in_array( $custom_card['status_group'] ?? '', [ 'basket' ], true ) ) : ?>
+                        <a class="me-single-cards__button me-single-cards__button--cta" href="<?php echo esc_url( wc_get_checkout_url() ); ?>">View basket and checkout</a>
+                    <?php endif; ?>
                 </div>
             </section>
         </section>
@@ -670,12 +779,13 @@ class Module {
             $front_url = (string) get_post_meta( $post->ID, 'wpcf-card-front', true );
         }
 
-        $label        = (string) get_post_meta( $post->ID, 'wpcf-card-label', true );
-        $cart_key     = (string) get_post_meta( $post->ID, 'wpcf-cart-item-key', true );
-        $packaged     = (string) get_post_meta( $post->ID, 'wpcf-packaged', true );
-        $shipped      = (string) get_post_meta( $post->ID, 'wpcf-shipped', true );
-        $submitted    = (string) get_post_meta( $post->ID, 'wpcf-design-submitted', true );
-        $order_id     = function_exists( 'get_tag_order_id' ) ? (int) get_tag_order_id( (int) $post->ID ) : 0;
+        $label           = (string) get_post_meta( $post->ID, 'wpcf-card-label', true );
+        $cart_key        = (string) get_post_meta( $post->ID, 'wpcf-cart-item-key', true );
+        $packaged        = (string) get_post_meta( $post->ID, 'wpcf-packaged', true );
+        $shipped         = (string) get_post_meta( $post->ID, 'wpcf-shipped', true );
+        $submitted       = (string) get_post_meta( $post->ID, 'wpcf-design-submitted', true );
+        $design_received = (string) get_post_meta( $post->ID, 'wpcf-design-received', true );
+        $order_id        = function_exists( 'get_tag_order_id' ) ? (int) get_tag_order_id( (int) $post->ID ) : 0;
 
         if ( $cart_key === '' && $packaged !== '1' && $shipped !== '1' && $submitted !== '1' && $order_id <= 0 ) {
             return null;
@@ -690,6 +800,8 @@ class Module {
         } elseif ( $shipped === '1' || $packaged === '1' ) {
             $status_group = 'live';
             $status_label = $shipped === '1' ? 'Shipped' : 'Packaged';
+        } elseif ( $design_received === '1' ) {
+            $status_label = 'Design received';
         } elseif ( $submitted === '1' ) {
             $status_label = 'Design submitted';
         } elseif ( $order_id > 0 ) {
@@ -706,8 +818,10 @@ class Module {
             'status_group' => $status_group,
             'status_label' => $status_label,
             'profile_id'   => $profile_id,
-            'order_id'     => $order_id,
-            'submitted'    => $submitted === '1',
+            'order_id'        => $order_id,
+            'submitted'       => $submitted === '1',
+            'design_received' => $design_received === '1',
+            'design_editable' => $design_received !== '1',
         ];
     }
 
@@ -805,6 +919,18 @@ class Module {
             }
         }
 
+        // Fallback: logo uploaded directly on the profile during onboarding.
+        if ( $front_url === '' && $profile_id > 0 ) {
+            $onboarding_logo_id = (int) get_post_meta( $profile_id, 'me_profile_company_logo_id', true );
+            if ( $onboarding_logo_id > 0 ) {
+                $logo_id   = $onboarding_logo_id;
+                $front_url = (string) ( wp_get_attachment_image_url( $onboarding_logo_id, 'medium' )
+                    ?: wp_get_attachment_image_url( $onboarding_logo_id, 'thumbnail' )
+                    ?: wp_get_attachment_url( $onboarding_logo_id )
+                    ?: '' );
+            }
+        }
+
         return [
             'id'           => $card_id,
             'kind'         => 'classic',
@@ -818,7 +944,7 @@ class Module {
         ];
     }
 
-    private static function render_custom_card_editor( int $profile_id, array $custom_card ) : string {
+    private static function render_custom_card_editor( int $profile_id, array $custom_card, bool $submitted = false ) : string {
         $placeholder = plugin_dir_url( __FILE__ ) . 'images/upload.png';
 
         ob_start();
@@ -898,6 +1024,7 @@ class Module {
                     </div>
                     <div class="me-bundle-card__form-actions">
                         <button type="submit" class="me-single-cards__button me-single-cards__button--primary">Save custom card details</button>
+                        <button type="button" class="me-single-cards__button" data-bundle-submit-design data-card-id="<?php echo esc_attr( $custom_card['id'] ?? 0 ); ?>"><?php echo $submitted ? 'Resubmit design' : 'Submit design'; ?></button>
                     </div>
                     <div class="me-bundle-card__status" data-bundle-custom-status aria-live="polite"></div>
                 </form>

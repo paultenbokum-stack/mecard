@@ -1,7 +1,7 @@
 ﻿.me-single-editor-page {
-    max-width: 920px;
+    /*max-width: 920px;*/
     margin: 0 auto;
-    padding: 24px 16px 120px;
+    /*padding: 24px 0 120px;*/
 }
 
 .me-single-editor__header {

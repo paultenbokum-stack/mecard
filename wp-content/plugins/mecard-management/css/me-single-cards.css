@@ -2,7 +2,7 @@
 .me-single-manage {
     max-width: 920px;
     margin: 0 auto;
-    padding: 24px 18px 40px;
+    padding: 24px 0 40px;
 }
 
 .me-single-cards__header,
@@ -56,6 +56,50 @@
     flex-direction: column;
     gap: 4px;
     color: #42556f;
+}
+
+.me-single-cards__status-badge {
+    display: inline-block;
+    font-size: 0.78em;
+    font-weight: 600;
+    padding: 2px 9px;
+    border-radius: 999px;
+    background: #e8eef5;
+    color: #42556f;
+    align-self: flex-start;
+}
+
+.me-single-cards__status-badge--needed {
+    background: #fff4d6;
+    color: #7a5600;
+}
+
+.me-single-cards__status-badge--draft {
+    background: #eaecef;
+    color: #42556f;
+}
+
+.me-single-cards__status-badge--submitted {
+    background: #dbeeff;
+    color: #0e4f8a;
+}
+
+.me-single-cards__status-badge--received {
+    background: #d4f0e0;
+    color: #155a35;
+}
+
+.me-single-cards__design-note {
+    font-size: 0.84em;
+    color: #6b7e96;
+    margin: 0;
+}
+
+.me-single-cards__item-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: flex-start;
 }
 
 .me-single-cards__stage-actions,

@@ -757,10 +757,10 @@ function render_social_icons() {
 
     $profile_values = array(
         "personal" => array(
-            "name" => $post_meta['wpcf-first-name'][0].' '.$post_meta['wpcf-last-name'][0],
-            "mobile_number" => $post_meta['wpcf-mobile-number'][0],
-            "whatsapp_number" => $post_meta['wpcf-whatsapp-number'][0],
-            "email" => $post_meta['wpcf-email-address'][0]
+            "name" => ($post_meta['wpcf-first-name'][0] ?? '') . ' ' . ($post_meta['wpcf-last-name'][0] ?? ''),
+            "mobile_number" => $post_meta['wpcf-mobile-number'][0] ?? '',
+            "whatsapp_number" => $post_meta['wpcf-whatsapp-number'][0] ?? '',
+            "email" => $post_meta['wpcf-email-address'][0] ?? ''
         ),
         /*"company" => array (
             "company_name" => $user_meta['wpcf-company_name'][0],
@@ -772,11 +772,11 @@ function render_social_icons() {
             "company_address" => $user_meta['wpcf-company_address'][0]
         ),*/
         "social" => array (
-            "facebook" => $post_meta['wpcf-facebook-url'][0],
-            "twitter" => $post_meta['wpcf-twitter-url'][0],
-            "linkedin" => $post_meta['wpcf-linkedin-url'][0],
-            "youtube" => $post_meta['wpcf-youtube-url'][0],
-            "tiktok" => $post_meta['wpcf-tiktok-url'][0]
+            "facebook" => $post_meta['wpcf-facebook-url'][0] ?? '',
+            "twitter" => $post_meta['wpcf-twitter-url'][0] ?? '',
+            "linkedin" => $post_meta['wpcf-linkedin-url'][0] ?? '',
+            "youtube" => $post_meta['wpcf-youtube-url'][0] ?? '',
+            "tiktok" => $post_meta['wpcf-tiktok-url'][0] ?? ''
         )
 
     );
@@ -784,7 +784,7 @@ function render_social_icons() {
     $whatsapp = ($profile_values['personal']['whatsapp_number']) ? $profile_values['personal']['whatsapp_number'] : $profile_values['personal']['mobile_number'];
     $whatsapp_int =  str_replace(' ','',preg_replace('/^0/', '+'.$countryCode, $whatsapp));
 
-    if ($post_meta['wpcf-instagram-user'][0]) {
+    if (!empty($post_meta['wpcf-instagram-user'][0])) {
         $profile_values['social']['instagram'] = 'https://instagram.com/'.ltrim($post_meta['wpcf-instagram-user'][0],'@');
     }
 
@@ -1785,8 +1785,9 @@ add_action( 'save_post', 'update_post_slug' );
 add_action( 'wp' , 'astra_remove_new_header' );
 
 function astra_remove_new_header() {
-    if (get_post_type() == 'mecard-profile' || 't' || 'riscura') {
+    if (in_array(get_post_type(), ['mecard-profile', 't', 'riscura'], true)) {
         global $post;
+        if (!$post) return;
         $postid = $post->ID;
         if (get_post_type() == 't') {
             $postid = toolset_get_related_post($post->ID,'mecard-profile-mecard-tag');

@@ -88,7 +88,7 @@ class Module {
         <div class="me-auth-entry">
           <div class="me-auth-card me-auth-card--single">
             <p class="me-auth-entry__eyebrow">Step 1</p>
-            <h2 class="me-auth-entry__title">Create your MeCard</h2>
+            <h2 class="me-auth-entry__title">Create your MeCard Profile</h2>
             <p class="me-auth-card__text">Create your free shareable profile in seconds, then add it to your home screen for instant sharing.</p>
             <div class="me-auth-screen__nsl">' . $google_button . '</div>
             <div class="me-auth-divider"><span>or</span></div>
@@ -116,10 +116,26 @@ class Module {
             if (!wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['me_email_signup_nonce'])), 'me_email_signup')) {
                 $errors[] = 'Your session expired. Please try again.';
             } else {
+                // Honeypot: bots fill hidden fields, humans don't.
+                $honeypot = isset($_POST['me_website']) ? sanitize_text_field(wp_unslash($_POST['me_website'])) : '';
+                if ($honeypot !== '') {
+                    // Silently succeed to avoid tipping off bots.
+                    wp_safe_redirect(self::get_signup_url());
+                    exit;
+                }
+
+                // Time check: reject if submitted in under 3 seconds.
+                $form_time = isset($_POST['me_form_time']) ? absint($_POST['me_form_time']) : 0;
+                if ($form_time > 0 && (time() - $form_time) < 3) {
+                    wp_safe_redirect(self::get_signup_url());
+                    exit;
+                }
+
                 $values['first_name'] = sanitize_text_field(wp_unslash($_POST['first_name'] ?? ''));
                 $values['last_name']  = sanitize_text_field(wp_unslash($_POST['last_name'] ?? ''));
                 $values['email']      = sanitize_email(wp_unslash($_POST['email'] ?? ''));
                 $values['mobile']     = sanitize_text_field(wp_unslash($_POST['mobile'] ?? ''));
+                $password             = wp_unslash($_POST['me_password'] ?? '');
 
                 if ($values['first_name'] === '') {
                     $errors[] = 'First name is required.';
@@ -132,6 +148,9 @@ class Module {
                 }
                 if ($values['mobile'] === '') {
                     $errors[] = 'Mobile number is required.';
+                }
+                if (strlen($password) < 8) {
+                    $errors[] = 'Password must be at least 8 characters.';
                 }
                 if ($values['email'] !== '' && email_exists($values['email'])) {
                     $errors[] = 'An account with that email already exists. Please log in instead.';
@@ -149,7 +168,6 @@ class Module {
                         $user_login = $base_login . $suffix;
                     }
 
-                    $password = wp_generate_password(24, true, true);
                     $user_id = wp_create_user($user_login, $password, $values['email']);
 
                     if (is_wp_error($user_id)) {
@@ -190,7 +208,7 @@ class Module {
         <div class="me-auth-entry">
           <div class="me-auth-card me-auth-card--single">
             <p class="me-auth-entry__eyebrow">Step 1</p>
-            <h2 class="me-auth-entry__title">Create your MeCard with email</h2>
+            <h2 class="me-auth-entry__title">Create your MeCard Profile</h2>
             <p class="me-auth-card__text">Start with the basics here and we will carry them into your free profile.</p>
             ' . $error_html . '
             <form class="me-auth-form" method="post">
@@ -206,8 +224,13 @@ class Module {
               <label>Mobile number
                 <input type="text" name="mobile" value="' . esc_attr($values['mobile']) . '" autocomplete="tel" required>
               </label>
+              <label>Password <span class="me-step__optional">to log back in later</span>
+                <input type="password" name="me_password" autocomplete="new-password" minlength="8" required>
+              </label>
+              <input type="text" name="me_website" value="" autocomplete="off" tabindex="-1" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0;">
+              <input type="hidden" name="me_form_time" value="' . esc_attr((string) time()) . '">
               ' . wp_nonce_field('me_email_signup', 'me_email_signup_nonce', true, false) . '
-              <button class="me-auth-form__submit" type="submit">Create my free MeCard</button>
+              <button class="me-auth-form__submit" type="submit">Create my free profile</button>
             </form>
             ' . self::render_signup_features() . '
             <div class="me-auth-card__actions">
@@ -265,6 +288,7 @@ class Module {
             'currentUserId'        => get_current_user_id(),
             'classicCardProductId' => defined('MECARD_CLASSIC_PRODUCT_ID') ? (int) MECARD_CLASSIC_PRODUCT_ID : 0,
             'customCardProductId'  => defined('MECARD_PRODUCT_ID') ? (int) MECARD_PRODUCT_ID : 0,
+            'customBundleImageUrl' => plugin_dir_url(__FILE__) . 'images/custom_bundle_new.png',
         ]);
     }
 
@@ -644,7 +668,7 @@ class Module {
     }
 
     public static function maybe_redirect_existing_users(): void {
-        if (is_admin() || !is_user_logged_in() || !is_singular()) {
+        if (is_admin() || !is_singular()) {
             return;
         }
 
@@ -661,7 +685,12 @@ class Module {
             return;
         }
 
-        if (($has_onboarding || $has_signup || $has_signup_email) && !self::current_user_can_use_onboarding()) {
+        if (!is_user_logged_in() && $has_onboarding) {
+            wp_safe_redirect(self::get_signup_url());
+            exit;
+        }
+
+        if (is_user_logged_in() && !self::current_user_can_use_onboarding()) {
             wp_safe_redirect(self::get_dashboard_url());
             exit;
         }
@@ -716,9 +745,9 @@ class Module {
     private static function render_signup_features(): string {
         return '
         <div class="me-feature-list">
-          <div class="me-feature-list__item"><strong>Free shareable profile forever</strong><span>WhatsApp, QR code, and NFC sharing built in.</span></div>
-          <div class="me-feature-list__item"><strong>Order physical cards and phone tags</strong><span>Turn the same profile into real-world MeCard products.</span></div>
-          <div class="me-feature-list__item"><strong>Supercharge your Profile</strong><span>Upgrade later for branding, layouts, and more control.</span></div>
+          <div class="me-feature-list__item"><strong>Launch sharing tools from your phone\'s home screen</strong><span>Share via WhatsApp, QR code, or NFC tap — always one tap away.</span></div>
+          <div class="me-feature-list__item"><strong>Your details downloaded into recipient\'s contacts app</strong><span>One tap saves your card directly to their phone.</span></div>
+          <div class="me-feature-list__item"><strong>Personal &amp; company details in one place</strong><span>Mobile, email, social links and basic company info — all included free.</span></div>
         </div>';
     }
 
@@ -753,7 +782,27 @@ class Module {
             $items .= '<li class="' . esc_attr(implode(' ', $classes)) . '" data-progress-step="' . esc_attr($key) . '"><span class="me-progress__dot">' . $badge . '</span><span class="me-progress__label">' . esc_html($label) . '</span></li>';
         }
 
-        return '<div class="me-progress me-progress--bottom"><ol class="me-progress__list">' . $items . '</ol><div class="me-progress__extra">Add cards and configure more features</div></div>';
+        $bundle_img = esc_url(plugin_dir_url(__FILE__) . 'images/custom_bundle_new.png');
+
+        return '
+        <div class="me-progress me-progress--bottom">
+          <ol class="me-progress__list">' . $items . '</ol>
+          <div class="me-progress__extra">Then: Add Cards and configure more features</div>
+          <div class="me-progress-upsell">
+            <div class="me-progress-upsell__section">
+              <p class="me-progress-upsell__heading">Profile enhancements</p>
+              <ul class="me-progress-upsell__list">
+                <li>Custom branding &amp; colours</li>
+                <li>Pro layouts &amp; themes</li>
+                <li>Rich company information</li>
+              </ul>
+            </div>
+            <div class="me-progress-upsell__section">
+              <p class="me-progress-upsell__heading">Cards &amp; bundles</p>
+              <img class="me-progress-upsell__bundle-img" src="' . $bundle_img . '" alt="MeCard custom card bundle">
+            </div>
+          </div>
+        </div>';
     }
 
     private static function is_local_test_user(int $user_id): bool {
@@ -787,7 +836,15 @@ class Module {
             return '';
         }
 
-        return (string) wp_get_attachment_image_url($attachment_id, 'medium');
+        $url = wp_get_attachment_image_url($attachment_id, 'medium');
+        if (!$url) {
+            $url = wp_get_attachment_image_url($attachment_id, 'thumbnail');
+        }
+        if (!$url) {
+            $url = wp_get_attachment_url($attachment_id);
+        }
+
+        return (string) ($url ?: '');
     }
 
     private static function get_user_profile_id(int $user_id): int {

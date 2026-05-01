@@ -23,16 +23,9 @@ class Module {
         }
 
         wp_enqueue_style(
-            'me-single-cards',
-            plugin_dir_url( __FILE__ ) . 'css/me-single-cards.css',
-            [],
-            filemtime( plugin_dir_path( __FILE__ ) . 'css/me-single-cards.css' )
-        );
-
-        wp_enqueue_style(
             'me-single-manage',
             plugin_dir_url( __FILE__ ) . 'css/me-single-manage.css',
-            [ 'me-single-cards' ],
+            [],
             filemtime( plugin_dir_path( __FILE__ ) . 'css/me-single-manage.css' )
         );
 
@@ -129,8 +122,7 @@ class Module {
                 </section>
             <?php elseif ( $has_cards ) : ?>
                 <?php
-                $has_basket_cards   = ! empty( $active_cards['basket'] );
-                $has_editable_cards = $has_basket_cards && ! ( $active_cards['basket'][0]['submitted'] ?? false );
+                $has_basket_cards = ! empty( $active_cards['basket'] );
                 ?>
 
                 <?php if ( ! $is_pro ) : ?>
@@ -173,9 +165,6 @@ class Module {
                     <div class="me-single-manage__actions">
                         <?php if ( $has_basket_cards ) : ?>
                             <a class="me-single-manage__button me-single-manage__button--cta" href="<?php echo esc_url( wc_get_checkout_url() ); ?>">Checkout</a>
-                        <?php endif; ?>
-                        <?php if ( $has_editable_cards ) : ?>
-                            <a class="me-single-manage__button" href="<?php echo esc_url( $cards_url ); ?>">Configure card</a>
                         <?php endif; ?>
                         <a class="me-single-manage__button me-single-manage__button--secondary" href="<?php echo esc_url( $cards_url ); ?>">Manage cards</a>
                     </div>
@@ -444,6 +433,17 @@ class Module {
             }
         }
 
+        // Fallback: logo uploaded directly on the profile during onboarding.
+        if ( $front_url === '' && $profile_id > 0 ) {
+            $onboarding_logo_id = (int) get_post_meta( $profile_id, 'me_profile_company_logo_id', true );
+            if ( $onboarding_logo_id > 0 ) {
+                $front_url = (string) ( wp_get_attachment_image_url( $onboarding_logo_id, 'medium' )
+                    ?: wp_get_attachment_image_url( $onboarding_logo_id, 'thumbnail' )
+                    ?: wp_get_attachment_url( $onboarding_logo_id )
+                    ?: '' );
+            }
+        }
+
         return [
             'kind'         => 'classic',
             'label'        => 'Classic card',
@@ -472,7 +472,7 @@ class Module {
                     <button type="button" class="me-single-manage__button me-single-manage__button--secondary is-active" data-me-offer-toggle="classic">Classic</button>
                     <button type="button" class="me-single-manage__button me-single-manage__button--secondary" data-me-offer-toggle="custom">Custom</button>
                 </div>
-                <p>Includes a classic card, a phone tag and the Pro upgrade for a year (renews at R199 in year 2).</p>
+                <p>Includes a classic card, a phone tag and the Pro upgrade.</p>
                 <p class="me-single-manage__offer-note">Classic is the quickest route for you and the easiest for us to manufacture. No design files required.</p>
                 <div class="me-single-manage__actions">
                     <a class="me-single-manage__button me-single-manage__button--primary" data-me-basket-action="1" data-adding-label="Adding..." href="<?php echo esc_url( self::classic_bundle_url( $profile_id ) ); ?>">Add classic bundle</a>
@@ -493,7 +493,7 @@ class Module {
                     <button type="button" class="me-single-manage__button me-single-manage__button--secondary" data-me-offer-toggle="classic">Classic</button>
                     <button type="button" class="me-single-manage__button me-single-manage__button--secondary is-active" data-me-offer-toggle="custom">Custom</button>
                 </div>
-                <p>Includes a custom card, a phone tag and the Pro upgrade for a year (renews at R199 in year 2).</p>
+                <p>Includes a custom card, a phone tag and the Pro upgrade.</p>
                 <p class="me-single-manage__custom-spec">You need to provide your own front and back design files in 856 x 540px, PNG or JPG.</p>
                 <p class="me-single-manage__custom-spec">QR code generated automatically, you control size colour and placement.</p>
                 <div class="me-single-manage__actions">

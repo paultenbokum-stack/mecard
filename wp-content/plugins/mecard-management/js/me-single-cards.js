@@ -531,6 +531,51 @@
         });
     });
 
+    $(document).on('click', '[data-bundle-submit-design]', function() {
+        const $btn    = $(this);
+        const cardId  = String($btn.data('card-id') || $btn.attr('data-card-id') || '');
+        const $status = $btn.closest('[data-bundle-custom-form], [data-bundle-card-form]').find('[data-bundle-custom-status], [data-bundle-card-status]').first();
+
+        if (!cardId) { return; }
+
+        $btn.prop('disabled', true).text('Submitting...');
+        $status.text('');
+
+        $.ajax({
+            url: CFG.ajaxurl,
+            method: 'POST',
+            data: {
+                action:    'me_single_cards_submit_design',
+                card_id:   cardId,
+                _wpnonce:  CFG.nonce || ''
+            }
+        }).done(function(res) {
+            if (!res || !res.success) {
+                $status.text((res && res.data && res.data.message) || 'Could not submit design.');
+                $btn.prop('disabled', false);
+                return;
+            }
+            $btn.text('Resubmit design').prop('disabled', false);
+            $status.text('Design submitted. We\u2019ll be in touch.');
+            // Update the status badge on the card listing item if present.
+            var $item = $btn.closest('.me-single-cards__item');
+            var $badge = $item.find('.me-single-cards__status-badge').first();
+            if ($badge.length) {
+                $badge.removeClass('me-single-cards__status-badge--needed me-single-cards__status-badge--draft')
+                      .addClass('me-single-cards__status-badge--submitted')
+                      .text('Design submitted');
+            }
+            // Show the "still editable" note if not already visible.
+            if (!$item.find('.me-single-cards__design-note').length) {
+                $btn.closest('.me-bundle-card__form-actions, .me-single-cards__item-actions')
+                    .after('<p class="me-single-cards__design-note">You can still make changes until we confirm receipt.</p>');
+            }
+        }).fail(function() {
+            $status.text('Could not submit design.');
+            $btn.prop('disabled', false);
+        });
+    });
+
     $(function() {
         $('.me-bundle-card--custom').each(function() {
             initBundleCustomInteractive($(this));
