@@ -196,7 +196,7 @@ class Module {
                         wp_set_current_user($user_id);
                         wp_set_auth_cookie($user_id, true);
 
-                        wp_safe_redirect(self::get_signup_url());
+                        wp_safe_redirect(self::get_onboarding_url());
                         exit;
                     }
                 }
@@ -772,6 +772,10 @@ class Module {
 
     public static function get_dashboard_url(): string {
         return (string) apply_filters('mecard_onboarding_dashboard_url', mecard_user_home_url());
+    }
+
+    public static function get_onboarding_url(): string {
+        return (string) apply_filters('mecard_onboarding_onboarding_url', site_url('/onboarding'));
     }
 
     public static function get_signup_url(): string {
