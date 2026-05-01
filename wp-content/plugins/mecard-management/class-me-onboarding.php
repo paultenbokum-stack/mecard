@@ -77,7 +77,7 @@ class Module {
     }
 
     private static function render_signup_entry(): string {
-        $login_url = wp_login_url(get_permalink());
+        $login_url = wc_get_page_permalink('myaccount');
         $google_button = do_shortcode('[nextend_social_login provider="google" redirect="current" align="left" customlabel="Continue with {{providerName}}"]');
         $email_signup_url = self::get_signup_email_url();
 
@@ -203,7 +203,7 @@ class Module {
             }
         }
 
-        $login_url = wp_login_url(self::get_signup_url());
+        $login_url = wc_get_page_permalink('myaccount');
         $error_html = '';
         if (!empty($errors)) {
             $items = '';
