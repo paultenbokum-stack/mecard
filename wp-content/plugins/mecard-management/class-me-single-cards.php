@@ -453,8 +453,10 @@ class Module {
                             <?php endif; ?>
                         </div>
                     </article>
+                    <hr class="me-single-cards__journey-divider">
                     <article class="me-single-cards__item">
                         <h2>Phone tag</h2>
+                        <p class="me-single-cards__phone-tag-note">Your phone tag is included in the bundle and pre-configured to link to your profile — no customisation needed.</p>
                         <?php echo self::render_card_preview( $phone_tag ); ?>
                     </article>
                 </div>
@@ -485,8 +487,10 @@ class Module {
                         <h2>Custom card</h2>
                         <?php echo self::render_custom_card_editor( $profile_id, $custom_card ); ?>
                     </article>
+                    <hr class="me-single-cards__journey-divider">
                     <article class="me-single-cards__item">
                         <h2>Phone tag</h2>
+                        <p class="me-single-cards__phone-tag-note">Your phone tag is included in the bundle and pre-configured to link to your profile — no customisation needed.</p>
                         <?php echo self::render_card_preview( $phone_tag ); ?>
                     </article>
                 </div>
@@ -876,6 +880,20 @@ class Module {
                 $logo = get_the_post_thumbnail_url( (int) $company_ids[0], 'medium' );
                 if ( is_string( $logo ) && $logo !== '' ) {
                     return $logo;
+                }
+            }
+        }
+
+        // Fallback: logo uploaded directly on the profile during onboarding.
+        if ( $profile_id > 0 ) {
+            $onboarding_logo_id = (int) get_post_meta( $profile_id, 'me_profile_company_logo_id', true );
+            if ( $onboarding_logo_id > 0 ) {
+                $url = (string) ( wp_get_attachment_image_url( $onboarding_logo_id, 'medium' )
+                    ?: wp_get_attachment_image_url( $onboarding_logo_id, 'thumbnail' )
+                    ?: wp_get_attachment_url( $onboarding_logo_id )
+                    ?: '' );
+                if ( $url !== '' ) {
+                    return $url;
                 }
             }
         }

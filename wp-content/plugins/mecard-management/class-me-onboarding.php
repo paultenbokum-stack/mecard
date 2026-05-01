@@ -27,6 +27,7 @@ class Module {
         add_action('wp_ajax_me_onboarding_bootstrap', [__CLASS__, 'ajax_bootstrap']);
         add_action('wp_ajax_me_onboarding_save_step', [__CLASS__, 'ajax_save_step']);
         add_action('wp_ajax_me_onboarding_classic_card_cart', [__CLASS__, 'ajax_classic_card_cart']);
+        add_action('wp_ajax_me_send_profile_link', [__CLASS__, 'ajax_send_profile_link']);
         add_filter('ajax_query_attachments_args', [__CLASS__, 'filter_onboarding_media_query']);
     }
 
@@ -96,8 +97,8 @@ class Module {
               <span class="me-auth-email-link__icon">@</span>
               <span>Sign up with email</span>
             </a>
-            ' . self::render_signup_features() . '
             <p class="me-auth-screen__footer">Already have an account? <a href="' . esc_url($login_url) . '">Log in</a></p>
+            ' . self::render_signup_features() . '
           </div>
           ' . self::render_progress_tracker('signup') . '
         </div>';
@@ -129,6 +130,15 @@ class Module {
                 if ($form_time > 0 && (time() - $form_time) < 3) {
                     wp_safe_redirect(self::get_signup_url());
                     exit;
+                }
+
+                // reCAPTCHA Enterprise score check.
+                $recaptcha_token = sanitize_text_field(wp_unslash($_POST['me_recaptcha_token'] ?? ''));
+                if (defined('MECARD_RECAPTCHA_SITE_KEY') && MECARD_RECAPTCHA_SITE_KEY) {
+                    if (!self::verify_recaptcha_token($recaptcha_token)) {
+                        wp_safe_redirect(self::get_signup_url());
+                        exit;
+                    }
                 }
 
                 $values['first_name'] = sanitize_text_field(wp_unslash($_POST['first_name'] ?? ''));
@@ -211,7 +221,7 @@ class Module {
             <h2 class="me-auth-entry__title">Create your MeCard Profile</h2>
             <p class="me-auth-card__text">Start with the basics here and we will carry them into your free profile.</p>
             ' . $error_html . '
-            <form class="me-auth-form" method="post">
+            <form class="me-auth-form" method="post" id="me-signup-form">
               <label>First name
                 <input type="text" name="first_name" value="' . esc_attr($values['first_name']) . '" autocomplete="given-name" required>
               </label>
@@ -229,17 +239,92 @@ class Module {
               </label>
               <input type="text" name="me_website" value="" autocomplete="off" tabindex="-1" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0;">
               <input type="hidden" name="me_form_time" value="' . esc_attr((string) time()) . '">
+              <input type="hidden" name="me_recaptcha_token" id="me_recaptcha_token" value="">
               ' . wp_nonce_field('me_email_signup', 'me_email_signup_nonce', true, false) . '
               <button class="me-auth-form__submit" type="submit">Create my free profile</button>
             </form>
+            ' . self::render_recaptcha_script() . '
+            <p class="me-auth-screen__footer">Already have an account? <a href="' . esc_url($login_url) . '">Log in</a></p>
             ' . self::render_signup_features() . '
             <div class="me-auth-card__actions">
               <a class="me-auth-back-anchor" href="' . esc_url(self::get_signup_url()) . '">Back to social sign up</a>
-              <p class="me-auth-screen__footer">Already have an account? <a href="' . esc_url($login_url) . '">Log in</a></p>
             </div>
           </div>
           ' . self::render_progress_tracker('signup') . '
         </div>';
+    }
+
+    private static function is_local_env(): bool {
+        $host = isset($_SERVER['HTTP_HOST']) ? strtolower((string) $_SERVER['HTTP_HOST']) : '';
+        return in_array($host, ['localhost', '127.0.0.1', '::1'], true)
+            || str_starts_with($host, 'localhost:');
+    }
+
+    private static function render_recaptcha_script(): string {
+        if (!defined('MECARD_RECAPTCHA_SITE_KEY') || !MECARD_RECAPTCHA_SITE_KEY || self::is_local_env()) {
+            return '';
+        }
+        $site_key = esc_js(MECARD_RECAPTCHA_SITE_KEY);
+        return '<script>
+(function() {
+  var form = document.getElementById("me-signup-form");
+  if (!form) return;
+  form.addEventListener("submit", function(e) {
+    if (document.getElementById("me_recaptcha_token").value !== "") return;
+    e.preventDefault();
+    grecaptcha.enterprise.ready(function() {
+      grecaptcha.enterprise.execute("' . $site_key . '", {action: "SIGNUP"}).then(function(token) {
+        document.getElementById("me_recaptcha_token").value = token;
+        form.submit();
+      });
+    });
+  });
+})();
+</script>';
+    }
+
+    private static function verify_recaptcha_token(string $token): bool {
+        if (
+            self::is_local_env() ||
+            !defined('MECARD_RECAPTCHA_SITE_KEY') || !MECARD_RECAPTCHA_SITE_KEY ||
+            !defined('MECARD_RECAPTCHA_API_KEY')  || !MECARD_RECAPTCHA_API_KEY  ||
+            !defined('MECARD_RECAPTCHA_PROJECT')   || !MECARD_RECAPTCHA_PROJECT
+        ) {
+            return true; // skip on localhost or when keys not configured
+        }
+
+        if ($token === '') {
+            return false;
+        }
+
+        $url = 'https://recaptchaenterprise.googleapis.com/v1/projects/' . rawurlencode(MECARD_RECAPTCHA_PROJECT) . '/assessments?key=' . rawurlencode(MECARD_RECAPTCHA_API_KEY);
+
+        $response = wp_remote_post($url, [
+            'headers' => ['Content-Type' => 'application/json'],
+            'body'    => wp_json_encode([
+                'event' => [
+                    'token'          => $token,
+                    'siteKey'        => MECARD_RECAPTCHA_SITE_KEY,
+                    'expectedAction' => 'SIGNUP',
+                ],
+            ]),
+            'timeout' => 10,
+        ]);
+
+        if (is_wp_error($response)) {
+            return false;
+        }
+
+        $body = json_decode(wp_remote_retrieve_body($response), true);
+        if (!is_array($body)) {
+            return false;
+        }
+
+        $valid  = isset($body['tokenProperties']['valid']) && $body['tokenProperties']['valid'] === true;
+        $action = isset($body['tokenProperties']['action']) && $body['tokenProperties']['action'] === 'SIGNUP';
+        $score  = isset($body['riskAnalysis']['score']) ? (float) $body['riskAnalysis']['score'] : 0.0;
+
+        return $valid && $action && $score >= 0.5;
     }
 
     public static function enqueue_assets(): void {
@@ -256,6 +341,16 @@ class Module {
         }
 
         wp_enqueue_media();
+
+        if (defined('MECARD_RECAPTCHA_SITE_KEY') && MECARD_RECAPTCHA_SITE_KEY && !self::is_local_env()) {
+            wp_enqueue_script(
+                'recaptcha-enterprise',
+                'https://www.google.com/recaptcha/enterprise.js?render=' . urlencode(MECARD_RECAPTCHA_SITE_KEY),
+                [],
+                null,
+                false
+            );
+        }
 
         wp_enqueue_style(
             'me-onboarding',
@@ -286,6 +381,7 @@ class Module {
             'standardProfileImageUrl' => plugin_dir_url(__FILE__) . 'images/alessio-standard-profile-phone.png',
             'proProfileImageUrl'      => plugin_dir_url(__FILE__) . 'images/alessio-pro-profile.png',
             'currentUserId'        => get_current_user_id(),
+            'currentUserEmail'     => wp_get_current_user()->user_email,
             'classicCardProductId' => defined('MECARD_CLASSIC_PRODUCT_ID') ? (int) MECARD_CLASSIC_PRODUCT_ID : 0,
             'customCardProductId'  => defined('MECARD_PRODUCT_ID') ? (int) MECARD_PRODUCT_ID : 0,
             'customBundleImageUrl' => plugin_dir_url(__FILE__) . 'images/custom_bundle_new.png',
@@ -464,6 +560,26 @@ class Module {
         wp_send_json_success([
             'classicCardCart' => self::get_classic_card_cart_state(),
         ]);
+    }
+
+    public static function ajax_send_profile_link(): void {
+        self::guard_request();
+
+        $user      = wp_get_current_user();
+        $share_url = esc_url_raw(wp_unslash($_POST['share_url'] ?? ''));
+
+        if (empty($share_url)) {
+            wp_send_json_error('Profile link not available.');
+        }
+
+        $subject = 'Your MeCard profile link';
+        $message = "Hi {$user->display_name},\n\nHere's your MeCard profile link:\n\n{$share_url}\n\nOpen this on your phone, tap the Share button, then choose \"Add to Home Screen\" to add your MeCard launch button.\n\nThe MeCard Team";
+
+        if (wp_mail($user->user_email, $subject, $message)) {
+            wp_send_json_success();
+        } else {
+            wp_send_json_error('Could not send the email. Please try again.');
+        }
     }
 
     private static function guard_request(): void {

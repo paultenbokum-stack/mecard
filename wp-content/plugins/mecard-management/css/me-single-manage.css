@@ -169,12 +169,15 @@
 }
 
 .me-single-manage__offer-heading {
-    position: relative;
-    padding-right: 52px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
 }
 
 .me-single-manage__offer-heading--custom {
-    padding-right: 52px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
 }
 
 .me-single-manage__offer-heading h2 {
@@ -182,10 +185,8 @@
 }
 
 .me-single-manage__offer-price {
-    position: absolute;
-    top: -2px;
-    right: -10px;
     display: inline-flex;
+    flex-shrink: 0;
     align-items: center;
     justify-content: center;
     width: 98px;
@@ -224,7 +225,7 @@
     width: 100%;
     max-width: 280px;
     height: auto;
-    margin: 0 auto;
+    margin: 0 20px;
 }
 
 .me-single-manage__panel--upsell {
@@ -383,15 +384,15 @@
 }
 
 .me-single-cards__journey-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
 }
 
 /* ─── Card preview component ────────────────────────────────────────────────── */
 
 .me-card-preview {
-    width: 100%;
+    width: min(100%, 8.56cm);
 }
 
 .me-card-preview__surface {
@@ -493,6 +494,31 @@
     object-fit: contain;
 }
 
+/* ─── Phone tag: 30mm circle, not a card rectangle ─────────────────────────── */
+
+.me-card-preview--phone_tag {
+    width: 30mm;
+}
+
+.me-card-preview--phone_tag .me-card-preview__surface {
+    width: 30mm;
+    height: 30mm;
+    aspect-ratio: auto;
+    border-radius: 50%;
+    background: transparent;
+    box-shadow: none;
+}
+
+.me-card-preview--phone_tag .me-card-preview__tag-shell {
+    padding: 0;
+}
+
+.me-card-preview--phone_tag .me-card-preview__tag-image {
+    width: 30mm;
+    height: 30mm;
+    object-fit: contain;
+}
+
 /* ─── Bundle card UI ────────────────────────────────────────────────────────── */
 
 .me-bundle-card__toggle {
@@ -528,7 +554,7 @@
 }
 
 .me-bundle-card__preview--back {
-    width: 100%;
+    width: min(100%, 8.56cm);
     aspect-ratio: 8.56 / 5.4;
     border-radius: 18px;
     overflow: hidden;
@@ -610,6 +636,7 @@
 .me-bundle-custom__preview-card {
     display: grid;
     gap: 12px;
+    justify-items: center;
 }
 
 .me-bundle-custom__preview-label {
@@ -620,7 +647,7 @@
 .me-bundle-custom__preview-frame,
 .me-bundle-custom__back-preview {
     position: relative;
-    width: 100%;
+    width: min(100%, 8.56cm);
     aspect-ratio: 8.56 / 5.4;
     border-radius: 18px;
     background: #ffffff;
@@ -857,15 +884,17 @@
     }
 
     .me-single-manage__offer-heading {
-        padding-right: 40px;
+        gap: 10px;
+    }
+
+    .me-single-manage__offer-heading h2 {
+        font-size: 1.25rem;
     }
 
     .me-single-manage__offer-price {
-        top: 4px;
-        right: -8px;
-        width: 84px;
-        height: 84px;
-        font-size: 0.95rem;
+        width: 72px;
+        height: 72px;
+        font-size: 0.82rem;
     }
 
     .me-single-manage__compare {

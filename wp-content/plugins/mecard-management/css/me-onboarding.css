@@ -854,12 +854,20 @@ div.me-classic-card__surface.card-front.classic .classic-job-title {
   color: var(--me-muted);
 }
 
-/* Fix: theme/WooCommerce CSS bleeds into WP media modal tab colour */
+/* Fix: theme/WooCommerce CSS bleeds into WP media modal tab colours */
 .media-modal .media-frame-menu .media-menu a {
   color: #555d66 !important;
 }
 .media-modal .media-frame-menu .media-menu a.active,
 .media-modal .media-frame-menu .media-menu a:hover {
+  color: #191e23 !important;
+}
+/* Fix: router tabs (Upload Files / Media Library) text invisible */
+.media-modal .media-router .media-router-item {
+  color: #555d66 !important;
+}
+.media-modal .media-router .media-router-item.active,
+.media-modal .media-router .media-router-item:hover {
   color: #191e23 !important;
 }
 

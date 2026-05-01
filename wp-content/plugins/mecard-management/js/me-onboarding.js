@@ -23,6 +23,10 @@
 
   let deferredInstallPrompt = null;
 
+  function isDesktop() {
+    return window.matchMedia("(hover: hover) and (pointer: fine)").matches;
+  }
+
   window.addEventListener("beforeinstallprompt", function (event) {
     event.preventDefault();
     deferredInstallPrompt = event;
@@ -282,6 +286,15 @@
       }
     })();
 
+    const desktop = isDesktop();
+    const userEmail = escapeHtml(MECARD_ONBOARDING.currentUserEmail || "");
+    const hintText = desktop
+      ? `We\u2019ll send your profile link to ${userEmail}. Open it on your phone, then tap Share \u2192 Add to Home Screen to add your launch button.`
+      : "This opens your profile share tools in a new tab. Come back here after you\u2019ve added the launch button.";
+    const primaryAction = desktop
+      ? `<button class="me-btn me-btn--primary" data-send-profile-link>Send my profile link to my email</button>`
+      : `<a class="me-btn me-btn--primary" href="${escapeHtml(guidedShareUrl)}" target="_blank" rel="noopener">Add launch button</a>`;
+
     return `
       <div class="me-step">
         <div class="me-step__header">
@@ -291,12 +304,12 @@
         <div class="me-install-demo">
           <img class="me-install-demo__image" src="${escapeHtml(MECARD_ONBOARDING.launchDemoUrl || MECARD_ONBOARDING.installGifUrl || "")}" alt="Move the MeCard launch button into your favourites tray" />
         </div>
-        <p class="me-step__hint">This opens your profile share tools in a new tab. Come back here after you’ve added the launch button.</p>
+        <p class="me-step__hint">${hintText}</p>
         <div class="me-step__actions">
           <button class="me-btn me-btn--secondary" data-back>Back</button>
-          <a class="me-btn me-btn--primary" href="${escapeHtml(guidedShareUrl)}" target="_blank" rel="noopener">Add launch button</a>
+          ${primaryAction}
           <button class="me-btn me-btn--ghost" data-install-skip>Skip for now</button>
-          <button class="me-btn me-btn--secondary" data-next-save="install">I'm done</button>
+          <button class="me-btn me-btn--secondary" data-next-save="install">I\u2019m done</button>
         </div>
       </div>
     `;
@@ -514,7 +527,7 @@
     frame.on("content:activate:browse", function () {
       var library = frame.state().get("library");
       if (library) {
-        library.reset();
+        library.fetch({ reset: true });
       }
     });
 
@@ -577,6 +590,7 @@
     const mediaButton = event.target.closest("[data-media-button]");
     const jump = event.target.closest("[data-jump]");
     const install = event.target.closest("[data-install-pwa]");
+    const sendProfileLink = event.target.closest("[data-send-profile-link]");
     const installSkip = event.target.closest("[data-install-skip]");
     const cardCart = event.target.closest("[data-card-cart]");
     const copyShare = event.target.closest("[data-copy-share-url]");
@@ -623,6 +637,34 @@
           renderCurrentStep();
         });
       }
+      return;
+    }
+
+    if (sendProfileLink) {
+      sendProfileLink.disabled = true;
+      const originalText = sendProfileLink.textContent;
+      sendProfileLink.textContent = "Sending\u2026";
+      fetch(MECARD_ONBOARDING.ajaxurl, {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({
+          action: "me_send_profile_link",
+          nonce: MECARD_ONBOARDING.nonce,
+          share_url: state.shareUrl || "",
+        }),
+      })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          if (!data.success) throw new Error((data.data) || "Could not send email.");
+          sendProfileLink.textContent = "Sent!";
+          const hint = sendProfileLink.closest(".me-step").querySelector(".me-step__hint");
+          if (hint) hint.textContent = "Check your inbox \u2014 open the link on your phone to add your launch button.";
+        })
+        .catch(function (error) {
+          sendProfileLink.disabled = false;
+          sendProfileLink.textContent = originalText;
+          window.alert(error.message);
+        });
       return;
     }
 

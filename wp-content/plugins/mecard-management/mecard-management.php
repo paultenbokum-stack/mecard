@@ -1918,7 +1918,7 @@ function get_tag_order_id($tag_id) {
     ", $tag_id);
 
         $result = $wpdb->get_row($query);
-        $order_id = $result->parent_id;
+        $order_id = $result ? $result->parent_id : null;
         return $order_id;
 }
 

@@ -357,7 +357,18 @@
             const card = res.data.card;
             const $preview = $form.closest('.me-bundle-card');
             $preview.find('.me-card-preview__name').text(card.name || '');
-            $preview.find('.me-card-preview__title').text(card.job_title || '');
+            const $title = $preview.find('.me-card-preview__title');
+            if (card.job_title) {
+                if ($title.length) {
+                    $title.text(card.job_title);
+                } else {
+                    $preview.find('.me-card-preview__name').after(
+                        $('<div>', { 'class': 'me-card-preview__title' }).text(card.job_title)
+                    );
+                }
+            } else {
+                $title.remove();
+            }
             if (card.front_url) {
                 const $logo = $preview.find('.me-card-preview__logo');
                 if ($logo.length) {
