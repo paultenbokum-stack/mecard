@@ -136,8 +136,7 @@ class Module {
                 $recaptcha_token = sanitize_text_field(wp_unslash($_POST['me_recaptcha_token'] ?? ''));
                 if (defined('MECARD_RECAPTCHA_SITE_KEY') && MECARD_RECAPTCHA_SITE_KEY) {
                     if (!self::verify_recaptcha_token($recaptcha_token)) {
-                        wp_safe_redirect(self::get_signup_url());
-                        exit;
+                        $errors[] = 'We could not verify your submission. Please try again.';
                     }
                 }
 
