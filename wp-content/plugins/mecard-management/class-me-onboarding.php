@@ -132,11 +132,11 @@ class Module {
                     exit;
                 }
 
-                // reCAPTCHA Enterprise score check.
+                // reCAPTCHA Enterprise score check (advisory only — low scores are logged but do not block registration).
                 $recaptcha_token = sanitize_text_field(wp_unslash($_POST['me_recaptcha_token'] ?? ''));
                 if (defined('MECARD_RECAPTCHA_SITE_KEY') && MECARD_RECAPTCHA_SITE_KEY) {
                     if (!self::verify_recaptcha_token($recaptcha_token)) {
-                        $errors[] = 'We could not verify your submission. Please try again.';
+                        error_log('MeCard reCAPTCHA: low/failed score for email signup from ' . sanitize_text_field(wp_unslash($_SERVER['REMOTE_ADDR'] ?? '')));
                     }
                 }
 
