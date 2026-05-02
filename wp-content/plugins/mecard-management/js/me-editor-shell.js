@@ -559,10 +559,14 @@
     });
 
     // ---------- Open modal helper (matches existing button calls) ----------
-    window.NewMeOpenProfileEditor = function(){
-        if (new URLSearchParams(window.location.search).get('me_preview')) return;
-        const manageUrl = (window.ME && ME.manageUrl) ? ME.manageUrl : '/manage/';
-        window.location.assign(manageUrl);
+    window.NewMeOpenProfileEditor = function(post_id){
+        $('#meProfileEditorModal').modal('show');
+        setLoading(true);
+
+        loadProfile(post_id)
+            .always(function(){
+                setLoading(false);
+            });
     };
 
     // ---------- Media frame for profile photo ----------
