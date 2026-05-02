@@ -970,4 +970,11 @@ div.me-classic-card__surface.card-front.classic .classic-job-title {
   .me-profile-frame__view {
     height: 560px;
   }
+
+  .me-profile-frame__phone {
+    max-width: none;
+    margin-left: -20px;
+    margin-right: -20px;
+    border-radius: 0;
+  }
 }

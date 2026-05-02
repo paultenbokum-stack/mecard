@@ -73,6 +73,7 @@ class Module {
                 'nonceField'   => '_wpnonce',
                 'nonceProfile' => wp_create_nonce('me-profile-edit-nonce'),
                 'nonceCompany' => wp_create_nonce('me-company-edit-nonce'),
+                'manageUrl'    => site_url( '/manage/' ),
             ]
         );
     }

@@ -826,17 +826,11 @@ function mecard_single_editor_link_html( $profile_id = 0 ) {
         return '';
     }
 
-    if ( ! class_exists( '\Me\Single_Editor\Module' ) ) {
+    if ( isset( $_GET['me_preview'] ) ) {
         return '';
     }
 
-    $user_profiles = \Me\Single_Editor\Module::get_self_owned_profiles( get_current_user_id() );
-    if ( count( $user_profiles ) !== 1 || (int) $user_profiles[0] !== $profile_id ) {
-        return '';
-    }
-
-    $url = \Me\Single_Editor\Module::editor_url( $profile_id );
-    return '<div class="mecard-owner-edit-link"><a href="' . esc_url( $url ) . '">Edit profile</a></div>';
+    return '<div class="mecard-owner-edit-link"><a href="' . esc_url( site_url( '/manage/' ) ) . '">Edit profile</a></div>';
 }
 
 function vcard_download_button($atts) {
@@ -1158,7 +1152,13 @@ function woo_change_order_received_text( $str, $order ) {
 
     // --- Build output ---
     $name       = esc_html( $order->get_billing_first_name() );
-    $manage_url = esc_url( site_url( '/manage-mecard-profiles/new-cards-and-tags/' ) );
+    $customer_id      = (int) $order->get_customer_id();
+    $is_single_profile = $customer_id > 0
+        && class_exists( '\\Me\\Single_Editor\\Module' )
+        && \Me\Single_Editor\Module::resolve_single_profile_id( $customer_id ) > 0;
+    $manage_url = $is_single_profile
+        ? esc_url( \Me\Single_Manage\Module::manage_url() )
+        : esc_url( site_url( '/manage-mecard-profiles/new-cards-and-tags/' ) );
 
     $str  = '<div class="mecard-box">';
     $str .= '<h3 class="mecard-box__heading">Thanks for your MeCard order, ' . $name . '!</h3>';
@@ -2551,6 +2551,18 @@ add_action('wp_enqueue_scripts', function () {
 });
 
 
+
+// === HIDE MEDIA EDITOR FIELDS FOR NON-ADMINS (FRONTEND) ===
+add_action( 'wp_head', function() {
+    if ( current_user_can( 'manage_options' ) ) return;
+    echo '<style>
+        .attachment-details .setting[data-setting="alt"],
+        .attachment-details .setting[data-setting="title"],
+        .attachment-details .setting[data-setting="caption"],
+        .attachment-details .setting[data-setting="description"],
+        #alt-text-description { display: none; }
+    </style>';
+} );
 
 // === FULLSCREEN MODAL CSS FOR BS4 ===
 add_action('wp_head', function(){ ?>

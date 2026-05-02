@@ -559,20 +559,10 @@
     });
 
     // ---------- Open modal helper (matches existing button calls) ----------
-    window.NewMeOpenProfileEditor = function(post_id){
-        const targetId = parseInt(post_id, 10) || 0;
-        const $modal = $('#meProfileEditorModal');
-        if ($modal.length) {
-            // Legacy multi-profile modal editor
-            loadProfile(targetId);
-            $modal.modal('show');
-            return;
-        }
-        // Single-profile flow: navigate to the inline editor page
-        const baseUrl = (window.ME_SINGLE_EDITOR && ME_SINGLE_EDITOR.editProfileUrl)
-            ? ME_SINGLE_EDITOR.editProfileUrl
-            : '/manage/profile/';
-        window.location.assign(baseUrl);
+    window.NewMeOpenProfileEditor = function(){
+        if (new URLSearchParams(window.location.search).get('me_preview')) return;
+        const manageUrl = (window.ME && ME.manageUrl) ? ME.manageUrl : '/manage/';
+        window.location.assign(manageUrl);
     };
 
     // ---------- Media frame for profile photo ----------

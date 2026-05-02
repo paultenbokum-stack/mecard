@@ -25,12 +25,11 @@ if ( $profile_type === 'pro' || $profile_type === 'professional' ) {
 ?>
 <div class="mecard-public-card">
     <?php \Me\Profile_Renderer\Module::render( $profile, $company, 'public' ); ?>
-    <?php if ( current_user_can( 'edit_post', $profile_id ) ) : ?>
+    <?php if ( current_user_can( 'edit_post', $profile_id ) && ! isset( $_GET['me_preview'] ) ) : ?>
     <div class="mecard-edit-bar">
-        <button type="button" class="btn btn-outline-secondary btn-sm"
-                onclick="NewMeOpenProfileEditor(<?php echo (int) $profile_id; ?>)">
+        <a class="btn btn-outline-secondary btn-sm" href="<?php echo esc_url( site_url( '/manage/' ) ); ?>">
             <i class="fas fa-pencil-alt"></i> Edit Profile
-        </button>
+        </a>
     </div>
     <?php endif; ?>
 </div>

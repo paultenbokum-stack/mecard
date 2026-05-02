@@ -508,7 +508,7 @@ class Module {
                     <button type="button" class="me-single-manage__button me-single-manage__button--secondary" data-me-offer-toggle="custom">Custom</button>
                 </div>
                 <p>Includes a classic card, a phone tag and the Pro upgrade.</p>
-                <p class="me-single-manage__offer-note">Classic is the quickest route for you and the easiest for us to manufacture. No design files required.</p>
+                <p class="me-single-manage__offer-note">Classic is the quickest route. No design files required.</p>
                 <div class="me-single-manage__actions">
                     <a class="me-single-manage__button me-single-manage__button--primary" data-me-basket-action="1" data-adding-label="Adding..." href="<?php echo esc_url( self::classic_bundle_url( $profile_id ) ); ?>">Add classic bundle</a>
                     <a class="me-single-manage__button me-single-manage__button--secondary" href="<?php echo esc_url( $cards_url ); ?>">Manage cards</a>

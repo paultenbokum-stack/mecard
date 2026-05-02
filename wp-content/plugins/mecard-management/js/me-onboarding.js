@@ -254,6 +254,15 @@
   }
 
   function renderPreview() {
+    const previewUrl = (() => {
+      try {
+        const url = new URL(state.shareUrl || "", window.location.origin);
+        url.searchParams.set("me_preview", "1");
+        return url.toString();
+      } catch (e) {
+        return state.shareUrl || "";
+      }
+    })();
     return `
       <div class="me-step">
         <div class="me-step__header">
@@ -263,7 +272,7 @@
         <div class="me-profile-frame me-profile-frame--wide">
           <div class="me-profile-frame__phone">
             <div class="me-profile-frame__bar"></div>
-            <iframe class="me-profile-frame__view" src="${escapeHtml(state.shareUrl || "")}" title="Profile preview" loading="lazy"></iframe>
+            <iframe class="me-profile-frame__view" src="${escapeHtml(previewUrl)}" title="Profile preview" loading="lazy"></iframe>
           </div>
         </div>
         <div class="me-step__actions">
