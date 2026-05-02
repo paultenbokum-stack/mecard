@@ -637,11 +637,6 @@ function me_load_fonts() {
     echo "<style>
             @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600&display=swap');
             </style>";
-    if (is_post_type_archive('riscura') || is_singular('riscura')) {
-        echo "<style>
-                @import url('https://fonts.googleapis.com/css2?family=Lato&family=Merriweather&display=swap');
-                </style>";
-    }
 }
 
 add_shortcode('mecard-management-script-path',function($atts) {
@@ -961,18 +956,6 @@ NOTE: More links and social profile on mecard.co.za';
             END:VCARD' ;*/
 
  switch ($profile->post_type) {
-     case 'riscura':
-        $firstname = $profile_meta['wpcf-first-name-r'][0];
-         $lastname = $profile_meta['wpcf-last-name-r'][0];
-         $email = $profile_meta['wpcf-email-r'][0];
-         $mobile = $profile_meta['wpcf-mobile-number-r'][0];
-         $company_name = $profile_meta['wpcf-company-r'][0];
-         $company_address = '';
-         $company_phone = '';
-         $profile_data = 'NOTE: Powered by RisCura';
-         $job_title = '';
-         $company_website = '';
-         break;
      default:
          $firstname = $profile_meta['wpcf-first-name'][0];
          $lastname = $profile_meta['wpcf-last-name'][0];
@@ -1785,21 +1768,17 @@ add_action( 'save_post', 'update_post_slug' );
 add_action( 'wp' , 'astra_remove_new_header' );
 
 function astra_remove_new_header() {
-    if (in_array(get_post_type(), ['mecard-profile', 't', 'riscura'], true)) {
+    if (in_array(get_post_type(), ['mecard-profile', 't'], true)) {
         global $post;
         if (!$post) return;
         $postid = $post->ID;
         if (get_post_type() == 't') {
             $postid = toolset_get_related_post($post->ID,'mecard-profile-mecard-tag');
         }
-        if (get_post_meta($postid,'wpcf-profile-type',true) == 'professional' || get_post_type() == 'riscura') {
+        if (get_post_meta($postid,'wpcf-profile-type',true) == 'professional') {
             remove_action( 'astra_primary_header', array( Astra_Builder_Header::get_instance(), 'primary_header' ) );
             remove_action( 'astra_mobile_primary_header', array( Astra_Builder_Header::get_instance(), 'mobile_primary_header' ) );
         }
-        if (get_post_type() == 'riscura') {
-            remove_action( 'astra_below_footer', array( Astra_Builder_Footer::get_instance(), 'mobile_primary_footer' ) );
-        }
-
     }
 
 }
@@ -2153,159 +2132,11 @@ add_filter('cred_select2_ajax_get_potential_relationship_parents_query_limit', f
 });
 
 
-# riscura functions
-
-add_action( 'cred_save_data', 'set_riscura_profile', 33, 2 );
-
-function set_riscura_profile($post_id, $form_data): void
-{
-    if ($form_data['post_type'] == 'riscura' && $form_data['form_type'] == 'edit') {
-        $profile_meta = get_post_meta($post_id);
-        wp_update_post(array('ID' => $post_id,'post_title' => $profile_meta['wpcf-first-name-r'][0].' '.$profile_meta['wpcf-last-name-r'][0]));
-        update_post_meta($post_id,'wpcf-assigned-r',1);
-    }
-    return;
-}
-
-add_shortcode('riscura_buttons','riscura_buttons');
-
-function riscura_buttons($atts)
-{
-
-    global $post;
-    $mobile = get_post_meta($post->ID,'wpcf-mobile-number-r', true);
-    $first_name = get_post_meta($post->ID,'wpcf-first-name-r', true);
-    $countryCode = '27';
-    $mobile_int =  str_replace(' ','',preg_replace('/^0/', '+'.$countryCode, $mobile));
-    $email = get_post_meta($post->ID,'wpcf-email-r', true);
-    $html = '<div class="row profile-buttons">
-                    <div class="col col-12">
-                        <a href="tel:'.$mobile.'">
-                            <button class="phone riscura"><i class="fas fa-mobile-alt"></i> Call</button>
-                        </a>
-                    </div>
-               </div>
-               <div class="row profile-buttons">      
-                        <div class="col col-12">
-                            <a href="mailto:'.$email.'">
-                                <button class="email riscura"><i class="fas fa-envelope"></i> Email</button>
-                                </a>
-                        </div>
-               </div>
-               <div class="row profile-buttons">
-                        <div class="col col-12">
-                            <a href="https://wa.me/'.$mobile_int.'">
-                                <button class="whatsapp riscura"><i class="fab fa-whatsapp"></i> Whatsapp </button>
-                            </a>
-                        </div>
-               </div>
-                    
-                </div>' ;
-    return $html;
-}
-
-add_shortcode('riscura_qr','riscura_qr');
-
-function riscura_qr() {
-    global $post;
-    $html = '
-   <a href="#" class="open-qr-modal-riscura" data-profile-url="'.get_permalink($post->ID).'" title="Generate QR code for '.$post->post_title.'" data-profile-name="'.$post->post_title.'" data-toggle="modal" data-target="#QRModal">Download QR code</a>
-    <!-- QR Modal -->
-
-<div class="modal fade qr-generator" id="QRModal" data-tag="'.$post->ID.'" data-profile-id="" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg">
-    <div class="modal-content">
-    
-      <div class="modal-header">
-        <h5>QR Code Generator</h5>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
-        </button>
-      </div>
-      
-      <div class="modal-body">
-         <div class="container-fluid">
-           <div class="row">
-             <div class="col col-sm-12">
-             	<div class="qr-container profile-qr" data-tag="'.$post->post_title.'">                            	
-                    <div id="profile-qr-code-full" class="profile-qr-code" data-url="'.get_permalink($post->ID).'" data-profile-name="'.$post->post_title.'" data-qr_colour="#000000" data-qr_bg="#FFFFFF" data-ypos="" data-xpos="" data-width="200">
-                    </div>
-                </div>
-             </div>
-           </div>
-         </div>
-         </div>
-         
-        <div class="modal-footer">
-            <div id="qr-download-gif" style="display:none">
-                <img class="qr-icon" src="'.plugin_dir_url( __FILE__ ).'images/download.gif">
-            </div>
-            <button id="download-qr">Download</button>
-        </div>  
-        
-    </div>
-  </div>
-
-</div>
-  <!-- end modal -->
-    ';
-    return $html;
-}
-
-/**
- * No initial results
- *
- * Don't show View results until a filter has been applied
- *
- * Tests for custom field filters, taxonomy filters, or text searches
- */
-function tssupp_no_initial_results( $query_results, $view_settings, $view_id ){
-
-    $target_views = array( RISCURA_ENTER_TAG_VIEW ); // Edit to add IDs of Views to add this to
-
-    if ( in_array( $view_id, $target_views ) ) {
-
-        // if there is a search term set
-        if ( !isset( $query_results->query['meta_query'] ) && !isset( $query_results->query['tax_query'] ) && !isset( $query_results->query['s'] ) ) {
-            $query_results->posts = array();
-            $query_results->post_count = 0;
-            $query_results->found_posts = 0;
-        }
-    }
-
-    return $query_results;
-}
-add_filter( 'wpv_filter_query_post_process', 'tssupp_no_initial_results', 10, 3 );
-
-function func_search_by_exact_title( $search, $wp_query ){
-    global $wpdb;
-    global $WP_Views;
-
-    if($WP_Views->current_view == RISCURA_ENTER_TAG_VIEW){
-        if ( empty( $search ) )
-            return $search; // skip processing - no search term in query
-
-        $q = $wp_query->query_vars;
-        $search = '';
-        foreach ( (array) $q['search_terms'] as $term ) {
-            $term = esc_sql( $wpdb->esc_like( $term ) );
-            $search = " AND ($wpdb->posts.post_title REGEXP '[[:<:]]".$term."[[:>:]]')";
-           // $search = " AND ($wpdb->posts.post_title = '.$term.'";
-
-        }
-
-    }
-    return $search;
-}
-//add_filter( 'posts_search', 'func_search_by_exact_title', 1000, 2 );
-
-
-
 /**
  * Show WooCommerce Store Notice to Logged In Previous Customers Only.
  */
 function modify_woocommerce_demo_store_customers_only( $notice_html ) {
-    if (is_singular(array('riscura','t','mecard-profile')) || is_page(array('riscura-management','riscura-tag-code')))  {
+    if (is_singular(array('t','mecard-profile')))  {
         return '';
     }
 

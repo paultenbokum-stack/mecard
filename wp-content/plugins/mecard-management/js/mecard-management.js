@@ -546,13 +546,7 @@ jQuery(document).ready(function($) {
 
         });
 
-    $(document).on('shown.bs.modal', 'article.riscura .modal.qr-gen',function () {
-        //let qr = $(this).find('.profile-qr-code');
-
-
-    });
-
-    $(document).on('click','a.open-qr-modal,a.open-qr-modal-dd,a.open-qr-modal-riscura',function(e) {
+    $(document).on('click','a.open-qr-modal,a.open-qr-modal-dd',function(e) {
         e.preventDefault();
         let qr = $('#profile-qr-code-full');
         $(qr).data('url',$(this).data('profile-url'));
@@ -642,13 +636,6 @@ jQuery(document).ready(function($) {
         if (!$('#profileAddModal.show').length > 0) {
             //$('.modal-backdrop').hide();
             //$('body').removeClass('modal-open');
-        }
-        if ('article.riscura .qr-container.profile-qr') {
-            window.scrollTo(0, 0);
-            let qr = $('#profile-qr-code-full');
-            $(qr).data('url',$(this).data('profile-url'));
-            $(qr).data('profile-name',$(this).data('profile-name'));
-            makeQRprofile(qr);
         }
 
     });
