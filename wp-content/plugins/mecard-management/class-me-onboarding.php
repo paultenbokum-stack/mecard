@@ -636,6 +636,10 @@ class Module {
         if (!empty($user->user_email)) {
             update_post_meta($profile_id, 'wpcf-email-address', sanitize_email($user->user_email));
         }
+        $mobile = (string) get_user_meta($user_id, 'wpcf-mobile-number', true);
+        if ($mobile !== '') {
+            update_post_meta($profile_id, 'wpcf-mobile-number', $mobile);
+        }
         update_post_meta($profile_id, 'wpcf-profile-type', 'standard');
         update_post_meta($profile_id, 'me_profile_owner_user_id', $user_id);
         update_post_meta($profile_id, 'me_onboarding_started', 1);

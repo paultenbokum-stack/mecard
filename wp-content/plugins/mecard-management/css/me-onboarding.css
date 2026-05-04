@@ -171,6 +171,12 @@
   font: inherit;
 }
 
+.me-auth-form input::placeholder,
+.me-step__field input::placeholder {
+  color: #bbb;
+  opacity: 1;
+}
+
 .me-auth-form__note,
 .me-note,
 .me-install-steps,
