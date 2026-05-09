@@ -69,7 +69,14 @@ class Module {
     }
 
     public static function replace_cards_page( $content ) {
-        if ( ! is_main_query() || ! in_the_loop() || ! is_page( 'cards' ) ) {
+        if ( ! is_main_query() || ! in_the_loop() ) {
+            return $content;
+        }
+
+        // Only target the management page at /manage/cards/, not any page with slug "cards".
+        // A top-level marketing /cards/ page should render its own Gutenberg content untouched.
+        $manage_cards = get_page_by_path( 'manage/cards' );
+        if ( ! $manage_cards || ! is_page( $manage_cards->ID ) ) {
             return $content;
         }
 
