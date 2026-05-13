@@ -112,11 +112,13 @@
         }
     })();
 
-    // View
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', () => push('profile_view'));
-    } else {
-        push('profile-view');
+    // View — skip when the logged-in owner is previewing their own profile
+    if (!cfg.isOwner) {
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => push('profile_view'));
+        } else {
+            push('profile_view');
+        }
     }
 
     // vCard

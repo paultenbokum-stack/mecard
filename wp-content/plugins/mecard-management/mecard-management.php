@@ -3544,6 +3544,13 @@ add_action('wp_enqueue_scripts', function () {
         'profileType'  => $profile_type,   // 'standard' | 'professional'
 
         'userLoggedIn' => is_user_logged_in(),
+        'isOwner'      => (function() use ( $profile_id ) {
+            if ( ! $profile_id || ! is_user_logged_in() ) return false;
+            $uid      = get_current_user_id();
+            $post     = get_post( $profile_id );
+            $owner_id = (int) get_post_meta( $profile_id, 'me_profile_owner_user_id', true );
+            return $post && ( (int) $post->post_author === $uid || ( $owner_id > 0 && $owner_id === $uid ) );
+        })(),
     ];
 
     wp_add_inline_script(
