@@ -3553,3 +3553,79 @@ add_action('wp_enqueue_scripts', function () {
     );
 });
 
+/**
+ * Conversion tracking — "Profile created"
+ *
+ * Server-side detection, client-side dispatch pattern:
+ * - PHP sets a one-shot _mecard_conv_pending user meta on profile creation.
+ * - wp_footer reads it on the next page render, fires a dataLayer push, then
+ *   permanently marks _mecard_conv_fired so the event never fires twice.
+ *
+ * Solo route:  mecard_profile_autocreated (onboarding bootstrap)
+ * Team route:  save_post_mecard-profile   (team console creates profile for member)
+ */
+add_action( 'mecard_profile_autocreated', function( $profile_id, $user_id ) {
+    if ( get_user_meta( $user_id, '_mecard_conv_fired', true ) ) {
+        return;
+    }
+    update_user_meta( $user_id, '_mecard_conv_pending', 'solo' );
+}, 20, 2 );
+
+add_action( 'save_post_mecard-profile', function( $post_id, $post, $update ) {
+    // Only new profiles, not edits.
+    if ( $update ) {
+        return;
+    }
+    // Ignore revisions and autosaves.
+    if ( wp_is_post_revision( $post_id ) || wp_is_post_autosave( $post_id ) ) {
+        return;
+    }
+    if ( $post->post_status !== 'publish' && $post->post_status !== 'private' ) {
+        return;
+    }
+
+    $creator_id = get_current_user_id();
+    if ( ! $creator_id ) {
+        return;
+    }
+
+    // Solo route is already handled by mecard_profile_autocreated — skip if the
+    // creator is the profile owner and we're in the AJAX bootstrap context.
+    $owner_id = (int) get_post_meta( $post_id, 'me_profile_owner_user_id', true );
+    if ( $owner_id && $owner_id === $creator_id && wp_doing_ajax() ) {
+        return;
+    }
+
+    if ( get_user_meta( $creator_id, '_mecard_conv_fired', true ) ) {
+        return;
+    }
+
+    update_user_meta( $creator_id, '_mecard_conv_pending', 'team' );
+}, 20, 3 );
+
+add_action( 'wp_footer', function() {
+    if ( ! is_user_logged_in() ) {
+        return;
+    }
+    $user_id = get_current_user_id();
+    $route   = get_user_meta( $user_id, '_mecard_conv_pending', true );
+    if ( ! $route ) {
+        return;
+    }
+    delete_user_meta( $user_id, '_mecard_conv_pending' );
+    update_user_meta( $user_id, '_mecard_conv_fired', current_time( 'mysql' ) );
+    ?>
+    <script>
+    (function(){
+      window.dataLayer = window.dataLayer || [];
+      window.dataLayer.push({
+        event: 'profile_created',
+        event_source: 'mecard',
+        route: <?php echo wp_json_encode( $route ); ?>,
+        user_id: <?php echo wp_json_encode( $user_id ); ?>
+      });
+    })();
+    </script>
+    <?php
+}, 99 );
+
