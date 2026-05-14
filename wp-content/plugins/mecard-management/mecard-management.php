@@ -3619,17 +3619,38 @@ add_action( 'wp_footer', function() {
     if ( ! $route ) {
         return;
     }
+    // Don't fire on the onboarding preview — it runs in an iframe so dataLayer
+    // is not visible to GTM in the main window. Hold the pending meta and fire
+    // on the next real page load (e.g. /manage).
+    if ( isset( $_GET['me_preview'] ) ) {
+        return;
+    }
+    // Don't fire on static asset requests that somehow route through WordPress.
+    $request_path = parse_url( $_SERVER['REQUEST_URI'], PHP_URL_PATH );
+    if ( $request_path && preg_match( '/\.(js|css|map|png|jpg|jpeg|gif|svg|woff2?|ttf|ico|eot)$/i', $request_path ) ) {
+        return;
+    }
     delete_user_meta( $user_id, '_mecard_conv_pending' );
     update_user_meta( $user_id, '_mecard_conv_fired', current_time( 'mysql' ) );
     ?>
     <script>
     (function(){
+      var route = <?php echo wp_json_encode( $route ); ?>;
       window.dataLayer = window.dataLayer || [];
       window.dataLayer.push({
-        event: 'profile_created',
+        event: 'first_profile_created',
         event_source: 'mecard',
-        route: <?php echo wp_json_encode( $route ); ?>,
+        route: route,
         user_id: <?php echo wp_json_encode( $user_id ); ?>
+      });
+      // gtag loads async — defer until it is available.
+      window.addEventListener('load', function() {
+        if (typeof window.gtag === 'function') {
+          window.gtag('event', 'first_profile_created', {
+            event_source: 'mecard',
+            route: route
+          });
+        }
       });
     })();
     </script>
