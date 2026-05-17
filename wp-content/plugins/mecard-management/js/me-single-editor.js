@@ -246,6 +246,12 @@
         }
     }
 
+    function updateSocialPlaceholder($pane) {
+        var $socials = $pane.find('.mc-socials, .mecard-social');
+        var hasVisible = $socials.find('.mecard-social-item[data-me-field]').filter(function(){ return $(this).css('display') !== 'none'; }).length > 0;
+        $socials.find('.mc-socials__placeholder').toggle(!hasVisible);
+    }
+
     function formatWhatsappInt(raw) {
         if (!raw) return '';
         let val = String(raw).replace(/\s+/g, '');
@@ -390,7 +396,14 @@
         if (mode === 'standard') {
             field($pane, 'email-text').text(p.email || '');
             field($pane, 'mobile-text').text(p.mobile || '');
-            field($pane, 'company-name').text(c.title || p.company_name || '');
+            var companyText = c.title || p.company_name || '';
+            field($pane, 'company-name').text(companyText);
+            var $roleCompany = field($pane, 'role-company');
+            if (companyText) {
+                $roleCompany.show().find('strong').text(companyText);
+            } else {
+                $roleCompany.hide();
+            }
             field($pane, 'email').attr('href', p.email ? 'mailto:' + p.email : '#');
             field($pane, 'call').attr('href', p.mobile ? 'tel:' + p.mobile : '#');
             const stdWaInt = formatWhatsappInt(p.wa || p.mobile || '');
@@ -398,6 +411,7 @@
             ['facebook','twitter','linkedin','instagram','youtube','tiktok'].forEach(function(key){
                 toggleSocialInPane($pane, key, soc[key] || '');
             });
+            updateSocialPlaceholder($pane);
             field($pane, 'website-row').hide();
         } else {
             field($pane, 'company-name').text(c.title || p.company_name || '');
@@ -432,6 +446,7 @@
             ['facebook','twitter','linkedin','instagram','youtube','tiktok'].forEach(function(key){
                 toggleSocialInPane($pane, key, soc[key] || '');
             });
+            updateSocialPlaceholder($pane);
             applyCompanyDesignToPane($pane);
         }
     }
@@ -534,10 +549,11 @@
         markRegion($stdPane.find('.profile-image'), 'media-profile', 'media_profile');
         markRegion($stdPane.find('.profile-image img, .profile-image .me-photo-placeholder'), 'media-profile', 'media_profile');
         markRegion($stdPane.find('[data-me-field="job"]'), 'about-standard', 'job');
-        markRegion($stdPane.find('[data-me-field="email-text"]').closest('.row'), 'contact-standard', 'email');
-        markRegion($stdPane.find('[data-me-field="mobile-text"]').closest('.row'), 'contact-standard', 'mobile');
-        markRegion($stdPane.find('[data-me-field="company-name"]').closest('.row'), 'company-standard', 'company');
-        markRegion($stdPane.find('.mecard-social'), 'social-standard', 'network');
+        markRegion($stdPane.find('[data-me-field="role-company"]'), 'company-standard', 'company');
+        markRegion($stdPane.find('[data-me-field="email-text"]').closest('.row, .mc-details__row'), 'contact-standard', 'email');
+        markRegion($stdPane.find('[data-me-field="mobile-text"]').closest('.row, .mc-details__row'), 'contact-standard', 'mobile');
+        markRegion($stdPane.find('[data-me-field="company-name"]').closest('.row, .mc-details__row'), 'company-standard', 'company');
+        markRegion($stdPane.find('.mecard-social, .mc-socials'), 'social-standard', 'network');
 
         markRegion($proPane.find('h1'), 'about-pro', 'first');
         markRegion($proPane.find('[data-me-field="first"]'), 'about-pro', 'first');
@@ -634,8 +650,10 @@
             syncForm();
             hydrateAll();
             renderUpgradePanel();
+            $('#meSingleLoading').fadeOut(200, function(){ $(this).remove(); });
         }).fail(function() {
             setStatus('Could not load this editor.', true);
+            $('#meSingleLoading').fadeOut(200, function(){ $(this).remove(); });
         });
     }
     function collectLinks(kind) {

@@ -412,6 +412,10 @@ class Module {
             </form>
 
             <div class="me-single-editor__canvas">
+                <div class="me-single-editor__loading" id="meSingleLoading">
+                    <div class="me-single-editor__spinner"></div>
+                    <p>Loading profile&hellip;</p>
+                </div>
                 <div id="meSinglePreviewStandard" class="me-single-editor__pane <?php echo $is_pro_profile ? '' : 'is-active'; ?>" data-mode="standard">
                     <div class="mecard-public-card me-single-editor__preview-card">
                             <?php Profile_Renderer_Module::render_standard( [], [], 'preview' ); ?>

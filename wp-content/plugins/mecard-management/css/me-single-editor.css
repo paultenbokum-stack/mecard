@@ -214,6 +214,34 @@
     min-height: 640px;
 }
 
+.me-single-editor__loading {
+    position: absolute;
+    inset: 0;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    background: #fff;
+}
+.me-single-editor__loading p {
+    margin: 0;
+    font-size: 14px;
+    color: #666;
+}
+.me-single-editor__spinner {
+    width: 32px;
+    height: 32px;
+    border: 3px solid #e5e5e5;
+    border-top-color: #333;
+    border-radius: 50%;
+    animation: me-spin .7s linear infinite;
+}
+@keyframes me-spin {
+    to { transform: rotate(360deg); }
+}
+
 .me-single-editor__preview-card {
     max-width: 480px;
     width: 100%;

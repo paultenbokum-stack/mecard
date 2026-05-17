@@ -269,7 +269,14 @@
         }
 
         // -- Standard pane --
-        field($stdPane, 'company-name').text((company && company.title) ? company.title : ((profile && profile.company_name) || ''));
+        var stdCompanyText = (company && company.title) ? company.title : ((profile && profile.company_name) || '');
+        field($stdPane, 'company-name').text(stdCompanyText);
+        var $stdRoleCompany = field($stdPane, 'role-company');
+        if (stdCompanyText) {
+            $stdRoleCompany.show().find('strong').text(stdCompanyText);
+        } else {
+            $stdRoleCompany.hide();
+        }
 
         if (addr) {
             const mapsStd = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(addr);

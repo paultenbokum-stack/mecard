@@ -104,6 +104,8 @@ $social_icons = [
                     </a>
                 </div>
                 <?php endforeach; ?>
+                <?php $has_any_social = ! empty( array_filter( $soc ) ); ?>
+                <p class="mc-socials__placeholder me-single-editor__empty-text col-12 text-center"<?php if ( $has_any_social ) echo ' style="display:none"'; ?>>+ add social links</p>
             </div>
             <div class="row profile-buttons">
                 <div class="col col-4">
