@@ -746,6 +746,8 @@ jQuery(document).ready(function($) {
             const defaultCountry = (cfg.defaultCountry || 'za').toLowerCase();
             let waIti = null;
             let waLastOpenAt = 0;
+            let waIsValidating = false;
+            let waSuppressBlur = false;
 
             function getBrowserCountryHint() {
                 const lang = (navigator.languages && navigator.languages[0]) || navigator.language || '';
@@ -830,23 +832,27 @@ jQuery(document).ready(function($) {
 
             function validateWhatsappNumber(showValidState) {
                 if (!waInput || !waIti) return false;
+                if (waIsValidating) return false;
 
                 if (!sanitizeNationalValue(waInput.value)) {
                     setWaFeedback('', false);
                     return false;
                 }
 
+                waIsValidating = true;
                 syncInputCountryFromValue();
 
                 if (window.intlTelInputUtils && typeof waIti.isValidNumber === 'function') {
                     const isValid = waIti.isValidNumber();
                     setWaFeedback(isValid ? (showValidState ? cfg.i18n.waValid : '') : cfg.i18n.invalidMsisdn, !isValid);
+                    waIsValidating = false;
                     return isValid;
                 }
 
                 const fallbackDigits = fallbackWaNumber();
                 const isFallbackValid = fallbackDigits.length >= 8;
                 setWaFeedback(isFallbackValid ? (showValidState ? cfg.i18n.waValid : '') : cfg.i18n.invalidMsisdn, !isFallbackValid);
+                waIsValidating = false;
                 return isFallbackValid;
             }
 
@@ -911,7 +917,14 @@ jQuery(document).ready(function($) {
                     }
                 });
 
+                document.addEventListener('visibilitychange', function () {
+                    if (!document.hidden) {
+                        waSuppressBlur = true;
+                        window.setTimeout(function () { waSuppressBlur = false; }, 300);
+                    }
+                });
                 waInput.addEventListener('blur', function () {
+                    if (waSuppressBlur) return;
                     validateWhatsappNumber(true);
                 });
                 waInput.addEventListener('input', function () {
