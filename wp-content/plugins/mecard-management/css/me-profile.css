@@ -315,9 +315,11 @@ a.mc-action, a.mc-action:hover, a.mc-action:focus { text-decoration: none !impor
     cursor: pointer;
     box-shadow: 0 6px 18px -6px rgba(15,23,42,0.35);
 }
-.mc-savebar__btn a {
+.mc-savebar__btn a,
+.mc-savebar__btn a:hover,
+.mc-savebar__btn a:focus {
     color: #fff;
-    text-decoration: none;
+    text-decoration: none !important;
 }
 .mc-savebar__btn:active { transform: translateY(1px); }
 /* Savebar is always inline inside editor phone frame / preview card */
@@ -376,8 +378,10 @@ button.company {
     padding: 14px;
     text-align: center;
 }
-.vcard-button a {
-    text-decoration: none;
+.vcard-button a,
+.vcard-button a:hover,
+.vcard-button a:focus {
+    text-decoration: none !important;
     display: inline-block;
     font-weight: 600;
 }
