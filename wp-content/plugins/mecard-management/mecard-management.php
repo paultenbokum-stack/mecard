@@ -851,7 +851,7 @@ $html = '
     <p>Click on the downloaded file</p><p><span class="vcard-file">"'.$post->post_title.'.vcf"</span></p><p>to import into your phone\'s contacts.</p>
 </div>
 </div>
-<div class="vcard-button" id="vcard-button-'.$post->ID.'" style=""><a href="#" style="">Download Contact Card</a> </div>
+<div class="vcard-button" id="vcard-button-'.$post->ID.'" style=""><a href="#" style=""><svg class="mc-vcard-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="9" r="3.5"/><path d="M4 19c0-3 2.7-5.5 6-5.5s6 2.5 6 5.5"/><path d="M18 6v6M15 9h6"/></svg> Save to contacts</a> </div>
 </div>
     
 <iframe id="vcard-download"></iframe>

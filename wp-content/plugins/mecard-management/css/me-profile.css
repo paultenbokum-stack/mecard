@@ -69,14 +69,275 @@
     color: var(--me-accent, #0170b9);
 }
 
+/* --------------------------------------------------------------------------
+   Standard profile — mc-* design system
+   -------------------------------------------------------------------------- */
+
+/* Page shell */
+.mc-page {
+    font-family: -apple-system, system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    color: #0F172A;
+    background: #F6F7F9;
+    min-height: 100%;
+}
+
+/* Top bar (preview context only) */
+.mc-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 20px 14px;
+    background: #fff;
+}
+.mc-logo { font-size: 26px; line-height: 1; letter-spacing: -0.02em; color: #0F172A; }
+.mc-logo__bold { font-weight: 800; }
+.mc-logo__light { font-weight: 300; }
+.mc-logo__img { max-height: 28px; width: auto; }
+.mc-topbar__actions { display: flex; align-items: center; gap: 14px; }
+.mc-iconbtn {
+    width: 36px; height: 36px; border-radius: 9px; padding: 0;
+    display: flex; align-items: center; justify-content: center;
+    background: transparent; border: none; cursor: pointer;
+    color: #1976D2;
+}
+.mc-iconbtn--outline { border: 1.5px solid #1976D2; }
+
+/* Main column */
+.mc-main { padding: 8px 16px 24px; }
+
+/* Identity card */
+.mc-card {
+    background: #fff;
+    border-radius: 22px;
+    padding: 28px 20px 24px;
+    text-align: center;
+    box-shadow: 0 1px 2px rgba(15,23,42,0.04), 0 8px 24px -8px rgba(15,23,42,0.10);
+}
+.mc-card__avatar {
+    width: 104px; height: 104px; border-radius: 50%;
+    background: #F1F3F6;
+    box-shadow: inset 0 0 0 1px #E6E9EE;
+    margin: 0 auto 16px;
+    display: flex; align-items: flex-end; justify-content: center;
+    overflow: hidden;
+}
+.mc-card__avatar img {
+    width: 104px !important;
+    height: 104px !important;
+    max-width: none !important;
+    border-radius: 50% !important;
+    object-fit: cover;
+    display: block;
+    margin: 0;
+    border: none;
+}
+.mc-card__avatar-placeholder {
+    display: flex; align-items: flex-end; justify-content: center;
+    width: 100%; height: 100%; color: #C4CAD3;
+    background: #F1F3F6;
+    border-radius: 0;
+}
+.mc-card__avatar-placeholder svg { margin-bottom: -2px; }
+.mc-card__name {
+    margin: 0;
+    font-size: 24px !important;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: #0F172A;
+}
+.mc-card__role {
+    margin: 4px 0 0;
+    font-size: 14px;
+    color: #64748B;
+}
+.mc-card__role strong { color: #0F172A; font-weight: 600; }
+
+/* Social row */
+.mc-socials {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 18px;
+    flex-wrap: wrap;
+}
+.mc-socials__placeholder {
+    width: 100%;
+    text-align: center;
+    margin: 0;
+    font-size: 14px;
+    color: #94a3b8;
+    cursor: pointer;
+}
+.mc-social {
+    width: 44px; height: 44px;
+    border-radius: 10px;
+    background: #F1F3F6;
+    color: #475569;
+    display: flex; align-items: center; justify-content: center;
+    text-decoration: none;
+    transition: background .15s, color .15s;
+    font-size: 20px;
+}
+.mc-social:hover { background: #E7ECF2; color: #0F172A; }
+.mc-social i { font-size: 30px !important; line-height: 1; }
+
+/* Action row */
+.mc-actions {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-top: 14px;
+}
+.mc-action {
+    background: #fff;
+    border: none;
+    border-radius: 14px;
+    padding: 14px 6px 12px;
+    display: flex; flex-direction: column; align-items: center; gap: 6px;
+    font-family: inherit;
+    cursor: pointer;
+    text-decoration: none;
+    box-shadow: 0 1px 2px rgba(15,23,42,0.04), 0 6px 16px -10px rgba(15,23,42,0.15);
+    transition: transform .1s;
+}
+a.mc-action, a.mc-action:hover, a.mc-action:focus { text-decoration: none !important; }
+.mc-action:active { transform: translateY(1px); }
+.mc-action__icon {
+    width: 38px; height: 38px;
+    border-radius: 10px;
+    color: #fff;
+    display: flex; align-items: center; justify-content: center;
+}
+.mc-action__icon--call     { background: #16A34A; }
+.mc-action__icon--email    { background: #1976D2; }
+.mc-action__icon--whatsapp { background: #25D366; }
+.mc-action__label {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: #0F172A;
+}
+
+/* Details sections */
+.mc-details {
+    background: #fff;
+    border-radius: 18px;
+    margin-top: 14px;
+    padding: 4px 18px;
+    box-shadow: 0 1px 2px rgba(15,23,42,0.03), 0 4px 14px -8px rgba(15,23,42,0.08);
+    color: #0F172A;
+}
+.mc-details__section-title {
+    margin: 14px 0 2px !important;
+    font-size: 11px !important;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #94A3B8 !important;
+    line-height: 1.4 !important;
+}
+.mc-details__row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 0;
+    border-bottom: 1px solid #F1F3F6;
+}
+.mc-details__row:last-child { border-bottom: none; }
+.mc-details__icon {
+    flex: 0 0 auto;
+    width: 32px; height: 32px;
+    border-radius: 9px;
+    display: flex; align-items: center; justify-content: center;
+}
+.mc-details__icon--blue { background: #F1F5FB; color: #1976D2; }
+.mc-details__text { flex: 1; min-width: 0; }
+.mc-details__label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: #94A3B8;
+}
+.mc-details__value {
+    margin-top: 1px;
+    font-size: 14.5px;
+    font-weight: 500;
+    color: #0F172A;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.mc-details__value a { color: #1976D2; text-decoration: none; }
+.mc-details__value a:hover { text-decoration: underline; }
+
+/* Company action buttons */
+.mc-company-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 12px 0 16px;
+}
+.mc-company-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 9px 16px;
+    border-radius: 10px;
+    background: #F1F3F6;
+    color: #0F172A;
+    font-size: 13.5px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: background .15s;
+}
+.mc-company-btn:hover { background: #E7ECF2; color: #0F172A; text-decoration: none; }
+
+/* Save to contacts bar — preview context placeholder */
+.mc-savebar {
+    padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px));
+    background: linear-gradient(to top, #F6F7F9 60%, rgba(246,247,249,0));
+}
+.mc-savebar__btn {
+    width: 100%;
+    height: 52px;
+    border: none;
+    border-radius: 14px;
+    background: #0F172A;
+    color: #fff;
+    font-family: inherit;
+    font-weight: 600;
+    font-size: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    cursor: pointer;
+    box-shadow: 0 6px 18px -6px rgba(15,23,42,0.35);
+}
+.mc-savebar__btn a {
+    color: #fff;
+    text-decoration: none;
+}
+.mc-savebar__btn:active { transform: translateY(1px); }
+/* Savebar is always inline inside editor phone frame / preview card */
+.me-phone-screen .mc-savebar,
+.me-single-editor__preview-card .mc-savebar,
+.me-phone-screen [data-me-field="vcard-button"],
+.me-single-editor__preview-card [data-me-field="vcard-button"] {
+    position: static !important;
+}
+
+
 /* Primary profile action buttons (call / email / whatsapp) */
 .profile-buttons {
     margin-top: 4px;
     margin-bottom: 10px;
 }
-.profile-buttons .col {
+.profile-buttons .col a button{
     padding-left: 6px;
     padding-right: 6px;
+    margin-bottom: 8px;
 }
 .profile-buttons button {
     width: 100%;
@@ -211,7 +472,8 @@ button.company {
     flex: 0 0 auto;
 }
 .me-phone-screen .pro-profile-container,
-.me-phone-screen .standard-profile-container {
+.me-phone-screen .standard-profile-container,
+.me-phone-screen .mc-page {
     overflow-y: auto;
     flex: 1;
 }
@@ -338,10 +600,75 @@ button.company {
     border-top: 1px solid rgba(0,0,0,.06);
 }
 
+/* vcard-download on public standard profile — new design */
+.mc-page .vcard-download {
+    background: transparent;
+    border-top: none;
+    position: static;
+}
+.mc-page .vcard-button {
+    padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px));
+    background: linear-gradient(to top, #F6F7F9 60%, rgba(246,247,249,0));
+    text-align: center;
+}
+.mc-page .vcard-button a {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    width: 100%;
+    height: 52px;
+    border-radius: 14px;
+    background: #0F172A;
+    color: #fff;
+    font-family: -apple-system, system-ui, sans-serif;
+    font-weight: 600;
+    font-size: 15px;
+    text-decoration: none;
+    box-shadow: 0 6px 18px -6px rgba(15,23,42,0.35);
+    transition: transform .1s;
+}
+.mc-vcard-icon { display: none; }
+.mc-page .mc-vcard-icon { display: inline-block; vertical-align: middle; }
+.mc-page .vcard-button a:hover { text-decoration: none; color: #fff; }
+.mc-page .vcard-button a:active { transform: translateY(1px); }
+.mc-page #download-message {
+    background: #fff;
+    border-radius: 14px;
+    margin: 0 16px 8px;
+    padding: 14px 16px;
+    box-shadow: 0 2px 12px rgba(15,23,42,0.12);
+    font-size: 14px;
+    color: #0F172A;
+}
+.mc-page #download-message p { margin: 0 0 4px; }
+.mc-page #download-message .vcard-file { font-weight: 600; }
+.mc-page #download-close {
+    float: right;
+    background: none;
+    border: none;
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+    color: #64748B;
+    padding: 0;
+}
+
+/* Mobile: sticky vcard bar */
 @media (max-width: 767px) {
     .mecard-public-card .pro-profile-container,
-    .mecard-public-card .standard-profile-container {
-        padding-bottom: 96px;
+    .mecard-public-card .standard-profile-container,
+    .mecard-public-card .mc-page {
+        padding-bottom: 88px;
+    }
+
+    .mc-page [data-me-field="vcard-button"] {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 10010;
+        width: 100%;
     }
 
     .mecard-public-card .vcard-download {
@@ -358,6 +685,16 @@ button.company {
 
     .mecard-public-card .vcard-button {
         padding: 14px 16px;
+    }
+}
+
+/* Desktop: vcard bar inline */
+@media (min-width: 768px) {
+    .mc-page [data-me-field="vcard-button"] {
+        position: static;
+    }
+    .mc-page .vcard-button {
+        padding: 12px 24px 24px;
     }
 }
 
