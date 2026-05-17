@@ -413,7 +413,7 @@ function load_jquery_ui() {
 
 function load_qr_js() {
     if (is_page(array('manage-mecard-profiles','card-processing','profiles','new-cards-and-tags','live-cards-and-tags')) || is_singular(['mecard-profile','t'])) {
-        wp_register_script('qrcode-generator', plugin_dir_url(__FILE__) . 'js/qrcode.js');
+        wp_register_script('qrcode-generator', plugin_dir_url(__FILE__) . 'js/qrcode.js', [], filemtime(plugin_dir_path(__FILE__) . 'js/qrcode.js'));
         wp_enqueue_script('qrcode-generator');
     }
 }
@@ -440,7 +440,7 @@ function install_scripts(): void
         '25.15.0'
     );
     wp_enqueue_script('intl-tel-input');
-    wp_register_script( 'mecard_management', plugin_dir_url( __FILE__ ).'js/mecard-management.js' );
+    wp_register_script( 'mecard_management', plugin_dir_url( __FILE__ ).'js/mecard-management.js', [], filemtime(plugin_dir_path(__FILE__) . 'js/mecard-management.js') );
     wp_enqueue_script('mecard_management');
     wp_localize_script('mecard_management','MECARD_MGMT', [
         'ajaxurl'   => admin_url('admin-ajax.php'),
@@ -498,7 +498,7 @@ function install_scripts(): void
 
     // Finally enqueue
 
-    wp_register_style('mecard-styles', plugin_dir_url( __FILE__ ).'css/style.css' );
+    wp_register_style('mecard-styles', plugin_dir_url( __FILE__ ).'css/style.css', [], filemtime(plugin_dir_path(__FILE__) . 'css/style.css') );
     wp_enqueue_style('mecard-styles');
 }
 
@@ -516,7 +516,7 @@ function mecard_enqueue_public_profile_styles() {
         'me-profile',
         plugin_dir_url(__FILE__) . 'css/me-profile.css',
         [],
-        defined('ME_PLUGIN_VER') ? ME_PLUGIN_VER : '1.1'
+        filemtime(plugin_dir_path(__FILE__) . 'css/me-profile.css')
     );
 }
 
@@ -3480,7 +3480,7 @@ add_action('wp_head', function () {
 
 wp_localize_script('mecard-management', 'MECARD_SHARE', [
     // ...
-    'swUrl' => site_url('/mecard-sw.js'),
+    'swUrl' => site_url('/mecard-sw.js?v=' . filemtime(ABSPATH . 'mecard-sw.js')),
 ]);
 
 function me_is_post_owner( $post_id, $user_id = 0, $resolve_revision = true ) : bool {
@@ -3504,7 +3504,7 @@ function me_is_post_owner( $post_id, $user_id = 0, $resolve_revision = true ) : 
 add_action('wp_enqueue_scripts', function () {
     if ( ! ( is_singular('mecard-profile') || is_singular('t') ) ) return;
 
-    wp_register_script('mecard-ga4', plugins_url('/js/mecard-ga4.js', __FILE__), [], '1.2.0', true);
+    wp_register_script('mecard-ga4', plugins_url('/js/mecard-ga4.js', __FILE__), [], filemtime(plugin_dir_path(__FILE__) . 'js/mecard-ga4.js'), true);
     wp_enqueue_script('mecard-ga4');
 
     $context_id   = get_queried_object_id();

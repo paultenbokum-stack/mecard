@@ -14,28 +14,29 @@ class Module {
     public static function enqueue() : void {
         if (!is_user_logged_in()) return;
 
-        $base_url = plugin_dir_url(__FILE__);
-        $css_url  = $base_url . 'css/';
-        $js_url   = $base_url . 'js/';
+        $base_url  = plugin_dir_url(__FILE__);
+        $base_path = plugin_dir_path(__FILE__);
+        $css_url   = $base_url . 'css/';
+        $js_url    = $base_url . 'js/';
 
         // Re-use your existing CSS, just without the "new_" prefixes in PHP
         wp_enqueue_style(
             'me-profile-edit',
             $css_url . 'me-profile-edit.css',
             [],
-            defined('ME_PLUGIN_VER') ? ME_PLUGIN_VER : '1.1'
+            filemtime($base_path . 'css/me-profile-edit.css')
         );
         wp_enqueue_style(
             'me-profile',
             $css_url . 'me-profile.css',
             [],
-            defined('ME_PLUGIN_VER') ? ME_PLUGIN_VER : '1.1'
+            filemtime($base_path . 'css/me-profile.css')
         );
         wp_enqueue_style(
             'me-editor-shell',
             $css_url . 'new_me-editor-shell.css',
             [],
-            defined('ME_PLUGIN_VER') ? ME_PLUGIN_VER : '1.1'
+            filemtime($base_path . 'css/new_me-editor-shell.css')
         );
 
         wp_enqueue_media();
@@ -44,7 +45,7 @@ class Module {
             'me-editor-shell',
             $js_url . 'me-editor-shell.js',
             ['jquery'],
-            defined('ME_PLUGIN_VER') ? ME_PLUGIN_VER : '1.1',
+            filemtime($base_path . 'js/me-editor-shell.js'),
             true
         );
 
@@ -54,7 +55,7 @@ class Module {
                 'me-company-edit-js',
                 $js_url . 'me-company-edit.js',
                 ['jquery'],
-                defined('ME_PLUGIN_VER') ? ME_PLUGIN_VER : '1.1',
+                filemtime($base_path . 'js/me-company-edit.js'),
                 true
             );
         }
