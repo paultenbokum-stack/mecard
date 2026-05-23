@@ -3627,19 +3627,18 @@ add_action( 'wp_footer', function() {
     ?>
     <script>
     (function(){
-      var route = <?php echo wp_json_encode( $route ); ?>;
-      function fire() {
-        window.gtag('event', 'first_profile_created', {
-          event_source: 'mecard',
-          route: route
-        });
+      // Ensure gtag exists — mirrors the Google tag bootstrap pattern.
+      // If the Google tag snippet hasn't run yet, this queues the call
+      // so it fires once the async script loads.
+      window.dataLayer = window.dataLayer || [];
+      if (typeof window.gtag !== 'function') {
+        window.gtag = function(){ window.dataLayer.push(arguments); };
       }
-      if (typeof window.gtag === 'function') { fire(); return; }
-      var attempts = 0;
-      var poll = setInterval(function() {
-        if (typeof window.gtag === 'function') { clearInterval(poll); fire(); }
-        else if (++attempts >= 50) { clearInterval(poll); }
-      }, 200);
+      window.gtag('event', 'first_profile_created', {
+        event_source: 'mecard',
+        route: <?php echo wp_json_encode( $route ); ?>
+
+      });
     })();
     </script>
     <?php

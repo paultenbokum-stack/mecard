@@ -1,49 +1,26 @@
 (function () {
     const cfg = (window.MECARD_TRACKING || {});
-    const dl  = (window.dataLayer = window.dataLayer || []);
 
-// Inside mecard-ga4.js, replace your push() with this:
     function push(eventName, params = {}) {
-        const payload = {
-            event: eventName,
+        if (typeof window.gtag !== 'function') return;
 
-            // Common context
+        window.gtag('event', eventName, {
             event_source: 'mecard',
             page_location: location.href,
             referrer: document.referrer || null,
 
-            // Page entity
-            entity_type: cfg.type || null,   // 'profile' | 'tag'
-            entity_id: cfg.id || null,       // profile-or-tag ID
+            entity_type: cfg.type || null,
+            entity_id: cfg.id || null,
             tag_type: cfg.tagType || null,
 
-            // Profile roll-up
             profile_id: cfg.profileId || null,
             profile_slug: cfg.profileSlug || null,
             account_id: cfg.accountId || null,
-            profile_type: cfg.profileType || null, // 'standard' | 'professional'
+            profile_type: cfg.profileType || null,
             logged_in: !!cfg.userLoggedIn,
 
-            // Event-specific
             ...params
-        };
-
-
-        // Always push to the dataLayer (GTM/Pixel Manager listeners).
-        dl.push(payload);
-
-        // If GTM is NOT present but the Google tag IS, forward as a gtag event.
-        // This prevents duplicate sends when GTM is installed.
-        const hasGTM  = false; //!!window.google_tag_manager;
-        const hasGtag = typeof window.gtag === 'function';
-        if (!hasGTM && hasGtag) {
-            const { event, ...gtagParams } = payload;
-            window.gtag('event', eventName, gtagParams);
-            //console.log('!hasGTM && hasGtag:',dl);
-        } else {
-            console.log('hasGtag:',hasGtag);
-            console.log('hasGTM:',hasGTM);
-        }
+        });
     }
 
 
