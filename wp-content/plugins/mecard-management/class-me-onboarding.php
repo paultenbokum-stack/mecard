@@ -817,6 +817,12 @@ class Module {
             wp_safe_redirect(self::get_dashboard_url());
             exit;
         }
+
+        // Logged-in first-time user on a signup page — send to dedicated onboarding page.
+        if (is_user_logged_in() && !$has_onboarding && ($has_signup || $has_signup_email)) {
+            wp_safe_redirect(self::get_onboarding_url());
+            exit;
+        }
     }
 
     public static function filter_onboarding_media_query(array $query = []): array {

@@ -1,0 +1,11 @@
+- redirect single user back to /manage section on order placed
+
+- remove alt text, title caption description from media editor
+
+- on mobile, make onboarding profile preview go to the edge of the section, its too narrow and makes the whole profile layout look wrong
+
+- get rid of the text "and the easiest for us to manufacture"
+
+in pro editor, the company logo must be full width and height inside its container, no padding/margins
+
+The edit profile button on the live profile should direct the user to /manage whether the user is a single or team account user.
