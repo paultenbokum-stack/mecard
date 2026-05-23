@@ -522,6 +522,7 @@ class Module {
         if ($step === 'preview') {
             $user_id = get_current_user_id();
             if ( $user_id && ! get_user_meta( $user_id, '_mecard_conv_fired', true ) ) {
+                delete_user_meta( $user_id, '_mecard_conv_pending' );
                 update_user_meta( $user_id, '_mecard_conv_fired', current_time( 'mysql' ) );
                 $response['fireProfileCreated'] = true;
             }
