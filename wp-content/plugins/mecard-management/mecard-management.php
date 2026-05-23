@@ -3561,23 +3561,24 @@ add_action('wp_enqueue_scripts', function () {
 });
 
 /**
- * Conversion tracking — "Profile created"
+ * Conversion tracking — two events:
  *
- * Server-side detection, client-side dispatch pattern:
- * - PHP sets a one-shot _mecard_conv_pending user meta on onboarding completion
- *   (solo route) or team profile creation (team route).
- * - wp_footer reads it on the next page render, fires a dataLayer push, then
- *   permanently marks _mecard_conv_fired so the event never fires twice.
+ * 1. first_profile_created — fired client-side in me-onboarding.js immediately
+ *    after the user clicks "Publish profile" (preview step). The PHP AJAX handler
+ *    returns fireProfileCreated=true and sets _mecard_conv_fired.
+ *    For team-created profiles (no JS callback), we set _mecard_conv_pending
+ *    and fire via wp_footer on the next page load.
  *
- * Solo route:  set in Me\Onboarding\Module::ajax_save_step when install step completes
- * Team route:  save_post_mecard-profile (team console creates profile for member)
+ * 2. onboarding_complete — fired client-side when the referrer is /onboarding.
+ *    No server-side state needed; the referrer check is sufficient.
  */
+
+// Team route: set pending for first_profile_created when a profile is created
+// outside of the solo onboarding AJAX flow (e.g. team console).
 add_action( 'save_post_mecard-profile', function( $post_id, $post, $update ) {
-    // Only new profiles, not edits.
     if ( $update ) {
         return;
     }
-    // Ignore revisions and autosaves.
     if ( wp_is_post_revision( $post_id ) || wp_is_post_autosave( $post_id ) ) {
         return;
     }
@@ -3590,7 +3591,7 @@ add_action( 'save_post_mecard-profile', function( $post_id, $post, $update ) {
         return;
     }
 
-    // Solo onboarding sets pending in ajax_save_step — skip here.
+    // Solo onboarding fires the event from JS — skip here.
     if ( wp_doing_ajax() ) {
         return;
     }
@@ -3606,41 +3607,38 @@ add_action( 'wp_footer', function() {
     if ( ! is_user_logged_in() ) {
         return;
     }
-    $user_id = get_current_user_id();
-    $route   = get_user_meta( $user_id, '_mecard_conv_pending', true );
-    if ( ! $route ) {
-        return;
-    }
-    // Don't fire on the onboarding preview — it runs in an iframe so gtag
-    // is not available. Hold the pending meta and fire on the next real
-    // page load (e.g. /manage).
     if ( isset( $_GET['me_preview'] ) ) {
         return;
     }
-    // Don't fire on static asset requests that somehow route through WordPress.
-    $request_path = parse_url( $_SERVER['REQUEST_URI'], PHP_URL_PATH );
-    if ( $request_path && preg_match( '/\.(js|css|map|png|jpg|jpeg|gif|svg|woff2?|ttf|ico|eot)$/i', $request_path ) ) {
-        return;
+
+    $user_id = get_current_user_id();
+    $events  = [];
+
+    // Team route: first_profile_created (pending from save_post hook).
+    $pending_route = get_user_meta( $user_id, '_mecard_conv_pending', true );
+    if ( $pending_route ) {
+        delete_user_meta( $user_id, '_mecard_conv_pending' );
+        update_user_meta( $user_id, '_mecard_conv_fired', current_time( 'mysql' ) );
+        $events[] = [
+            'name'   => 'first_profile_created',
+            'params' => [ 'event_source' => 'mecard', 'route' => $pending_route ],
+        ];
     }
-    delete_user_meta( $user_id, '_mecard_conv_pending' );
-    update_user_meta( $user_id, '_mecard_conv_fired', current_time( 'mysql' ) );
+
+    if ( ! empty( $events ) ) {
     ?>
     <script>
     (function(){
-      // Ensure gtag exists — mirrors the Google tag bootstrap pattern.
-      // If the Google tag snippet hasn't run yet, this queues the call
-      // so it fires once the async script loads.
       window.dataLayer = window.dataLayer || [];
       if (typeof window.gtag !== 'function') {
         window.gtag = function(){ window.dataLayer.push(arguments); };
       }
-      window.gtag('event', 'first_profile_created', {
-        event_source: 'mecard',
-        route: <?php echo wp_json_encode( $route ); ?>
-
-      });
+      <?php foreach ( $events as $evt ) : ?>
+      window.gtag('event', <?php echo wp_json_encode( $evt['name'] ); ?>, <?php echo wp_json_encode( $evt['params'] ); ?>);
+      <?php endforeach; ?>
     })();
     </script>
     <?php
+    }
 }, 99 );
 

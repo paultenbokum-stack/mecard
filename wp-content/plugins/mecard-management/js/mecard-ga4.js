@@ -1,9 +1,14 @@
 (function () {
     const cfg = (window.MECARD_TRACKING || {});
 
-    function push(eventName, params = {}) {
-        if (typeof window.gtag !== 'function') return;
+    // Ensure gtag exists — if the Google tag script hasn't loaded yet,
+    // this shim queues calls so they fire once it initialises.
+    window.dataLayer = window.dataLayer || [];
+    if (typeof window.gtag !== 'function') {
+        window.gtag = function(){ window.dataLayer.push(arguments); };
+    }
 
+    function push(eventName, params = {}) {
         window.gtag('event', eventName, {
             event_source: 'mecard',
             page_location: location.href,

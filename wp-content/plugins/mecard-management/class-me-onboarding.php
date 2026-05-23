@@ -496,11 +496,6 @@ class Module {
             update_post_meta($profile_id, 'me_onboarding_install_skipped', $install_skipped);
             update_post_meta($profile_id, 'me_onboarding_stage', 'ready');
             update_post_meta($profile_id, 'me_onboarding_completed', 1);
-
-            $user_id = get_current_user_id();
-            if ( $user_id && ! get_user_meta( $user_id, '_mecard_conv_fired', true ) ) {
-                update_user_meta( $user_id, '_mecard_conv_pending', 'solo' );
-            }
         } elseif ($step === 'ready') {
             update_post_meta($profile_id, 'me_onboarding_stage', 'ready');
         }
@@ -523,6 +518,14 @@ class Module {
             'shareUrl'  => get_permalink($profile_id),
             'classicCardCart' => self::get_classic_card_cart_state(),
         ];
+
+        if ($step === 'preview') {
+            $user_id = get_current_user_id();
+            if ( $user_id && ! get_user_meta( $user_id, '_mecard_conv_fired', true ) ) {
+                update_user_meta( $user_id, '_mecard_conv_fired', current_time( 'mysql' ) );
+                $response['fireProfileCreated'] = true;
+            }
+        }
 
         if ($step === 'install') {
             $response['redirectUrl'] = self::get_dashboard_url();

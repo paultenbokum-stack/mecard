@@ -495,7 +495,19 @@
       state.profile = response.data.profile || state.profile;
       state.shareUrl = response.data.shareUrl || state.shareUrl;
       state.classicCardCart = response.data.classicCardCart || state.classicCardCart;
+      if (response.data && response.data.fireProfileCreated && typeof window.gtag === 'function') {
+        window.gtag('event', 'first_profile_created', {
+          event_source: 'mecard',
+          route: 'solo'
+        });
+      }
       if (response.data && response.data.redirectUrl) {
+        if (typeof window.gtag === 'function') {
+          window.gtag('event', 'onboarding_complete', {
+            event_source: 'mecard',
+            transport_type: 'beacon'
+          });
+        }
         window.location.assign(response.data.redirectUrl);
         return response;
       }
