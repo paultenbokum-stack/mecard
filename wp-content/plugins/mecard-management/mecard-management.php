@@ -3564,20 +3564,14 @@ add_action('wp_enqueue_scripts', function () {
  * Conversion tracking — "Profile created"
  *
  * Server-side detection, client-side dispatch pattern:
- * - PHP sets a one-shot _mecard_conv_pending user meta on profile creation.
+ * - PHP sets a one-shot _mecard_conv_pending user meta on onboarding completion
+ *   (solo route) or team profile creation (team route).
  * - wp_footer reads it on the next page render, fires a dataLayer push, then
  *   permanently marks _mecard_conv_fired so the event never fires twice.
  *
- * Solo route:  mecard_profile_autocreated (onboarding bootstrap)
- * Team route:  save_post_mecard-profile   (team console creates profile for member)
+ * Solo route:  set in Me\Onboarding\Module::ajax_save_step when install step completes
+ * Team route:  save_post_mecard-profile (team console creates profile for member)
  */
-add_action( 'mecard_profile_autocreated', function( $profile_id, $user_id ) {
-    if ( get_user_meta( $user_id, '_mecard_conv_fired', true ) ) {
-        return;
-    }
-    update_user_meta( $user_id, '_mecard_conv_pending', 'solo' );
-}, 20, 2 );
-
 add_action( 'save_post_mecard-profile', function( $post_id, $post, $update ) {
     // Only new profiles, not edits.
     if ( $update ) {
@@ -3596,10 +3590,8 @@ add_action( 'save_post_mecard-profile', function( $post_id, $post, $update ) {
         return;
     }
 
-    // Solo route is already handled by mecard_profile_autocreated — skip if the
-    // creator is the profile owner and we're in the AJAX bootstrap context.
-    $owner_id = (int) get_post_meta( $post_id, 'me_profile_owner_user_id', true );
-    if ( $owner_id && $owner_id === $creator_id && wp_doing_ajax() ) {
+    // Solo onboarding sets pending in ajax_save_step — skip here.
+    if ( wp_doing_ajax() ) {
         return;
     }
 
@@ -3619,9 +3611,9 @@ add_action( 'wp_footer', function() {
     if ( ! $route ) {
         return;
     }
-    // Don't fire on the onboarding preview — it runs in an iframe so dataLayer
-    // is not visible to GTM in the main window. Hold the pending meta and fire
-    // on the next real page load (e.g. /manage).
+    // Don't fire on the onboarding preview — it runs in an iframe so gtag
+    // is not available. Hold the pending meta and fire on the next real
+    // page load (e.g. /manage).
     if ( isset( $_GET['me_preview'] ) ) {
         return;
     }
@@ -3636,22 +3628,18 @@ add_action( 'wp_footer', function() {
     <script>
     (function(){
       var route = <?php echo wp_json_encode( $route ); ?>;
-      window.dataLayer = window.dataLayer || [];
-      window.dataLayer.push({
-        event: 'first_profile_created',
-        event_source: 'mecard',
-        route: route,
-        user_id: <?php echo wp_json_encode( $user_id ); ?>
-      });
-      // gtag loads async — defer until it is available.
-      window.addEventListener('load', function() {
-        if (typeof window.gtag === 'function') {
-          window.gtag('event', 'first_profile_created', {
-            event_source: 'mecard',
-            route: route
-          });
-        }
-      });
+      function fire() {
+        window.gtag('event', 'first_profile_created', {
+          event_source: 'mecard',
+          route: route
+        });
+      }
+      if (typeof window.gtag === 'function') { fire(); return; }
+      var attempts = 0;
+      var poll = setInterval(function() {
+        if (typeof window.gtag === 'function') { clearInterval(poll); fire(); }
+        else if (++attempts >= 50) { clearInterval(poll); }
+      }, 200);
     })();
     </script>
     <?php
