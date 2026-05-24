@@ -1,8 +1,9 @@
 (function () {
   const root = document.querySelector("[data-me-onboarding]");
-  if (!root || typeof MECARD_ONBOARDING === "undefined") {
+  if (!root || typeof MECARD_ONBOARDING === "undefined" || root.__meOnboardingInit) {
     return;
   }
+  root.__meOnboardingInit = true;
 
   const panel = root.querySelector("[data-me-panel]");
   const progressTracker = root.querySelector("[data-me-progress-tracker]");

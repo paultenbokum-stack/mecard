@@ -7,6 +7,18 @@ if ( ! defined( 'ABSPATH' ) ) {
     return;
 }
 
+// One-time bulk role migration: visit /wp-admin/?mecard_migrate_authors=1 as admin, then remove this block.
+add_action( 'admin_init', function () {
+    if ( empty( $_GET['mecard_migrate_authors'] ) || ! current_user_can( 'manage_options' ) ) {
+        return;
+    }
+    $authors = get_users( [ 'role' => 'author' ] );
+    foreach ( $authors as $u ) {
+        $u->set_role( 'customer' );
+    }
+    wp_die( sprintf( 'Done — %d user(s) migrated from author to customer.', count( $authors ) ) );
+} );
+
 include 'custom_product.php';
 
 // Define base paths if not already defined
@@ -1606,7 +1618,7 @@ add_filter( 'ajax_query_attachments_args', 'show_current_user_attachments' );
 function show_current_user_attachments( $query ) {
     $user_id = get_current_user_id();
 
-    if ( $user_id && current_user_can('author')) {
+    if ( $user_id && ! current_user_can('manage_options') ) {
         $query['author'] = $user_id;
     }
     return $query;

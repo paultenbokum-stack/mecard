@@ -182,6 +182,9 @@ class Module {
                     if (is_wp_error($user_id)) {
                         $errors[] = $user_id->get_error_message();
                     } else {
+                        $user = new \WP_User($user_id);
+                        $user->set_role('customer');
+
                         wp_update_user([
                             'ID'           => $user_id,
                             'display_name' => trim($values['first_name'] . ' ' . $values['last_name']),
