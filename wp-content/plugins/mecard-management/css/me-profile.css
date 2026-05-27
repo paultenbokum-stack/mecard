@@ -666,7 +666,7 @@ button.company {
         padding-bottom: 88px;
     }
 
-    .mc-page [data-me-field="vcard-button"] {
+    .mecard-public-card [data-me-field="vcard-button"] {
         position: fixed;
         left: 0;
         right: 0;
@@ -675,16 +675,13 @@ button.company {
         width: 100%;
     }
 
-    .mecard-public-card .vcard-download {
-        position: fixed;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        z-index: 10010;
+    .mecard-public-card [data-me-field="vcard-button"] .vcard-download {
+        position: static;
         width: 100%;
         border-top: 1px solid rgba(0,0,0,.08);
         box-shadow: 0 -6px 18px rgba(0,0,0,.12);
         padding-bottom: env(safe-area-inset-bottom, 0);
+        background: #fff;
     }
 
     .mecard-public-card .vcard-button {

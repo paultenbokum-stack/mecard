@@ -1400,7 +1400,11 @@ body:not(.logged-in) .ast-header-woo-cart {
 }
 
 iframe#vcard-download {
-    height: 0px;
+    position: absolute;
+    width: 0;
+    height: 0;
+    border: 0;
+    overflow: hidden;
 }
 
 body.views-template-professional-profile-template h1.profile-heading {
