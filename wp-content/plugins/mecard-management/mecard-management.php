@@ -842,7 +842,15 @@ function mecard_single_editor_link_html( $profile_id = 0 ) {
 
 function vcard_download_button($atts) {
 global $post;
-    $src = site_url().'/vcard/?profile_id='.$post->ID.'&profile_name='.$post->post_title;
+    // Resolve to the linked profile when rendering on a tag (/t/) page
+    $vcard_post = $post;
+    if ( $post && $post->post_type === 't' && function_exists('mecard_resolve_profile_id') ) {
+        $resolved_id = mecard_resolve_profile_id( $post->ID );
+        if ( $resolved_id ) {
+            $vcard_post = get_post( $resolved_id );
+        }
+    }
+    $src = site_url().'/vcard/?profile_id='.$vcard_post->ID.'&profile_name='.$vcard_post->post_title;
     $iframe_src = '';
     $autodownload = 0;
     if (isset($atts['auto'])) {
@@ -860,17 +868,17 @@ $html = '
           <span aria-hidden="true">&times;</span>
         </button>
          <div>
-    <p>Click on the downloaded file</p><p><span class="vcard-file">"'.$post->post_title.'.vcf"</span></p><p>to import into your phone\'s contacts.</p>
+    <p>Click on the downloaded file</p><p><span class="vcard-file">"'.$vcard_post->post_title.'.vcf"</span></p><p>to import into your phone\'s contacts.</p>
 </div>
 </div>
-<div class="vcard-button" id="vcard-button-'.$post->ID.'" style=""><a href="#" style=""><svg class="mc-vcard-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="9" r="3.5"/><path d="M4 19c0-3 2.7-5.5 6-5.5s6 2.5 6 5.5"/><path d="M18 6v6M15 9h6"/></svg> Save to contacts</a> </div>
+<div class="vcard-button" id="vcard-button-'.$vcard_post->ID.'" style=""><a href="#" style=""><svg class="mc-vcard-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="9" r="3.5"/><path d="M4 19c0-3 2.7-5.5 6-5.5s6 2.5 6 5.5"/><path d="M18 6v6M15 9h6"/></svg> Save to contacts</a> </div>
 </div>
     
 <iframe id="vcard-download"></iframe>
 <script type="text/javascript">
     jQuery(document).ready(function() {
         var autodownload = '.$autodownload.';
-        if (autodownload && !me_getCookie("me_'.$post->ID.'")) {
+        if (autodownload && !me_getCookie("me_'.$vcard_post->ID.'")) {
             console.log("click");
             set_download(jQuery(".vcard-button a"));
         }
@@ -882,7 +890,7 @@ $html = '
             var isiPhone = / iPhone/i.test(navigator.userAgent.toLowerCase());  
             var download_url = "'.$src.'";
             download_url = (isiPhone) ? download_url + "&iphone=1" : download_url;
-            me_setCookie("me_'.$post->ID.'","1",10000);
+            me_setCookie("me_'.$vcard_post->ID.'","1",10000);
             jQuery("#vcard-download").attr("src",download_url);
             
              if (isAndroid)  
