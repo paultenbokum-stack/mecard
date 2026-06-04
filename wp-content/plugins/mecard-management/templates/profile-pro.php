@@ -16,7 +16,7 @@ $last            = $profile['last'] ?? '';
 $job             = $profile['job'] ?? '';
 $email           = $profile['email'] ?? '';
 $mobile          = $profile['mobile'] ?? '';
-$wa_raw          = $profile['wa'] ?? '';
+$wa_raw          = $profile['wa'] ?: ($profile['mobile'] ?? '');
 $direct_line     = $profile['direct_line'] ?? '';
 $photo_url       = $profile['photo_url'] ?? '';
 $soc             = $profile['soc'] ?? [];
@@ -86,52 +86,44 @@ $social_icons = [
         <span data-me-field="job"><?php echo esc_html( $job ?: ( $is_public ? '' : 'Job title' ) ); ?></span>
     </div>
 
-    <?php if ( $is_public ) : ?>
-        <?php
-        // [mecard_social_icons] renders both the social icons row AND the call/email/wa buttons row.
-        echo do_shortcode( '[mecard_social_icons]' );
-        ?>
-    <?php else : ?>
-        <!-- Preview context: static equivalent of [mecard_social_icons] with data-me-field attributes -->
-        <div class="container-md">
-            <div class="row justify-content-center mecard-social">
-                <?php foreach ( $social_icons as $net => $icon_class ) :
-                    $url = $soc[ $net ] ?? '';
-                ?>
-                <div class="col-2 text-center mecard-social-item" data-me-field="soc-<?php echo esc_attr( $net ); ?>"<?php if ( ! $url ) echo ' style="display:none"'; ?>>
-                    <a href="<?php echo $url ? esc_url( $url ) : '#'; ?>" target="_blank" rel="noopener">
-                        <i class="<?php echo esc_attr( $icon_class ); ?>"></i>
-                    </a>
-                </div>
-                <?php endforeach; ?>
-                <?php $has_any_social = ! empty( array_filter( $soc ) ); ?>
-                <p class="mc-socials__placeholder me-single-editor__empty-text col-12 text-center"<?php if ( $has_any_social ) echo ' style="display:none"'; ?>>+ add social links</p>
+    <div class="container-md">
+        <div class="row justify-content-center mecard-social">
+            <?php foreach ( $social_icons as $net => $icon_class ) :
+                $url = $soc[ $net ] ?? '';
+            ?>
+            <div class="col-2 text-center mecard-social-item" data-me-field="soc-<?php echo esc_attr( $net ); ?>"<?php if ( ! $url ) echo ' style="display:none"'; ?>>
+                <a href="<?php echo $url ? esc_url( $url ) : '#'; ?>" target="_blank" rel="noopener">
+                    <i class="<?php echo esc_attr( $icon_class ); ?>"></i>
+                </a>
             </div>
-            <div class="row profile-buttons">
-                <div class="col col-4">
-                    <a data-me-field="call" href="<?php echo $mobile ? esc_url( 'tel:' . $mobile ) : '#'; ?>">
-                        <button type="button" class="phone" aria-label="Call">
-                            <i class="fas fa-mobile-alt"></i>
-                        </button>
-                    </a>
-                </div>
-                <div class="col col-4">
-                    <a data-me-field="email" href="<?php echo $email ? esc_url( 'mailto:' . $email ) : '#'; ?>">
-                        <button type="button" class="email" aria-label="Email">
-                            <i class="fas fa-envelope"></i>
-                        </button>
-                    </a>
-                </div>
-                <div class="col col-4">
-                    <a data-me-field="wa" href="<?php echo $wa_int ? esc_url( 'https://wa.me/' . $wa_int ) : '#'; ?>">
-                        <button type="button" class="whatsapp" aria-label="WhatsApp">
-                            <i class="fab fa-whatsapp"></i>
-                        </button>
-                    </a>
-                </div>
+            <?php endforeach; ?>
+            <?php $has_any_social = ! empty( array_filter( $soc ) ); ?>
+            <p class="mc-socials__placeholder me-single-editor__empty-text col-12 text-center"<?php if ( $is_public || $has_any_social ) echo ' style="display:none"'; ?>>+ add social links</p>
+        </div>
+        <div class="row profile-buttons">
+            <div class="col col-4">
+                <a data-me-field="call" href="<?php echo $mobile ? esc_url( 'tel:' . $mobile ) : '#'; ?>">
+                    <button type="button" class="phone" aria-label="Call">
+                        <i class="fas fa-mobile-alt"></i>
+                    </button>
+                </a>
+            </div>
+            <div class="col col-4">
+                <a data-me-field="email" href="<?php echo $email ? esc_url( 'mailto:' . $email ) : '#'; ?>">
+                    <button type="button" class="email" aria-label="Email">
+                        <i class="fas fa-envelope"></i>
+                    </button>
+                </a>
+            </div>
+            <div class="col col-4">
+                <a data-me-field="wa" href="<?php echo $wa_int ? esc_url( 'https://wa.me/' . $wa_int ) : '#'; ?>">
+                    <button type="button" class="whatsapp" aria-label="WhatsApp">
+                        <i class="fab fa-whatsapp"></i>
+                    </button>
+                </a>
             </div>
         </div>
-    <?php endif; ?>
+    </div>
 
     <div class="container-fluid">
 
