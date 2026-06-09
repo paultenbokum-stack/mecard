@@ -565,6 +565,11 @@
         });
     });
 
+    // ---------- Refresh underlying views when modal closes ----------
+    $('#meProfileEditorModal').on('hidden.bs.modal', function(){
+        refreshUnderlyingToolsetViews();
+    });
+
     // ---------- Open modal helper (matches existing button calls) ----------
     window.NewMeOpenProfileEditor = function(post_id){
         $('#meProfileEditorModal').modal('show');

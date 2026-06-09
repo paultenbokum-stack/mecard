@@ -92,6 +92,32 @@ class Module {
         $company_parent = isset($_POST['company_parent']) ? absint($_POST['company_parent']) : 0;
         update_post_meta($post_id, 'company_parent', $company_parent);
 
+        // Keep Toolset relationship in sync with the post meta value
+        if (function_exists('toolset_get_related_posts')) {
+            $existing_parents = toolset_get_related_posts(
+                $post_id,
+                'company-mecard-profile',
+                [
+                    'query_by_role'  => 'child',
+                    'role_to_return' => 'parent',
+                    'limit'          => 1,
+                ]
+            );
+            $old_company = !empty($existing_parents)
+                ? (is_object(reset($existing_parents)) ? (int) reset($existing_parents)->ID : (int) reset($existing_parents))
+                : 0;
+
+            // Disconnect old relationship first (required before connecting a new one)
+            if ($old_company && $old_company !== $company_parent && function_exists('toolset_disconnect_posts')) {
+                toolset_disconnect_posts('company-mecard-profile', $old_company, $post_id);
+            }
+
+            // Connect new company
+            if ($company_parent && $company_parent !== $old_company && function_exists('toolset_connect_posts')) {
+                toolset_connect_posts('company-mecard-profile', $company_parent, $post_id);
+            }
+        }
+
         // Featured image (profile picture) — only update when a valid attachment ID is supplied.
         // An empty/zero value means the user did not change the photo, so leave it alone.
         if ( ! empty( $_POST['me_profile_photo_id'] ) ) {
