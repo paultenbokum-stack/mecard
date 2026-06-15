@@ -43,6 +43,7 @@ require_once ME_PLUGIN_DIR . 'class-me-entitlements.php';
 require_once ME_PLUGIN_DIR . 'class-me-single-editor.php';
 require_once ME_PLUGIN_DIR . 'class-me-single-cards.php';
 require_once ME_PLUGIN_DIR . 'class-me-single-manage.php';
+require_once ME_PLUGIN_DIR . 'class-me-tracking.php';
 
 function mecard_cart_cleanup_guard_key( string $cart_item_key, int $user_id ) : string {
     return $cart_item_key . '|' . $user_id;
@@ -258,6 +259,7 @@ add_action( 'init', function () {
     Me\Single_Editor\Module::init();
     Me\Single_Cards\Module::init();
     Me\Single_Manage\Module::init();
+    Me\Tracking\Module::init();
 } );
 
 add_action( 'wp', 'mecard_customize_empty_cart_state', 20 );
@@ -3579,6 +3581,63 @@ add_action('wp_enqueue_scripts', function () {
         'before'
     );
 });
+
+// ─── Custom event tracking JS (site-wide) ────────────────────────────────────
+add_action('wp_enqueue_scripts', function () {
+    wp_register_script(
+        'mecard-track',
+        plugins_url('/js/mecard-track.js', __FILE__),
+        [],
+        filemtime(plugin_dir_path(__FILE__) . 'js/mecard-track.js'),
+        true
+    );
+    wp_enqueue_script('mecard-track');
+
+    $config = [
+        'endpoint' => rest_url('mecard/v1/track'),
+        'debug'    => defined('WP_DEBUG') && WP_DEBUG,
+    ];
+
+    // Add profile/company context on profile and tag pages
+    if (is_singular('mecard-profile') || is_singular('t')) {
+        $context_id   = get_queried_object_id();
+        $context_type = is_singular('t') ? 'tag' : 'profile';
+
+        $profile_id = null;
+        if ($context_type === 'profile') {
+            $profile_id = $context_id;
+        } else {
+            if (function_exists('mecard_resolve_profile_id')) {
+                $profile_id = (int) mecard_resolve_profile_id($context_id);
+            }
+            if (empty($profile_id)) {
+                foreach (['wpcf-linked-profile', 'connected_profile_id', 'profile_id'] as $key) {
+                    $maybe = (int) get_post_meta($context_id, $key, true);
+                    if ($maybe) { $profile_id = $maybe; break; }
+                }
+            }
+        }
+
+        if ($profile_id) {
+            $config['profileId'] = $profile_id;
+            $company_id = (int) get_post_meta($profile_id, 'wpcf-company-parent', true);
+            if ($company_id) {
+                $config['companyId'] = $company_id;
+            }
+        }
+
+        // Default source for /t/ pages (NFC tap or QR)
+        if ($context_type === 'tag') {
+            $config['defaultSource'] = 'nfc';
+        }
+    }
+
+    wp_add_inline_script(
+        'mecard-track',
+        'window.MECARD_TRACK = ' . wp_json_encode($config) . ';',
+        'before'
+    );
+}, 5);
 
 /**
  * Conversion tracking — two events:

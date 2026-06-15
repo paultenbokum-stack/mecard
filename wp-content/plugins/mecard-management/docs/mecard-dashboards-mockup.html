@@ -1,0 +1,1051 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MeCard — Dashboards Mockup</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root {
+    --primary: #1f6feb;
+    --primary-dark: #1858c4;
+    --accent: #f59e0b;
+    --bg: #f6f8fb;
+    --card: #ffffff;
+    --border: #e5e9f0;
+    --text: #1a2233;
+    --muted: #6b7488;
+    --good: #16a34a;
+    --warn: #d97706;
+    --bad: #dc2626;
+    --teal: #0d9488;
+    --purple: #7c3aed;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  .topbar {
+    background: linear-gradient(135deg, #1f6feb, #0d9488);
+    color: white;
+    padding: 14px 28px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  }
+  .topbar h1 { margin: 0; font-size: 18px; font-weight: 600; letter-spacing: 0.2px; }
+  .topbar .badge { background: rgba(255,255,255,0.18); padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 500; }
+  .tabs {
+    display: flex;
+    background: var(--card);
+    border-bottom: 1px solid var(--border);
+    padding: 0 28px;
+  }
+  .tab {
+    padding: 14px 22px;
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    color: var(--muted);
+    font-weight: 500;
+    font-size: 14px;
+    transition: all 0.15s ease;
+  }
+  .tab.active { color: var(--primary); border-bottom-color: var(--primary); }
+  .tab:hover:not(.active) { color: var(--text); background: #f8fafc; }
+  .view { display: none; padding: 24px 28px; }
+  .view.active { display: block; }
+
+  .toolbar {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .toolbar select, .toolbar input {
+    padding: 8px 12px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--card);
+    font-size: 13px;
+    color: var(--text);
+  }
+  .toolbar label { font-size: 12px; color: var(--muted); margin-right: 4px; }
+  .pill-group { display: inline-flex; background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 3px; }
+  .pill {
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--muted);
+    transition: all 0.15s;
+  }
+  .pill.active { background: var(--primary); color: white; }
+  .pill:hover:not(.active) { background: #eef2f7; }
+
+  .grid {
+    display: grid;
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+  .grid.kpis { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+  .grid.two { grid-template-columns: 2fr 1fr; }
+  .grid.three { grid-template-columns: repeat(3, 1fr); }
+  .grid.four { grid-template-columns: repeat(4, 1fr); }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px 20px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+  }
+  .card h3 {
+    margin: 0 0 12px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .card h3 .help { font-size: 11px; color: var(--muted); text-transform: none; letter-spacing: 0; font-weight: 400; }
+
+  .kpi .value { font-size: 28px; font-weight: 700; color: var(--text); margin: 0; }
+  .kpi .delta { font-size: 12px; font-weight: 500; margin-top: 6px; }
+  .delta.up { color: var(--good); }
+  .delta.down { color: var(--bad); }
+  .delta.flat { color: var(--muted); }
+
+  .chart-wrap { position: relative; height: 220px; }
+  .chart-wrap.tall { height: 280px; }
+  .chart-wrap.short { height: 180px; }
+
+  .funnel { display: flex; flex-direction: column; gap: 6px; }
+  .funnel-row {
+    display: grid;
+    grid-template-columns: 180px 1fr 90px 70px;
+    gap: 10px;
+    align-items: center;
+    font-size: 13px;
+  }
+  .funnel-bar {
+    height: 28px;
+    background: linear-gradient(90deg, var(--primary), #0d9488);
+    border-radius: 4px;
+    color: white;
+    padding: 0 10px;
+    display: flex;
+    align-items: center;
+    font-weight: 500;
+    font-size: 12px;
+  }
+  .funnel-bar.warn { background: linear-gradient(90deg, #f59e0b, #d97706); }
+  .funnel-bar.bad { background: linear-gradient(90deg, #f87171, #dc2626); }
+  .funnel-conv { text-align: right; font-weight: 600; }
+  .funnel-conv.good { color: var(--good); }
+  .funnel-conv.warn { color: var(--warn); }
+  .funnel-conv.bad { color: var(--bad); }
+  .funnel-drop { font-size: 11px; color: var(--muted); text-align: right; }
+
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--border); font-size: 13px; }
+  th { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.4px; background: #fafbfc; font-weight: 600; }
+  td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  th.num { text-align: right; }
+  tr:last-child td { border-bottom: none; }
+  .tag { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 500; }
+  .tag.single { background: #e0e7ef; color: #475569; }
+  .tag.team-intent { background: #ddd6fe; color: #6d28d9; }
+  .tag.team-converted { background: #d1fae5; color: #065f46; }
+  .tag.pro { background: #fef3c7; color: #92400e; }
+  .tag.free { background: #f1f5f9; color: #64748b; }
+
+  .callout {
+    background: linear-gradient(135deg, #fef9c3, #fef3c7);
+    border: 1px solid #fde68a;
+    border-radius: 10px;
+    padding: 16px 18px;
+    margin-bottom: 20px;
+  }
+  .callout h4 { margin: 0 0 8px; font-size: 13px; color: #854d0e; display: flex; align-items: center; gap: 8px; }
+  .callout p { margin: 0; font-size: 13px; color: #713f12; }
+  .callout strong { color: #422006; }
+
+  .insight {
+    background: linear-gradient(135deg, #dbeafe, #e0e7ff);
+    border: 1px solid #bfdbfe;
+    border-radius: 10px;
+    padding: 16px 18px;
+    margin-bottom: 20px;
+  }
+  .insight h4 { margin: 0 0 6px; font-size: 13px; color: #1e40af; }
+  .insight ul { margin: 6px 0 0 18px; padding: 0; font-size: 13px; color: #1e3a8a; }
+  .insight li { margin-bottom: 4px; }
+
+  .legend { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 10px; font-size: 11px; color: var(--muted); }
+  .legend span { display: flex; align-items: center; gap: 5px; }
+  .dot { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+
+  .section-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text);
+    margin: 28px 0 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .section-title .count { background: var(--border); color: var(--muted); font-size: 11px; padding: 2px 8px; border-radius: 999px; font-weight: 500; }
+
+  .activity { max-height: 280px; overflow-y: auto; }
+  .activity-item {
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    gap: 10px;
+    font-size: 13px;
+  }
+  .activity-item:last-child { border-bottom: none; }
+  .activity-icon {
+    width: 28px; height: 28px; border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; flex-shrink: 0;
+  }
+  .icon-view { background: #dbeafe; color: #1e40af; }
+  .icon-share { background: #d1fae5; color: #065f46; }
+  .icon-vcard { background: #fef3c7; color: #92400e; }
+  .icon-contact { background: #ede9fe; color: #6d28d9; }
+  .activity-time { color: var(--muted); font-size: 11px; margin-left: auto; flex-shrink: 0; }
+
+  .progress { height: 6px; background: #f1f5f9; border-radius: 3px; overflow: hidden; }
+  .progress-fill { height: 100%; background: linear-gradient(90deg, var(--primary), var(--teal)); }
+
+  .seg-card { display: flex; gap: 12px; align-items: center; }
+  .seg-card .icon-circle {
+    width: 44px; height: 44px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; flex-shrink: 0;
+  }
+  .seg-card .icon-circle.single { background: #e0e7ef; color: #475569; }
+  .seg-card .icon-circle.team-intent { background: #ddd6fe; color: #6d28d9; }
+  .seg-card .icon-circle.team-converted { background: #d1fae5; color: #065f46; }
+  .seg-meta { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+  .source-split {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 12px;
+  }
+  .source-tile {
+    background: #f8fafc;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px;
+  }
+  .source-tile .label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.3px; }
+  .source-tile .v { font-size: 20px; font-weight: 700; margin-top: 4px; }
+  .source-tile .url { font-size: 11px; color: var(--muted); font-family: monospace; margin-top: 2px; }
+
+  .mockup-footer {
+    text-align: center;
+    padding: 30px;
+    color: var(--muted);
+    font-size: 12px;
+    background: var(--card);
+    border-top: 1px solid var(--border);
+  }
+
+  @media (max-width: 980px) {
+    .grid.two, .grid.three, .grid.four { grid-template-columns: 1fr; }
+    .funnel-row { grid-template-columns: 120px 1fr 70px 60px; font-size: 12px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1>MeCard Analytics — Dashboards Mockup</h1>
+  <div>
+    <span class="badge">v1 — sample data</span>
+    <span class="badge" style="margin-left:8px;">Last updated: 10 Jun 2026</span>
+  </div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" data-view="owner">Owner / Marketing Dashboard</div>
+  <div class="tab" data-view="team">Team-Owner Dashboard (customer-facing)</div>
+  <div class="tab" data-view="notes">Spec Notes</div>
+</div>
+
+<!-- =================== OWNER DASHBOARD =================== -->
+<div class="view active" id="view-owner">
+
+  <div class="toolbar">
+    <label>Date range:</label>
+    <select>
+      <option>Last 30 days</option>
+      <option selected>Last 90 days</option>
+      <option>Last 12 months</option>
+      <option>Custom…</option>
+    </select>
+
+    <label style="margin-left:14px;">Segment:</label>
+    <div class="pill-group">
+      <div class="pill active">All</div>
+      <div class="pill">Single profile</div>
+      <div class="pill">Team-intent (immediate)</div>
+      <div class="pill">Converted to team</div>
+    </div>
+
+    <label style="margin-left:14px;">Tier:</label>
+    <div class="pill-group">
+      <div class="pill active">All</div>
+      <div class="pill">Free</div>
+      <div class="pill">Pro</div>
+    </div>
+  </div>
+
+  <div class="insight">
+    <h4>What to work on next — auto-flagged</h4>
+    <ul>
+      <li><strong>Onboarding drop-off:</strong> 42% of signups never finish Profile Step 2. Biggest single bottleneck this quarter.</li>
+      <li><strong>A2HS adoption is low</strong> on iOS (12% vs 38% Android). The iOS Safari instructions modal needs work.</li>
+      <li><strong>Watermark attribution:</strong> 18% of new signups came via <code>utm_source=watermark</code> — share footer outperforms profile strip 3:1.</li>
+      <li><strong>Team conversion:</strong> Median time from first profile to second is 41 days; 73% of conversions happen in the first 60 days. After day 90, conversion drops sharply.</li>
+    </ul>
+  </div>
+
+  <!-- KPIs -->
+  <div class="grid kpis">
+    <div class="card kpi">
+      <h3>Signups (90d)</h3>
+      <p class="value">1,284</p>
+      <p class="delta up">▲ 18% vs prior period</p>
+    </div>
+    <div class="card kpi">
+      <h3>Onboarding completion</h3>
+      <p class="value">52%</p>
+      <p class="delta down">▼ 3pp vs prior period</p>
+    </div>
+    <div class="card kpi">
+      <h3>Pro conversion</h3>
+      <p class="value">11.4%</p>
+      <p class="delta up">▲ 2.1pp</p>
+    </div>
+    <div class="card kpi">
+      <h3>Avg revenue / signup</h3>
+      <p class="value">R 62.50</p>
+      <p class="delta up">▲ R 8.20</p>
+    </div>
+    <div class="card kpi">
+      <h3>Active profiles (30d)</h3>
+      <p class="value">3,917</p>
+      <p class="delta up">▲ 9%</p>
+    </div>
+  </div>
+
+  <!-- Customer segmentation -->
+  <div class="section-title">Customer segmentation <span class="count">Recommended approach</span></div>
+
+  <div class="callout">
+    <h4>💡 Segmentation recommendation</h4>
+    <p>Derive segments from existing data — no signup-form change needed.
+    <strong>Single profile</strong> = exactly 1 <code>mecard-profile</code> + non-bundle product.
+    <strong>Team-intent (immediate)</strong> = first order is <code>MECARD_BUNDLE_PRODUCT_ID</code>, <code>MECARD_CLASSIC_BUNDLE_PRODUCT_ID</code>, or <code>MECARD_CLASSIC_CORP_PRODUCT_ID</code>.
+    <strong>Converted to team</strong> = started with a single profile then fired <code>additional_profile_added</code> at least once.
+    Once segments are stable, revisit whether adding a "just me / my team" question at signup improves accuracy enough to be worth the friction.</p>
+  </div>
+
+  <div class="grid three">
+    <div class="card">
+      <h3>Single profile</h3>
+      <div class="seg-card">
+        <div class="icon-circle single">👤</div>
+        <div>
+          <div style="font-size:24px;font-weight:700;">847</div>
+          <div class="seg-meta">66% of total · 4.2% Pro conv</div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <h3>Team-intent (immediate)</h3>
+      <div class="seg-card">
+        <div class="icon-circle team-intent">👥</div>
+        <div>
+          <div style="font-size:24px;font-weight:700;">238</div>
+          <div class="seg-meta">19% of total · avg 6.4 profiles each</div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <h3>Converted to team</h3>
+      <div class="seg-card">
+        <div class="icon-circle team-converted">📈</div>
+        <div>
+          <div style="font-size:24px;font-weight:700;">199</div>
+          <div class="seg-meta">15% of total · median 41 days to convert</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid two">
+    <div class="card">
+      <h3>Signups over time, by segment</h3>
+      <div class="chart-wrap tall"><canvas id="chartSignups"></canvas></div>
+    </div>
+    <div class="card">
+      <h3>Time to team conversion (days)</h3>
+      <div class="chart-wrap tall"><canvas id="chartConvert"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Onboarding funnel -->
+  <div class="section-title">Onboarding funnel <span class="count">5 steps</span></div>
+
+  <div class="card">
+    <h3>Conversion through each step <span class="help">% of prior step · drop count</span></h3>
+    <div class="funnel">
+      <div class="funnel-row">
+        <div>1. Sign up</div>
+        <div class="funnel-bar" style="width:100%;">1,284 users</div>
+        <div class="funnel-conv good">100%</div>
+        <div class="funnel-drop">—</div>
+      </div>
+      <div class="funnel-row">
+        <div>2. Profile step 1</div>
+        <div class="funnel-bar" style="width:84%;">1,079</div>
+        <div class="funnel-conv good">84%</div>
+        <div class="funnel-drop">−205</div>
+      </div>
+      <div class="funnel-row">
+        <div>3. Profile step 2</div>
+        <div class="funnel-bar warn" style="width:58%;">745</div>
+        <div class="funnel-conv warn">69%</div>
+        <div class="funnel-drop">−334</div>
+      </div>
+      <div class="funnel-row">
+        <div>4. Confirm look</div>
+        <div class="funnel-bar" style="width:51%;">655</div>
+        <div class="funnel-conv good">88%</div>
+        <div class="funnel-drop">−90</div>
+      </div>
+      <div class="funnel-row">
+        <div>5. Add to Home Screen</div>
+        <div class="funnel-bar bad" style="width:24%;">308</div>
+        <div class="funnel-conv bad">47%</div>
+        <div class="funnel-drop">−347</div>
+      </div>
+      <div class="funnel-row">
+        <div><strong>Onboarding complete</strong></div>
+        <div class="funnel-bar" style="width:52%;">668</div>
+        <div class="funnel-conv good">52% overall</div>
+        <div class="funnel-drop"></div>
+      </div>
+    </div>
+    <div class="legend">
+      <span><span class="dot" style="background:var(--primary);"></span> Healthy step</span>
+      <span><span class="dot" style="background:var(--warn);"></span> Watch — &lt;75% conv</span>
+      <span><span class="dot" style="background:var(--bad);"></span> Critical — &lt;55% conv</span>
+    </div>
+  </div>
+
+  <!-- Engagement -->
+  <div class="section-title">Engagement</div>
+
+  <div class="grid two">
+    <div class="card">
+      <h3>Profile views — by URL pattern <span class="help">/t/ = card tap, /mecard-profile/ = direct</span></h3>
+      <div class="chart-wrap"><canvas id="chartViewSource"></canvas></div>
+      <div class="source-split">
+        <div class="source-tile">
+          <div class="label">Card tap (NFC + QR)</div>
+          <div class="v">28,412</div>
+          <div class="url">/t/{token}</div>
+        </div>
+        <div class="source-tile">
+          <div class="label">Direct profile link</div>
+          <div class="v">19,887</div>
+          <div class="url">/mecard-profile/{slug}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Share intents by method</h3>
+      <div class="chart-wrap"><canvas id="chartShareMethod"></canvas></div>
+    </div>
+  </div>
+
+  <div class="grid three">
+    <div class="card kpi"><h3>vCard downloads</h3><p class="value">6,108</p><p class="delta up">▲ 22%</p></div>
+    <div class="card kpi"><h3>Contact forms submitted</h3><p class="value">412</p><p class="delta up">▲ 8%</p></div>
+    <div class="card kpi"><h3>Recipient ad views <span style="font-size:10px;color:var(--muted);font-weight:400;">(watermark in viewport)</span></h3><p class="value">24,330</p><p class="delta up">▲ 31%</p></div>
+  </div>
+
+  <!-- Monetisation -->
+  <div class="section-title">Monetisation</div>
+
+  <div class="grid two">
+    <div class="card">
+      <h3>Upgrade funnel (Pro)</h3>
+      <div class="funnel">
+        <div class="funnel-row">
+          <div>Pro upsell viewed</div>
+          <div class="funnel-bar" style="width:100%;">3,841</div>
+          <div class="funnel-conv good">100%</div>
+          <div class="funnel-drop">—</div>
+        </div>
+        <div class="funnel-row">
+          <div>Pro upsell clicked</div>
+          <div class="funnel-bar" style="width:38%;">1,464</div>
+          <div class="funnel-conv warn">38%</div>
+          <div class="funnel-drop">−2,377</div>
+        </div>
+        <div class="funnel-row">
+          <div>Upgrade started</div>
+          <div class="funnel-bar warn" style="width:18%;">693</div>
+          <div class="funnel-conv warn">47%</div>
+          <div class="funnel-drop">−771</div>
+        </div>
+        <div class="funnel-row">
+          <div>Upgrade completed</div>
+          <div class="funnel-bar" style="width:11%;">425</div>
+          <div class="funnel-conv good">61%</div>
+          <div class="funnel-drop">−268</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Upsell click context — where do clicks come from?</h3>
+      <div class="chart-wrap"><canvas id="chartUpsell"></canvas></div>
+    </div>
+  </div>
+
+  <div class="grid two">
+    <div class="card">
+      <h3>Watermark attribution — signups by surface</h3>
+      <div class="chart-wrap"><canvas id="chartWatermark"></canvas></div>
+      <p style="font-size:11px;color:var(--muted);margin:8px 0 0;">Source: <code>utm_source=watermark</code>, broken down by <code>utm_medium</code></p>
+    </div>
+
+    <div class="card">
+      <h3>Team conversion cohorts</h3>
+      <div class="chart-wrap"><canvas id="chartCohort"></canvas></div>
+      <p style="font-size:11px;color:var(--muted);margin:8px 0 0;">% of single-profile users who added a 2nd profile within X days</p>
+    </div>
+  </div>
+
+  <!-- Geo / device -->
+  <div class="section-title">Geography & device</div>
+
+  <div class="grid two">
+    <div class="card">
+      <h3>Profile views by country</h3>
+      <table>
+        <thead><tr><th>Country</th><th class="num">Views</th><th class="num">Share</th></tr></thead>
+        <tbody>
+          <tr><td>🇿🇦 South Africa</td><td class="num">38,914</td><td class="num">80.6%</td></tr>
+          <tr><td>🇬🇧 United Kingdom</td><td class="num">3,212</td><td class="num">6.7%</td></tr>
+          <tr><td>🇺🇸 United States</td><td class="num">2,841</td><td class="num">5.9%</td></tr>
+          <tr><td>🇳🇦 Namibia</td><td class="num">1,108</td><td class="num">2.3%</td></tr>
+          <tr><td>Other</td><td class="num">2,224</td><td class="num">4.6%</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <h3>A2HS prompts by platform</h3>
+      <div class="chart-wrap"><canvas id="chartA2HS"></canvas></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- =================== TEAM OWNER DASHBOARD =================== -->
+<div class="view" id="view-team">
+
+  <div class="toolbar">
+    <div>
+      <div style="font-size:11px;color:var(--muted);">Viewing as</div>
+      <div style="font-size:18px;font-weight:600;">Acme Holdings · 14 active profiles</div>
+    </div>
+    <div style="margin-left:auto;display:flex;gap:12px;align-items:center;">
+      <label>Date range:</label>
+      <select>
+        <option>Last 7 days</option>
+        <option selected>Last 30 days</option>
+        <option>Last 90 days</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="insight">
+    <h4>Quick read on your team</h4>
+    <ul>
+      <li><strong>Sarah Mokoena</strong> got 41% of all team profile views this month — your top sharer.</li>
+      <li><strong>3 team members</strong> got fewer than 10 views: Mike, Devan, Thabo. Consider a team-wide reshare prompt.</li>
+      <li><strong>Tap-to-direct ratio:</strong> 64% of views come from card taps (/t/), 36% from shared links — healthy mix.</li>
+    </ul>
+  </div>
+
+  <!-- Top KPIs -->
+  <div class="grid four">
+    <div class="card kpi"><h3>Total profile views</h3><p class="value">4,182</p><p class="delta up">▲ 14%</p></div>
+    <div class="card kpi"><h3>Shares</h3><p class="value">893</p><p class="delta up">▲ 6%</p></div>
+    <div class="card kpi"><h3>vCard downloads</h3><p class="value">541</p><p class="delta up">▲ 12%</p></div>
+    <div class="card kpi"><h3>Contact form leads</h3><p class="value">38</p><p class="delta flat">▶ flat</p></div>
+  </div>
+
+  <div class="grid two">
+    <div class="card">
+      <h3>Team engagement over time</h3>
+      <div class="chart-wrap tall"><canvas id="chartTeamTime"></canvas></div>
+    </div>
+    <div class="card">
+      <h3>Views by source</h3>
+      <div class="chart-wrap tall"><canvas id="chartTeamSource"></canvas></div>
+      <p style="font-size:11px;color:var(--muted);margin:8px 0 0;">/t/ = NFC card tap or QR · /mecard-profile/ = link click</p>
+    </div>
+  </div>
+
+  <!-- Per-member table -->
+  <div class="section-title">Per-member performance</div>
+
+  <div class="card">
+    <table>
+      <thead>
+        <tr>
+          <th>Member</th>
+          <th class="num">Profile views</th>
+          <th class="num">/t/ taps</th>
+          <th class="num">Direct link</th>
+          <th class="num">Shares</th>
+          <th class="num">vCards</th>
+          <th class="num">Form fills</th>
+          <th>Last activity</th>
+          <th>Tier</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Sarah Mokoena</strong></td>
+          <td class="num">1,715</td>
+          <td class="num">1,182</td>
+          <td class="num">533</td>
+          <td class="num">208</td>
+          <td class="num">214</td>
+          <td class="num">17</td>
+          <td>2h ago</td>
+          <td><span class="tag pro">Pro</span></td>
+        </tr>
+        <tr>
+          <td><strong>James Bekker</strong></td>
+          <td class="num">622</td>
+          <td class="num">441</td>
+          <td class="num">181</td>
+          <td class="num">141</td>
+          <td class="num">88</td>
+          <td class="num">6</td>
+          <td>Yesterday</td>
+          <td><span class="tag pro">Pro</span></td>
+        </tr>
+        <tr>
+          <td><strong>Priya Naidoo</strong></td>
+          <td class="num">487</td>
+          <td class="num">301</td>
+          <td class="num">186</td>
+          <td class="num">102</td>
+          <td class="num">61</td>
+          <td class="num">5</td>
+          <td>2 days ago</td>
+          <td><span class="tag pro">Pro</span></td>
+        </tr>
+        <tr>
+          <td><strong>Themba Dlamini</strong></td>
+          <td class="num">412</td>
+          <td class="num">288</td>
+          <td class="num">124</td>
+          <td class="num">94</td>
+          <td class="num">55</td>
+          <td class="num">4</td>
+          <td>3 days ago</td>
+          <td><span class="tag pro">Pro</span></td>
+        </tr>
+        <tr>
+          <td><strong>Anna van der Merwe</strong></td>
+          <td class="num">298</td>
+          <td class="num">198</td>
+          <td class="num">100</td>
+          <td class="num">71</td>
+          <td class="num">38</td>
+          <td class="num">2</td>
+          <td>4 days ago</td>
+          <td><span class="tag pro">Pro</span></td>
+        </tr>
+        <tr>
+          <td><strong>Devan Pillay</strong></td>
+          <td class="num">9</td>
+          <td class="num">4</td>
+          <td class="num">5</td>
+          <td class="num">2</td>
+          <td class="num">1</td>
+          <td class="num">0</td>
+          <td>22 days ago</td>
+          <td><span class="tag free">Free</span></td>
+        </tr>
+        <tr>
+          <td><strong>Mike O'Connor</strong></td>
+          <td class="num">7</td>
+          <td class="num">2</td>
+          <td class="num">5</td>
+          <td class="num">1</td>
+          <td class="num">0</td>
+          <td class="num">0</td>
+          <td>5 weeks ago</td>
+          <td><span class="tag free">Free</span></td>
+        </tr>
+        <tr>
+          <td><strong>Thabo Sithole</strong></td>
+          <td class="num">3</td>
+          <td class="num">1</td>
+          <td class="num">2</td>
+          <td class="num">0</td>
+          <td class="num">0</td>
+          <td class="num">0</td>
+          <td>Never</td>
+          <td><span class="tag free">Free</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Leaderboards + activity -->
+  <div class="grid two" style="margin-top:20px;">
+    <div class="card">
+      <h3>Top performers (this period)</h3>
+      <table>
+        <thead><tr><th>Rank</th><th>Member</th><th>Metric</th><th class="num">Value</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td>Sarah Mokoena</td><td>Profile views</td><td class="num">1,715</td></tr>
+          <tr><td>2</td><td>Sarah Mokoena</td><td>vCard downloads</td><td class="num">214</td></tr>
+          <tr><td>3</td><td>James Bekker</td><td>Shares</td><td class="num">141</td></tr>
+          <tr><td>4</td><td>Sarah Mokoena</td><td>Form fills</td><td class="num">17</td></tr>
+          <tr><td>5</td><td>Priya Naidoo</td><td>Profile views</td><td class="num">487</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <h3>Members needing a nudge <span class="help">&lt;10 views, 30d</span></h3>
+      <table>
+        <thead><tr><th>Member</th><th class="num">Views</th><th>Last active</th><th></th></tr></thead>
+        <tbody>
+          <tr><td>Devan Pillay</td><td class="num">9</td><td>22 days ago</td><td><a href="#" style="font-size:12px;">Send nudge</a></td></tr>
+          <tr><td>Mike O'Connor</td><td class="num">7</td><td>5 weeks ago</td><td><a href="#" style="font-size:12px;">Send nudge</a></td></tr>
+          <tr><td>Thabo Sithole</td><td class="num">3</td><td>Never</td><td><a href="#" style="font-size:12px;">Send nudge</a></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="grid two">
+    <div class="card">
+      <h3>Share method breakdown — team total</h3>
+      <div class="chart-wrap"><canvas id="chartTeamShare"></canvas></div>
+    </div>
+
+    <div class="card">
+      <h3>Recent activity</h3>
+      <div class="activity">
+        <div class="activity-item"><div class="activity-icon icon-view">👁</div><div><strong>Sarah Mokoena's</strong> card tapped — Sandton<div style="font-size:11px;color:var(--muted);">via /t/ NFC</div></div><div class="activity-time">2m ago</div></div>
+        <div class="activity-item"><div class="activity-icon icon-vcard">📇</div><div><strong>James Bekker's</strong> vCard saved by recipient</div><div class="activity-time">14m ago</div></div>
+        <div class="activity-item"><div class="activity-icon icon-share">↗</div><div><strong>Priya Naidoo</strong> shared profile via WhatsApp</div><div class="activity-time">38m ago</div></div>
+        <div class="activity-item"><div class="activity-icon icon-view">👁</div><div><strong>Themba Dlamini's</strong> profile viewed — direct link<div style="font-size:11px;color:var(--muted);">via /mecard-profile/</div></div><div class="activity-time">1h ago</div></div>
+        <div class="activity-item"><div class="activity-icon icon-contact">✉</div><div><strong>Anna van der Merwe</strong> received a contact-form lead</div><div class="activity-time">2h ago</div></div>
+        <div class="activity-item"><div class="activity-icon icon-view">👁</div><div><strong>Sarah Mokoena's</strong> card tapped — Rosebank<div style="font-size:11px;color:var(--muted);">via /t/ NFC</div></div><div class="activity-time">2h ago</div></div>
+        <div class="activity-item"><div class="activity-icon icon-share">↗</div><div><strong>James Bekker</strong> shared profile via email</div><div class="activity-time">3h ago</div></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- =================== SPEC NOTES =================== -->
+<div class="view" id="view-notes">
+
+  <div class="card" style="max-width:920px;margin:0 auto;">
+    <h3 style="font-size:15px;color:var(--text);text-transform:none;letter-spacing:0;">Build notes — for the developer reading this</h3>
+
+    <h4 style="margin-top:18px;">1. Where this lives</h4>
+    <p>Custom WP admin page under <strong>MeCard Staff Backend</strong> (existing menu). New module <code>Me\Analytics\Module</code> registered alongside the editor modules in <code>mecard-management.php</code>. Data reads come directly from <code>{$wpdb-&gt;prefix}mecard_events</code> via prepared statements.</p>
+
+    <h4 style="margin-top:18px;">2. Profile-view source distinction</h4>
+    <p>Both <code>/t/{token}</code> and <code>/mecard-profile/{slug}</code> fire <code>profile_viewed</code>. To split them in queries without adding a new event:</p>
+    <ul>
+      <li>Add an <code>entry_url_pattern</code> field to the <code>meta</code> JSON on <code>profile_viewed</code> with value <code>'t'</code> or <code>'mecard-profile'</code>. Detected server-side from the matched rewrite rule before the page renders.</li>
+      <li>Counted via <code>JSON_EXTRACT(meta, '$.entry_url_pattern')</code>. MySQL 5.7+ supports this; WAMP local is fine.</li>
+    </ul>
+
+    <h4 style="margin-top:18px;">3. Segmentation logic (recommended)</h4>
+    <p>Computed at query time, no new column needed. Pseudo-SQL:</p>
+    <pre style="background:#0f172a;color:#e2e8f0;padding:14px;border-radius:6px;font-size:12px;overflow-x:auto;">SELECT
+  user_id,
+  CASE
+    WHEN first_order_product_id IN (2044, 11160, 3189) THEN 'team_intent'
+    WHEN profile_count = 1 THEN 'single'
+    WHEN profile_count &gt; 1 AND first_order_product_id NOT IN (2044, 11160, 3189) THEN 'team_converted'
+  END AS segment
+FROM (
+  SELECT user_id,
+    (SELECT product_id FROM ...first order...) AS first_order_product_id,
+    COUNT(DISTINCT profile_id) AS profile_count
+  FROM users LEFT JOIN profiles ...
+) base;</pre>
+    <p style="font-size:12px;color:var(--muted);">Product IDs from <code>wp-config.php</code>: <code>MECARD_BUNDLE_PRODUCT_ID</code> = 2044, <code>MECARD_CLASSIC_BUNDLE_PRODUCT_ID</code> = 11160, <code>MECARD_CLASSIC_CORP_PRODUCT_ID</code> = 3189. Treat any of these as team-intent on first order.</p>
+
+    <h4 style="margin-top:18px;">4. Caching</h4>
+    <p>Dashboard queries are aggregate scans across <code>mecard_events</code>. Wrap each widget's query in a 5-minute transient (<code>set_transient('mecard_dash_kpi_signups', ..., 300)</code>) — analytics doesn't need real-time. Bypass cache with <code>?nocache=1</code> for debugging.</p>
+
+    <h4 style="margin-top:18px;">5. Team-owner dashboard auth</h4>
+    <p>Team owner = the user who owns the <code>mecard-company</code> record. Members = all <code>mecard-profile</code> CPTs with that company linked. The dashboard query scopes <code>mecard_events</code> by <code>profile_id IN (...team profile ids...)</code>. Member never sees own data on this page — separate "my stats" page for that.</p>
+
+    <h4 style="margin-top:18px;">6. The "nudge" action</h4>
+    <p>Sends a templated WP email to the underperforming team member: <em>"Your card has had X views this month — here are 3 ways to share it."</em> Logs <code>team_nudge_sent</code> as a new event so we can measure whether nudges actually drive subsequent shares.</p>
+
+    <h4 style="margin-top:18px;">7. Not in v1 dashboards (future)</h4>
+    <ul>
+      <li>Drill-down to individual session timelines</li>
+      <li>Cohort retention by acquisition channel</li>
+      <li>Geographic heatmap (vs. the simple country table)</li>
+      <li>Referral / share-token attribution (waits for the v2 referral spec)</li>
+      <li>Per-profile "stats" page for individual team members (separate spec)</li>
+    </ul>
+  </div>
+
+</div>
+
+<div class="mockup-footer">
+  MeCard Dashboards — mockup with sample data · designed against UX Analytics &amp; Watermark Freemium v1 Spec
+</div>
+
+<script>
+  // Tab switching
+  document.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+      tab.classList.add('active');
+      document.getElementById('view-' + tab.dataset.view).classList.add('active');
+    });
+  });
+
+  // Pill switching
+  document.querySelectorAll('.pill-group').forEach(group => {
+    group.querySelectorAll('.pill').forEach(pill => {
+      pill.addEventListener('click', () => {
+        group.querySelectorAll('.pill').forEach(p => p.classList.remove('active'));
+        pill.classList.add('active');
+      });
+    });
+  });
+
+  // Chart defaults
+  Chart.defaults.font.family = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+  Chart.defaults.font.size = 11;
+  Chart.defaults.color = '#6b7488';
+  Chart.defaults.plugins.legend.labels.boxWidth = 12;
+  Chart.defaults.plugins.legend.labels.boxHeight = 12;
+
+  const months = ['W1','W2','W3','W4','W5','W6','W7','W8','W9','W10','W11','W12'];
+
+  // Signups by segment
+  new Chart(document.getElementById('chartSignups'), {
+    type: 'bar',
+    data: {
+      labels: months,
+      datasets: [
+        { label: 'Single', data: [62,71,80,68,78,82,75,89,72,88,71,91], backgroundColor: '#94a3b8', stack: 's' },
+        { label: 'Team-intent', data: [12,18,22,15,21,24,19,28,21,24,19,15], backgroundColor: '#7c3aed', stack: 's' },
+        { label: 'Converted to team', data: [8,11,14,17,15,19,18,22,16,20,18,21], backgroundColor: '#10b981', stack: 's' }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      scales: { x: { stacked: true, grid: { display: false } }, y: { stacked: true, grid: { color: '#eef2f7' } } },
+      plugins: { legend: { position: 'bottom' } }
+    }
+  });
+
+  // Time to team conversion
+  new Chart(document.getElementById('chartConvert'), {
+    type: 'bar',
+    data: {
+      labels: ['0-7d','8-14d','15-30d','31-60d','61-90d','91-180d','180d+'],
+      datasets: [{
+        data: [18, 24, 41, 52, 33, 21, 10],
+        backgroundColor: ['#10b981','#10b981','#34d399','#34d399','#fbbf24','#f87171','#dc2626']
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: { y: { grid: { color: '#eef2f7' } }, x: { grid: { display: false } } }
+    }
+  });
+
+  // Profile views by source
+  new Chart(document.getElementById('chartViewSource'), {
+    type: 'line',
+    data: {
+      labels: months,
+      datasets: [
+        { label: '/t/ (card tap)', data: [2100,2300,2210,2480,2390,2510,2680,2540,2710,2830,2640,2890], borderColor: '#1f6feb', backgroundColor: 'rgba(31,111,235,0.1)', fill: true, tension: 0.35 },
+        { label: '/mecard-profile/ (direct)', data: [1400,1510,1610,1480,1690,1720,1640,1780,1690,1810,1740,1880], borderColor: '#0d9488', backgroundColor: 'rgba(13,148,136,0.1)', fill: true, tension: 0.35 }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'bottom' } },
+      scales: { y: { grid: { color: '#eef2f7' } }, x: { grid: { display: false } } }
+    }
+  });
+
+  // Share methods
+  new Chart(document.getElementById('chartShareMethod'), {
+    type: 'doughnut',
+    data: {
+      labels: ['WhatsApp','Email','SMS','Native share','QR','Copy link'],
+      datasets: [{
+        data: [3211, 1812, 488, 1244, 821, 502],
+        backgroundColor: ['#25D366','#1f6feb','#f59e0b','#7c3aed','#0d9488','#94a3b8']
+      }]
+    },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' } } }
+  });
+
+  // Upsell click context
+  new Chart(document.getElementById('chartUpsell'), {
+    type: 'bar',
+    data: {
+      labels: ['Share panel','Profile strip','Dashboard','vCard prompt','Email upsell'],
+      datasets: [{
+        data: [612, 384, 218, 142, 108],
+        backgroundColor: '#1f6feb'
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: { x: { grid: { color: '#eef2f7' } }, y: { grid: { display: false } } }
+    }
+  });
+
+  // Watermark attribution
+  new Chart(document.getElementById('chartWatermark'), {
+    type: 'doughnut',
+    data: {
+      labels: ['Share footer (utm_medium=share)','Profile strip','vCard NOTE','Other / direct'],
+      datasets: [{
+        data: [148, 51, 22, 28],
+        backgroundColor: ['#1f6feb','#0d9488','#f59e0b','#cbd5e1']
+      }]
+    },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' } } }
+  });
+
+  // Cohort retention
+  new Chart(document.getElementById('chartCohort'), {
+    type: 'line',
+    data: {
+      labels: ['Day 7','Day 14','Day 30','Day 60','Day 90','Day 180'],
+      datasets: [
+        { label: 'Q1 cohort', data: [2,4,9,14,17,19], borderColor: '#94a3b8', tension: 0.3 },
+        { label: 'Q2 cohort', data: [3,6,12,18,22,24], borderColor: '#1f6feb', tension: 0.3 },
+        { label: 'Q3 cohort (current)', data: [4,8,15,21,null,null], borderColor: '#10b981', borderDash: [4,4], tension: 0.3 }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'bottom' } },
+      scales: { y: { ticks: { callback: v => v + '%' }, grid: { color: '#eef2f7' } }, x: { grid: { display: false } } }
+    }
+  });
+
+  // A2HS by platform
+  new Chart(document.getElementById('chartA2HS'), {
+    type: 'bar',
+    data: {
+      labels: ['Prompted','Accepted','Dismissed'],
+      datasets: [
+        { label: 'iOS', data: [320, 38, 282], backgroundColor: '#94a3b8' },
+        { label: 'Android', data: [410, 156, 254], backgroundColor: '#10b981' },
+        { label: 'Desktop', data: [128, 22, 106], backgroundColor: '#1f6feb' }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'bottom' } },
+      scales: { y: { grid: { color: '#eef2f7' } }, x: { grid: { display: false } } }
+    }
+  });
+
+  // Team engagement over time
+  new Chart(document.getElementById('chartTeamTime'), {
+    type: 'line',
+    data: {
+      labels: ['1 May','5 May','9 May','13 May','17 May','21 May','25 May','29 May','2 Jun','6 Jun','10 Jun'],
+      datasets: [
+        { label: 'Views', data: [140,165,180,170,195,210,205,230,225,250,260], borderColor: '#1f6feb', backgroundColor: 'rgba(31,111,235,0.08)', fill: true, tension: 0.35 },
+        { label: 'Shares', data: [28,34,38,32,41,45,42,49,46,53,55], borderColor: '#0d9488', tension: 0.35 },
+        { label: 'vCards', data: [18,21,24,20,26,29,27,31,29,33,35], borderColor: '#f59e0b', tension: 0.35 }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'bottom' } },
+      scales: { y: { grid: { color: '#eef2f7' } }, x: { grid: { display: false } } }
+    }
+  });
+
+  // Team source split
+  new Chart(document.getElementById('chartTeamSource'), {
+    type: 'doughnut',
+    data: {
+      labels: ['/t/ card tap','/mecard-profile/ direct'],
+      datasets: [{ data: [2676, 1506], backgroundColor: ['#1f6feb','#0d9488'] }]
+    },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+  });
+
+  // Team share method
+  new Chart(document.getElementById('chartTeamShare'), {
+    type: 'doughnut',
+    data: {
+      labels: ['WhatsApp','Email','Native','SMS','QR','Copy'],
+      datasets: [{
+        data: [412, 188, 124, 81, 58, 30],
+        backgroundColor: ['#25D366','#1f6feb','#7c3aed','#f59e0b','#0d9488','#94a3b8']
+      }]
+    },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' } } }
+  });
+</script>
+
+</body>
+</html>

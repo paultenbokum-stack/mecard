@@ -502,6 +502,9 @@
           route: 'solo'
         });
       }
+      // Custom event store — onboarding steps are tracked server-side
+      // in class-me-onboarding.php with full user/profile context.
+      // Client-side mecardTrack() is NOT called here to avoid duplicates.
       if (response.data && response.data.redirectUrl) {
         if (typeof window.gtag === 'function') {
           window.gtag('event', 'onboarding_complete', {

@@ -515,6 +515,25 @@ class Module {
 
         do_action('mecard_onboarding_step_saved', $step, $profile_id, get_current_user_id());
 
+        // Server-side tracking backup for onboarding steps
+        if ( class_exists( '\\Me\\Tracking\\Module' ) ) {
+            $step_event_map = [
+                'basics'  => 'profile_step1_saved',
+                'contact' => 'profile_step2_saved',
+                'preview' => 'look_confirmed',
+                'install' => 'onboarding_completed',
+            ];
+            if ( isset( $step_event_map[ $step ] ) ) {
+                \Me\Tracking\Module::log_event( [
+                    'event_name' => $step_event_map[ $step ],
+                    'session_id' => isset( $_COOKIE['mecard_sid'] ) ? $_COOKIE['mecard_sid'] : '',
+                    'user_id'    => get_current_user_id(),
+                    'profile_id' => $profile_id,
+                    'source'     => 'onboarding',
+                ] );
+            }
+        }
+
         $response = [
             'profileId' => $profile_id,
             'profile'   => self::get_profile_payload($profile_id),

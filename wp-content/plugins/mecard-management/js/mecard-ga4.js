@@ -26,6 +26,44 @@
 
             ...params
         });
+
+        // Dual-fire to custom event store
+        if (typeof window.mecardTrack === 'function') {
+            var map = {
+                'profile_view':    'profile_viewed',
+                'download-contact':'vcard_downloaded',
+                'whatsapp_share':  'share_intent',
+                'copy_link':       'share_intent',
+                'sms_share':       'share_intent',
+                'email_share':     'share_intent',
+                'share_action':    'share_intent',
+                'qr_download':     'share_intent',
+                'a2hs_prompt_shown':'a2hs_prompted',
+                'a2hs_installed':  'a2hs_accepted'
+            };
+            var methodMap = {
+                'whatsapp_share': 'wa',
+                'copy_link':     'copy',
+                'sms_share':     'sms',
+                'email_share':   'email',
+                'share_action':  'native',
+                'qr_download':   'qr'
+            };
+            var customName = map[eventName];
+            // a2hs_prompt_result maps to accepted or dismissed based on outcome
+            if (eventName === 'a2hs_prompt_result' && params) {
+                customName = params.outcome === 'accepted' ? 'a2hs_accepted' : 'a2hs_dismissed';
+            }
+            if (customName) {
+                var extra = {};
+                if (methodMap[eventName]) {
+                    extra.meta = Object.assign({ method: methodMap[eventName] }, params);
+                } else if (params && Object.keys(params).length) {
+                    extra.meta = params;
+                }
+                window.mecardTrack(customName, extra);
+            }
+        }
     }
 
 
