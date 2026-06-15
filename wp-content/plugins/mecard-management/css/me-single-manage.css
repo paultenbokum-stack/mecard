@@ -136,6 +136,30 @@
     color: #fff;
 }
 
+.me-single-manage__team-link {
+    margin: 12px 0 0;
+    font-size: 13px;
+    color: #64748b;
+}
+
+.me-single-manage__team-link a {
+    color: #0170b9;
+    text-decoration: none;
+}
+
+.me-single-manage__team-link a:hover {
+    text-decoration: underline;
+}
+
+.me-single-manage__pending-notice {
+    margin: 8px 0 0;
+    padding: 10px 14px;
+    font-size: 13px;
+    color: #92400e;
+    background: #fef3c7;
+    border-radius: 8px;
+}
+
 /* ─── Manage home — offer/upsell panels ─────────────────────────────────────── */
 
 .me-single-manage__panel--offer {

@@ -221,6 +221,67 @@ class Module {
         self::assign_next_available_upgrade( $profile_id, $user_id );
     }
 
+    /**
+     * Whether the user has a pending pro upgrade — either an entitlement row
+     * that hasn't been consumed yet, or an on-hold/pending order containing
+     * an upgrade product (covers the BACS gap where cart rows are cancelled
+     * but process_paid_order hasn't run yet).
+     */
+    public static function user_has_pending_upgrade( int $user_id ) : bool {
+        if ( $user_id <= 0 || ! function_exists( 'wc_get_orders' ) ) {
+            return false;
+        }
+
+        // Check entitlements table first (covers in_cart + paid_unassigned + paid_assigned)
+        global $wpdb;
+        $table = self::table_name();
+        if ( $wpdb->get_var( "SHOW TABLES LIKE '{$table}'" ) ) {
+            $count = (int) $wpdb->get_var( $wpdb->prepare(
+                "SELECT COUNT(*) FROM {$table} WHERE owner_user_id = %d AND type = 'pro_upgrade' AND status NOT IN ('consumed','cancelled','refunded')",
+                $user_id
+            ) );
+            if ( $count > 0 ) {
+                return true;
+            }
+        }
+
+        // Check on-hold / pending orders for upgrade products (BACS gap)
+        $upgrade_product_ids = self::get_upgrade_product_ids();
+        if ( empty( $upgrade_product_ids ) ) {
+            return false;
+        }
+
+        $orders = wc_get_orders( [
+            'customer_id' => $user_id,
+            'status'      => [ 'on-hold', 'pending' ],
+            'limit'       => 20,
+            'return'      => 'ids',
+        ] );
+
+        foreach ( $orders as $order_id ) {
+            $order = wc_get_order( $order_id );
+            if ( ! $order ) {
+                continue;
+            }
+            foreach ( $order->get_items() as $item ) {
+                $pid = (int) $item->get_product_id();
+                if ( in_array( $pid, $upgrade_product_ids, true ) ) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private static function get_upgrade_product_ids() : array {
+        return array_filter( [
+            defined( 'MECARD_PROFILE_UPGRADE_PRODUCT_ID' ) ? (int) MECARD_PROFILE_UPGRADE_PRODUCT_ID : 0,
+            defined( 'MECARD_BUNDLE_PRODUCT_ID' )          ? (int) MECARD_BUNDLE_PRODUCT_ID          : 0,
+            defined( 'MECARD_CLASSIC_BUNDLE_PRODUCT_ID' )  ? (int) MECARD_CLASSIC_BUNDLE_PRODUCT_ID  : 0,
+        ] );
+    }
+
     public static function maybe_assign_on_profile_save( $post_id, $post, $update ) : void {
         if ( wp_is_post_revision( $post_id ) || ! $post instanceof \WP_Post ) {
             return;

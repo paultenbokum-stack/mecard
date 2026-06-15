@@ -84,6 +84,7 @@ class Module {
         $active_cards = Single_Cards_Module::get_current_card_groups( $user_id, $profile_id );
         $has_cards    = ! empty( $active_cards['basket'] ) || ! empty( $active_cards['in_progress'] ) || ! empty( $active_cards['live'] );
         $is_pro       = self::is_pro_profile( $profile_id );
+        $hide_upgrade = $is_pro || \Me\Entitlements\Module::user_has_pending_upgrade( $user_id );
 
         ob_start();
         echo self::render_subnav( 'home' );
@@ -98,10 +99,14 @@ class Module {
             <section class="me-single-manage__panel">
                 <h2>Manage your profile</h2>
                 <p>Open your live profile or jump straight into the inline editor.</p>
+                <?php if ( ! $is_pro && $hide_upgrade ) : ?>
+                    <p class="me-single-manage__pending-notice">Your Pro upgrade is pending &mdash; we&rsquo;re just waiting for EFT confirmation.</p>
+                <?php endif; ?>
                 <div class="me-single-manage__actions">
                     <a class="me-single-manage__button me-single-manage__button--secondary" href="<?php echo esc_url( $profile_url ); ?>">View profile</a>
                     <a class="me-single-manage__button me-single-manage__button--primary" href="<?php echo esc_url( $edit_url ); ?>"><?php echo $bundle['active'] ? 'Continue profile setup' : 'Edit profile'; ?></a>
                 </div>
+                <p class="me-single-manage__team-link">Managing a team? Go to the <a href="<?php echo esc_url( site_url( '/manage-mecard-profiles/dashboard/' ) ); ?>">team dashboard</a>.</p>
             </section>
 
             <?php if ( $bundle['active'] ) : ?>
@@ -126,7 +131,7 @@ class Module {
                 $has_basket_cards = ! empty( $active_cards['basket'] );
                 ?>
 
-                <?php if ( ! $is_pro ) : ?>
+                <?php if ( ! $hide_upgrade ) : ?>
                     <section class="me-single-manage__panel me-single-manage__panel--upsell">
                         <p class="me-single-manage__kicker">Upgrade to Pro</p>
                         <h2>Supercharge your profile</h2>
@@ -203,13 +208,17 @@ class Module {
                     </div>
                 </section>
 
-                <?php echo self::render_bundle_offer_panel( $profile_id, $cards_url ); ?>
+                <?php if ( ! $hide_upgrade ) : ?>
+                    <?php echo self::render_bundle_offer_panel( $profile_id, $cards_url ); ?>
+                <?php endif; ?>
                 <?php echo self::render_card_offer_panel( $profile_id ); ?>
 
             <?php else : ?>
-                <?php echo self::render_bundle_offer_panel( $profile_id, $cards_url ); ?>
+                <?php if ( ! $hide_upgrade ) : ?>
+                    <?php echo self::render_bundle_offer_panel( $profile_id, $cards_url ); ?>
+                <?php endif; ?>
 
-                <?php if ( ! $is_pro ) : ?>
+                <?php if ( ! $hide_upgrade ) : ?>
                     <section class="me-single-manage__panel me-single-manage__panel--upsell">
                         <p class="me-single-manage__kicker">Upgrade to Pro</p>
                         <h2>Supercharge your profile</h2>

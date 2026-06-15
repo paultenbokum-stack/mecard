@@ -1701,6 +1701,53 @@ function mecard_woocommerce_login_redirect( $redirect, $user ) : string {
     return $redirect;
 }
 
+/**
+ * Nextend Social Login redirect override.
+ *
+ * Nextend bypasses the WP `login_redirect` filter in several code paths.
+ * The only filter that ALWAYS fires is `nsl_{provider_id}last_location_redirect`
+ * (provider.php:987). We hook it dynamically from the `nsl_login` action
+ * which gives us the provider instance.
+ */
+add_action( 'nsl_login', 'mecard_nsl_login_redirect', 10, 2 );
+function mecard_nsl_login_redirect( $user_id, $provider ) : void {
+    if ( ! class_exists( '\\Me\\Single_Editor\\Module' ) ) {
+        return;
+    }
+    $provider_id = $provider->getId();
+    add_filter( 'nsl_' . $provider_id . 'last_location_redirect', function ( $redirect_to ) use ( $user_id ) {
+        // If Nextend already has a specific destination (e.g. team dashboard via
+        // ?redirect_to=), let it through — don't override intentional redirects.
+        $dominated = [
+            '',
+            untrailingslashit( site_url() ),
+            untrailingslashit( home_url() ),
+            untrailingslashit( admin_url() ),
+        ];
+        if ( function_exists( 'wc_get_page_permalink' ) ) {
+            $dominated[] = untrailingslashit( wc_get_page_permalink( 'myaccount' ) );
+        }
+        // Also treat /sign-up as dominated — new users should go to onboarding, not back to signup.
+        if ( class_exists( '\\Me\\Onboarding\\Module' ) ) {
+            $dominated[] = untrailingslashit( \Me\Onboarding\Module::get_signup_url() );
+            $dominated[] = untrailingslashit( \Me\Onboarding\Module::get_signup_email_url() );
+        }
+        if ( ! in_array( untrailingslashit( $redirect_to ), $dominated, true ) ) {
+            return $redirect_to;
+        }
+        // Existing user with a profile → /manage/.
+        $profile_id = \Me\Single_Editor\Module::resolve_single_profile_id( (int) $user_id );
+        if ( $profile_id > 0 ) {
+            return \Me\Single_Manage\Module::manage_url();
+        }
+        // New user eligible for onboarding → /onboarding.
+        if ( class_exists( '\\Me\\Onboarding\\Module' ) && \Me\Onboarding\Module::current_user_can_use_onboarding() ) {
+            return \Me\Onboarding\Module::get_onboarding_url();
+        }
+        return $redirect_to;
+    }, 20, 1 );
+}
+
 add_filter('woocommerce_login_form_end', 'my_show_nextend_social_on_woo_login');
 function my_show_nextend_social_on_woo_login() {
     // This shortcode is typically what Nextend uses for login buttons:

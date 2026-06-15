@@ -337,7 +337,8 @@ class Module {
         $bundle_journey = Single_Manage_Module::get_bundle_journey( $profile_id );
         $is_bundle_journey = ! empty( $bundle_journey['active'] );
         $profile_type   = strtolower( (string) get_post_meta( $profile_id, 'wpcf-profile-type', true ) );
-        $is_pro_profile = $is_bundle_journey || in_array( $profile_type, [ 'professional', 'pro' ], true );
+        $has_pending    = \Me\Entitlements\Module::user_has_pending_upgrade( get_current_user_id() );
+        $is_pro_profile = $is_bundle_journey || $has_pending || in_array( $profile_type, [ 'professional', 'pro' ], true );
         $initial_mode   = $is_pro_profile ? 'pro' : 'standard';
 
         ob_start();
