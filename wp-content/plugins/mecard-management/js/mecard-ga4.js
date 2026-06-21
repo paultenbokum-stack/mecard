@@ -190,24 +190,29 @@
     });
 
     // Add to Home Screen / PWA
-    let deferredPrompt = null;
-    window.addEventListener('beforeinstallprompt', (e) => {
-        e.preventDefault();
-        deferredPrompt = e;
-        push('a2hs_prompt_shown');
+    // Track a2hs_prompt_shown only when the share panel opens AND the A2HS card is visible.
+    // The beforeinstallprompt event fires silently when the browser detects installability,
+    // NOT when the user actually sees the A2HS card — so we observe the panel instead.
+    let a2hsPromptTracked = false;
+    const sharePanel = document.getElementById('mecard-share-panel');
+    if (sharePanel) {
+        const observer = new MutationObserver(() => {
+            if (a2hsPromptTracked) return;
+            const isOpen = sharePanel.classList.contains('is-open');
+            const a2hsCard = document.getElementById('mecard-a2hs-card');
+            if (isOpen && a2hsCard && a2hsCard.style.display !== 'none') {
+                push('a2hs_prompted');
+                a2hsPromptTracked = true;
+            }
+        });
+        observer.observe(sharePanel, { attributes: true, attributeFilter: ['class'] });
+    }
 
-        const btn = document.querySelector('[data-track="a2hs_prompt"]');
-        if (btn) {
-            btn.hidden = false;
-            btn.addEventListener('click', async () => {
-                push('a2hs_prompt_clicked');
-                deferredPrompt.prompt();
-                const { outcome } = await deferredPrompt.userChoice;
-                push('a2hs_prompt_result', { outcome });
-                deferredPrompt = null;
-            }, { once: true });
-        }
-    });
+    // Track install button click and result via mecard-management.js's handler
+    const installBtn = document.getElementById('mecard-a2hs-install-btn');
+    if (installBtn) {
+        installBtn.addEventListener('click', () => push('a2hs_prompt_clicked'), { once: true });
+    }
 
     window.addEventListener('appinstalled', () => push('a2hs_installed'));
 })();

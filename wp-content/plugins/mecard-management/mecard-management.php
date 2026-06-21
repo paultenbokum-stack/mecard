@@ -44,6 +44,7 @@ require_once ME_PLUGIN_DIR . 'class-me-single-editor.php';
 require_once ME_PLUGIN_DIR . 'class-me-single-cards.php';
 require_once ME_PLUGIN_DIR . 'class-me-single-manage.php';
 require_once ME_PLUGIN_DIR . 'class-me-tracking.php';
+require_once ME_PLUGIN_DIR . 'class-me-analytics.php';
 
 function mecard_cart_cleanup_guard_key( string $cart_item_key, int $user_id ) : string {
     return $cart_item_key . '|' . $user_id;
@@ -260,6 +261,7 @@ add_action( 'init', function () {
     Me\Single_Cards\Module::init();
     Me\Single_Manage\Module::init();
     Me\Tracking\Module::init();
+    Me\Analytics\Module::init();
 } );
 
 add_action( 'wp', 'mecard_customize_empty_cart_state', 20 );
@@ -640,6 +642,8 @@ add_action('wp_enqueue_scripts', function () {
         wp_enqueue_editor();     // loads wp.editor + TinyMCE + quicktags
     }
     wp_enqueue_media();          // you already need this for the media modal
+    // Hide the "Edit" link in the media modal — it leads to wp-admin
+    wp_add_inline_style('media-views', '.attachment-details .edit-attachment { display: none !important; }');
 });
 
 remove_filter( 'the_content', 'wpautop' );

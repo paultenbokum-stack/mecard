@@ -16,6 +16,8 @@ class Module {
         add_action( 'woocommerce_checkout_create_order_line_item', [ __CLASS__, 'add_order_item_meta' ], 20, 4 );
         add_action( 'woocommerce_order_status_processing', [ __CLASS__, 'process_paid_order' ], 20 );
         add_action( 'woocommerce_order_status_completed', [ __CLASS__, 'process_paid_order' ], 20 );
+        add_action( 'woocommerce_order_status_cancelled', [ __CLASS__, 'cancel_order_entitlements' ], 20 );
+        add_action( 'woocommerce_order_status_refunded', [ __CLASS__, 'cancel_order_entitlements' ], 20 );
         add_action( 'mecard_profile_autocreated', [ __CLASS__, 'assign_available_entitlements_for_profile' ], 20, 2 );
         add_action( 'save_post_mecard-profile', [ __CLASS__, 'maybe_assign_on_profile_save' ], 20, 3 );
     }
@@ -208,6 +210,87 @@ class Module {
                     self::assign_bundle_companions( (string) $row['group_key'], $owner_user_id, $assigned_id );
                 }
             }
+        }
+    }
+
+    /**
+     * Cancel all entitlement rows linked to a cancelled/refunded order.
+     * If a pro_upgrade was already consumed, revert the profile back to basic.
+     */
+    public static function cancel_order_entitlements( $order_id ) : void {
+        if ( ! function_exists( 'wc_get_order' ) ) {
+            return;
+        }
+
+        $order = wc_get_order( $order_id );
+        if ( ! $order ) {
+            return;
+        }
+
+        $new_status = $order->has_status( 'refunded' ) ? 'refunded' : 'cancelled';
+
+        global $wpdb;
+        $table = self::table_name();
+        if ( ! $wpdb->get_var( "SHOW TABLES LIKE '{$table}'" ) ) {
+            return;
+        }
+
+        // Find rows linked by source_order_id (paid_* and consumed rows)
+        $rows = $wpdb->get_results(
+            $wpdb->prepare(
+                "SELECT * FROM {$table} WHERE source_order_id = %d AND status NOT IN ('cancelled','refunded')",
+                $order_id
+            ),
+            ARRAY_A
+        );
+
+        // Also find in_cart rows by cart_item_key (EFT/BACS orders that were never promoted)
+        $owner_user_id = (int) $order->get_user_id();
+        if ( $owner_user_id > 0 ) {
+            foreach ( $order->get_items() as $item ) {
+                if ( ! $item instanceof \WC_Order_Item_Product ) {
+                    continue;
+                }
+                $cart_key = (string) $item->get_meta( '_mecard_cart_item_key', true );
+                if ( $cart_key === '' ) {
+                    continue;
+                }
+                $cart_rows = $wpdb->get_results(
+                    $wpdb->prepare(
+                        "SELECT * FROM {$table} WHERE owner_user_id = %d AND cart_item_key = %s AND status = 'in_cart'",
+                        $owner_user_id,
+                        $cart_key
+                    ),
+                    ARRAY_A
+                );
+                if ( ! empty( $cart_rows ) ) {
+                    $rows = array_merge( $rows, $cart_rows );
+                }
+            }
+        }
+
+        if ( empty( $rows ) ) {
+            return;
+        }
+
+        foreach ( $rows as $row ) {
+            $row_id = (int) $row['id'];
+
+            // If a pro_upgrade was consumed, revert the profile to basic
+            if ( $row['type'] === 'pro_upgrade' && $row['status'] === 'consumed' ) {
+                $profile_id = (int) $row['assigned_profile_id'];
+                if ( $profile_id > 0 ) {
+                    $linked_entitlement = (int) get_post_meta( $profile_id, '_me_pro_entitlement_id', true );
+                    if ( $linked_entitlement === $row_id ) {
+                        update_post_meta( $profile_id, 'wpcf-profile-type', 'basic' );
+                        delete_post_meta( $profile_id, '_me_pro_entitlement_id' );
+                        delete_post_meta( $profile_id, '_me_pro_source_order_id' );
+                        delete_post_meta( $profile_id, '_me_pro_enabled_at' );
+                    }
+                }
+            }
+
+            self::update_row( $row_id, [ 'status' => $new_status ] );
         }
     }
 
