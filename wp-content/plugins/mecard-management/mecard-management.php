@@ -3677,9 +3677,12 @@ add_action('wp_enqueue_scripts', function () {
             }
         }
 
-        // Default source for /t/ pages (NFC tap or QR)
+        // Default source and entry URL pattern for /t/ pages (NFC tap or QR)
         if ($context_type === 'tag') {
-            $config['defaultSource'] = 'nfc';
+            $config['defaultSource']    = 'nfc';
+            $config['entryUrlPattern']  = 't';
+        } else {
+            $config['entryUrlPattern']  = 'mecard-profile';
         }
     }
 

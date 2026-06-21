@@ -61,6 +61,11 @@
                 } else if (params && Object.keys(params).length) {
                     extra.meta = params;
                 }
+                // Inject entry_url_pattern for profile_viewed so dashboard can split tap vs direct
+                if (customName === 'profile_viewed') {
+                    var trackCfg = window.MECARD_TRACK || {};
+                    extra.meta = Object.assign({ entry_url_pattern: trackCfg.entryUrlPattern || 'mecard-profile' }, extra.meta || {});
+                }
                 window.mecardTrack(customName, extra);
             }
         }
