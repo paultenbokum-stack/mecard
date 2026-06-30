@@ -644,6 +644,7 @@ button.company {
     box-shadow: 0 2px 12px rgba(15,23,42,0.12);
     font-size: 14px;
     color: #0F172A;
+    width: auto;
 }
 .mc-page #download-message p { margin: 0 0 4px; }
 .mc-page #download-message .vcard-file { font-weight: 600; }
