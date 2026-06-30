@@ -883,7 +883,7 @@ jQuery(document).ready(function($) {
 
                 waLastOpenAt = Date.now();
                 clearWhatsappInput();
-                window.open(`https://wa.me/${waDigits}?text=${enc(`Hi, here is my contact card: ${cfg.url}`)}`,'_blank','noopener');
+                window.open(`https://wa.me/${waDigits}?text=${enc(`Hi, here is my contact card: ${cfg.url}${cfg.shareFooter||''}`)}`,'_blank','noopener');
             }
 
             if (waInput && window.intlTelInput) {
@@ -979,7 +979,7 @@ jQuery(document).ready(function($) {
                     }
                 }
 
-                window.open(`https://wa.me/${waDigits}?text=${enc(`Hi, hereâ€™s my profile: ${cfg.url}`)}`,'_blank','noopener');
+                window.open(`https://wa.me/${waDigits}?text=${enc(`Hi, here\u2019s my profile: ${cfg.url}${cfg.shareFooter||''}`)}`,'_blank','noopener');
             });
 
             panel.addEventListener('click', function(e){
@@ -998,10 +998,10 @@ jQuery(document).ready(function($) {
                     const input = document.getElementById('mecard-wa-msisdn');
                     const raw = (input?.value||'').replace(/[^\d]/g,'');
                     if (!raw || raw.length<8) { alert(cfg.i18n.invalidMsisdn); return; }
-                    window.open(`https://wa.me/${raw}?text=${enc(`Hi, here’s my profile: ${cfg.url}`)}`,'_blank','noopener');
+                    window.open(`https://wa.me/${raw}?text=${enc(`Hi, here\u2019s my profile: ${cfg.url}${cfg.shareFooter||''}`)}`,'_blank','noopener');
                 }
                 if (action === 'native-share') {
-                    const data = { title: document.title||'My profile', text: 'Here’s my smart business card:', url: cfg.url };
+                    const data = { title: document.title||'My profile', text: 'Here\u2019s my smart business card:' + (cfg.shareFooter ? '\n' + cfg.shareFooter : ''), url: cfg.url };
                     if (navigator.share) navigator.share(data).catch(()=>{});
                     else navigator.clipboard?.writeText(cfg.url).then(()=>{ btn.innerHTML='<i class="fas fa-check"></i> Copied'; setTimeout(()=>btn.innerHTML='<i class="fas fa-share-alt"></i> Share link',1200); }).catch(()=>alert(cfg.i18n.copyFail));
                 }
@@ -1011,11 +1011,12 @@ jQuery(document).ready(function($) {
                 }
                 if (action === 'email') {
                     const subject = 'My smart business card';
-                    const body = `Hi,%0D%0A%0D%0AHere’s my profile:%0D%0A${enc(cfg.url)}`;
+                    const footer = cfg.shareFooter ? `%0D%0A%0D%0A${enc(cfg.shareFooter)}` : '';
+                    const body = `Hi,%0D%0A%0D%0AHere's my profile:%0D%0A${enc(cfg.url)}${footer}`;
                     window.location.href = `mailto:?subject=${enc(subject)}&body=${body}`;
                 }
                 if (action === 'sms') {
-                    const body = enc(`My profile: ${cfg.url}`);
+                    const body = enc(`My profile: ${cfg.url}${cfg.shareFooter||''}`);
                     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
                     window.location.href = isIOS ? `sms:&body=${body}` : `sms:?body=${body}`;
                 }
@@ -1044,11 +1045,11 @@ jQuery(document).ready(function($) {
             }).then(() => {
                 const controlled = !!navigator.serviceWorker.controller;
                 if (!controlled) {
-                    // First load after registration; A2HS won’t be eligible yet.
+                    // First load after registration; A2HS won't be eligible yet.
                     // Show a lightweight toast asking to reload.
                     const toast = document.createElement('div');
                     toast.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);bottom:80px;z-index:10050;background:#333;color:#fff;padding:8px 12px;border-radius:8px;font-size:14px';
-                    toast.textContent = 'Almost ready—please reload once to enable “Add to Home screen”.';
+                    toast.textContent = 'Almost ready—please reload once to enable "Add to Home screen".';
                     document.body.appendChild(toast);
                     setTimeout(()=>toast.remove(), 4500);
                 }
@@ -1079,8 +1080,8 @@ jQuery(document).ready(function($) {
         document.getElementById('mecard-a2hs-install-btn')?.addEventListener('click', async () => {
             const e = window.MECARD_BIP;
             if (!e) {
-                // Fallback if the event isn’t available (Samsung/Chrome sometimes won’t fire it)
-                alert('If you don’t see an install prompt, open Chrome menu (⋮) → “Install app”.');
+                // Fallback if the event isn't available (Samsung/Chrome sometimes won't fire it)
+                alert("If you don't see an install prompt, open Chrome menu (\u22EE) \u2192 \"Install app\".");
                 return;
             }
             e.prompt();                          // <-- THIS shows the install prompt

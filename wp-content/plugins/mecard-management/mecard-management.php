@@ -45,6 +45,7 @@ require_once ME_PLUGIN_DIR . 'class-me-single-cards.php';
 require_once ME_PLUGIN_DIR . 'class-me-single-manage.php';
 require_once ME_PLUGIN_DIR . 'class-me-tracking.php';
 require_once ME_PLUGIN_DIR . 'class-me-analytics.php';
+require_once ME_PLUGIN_DIR . 'class-me-viral.php';
 
 function mecard_cart_cleanup_guard_key( string $cart_item_key, int $user_id ) : string {
     return $cart_item_key . '|' . $user_id;
@@ -262,6 +263,7 @@ add_action( 'init', function () {
     Me\Single_Manage\Module::init();
     Me\Tracking\Module::init();
     Me\Analytics\Module::init();
+    Me\Viral\Module::init();
 } );
 
 add_action( 'wp', 'mecard_customize_empty_cart_state', 20 );
@@ -552,6 +554,16 @@ function mecard_share_setup() {
         wp_enqueue_script('mecard-share');
         wp_enqueue_style('mecard-share');
 
+        // Determine if this is a free profile for share footer watermark
+        $profile_id_resolved = function_exists( 'mecard_resolve_profile_id' ) ? ( mecard_resolve_profile_id( $post_id ) ?: $post_id ) : $post_id;
+        $profile_type = strtolower( (string) get_post_meta( $profile_id_resolved, 'wpcf-profile-type', true ) );
+        $is_free_profile = ! in_array( $profile_type, [ 'professional', 'pro' ], true );
+        $owner_name = trim(
+            ( get_post_meta( $profile_id_resolved, 'wpcf-first-name', true ) ?: '' )
+            . ' ' .
+            ( get_post_meta( $profile_id_resolved, 'wpcf-last-name', true ) ?: '' )
+        );
+
         wp_localize_script('mecard_management', 'MECARD_SHARE', [
             'postId'         => $post_id,
             'url'            => $page_url,
@@ -559,6 +571,7 @@ function mecard_share_setup() {
             'buttonText'     => $btn_text ?: '#ffffff',
             'defaultCountry' => 'za',
             'intlTelInputUtilsUrl' => 'https://cdn.jsdelivr.net/npm/intl-tel-input@25.15.0/build/js/utils.js',
+            'shareFooter'    => $is_free_profile ? " \xe2\x80\x94 Get yours at mecard.co.za" : '',
             'i18n'           => [
                 'copySuccess' => 'Link copied',
                 'copyFail'    => 'Press and hold to copy',
@@ -876,6 +889,7 @@ $html = '
          <div>
     <p>Click on the downloaded file</p><p><span class="vcard-file">"'.$vcard_post->post_title.'.vcf"</span></p><p>to import into your phone\'s contacts.</p>
 </div>
+<div id="mecard-download-cta-slot"></div>
 </div>
 <div class="vcard-button" id="vcard-button-'.$vcard_post->ID.'" style=""><a href="#" style=""><svg class="mc-vcard-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="9" r="3.5"/><path d="M4 19c0-3 2.7-5.5 6-5.5s6 2.5 6 5.5"/><path d="M18 6v6M15 9h6"/></svg> Save to contacts</a> </div>
 </div>
@@ -1046,6 +1060,14 @@ END:VCARD
 
 
 
+
+            /**
+             * Filter: mecard_vcard_output
+             * Allows modules (e.g. Viral) to modify vCard output before echoing.
+             * @param string $vcard  The vCard string.
+             * @param int    $profile_id  The profile post ID.
+             */
+            $vcard3 = apply_filters( 'mecard_vcard_output', $vcard3, $profile_id );
 
             echo $vcard3;
 
@@ -3428,7 +3450,7 @@ add_shortcode('mecard_share_panel', function ($atts) {
 
 
     <?php
-    return ob_get_clean();
+    return apply_filters( 'mecard_share_panel_html', ob_get_clean() );
 });
 
 

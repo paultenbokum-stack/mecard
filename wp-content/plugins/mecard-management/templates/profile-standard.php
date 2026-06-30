@@ -244,10 +244,6 @@ $social_icons = [
 
         </section>
 
-        <?php if ( $is_public ) : ?>
-            <?php echo do_shortcode( "[wpv-view name='more-links']" ); ?>
-        <?php endif; ?>
-
         <div style="height:30px" aria-hidden="true"></div>
 
     </main>
@@ -272,5 +268,7 @@ $social_icons = [
     <?php if ( $is_public ) : ?>
         <?php echo do_shortcode( '[mecard_share_panel]' ); ?>
     <?php endif; ?>
+
+    <?php if ( $is_public ) do_action( 'mecard_after_profile_content', $profile_id, $profile ); ?>
 
 </div><!-- /.mc-page -->
