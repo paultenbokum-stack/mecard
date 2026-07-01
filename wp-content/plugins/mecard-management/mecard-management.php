@@ -3797,3 +3797,69 @@ add_action( 'wp_footer', function() {
     }
 }, 99 );
 
+// ---------- ARCHIVE / UNARCHIVE PROFILE ----------
+add_action('wp_ajax_me_archive_profile',   'mecard_ajax_archive_profile');
+add_action('wp_ajax_me_unarchive_profile', 'mecard_ajax_unarchive_profile');
+
+function mecard_ajax_archive_profile() {
+    if ( ! check_ajax_referer( 'me-profile-edit-nonce', '_wpnonce', false ) ) {
+        wp_send_json_error( [ 'message' => 'Invalid nonce' ], 403 );
+    }
+    if ( ! is_user_logged_in() ) {
+        wp_send_json_error( [ 'message' => 'Not allowed' ], 403 );
+    }
+
+    $post_id = isset( $_POST['post_id'] ) ? absint( $_POST['post_id'] ) : 0;
+    if ( ! $post_id ) {
+        wp_send_json_error( [ 'message' => 'Missing post_id' ], 400 );
+    }
+
+    $post = get_post( $post_id );
+    if ( ! $post || $post->post_type !== 'mecard-profile' ) {
+        wp_send_json_error( [ 'message' => 'Invalid profile' ], 404 );
+    }
+
+    $is_owner = (int) $post->post_author === get_current_user_id();
+    if ( ! $is_owner && ! current_user_can( 'edit_post', $post_id ) ) {
+        wp_send_json_error( [ 'message' => 'No permission' ], 403 );
+    }
+
+    $result = wp_trash_post( $post_id );
+    if ( ! $result ) {
+        wp_send_json_error( [ 'message' => 'Could not archive profile' ], 500 );
+    }
+
+    wp_send_json_success( [ 'message' => 'Profile archived' ] );
+}
+
+function mecard_ajax_unarchive_profile() {
+    if ( ! check_ajax_referer( 'me-profile-edit-nonce', '_wpnonce', false ) ) {
+        wp_send_json_error( [ 'message' => 'Invalid nonce' ], 403 );
+    }
+    if ( ! is_user_logged_in() ) {
+        wp_send_json_error( [ 'message' => 'Not allowed' ], 403 );
+    }
+
+    $post_id = isset( $_POST['post_id'] ) ? absint( $_POST['post_id'] ) : 0;
+    if ( ! $post_id ) {
+        wp_send_json_error( [ 'message' => 'Missing post_id' ], 400 );
+    }
+
+    $post = get_post( $post_id );
+    if ( ! $post || $post->post_type !== 'mecard-profile' || $post->post_status !== 'trash' ) {
+        wp_send_json_error( [ 'message' => 'Invalid profile' ], 404 );
+    }
+
+    $is_owner = (int) $post->post_author === get_current_user_id();
+    if ( ! $is_owner && ! current_user_can( 'edit_post', $post_id ) ) {
+        wp_send_json_error( [ 'message' => 'No permission' ], 403 );
+    }
+
+    $result = wp_untrash_post( $post_id );
+    if ( ! $result ) {
+        wp_send_json_error( [ 'message' => 'Could not restore profile' ], 500 );
+    }
+
+    wp_send_json_success( [ 'message' => 'Profile restored' ] );
+}
+

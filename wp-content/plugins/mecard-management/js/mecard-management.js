@@ -554,6 +554,57 @@ jQuery(document).ready(function($) {
         makeQRprofile(qr);
     });
 
+    /* ── Archive profile ── */
+    $(document).on('click', '.mecard-archive-profile', function(e) {
+        e.preventDefault();
+        var $link  = $(this);
+        var postId = $link.data('profile-id');
+        var $card  = $link.closest('.profile-card');
+
+        var $overlay = $('<div class="mecard-archived-overlay"><span>Archiving...</span></div>');
+        $card.append($overlay);
+
+        $.post(ME.ajaxurl, {
+            action:   'me_archive_profile',
+            post_id:  postId,
+            _wpnonce: ME.nonceProfile
+        }).done(function(res) {
+            if (res.success) {
+                $overlay.html(
+                    '<span>Archived</span> ' +
+                    '<a href="#" class="mecard-undo-archive btn btn-sm btn-outline-secondary" data-profile-id="' + postId + '">Undo</a>'
+                );
+            } else {
+                $overlay.remove();
+                alert(res.data && res.data.message ? res.data.message : 'Could not archive profile.');
+            }
+        }).fail(function() {
+            $overlay.remove();
+            alert('Request failed. Please try again.');
+        });
+    });
+
+    /* ── Undo archive ── */
+    $(document).on('click', '.mecard-undo-archive', function(e) {
+        e.preventDefault();
+        var $link  = $(this);
+        var postId = $link.data('profile-id');
+        var $card  = $link.closest('.profile-card');
+
+        $.post(ME.ajaxurl, {
+            action:   'me_unarchive_profile',
+            post_id:  postId,
+            _wpnonce: ME.nonceProfile
+        }).done(function(res) {
+            if (res.success) {
+                $card.find('.mecard-archived-overlay').remove();
+            } else {
+                alert(res.data && res.data.message ? res.data.message : 'Could not restore profile.');
+            }
+        }).fail(function() {
+            alert('Request failed. Please try again.');
+        });
+    });
 
     $( document ).on( 'js_event_wpv_pagination_completed', function( event, data ) {
         /**
