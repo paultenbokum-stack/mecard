@@ -25,8 +25,14 @@ if ( $profile_id ) {
     $profile['id'] = $profile_id;
     $company['id'] = $company_id;
 
-    // Emit scoped CSS-var style block for pro profiles
-    \Me\Profile_Renderer\Module::render_design_style( $profile_id, $company );
+    // Emit scoped CSS-var style block — only meaningful for pro profiles.
+    // Must match single-mecard-profile.php: emitting it for standard profiles
+    // forces the vCard button text to the company download_text colour, which
+    // overrides the standard white-on-black button (black-on-black bug).
+    $profile_type = $profile['type'] ?? 'standard';
+    if ( $profile_type === 'pro' || $profile_type === 'professional' ) {
+        \Me\Profile_Renderer\Module::render_design_style( $profile_id, $company );
+    }
 
     // Render the canonical profile HTML
     ?>
