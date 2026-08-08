@@ -913,6 +913,10 @@
                 refreshCompanyPreview();
                 renderUpgradeMessage();
 
+                // Saving as Pro may have basketed the upgrade (or backing out of
+                // Pro removed it), so the menu basket needs to follow.
+                applyCartFragments(saved);
+
                 setSaveUI('saved');
                 refreshUnderlyingToolsetViews();
             } else {
@@ -981,6 +985,29 @@
         window.NewMeOpenProfileAdd();
     });
 
+    /**
+     * Swap in WooCommerce cart fragments so the theme's menu basket widget
+     * reflects the change without a page reload. Astra supplies
+     * 'a.cart-container' and 'div.widget_shopping_cart_content'.
+     */
+    function applyCartFragments(data){
+        if (!data || !data.fragments) return;
+
+        try {
+            $.each(data.fragments, function(selector, html){
+                $(selector).replaceWith(html);
+            });
+        } catch (e) {
+            console.error('[MeCard] Could not apply cart fragments', e);
+            return;
+        }
+
+        // Let WooCommerce refresh its own cached copy in sessionStorage,
+        // otherwise the next page load can restore a stale basket.
+        $(document.body).trigger('wc_fragment_refresh');
+        $(document.body).trigger('wc_fragments_refreshed');
+    }
+
     // ---------- Console list: Pro upgrade in/out of the basket ----------
     // The href on these links is a working no-JS fallback; with JS we swap the
     // button in place rather than reloading the whole page.
@@ -1019,6 +1046,7 @@
         $.post(S.ajaxurl, data).done(function(res){
             if (res && res.success) {
                 swapUpgradeButton($link, state, res.data || {});
+                applyCartFragments(res.data);
             } else {
                 const msg = (res && res.data && res.data.message) || 'Sorry, that did not work.';
                 alert(msg);

@@ -306,6 +306,31 @@ class Module {
         return wp_nonce_url($url, 'mecard-add-upgrade-' . $profile_id);
     }
 
+    /**
+     * WooCommerce cart fragments, so the theme's menu basket widget updates
+     * without a page reload. Astra hooks woocommerce_add_to_cart_fragments to
+     * return 'a.cart-container' and 'div.widget_shopping_cart_content'.
+     */
+    protected static function cart_fragments() : array {
+        if (!function_exists('WC') || !WC()->cart || !function_exists('woocommerce_mini_cart')) {
+            return ['fragments' => [], 'cart_hash' => ''];
+        }
+
+        // The mini cart renders from the totals, so make sure they're current.
+        WC()->cart->calculate_totals();
+
+        ob_start();
+        woocommerce_mini_cart();
+        $mini_cart = ob_get_clean();
+
+        return [
+            'fragments' => apply_filters('woocommerce_add_to_cart_fragments', [
+                'div.widget_shopping_cart_content' => '<div class="widget_shopping_cart_content">' . $mini_cart . '</div>',
+            ]),
+            'cart_hash' => WC()->cart->get_cart_hash(),
+        ];
+    }
+
     /** Guard shared by the upgrade add/remove AJAX endpoints. */
     protected static function verify_upgrade_request() : int {
         if (!check_ajax_referer('me-profile-edit-nonce', '_wpnonce', false)) {
@@ -339,11 +364,11 @@ class Module {
 
         $key = self::upgrade_cart_item_key($post_id);
 
-        wp_send_json_success([
+        wp_send_json_success(array_merge([
             'inCart'      => true,
             'cartItemKey' => $key,
             'removeUrl'   => ($key && function_exists('wc_get_cart_remove_url')) ? wc_get_cart_remove_url($key) : '',
-        ]);
+        ], self::cart_fragments()));
     }
 
     /** Console list: take the Pro upgrade back out without a page reload. */
@@ -352,10 +377,10 @@ class Module {
 
         self::remove_upgrade_from_basket($post_id);
 
-        wp_send_json_success([
+        wp_send_json_success(array_merge([
             'inCart' => false,
             'addUrl' => self::upgrade_add_url($post_id),
-        ]);
+        ], self::cart_fragments()));
     }
 
     public static function maybe_handle_upgrade_link() : void {
@@ -437,13 +462,13 @@ class Module {
         $company_id = $profile['company_parent'] ?? 0;
         $company    = $company_id ? Preview_Module::get_company_data($company_id) : [];
 
-        wp_send_json_success([
+        wp_send_json_success(array_merge([
             'message'      => 'Profile created',
             'post_id'      => $post_id,
             'profile'      => $profile,
             'company'      => $company,
             'entitlements' => self::entitlement_state($post_id),
-        ]);
+        ], self::cart_fragments()));
     }
 
     public static function ajax_save_profile_form() : void {
@@ -471,12 +496,12 @@ class Module {
         $company_id = $profile['company_parent'] ?? 0;
         $company = $company_id ? Preview_Module::get_company_data($company_id) : [];
 
-        wp_send_json_success([
+        wp_send_json_success(array_merge([
             'message'      => 'Profile saved',
             'profile'      => $profile,
             'company'      => $company,
             'entitlements' => self::entitlement_state($post_id),
-        ]);
+        ], self::cart_fragments()));
     }
 
     /**
