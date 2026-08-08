@@ -11,11 +11,22 @@ class Module {
     /** Depth counter for suspend_upgrade_autoassign() / resume_upgrade_autoassign(). */
     private static $autoassign_suspended = 0;
 
+    /**
+     * What happened to a Pro request during this save:
+     * '' not requested | 'granted' | 'basketed' | 'unavailable'.
+     */
+    private static $pro_outcome = '';
+
+    /** Why the basket refused the upgrade, when $pro_outcome is 'unavailable'. */
+    private static $pro_error = '';
+
     public static function init() : void {
         add_action('wp_ajax_me_profile_load',            [__CLASS__, 'ajax_profile_load']);
         add_action('wp_ajax_me_save_profile_form',       [__CLASS__, 'ajax_save_profile_form']);
         add_action('wp_ajax_me_profile_create',          [__CLASS__, 'ajax_profile_create']);
         add_action('wp_ajax_me_profile_company_preview', [__CLASS__, 'ajax_company_preview']);
+        add_action('wp_ajax_me_profile_add_upgrade',     [__CLASS__, 'ajax_add_upgrade']);
+        add_action('wp_ajax_me_profile_remove_upgrade',  [__CLASS__, 'ajax_remove_upgrade']);
         add_action('template_redirect',                  [__CLASS__, 'maybe_handle_upgrade_link']);
     }
 
@@ -124,6 +135,11 @@ class Module {
             'upgradePrice'     => $price ?: 'R199',
             'upgradeInCart'    => $product ? self::upgrade_in_cart($post_id) : false,
             'basketUrl'        => function_exists('wc_get_cart_url') ? wc_get_cart_url() : '',
+            // What happened to a Pro request on this save. The radio follows the
+            // user's choice, not the basket, so a failed add is reported rather
+            // than silently flipping them back to Standard.
+            'proOutcome'       => self::$pro_outcome,
+            'proError'         => self::$pro_error,
         ];
     }
 
@@ -194,16 +210,58 @@ class Module {
         ]);
     }
 
-    /** Put a Pro upgrade for this profile in the basket, unless one is there already. */
+    /**
+     * Put a Pro upgrade for this profile in the basket, unless one is there
+     * already. Records why it failed so the editor can say so instead of
+     * quietly dropping the user back to Standard.
+     */
     protected static function add_upgrade_to_basket(int $post_id) : bool {
         $product = self::upgrade_product_id();
-        if ($product <= 0 || !function_exists('WC') || !WC()->cart) {
+
+        if ($product <= 0) {
+            self::$pro_error = 'The Pro upgrade product is not configured.';
+            return false;
+        }
+        if (!function_exists('WC') || !WC()->cart) {
+            self::$pro_error = 'The basket is not available right now.';
             return false;
         }
         if (self::upgrade_in_cart($post_id)) {
             return true;
         }
-        return (bool) WC()->cart->add_to_cart($product, 1, 0, [], ['mecard_profile_id' => $post_id]);
+
+        $added = WC()->cart->add_to_cart($product, 1, 0, [], ['mecard_profile_id' => $post_id]);
+        if ($added) {
+            self::persist_cart();
+            return true;
+        }
+
+        // WooCommerce explains refusals through notices (not purchasable, out of
+        // stock, blocked by a validation filter, ...). Surface the first one.
+        if (function_exists('wc_get_notices')) {
+            foreach ((array) wc_get_notices('error') as $notice) {
+                $text = is_array($notice) ? ($notice['notice'] ?? '') : (string) $notice;
+                $text = trim(wp_strip_all_tags($text));
+                if ($text !== '') {
+                    self::$pro_error = $text;
+                    break;
+                }
+            }
+            wc_clear_notices();
+        }
+
+        if (self::$pro_error === '') {
+            self::$pro_error = 'The basket would not accept the Pro upgrade.';
+        }
+
+        error_log(sprintf(
+            '[MeCard] Pro upgrade (product %d) could not be added to the basket for profile %d: %s',
+            $product,
+            $post_id,
+            self::$pro_error
+        ));
+
+        return false;
     }
 
     /** Drop an unpaid Pro upgrade for this profile back out of the basket. */
@@ -211,6 +269,26 @@ class Module {
         $key = self::upgrade_cart_item_key($post_id);
         if ($key !== '' && function_exists('WC') && WC()->cart) {
             WC()->cart->remove_cart_item($key);
+            self::persist_cart();
+        }
+    }
+
+    /**
+     * Write the cart to the session now rather than waiting for shutdown.
+     *
+     * The editor re-fetches the profiles list the moment the save response
+     * lands, which can beat WooCommerce's shutdown handler and render the list
+     * from a cart that doesn't yet contain the upgrade.
+     */
+    protected static function persist_cart() : void {
+        if (!function_exists('WC')) {
+            return;
+        }
+        if (WC()->cart && method_exists(WC()->cart, 'set_session')) {
+            WC()->cart->set_session();
+        }
+        if (WC()->session && method_exists(WC()->session, 'save_data')) {
+            WC()->session->save_data();
         }
     }
 
@@ -226,6 +304,58 @@ class Module {
         );
 
         return wp_nonce_url($url, 'mecard-add-upgrade-' . $profile_id);
+    }
+
+    /** Guard shared by the upgrade add/remove AJAX endpoints. */
+    protected static function verify_upgrade_request() : int {
+        if (!check_ajax_referer('me-profile-edit-nonce', '_wpnonce', false)) {
+            wp_send_json_error(['message' => 'Invalid nonce'], 403);
+        }
+        if (!is_user_logged_in()) {
+            wp_send_json_error(['message' => 'Not allowed'], 403);
+        }
+
+        $post_id  = isset($_POST['post_id']) ? absint($_POST['post_id']) : 0;
+        $post     = $post_id ? get_post($post_id) : null;
+        $is_owner = $post && (int) $post->post_author === get_current_user_id();
+
+        if (!$post || $post->post_type !== 'mecard-profile' || (!$is_owner && !current_user_can('edit_post', $post_id))) {
+            wp_send_json_error(['message' => 'No permission or invalid post'], 403);
+        }
+
+        return $post_id;
+    }
+
+    /** Console list: add the Pro upgrade without a page reload. */
+    public static function ajax_add_upgrade() : void {
+        $post_id = self::verify_upgrade_request();
+
+        self::$pro_error = '';
+        if (!self::add_upgrade_to_basket($post_id)) {
+            wp_send_json_error([
+                'message' => self::$pro_error ?: 'Could not add the Pro upgrade to your basket.',
+            ], 500);
+        }
+
+        $key = self::upgrade_cart_item_key($post_id);
+
+        wp_send_json_success([
+            'inCart'      => true,
+            'cartItemKey' => $key,
+            'removeUrl'   => ($key && function_exists('wc_get_cart_remove_url')) ? wc_get_cart_remove_url($key) : '',
+        ]);
+    }
+
+    /** Console list: take the Pro upgrade back out without a page reload. */
+    public static function ajax_remove_upgrade() : void {
+        $post_id = self::verify_upgrade_request();
+
+        self::remove_upgrade_from_basket($post_id);
+
+        wp_send_json_success([
+            'inCart' => false,
+            'addUrl' => self::upgrade_add_url($post_id),
+        ]);
     }
 
     public static function maybe_handle_upgrade_link() : void {
@@ -490,8 +620,12 @@ class Module {
      * upgrade is a refund decision, not an edit.
      */
     protected static function apply_requested_profile_type(int $post_id) : void {
+        self::$pro_outcome = '';
+        self::$pro_error   = '';
+
         $current = strtolower((string) get_post_meta($post_id, 'wpcf-profile-type', true));
         if (in_array($current, ['pro', 'professional'], true)) {
+            self::$pro_outcome = 'granted';
             return;
         }
 
@@ -520,13 +654,14 @@ class Module {
 
         $after = strtolower((string) get_post_meta($post_id, 'wpcf-profile-type', true));
         if (in_array($after, ['pro', 'professional'], true)) {
+            self::$pro_outcome = 'granted';
             return;
         }
 
         // Nothing to spend — the profile stays Standard and the R199 upgrade goes
         // into the basket. Checkout consumes it and flips the profile to Pro.
         update_post_meta($post_id, 'wpcf-profile-type', 'standard');
-        self::add_upgrade_to_basket($post_id);
+        self::$pro_outcome = self::add_upgrade_to_basket($post_id) ? 'basketed' : 'unavailable';
     }
 
     /**

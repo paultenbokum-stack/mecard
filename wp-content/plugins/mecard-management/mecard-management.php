@@ -2012,7 +2012,17 @@ function profile_upgrade_form() {
         return '';
     }
 
-    $profile_id = (int) $post->ID;
+    return mecard_render_profile_upgrade_control( (int) $post->ID );
+}
+
+/**
+ * The upgrade control for one profile. Split out from the shortcode so it can
+ * also be injected into loop items whose template hides the shortcode.
+ */
+function mecard_render_profile_upgrade_control( int $profile_id ) {
+    if ( $profile_id <= 0 || get_post_type( $profile_id ) !== 'mecard-profile' ) {
+        return '';
+    }
 
     $type = strtolower( (string) get_post_meta( $profile_id, 'wpcf-profile-type', true ) );
     if ( in_array( $type, [ 'pro', 'professional' ], true ) ) {
@@ -2034,16 +2044,88 @@ function profile_upgrade_form() {
 
     $item_key = \Me\Profile_Editor\Module::upgrade_cart_item_key( $profile_id );
 
+    // Both links carry the profile id so the JS can swap them in place; the href
+    // stays a working no-JS fallback.
     if ( $item_key !== '' ) {
-        return '<a href="' . esc_url( wc_get_cart_remove_url( $item_key ) ) . '" class="mecard-remove-upgrade" aria-label="Remove this item" data-cart_item_key="' . esc_attr( $item_key ) . '">'
+        return '<a href="' . esc_url( wc_get_cart_remove_url( $item_key ) ) . '" class="mecard-remove-upgrade" aria-label="Remove this item" data-profile-id="' . esc_attr( $profile_id ) . '" data-cart_item_key="' . esc_attr( $item_key ) . '">'
             . '<button class="add-button"><i class="far fa-check-square"></i> Pro Upgrade selected</button></a>';
     }
 
-    return '<a class="mecard-add-upgrade" href="' . esc_url( \Me\Profile_Editor\Module::upgrade_add_url( $profile_id ) ) . '">'
+    return '<a class="mecard-add-upgrade" href="' . esc_url( \Me\Profile_Editor\Module::upgrade_add_url( $profile_id ) ) . '" data-profile-id="' . esc_attr( $profile_id ) . '">'
         . '<button class="add-button">Upgrade to Pro</button></a>' . $tooltip;
 }
 
 add_shortcode('profile_upgrade_form','profile_upgrade_form');
+
+/**
+ * The profile-card loop template only renders [profile_upgrade_form] when the
+ * profile has a linked company:
+ *
+ *   [wpv-conditional if="( ... standard ... ) AND ( '[wpv-post-title item="@company-mecard-profile.parent"]' ne '' )"]
+ *
+ * That predates Pro being purchasable without a company, so an upgraded profile
+ * with no company shows "No linked company" and no upgrade state at all. The
+ * template lives in wp_posts and can't ship via SFTP, so patch the rendered
+ * output instead: if the card has no upgrade control, put one in.
+ */
+add_filter( 'wpv_filter_content_template_output', 'mecard_inject_profile_upgrade_control', 10, 3 );
+
+/** Does this profile have a company linked through the Toolset relationship? */
+function mecard_profile_has_company( int $profile_id ) : bool {
+    if ( function_exists( 'toolset_get_related_posts' ) ) {
+        $parents = toolset_get_related_posts(
+            $profile_id,
+            'company-mecard-profile',
+            [ 'query_by_role' => 'child', 'role_to_return' => 'parent', 'limit' => 1 ]
+        );
+        if ( ! empty( $parents ) ) {
+            return true;
+        }
+    }
+
+    return (int) get_post_meta( $profile_id, 'company_parent', true ) > 0;
+}
+
+function mecard_inject_profile_upgrade_control( $html, $template_id, $post_id ) {
+    if ( ! is_string( $html ) || strpos( $html, 'meupgrade' ) === false ) {
+        return $html;
+    }
+
+    $post_id = (int) $post_id;
+    if ( $post_id <= 0 || get_post_type( $post_id ) !== 'mecard-profile' ) {
+        return $html;
+    }
+
+    // This filter runs on the *raw* template, before shortcodes are expanded, so
+    // we can't look for an already-rendered control. Instead, mirror the one
+    // case the template's conditional excludes: a profile with no linked
+    // company. With a company, [profile_upgrade_form] renders on its own and
+    // injecting here would produce two controls.
+    if ( mecard_profile_has_company( $post_id ) ) {
+        return $html;
+    }
+
+    // Belt and braces for any code path that hands us rendered output.
+    foreach ( [ 'mecard-add-upgrade', 'mecard-remove-upgrade', 'mecard-use-upgrade' ] as $marker ) {
+        if ( strpos( $html, $marker ) !== false ) {
+            return $html;
+        }
+    }
+
+    $control = mecard_render_profile_upgrade_control( $post_id );
+    if ( $control === '' ) {
+        return $html;
+    }
+
+    return preg_replace_callback(
+        '/<div class="meupgrade"[^>]*>/',
+        static function ( $m ) use ( $control ) {
+            return $m[0] . $control;
+        },
+        $html,
+        1
+    );
+}
 
 add_filter( 'wpv_filter_query', 'process_cards_with_orders', 101, 3 );
 

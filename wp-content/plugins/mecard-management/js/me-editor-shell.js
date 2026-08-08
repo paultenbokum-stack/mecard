@@ -583,7 +583,15 @@
     }
 
     // ---------- Pro upgrade entitlements ----------
-    function applyEntitlementState(ent){
+    /**
+     * @param {object}  ent            entitlement state from the server
+     * @param {boolean} keepSelection  true after a save — the radio must show what
+     *                                 the user chose, not what the basket managed
+     *                                 to do. A Pro profile stays Standard until
+     *                                 checkout, so re-deriving here would snap the
+     *                                 radio back and look like the choice was lost.
+     */
+    function applyEntitlementState(ent, keepSelection){
         if (!ent) return; // no payload — leave the radio as it is
         current.entitlements = ent;
 
@@ -592,6 +600,11 @@
         const $std  = $('#me-profile-type-standard');
         const $pro  = $('#me-profile-type-pro');
         const $note = $('#meProfileTypeProNote');
+
+        // Only force a selection when we're establishing the initial state.
+        const select = function($input){
+            if (!keepSelection) $input.prop('checked', true);
+        };
 
         if (ent.isPro) {
             // Already paid for. Releasing a consumed upgrade is a refund
@@ -604,15 +617,15 @@
             $pro.prop('disabled', false);
 
             if (available > 0) {
-                $pro.prop('checked', true);
+                select($pro);
                 $note.text(available === 1
                     ? '1 upgrade left on your account — this profile will use it.'
                     : available + ' upgrades left on your account — this profile will use one.');
             } else if (ent.upgradeInCart) {
-                $pro.prop('checked', true);
+                select($pro);
                 $note.text('Upgrade is in your basket — check out to activate Pro.');
             } else {
-                $std.prop('checked', true);
+                select($std);
                 $note.text(price + ' — added to your basket when you save.');
             }
         }
@@ -620,18 +633,31 @@
         renderUpgradeMessage();
     }
 
-    // Tells the user what saving with Pro selected will actually do.
+    // Tells the user what saving with Pro selected will actually do — or, after a
+    // save, what it did.
     function renderUpgradeMessage(){
         const ent  = current.entitlements || {};
         const $msg = $('#meProfileTypeUpgradeMsg');
 
+        $msg.removeClass('text-success text-danger');
+
+        // The basket refused the upgrade. Say so — the profile is still Standard
+        // and the user needs to know why, not just watch the radio move.
+        if (ent.proOutcome === 'unavailable') {
+            $msg.text('We could not add the Pro upgrade to your basket. '
+                + (ent.proError || '')
+                + ' Your profile has been saved as Standard.')
+                .addClass('text-danger').show();
+            return;
+        }
+
         if (ent.isPro || !isProType(profileTypeValue())) {
-            $msg.hide().text('').removeClass('text-success');
+            $msg.hide().text('');
             return;
         }
 
         if ((parseInt(ent.available, 10) || 0) > 0) {
-            $msg.hide().text('').removeClass('text-success');
+            $msg.hide().text('');
             return;
         }
 
@@ -866,9 +892,11 @@
                     adoptCompanyOption(current.company_id, current.company.title || '');
                 }
 
-                // An upgrade may have just been spent or basketed, so re-read first:
-                // the radio and preview both follow the entitlement state.
-                applyEntitlementState(saved.entitlements);
+                // An upgrade may have just been spent or basketed, so re-read the
+                // counts — but keep the user's Standard/Pro choice on screen. A
+                // Pro profile stays "standard" until checkout consumes the
+                // upgrade, so deriving the radio from that would snap it back.
+                applyEntitlementState(saved.entitlements, true);
 
                 if (saved.profile) {
                     current.legacyCompanyLink = (parseInt(saved.profile.company_parent, 10) || 0) > 0;
@@ -951,6 +979,75 @@
     $(document).on('click', '.js-me-add-profile', function(e){
         e.preventDefault();
         window.NewMeOpenProfileAdd();
+    });
+
+    // ---------- Console list: Pro upgrade in/out of the basket ----------
+    // The href on these links is a working no-JS fallback; with JS we swap the
+    // button in place rather than reloading the whole page.
+    function swapUpgradeButton($link, state, data){
+        const profileId = $link.data('profile-id');
+
+        if (state === 'in-cart') {
+            $link.removeClass('mecard-add-upgrade').addClass('mecard-remove-upgrade')
+                 .attr('href', data.removeUrl || '#')
+                 .attr('aria-label', 'Remove this item')
+                 .attr('data-cart_item_key', data.cartItemKey || '')
+                 .html('<button class="add-button"><i class="far fa-check-square"></i> Pro Upgrade selected</button>');
+        } else {
+            $link.removeClass('mecard-remove-upgrade').addClass('mecard-add-upgrade')
+                 .attr('href', data.addUrl || '#')
+                 .removeAttr('aria-label')
+                 .removeAttr('data-cart_item_key')
+                 .html('<button class="add-button">Upgrade to Pro</button>');
+        }
+
+        $link.data('profile-id', profileId).attr('data-profile-id', profileId);
+    }
+
+    function upgradeButtonRequest($link, action, state){
+        const profileId = parseInt($link.data('profile-id'), 10) || 0;
+        if (!profileId) return;
+
+        const $btn = $link.find('button');
+        const busy = state === 'in-cart' ? 'Adding…' : 'Removing…';
+        $btn.text(busy);
+        $link.css('pointer-events', 'none');
+
+        const data = { action: action, post_id: profileId };
+        data[S.nonceField || '_wpnonce'] = S.nonceProfile;
+
+        $.post(S.ajaxurl, data).done(function(res){
+            if (res && res.success) {
+                swapUpgradeButton($link, state, res.data || {});
+            } else {
+                const msg = (res && res.data && res.data.message) || 'Sorry, that did not work.';
+                alert(msg);
+                // Put the label back the way it was.
+                swapUpgradeButton($link, state === 'in-cart' ? 'not-in-cart' : 'in-cart', {
+                    addUrl: $link.attr('href'), removeUrl: $link.attr('href')
+                });
+            }
+        }).fail(function(xhr){
+            console.error('Upgrade button failed', xhr && xhr.responseText);
+            const msg = (xhr && xhr.responseJSON && xhr.responseJSON.data && xhr.responseJSON.data.message)
+                || 'Sorry, that did not work.';
+            alert(msg);
+            swapUpgradeButton($link, state === 'in-cart' ? 'not-in-cart' : 'in-cart', {
+                addUrl: $link.attr('href'), removeUrl: $link.attr('href')
+            });
+        }).always(function(){
+            $link.css('pointer-events', '');
+        });
+    }
+
+    $(document).on('click', '.mecard-add-upgrade', function(e){
+        e.preventDefault();
+        upgradeButtonRequest($(this), 'me_profile_add_upgrade', 'in-cart');
+    });
+
+    $(document).on('click', '.mecard-remove-upgrade', function(e){
+        e.preventDefault();
+        upgradeButtonRequest($(this), 'me_profile_remove_upgrade', 'not-in-cart');
     });
 
     // ---------- Media frame for profile photo ----------
