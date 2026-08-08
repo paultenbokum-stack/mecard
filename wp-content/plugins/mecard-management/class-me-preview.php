@@ -75,6 +75,7 @@ class Module {
                 'nonceProfile' => wp_create_nonce('me-profile-edit-nonce'),
                 'nonceCompany' => wp_create_nonce('me-company-edit-nonce'),
                 'manageUrl'    => site_url( '/manage/' ),
+                'companyPlaceholder' => $base_url . 'images/image-placeholder.jpg',
             ]
         );
     }
@@ -236,8 +237,59 @@ class Module {
                             <label for="wpcf-job-title">Job title</label>
                             <input type="text" class="form-control" name="wpcf-job-title" id="wpcf-job-title" value="">
                         </div>
+                        <div class="form-group col-md-6">
+                            <label>Profile picture</label>
+                            <div class="d-flex align-items-center">
+                                <img id="meProfilePhotoPreview"
+                                     src=""
+                                     alt=""
+                                     style="max-width:64px;max-height:64px;border-radius:50%;display:none;margin-right:10px;">
+                                <button type="button"
+                                        class="btn btn-outline-secondary btn-sm"
+                                        id="meProfilePhotoButton">
+                                    Choose picture
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Profile type sits beside the company field: toggling the
+                         radio swaps the control immediately to its right. -->
+                    <div class="form-row">
+                        <div class="form-group col-md-6 me-profile-type">
+                            <label class="d-block">Profile type</label>
+
+                            <div class="custom-control custom-radio">
+                                <input type="radio"
+                                       class="custom-control-input"
+                                       name="wpcf-profile-type"
+                                       id="me-profile-type-standard"
+                                       value="standard"
+                                       checked>
+                                <label class="custom-control-label" for="me-profile-type-standard">
+                                    Standard
+                                    <small class="d-block text-muted">Contact details, social links and a company name.</small>
+                                </label>
+                            </div>
+
+                            <div class="custom-control custom-radio">
+                                <input type="radio"
+                                       class="custom-control-input"
+                                       name="wpcf-profile-type"
+                                       id="me-profile-type-pro"
+                                       value="pro">
+                                <label class="custom-control-label" for="me-profile-type-pro">
+                                    Pro
+                                    <small class="d-block text-muted" id="meProfileTypeProNote"></small>
+                                </label>
+                            </div>
+
+                            <p id="meProfileTypeUpgradeMsg" class="small mt-2 mb-0" style="display:none;"></p>
+                        </div>
+
                         <div class="form-group col-md-6" id="company_parent_group">
-                            <label for="company_parent" id="company_parent_label">Company (parent)</label>
+                            <label for="company_parent" id="company_parent_label">Company</label>
+
                             <select class="form-control" name="company_parent" id="company_parent">
                                 <option value="0"><?php esc_html_e('— No company —'); ?></option>
                                 <?php foreach ($companies as $company): ?>
@@ -245,26 +297,18 @@ class Module {
                                         <?php echo esc_html(get_the_title($company)); ?>
                                     </option>
                                 <?php endforeach; ?>
+                                <option value="new"><?php esc_html_e('+ Create a new company…'); ?></option>
                             </select>
+
+                            <!-- Standard profiles just store a company name string. -->
                             <input type="text" class="form-control" name="wpcf-company-r" id="wpcf-company-r" placeholder="Your company name" style="display:none;">
-                            <p class="me-company-upgrade-hint" style="display:none;">&#128274; <a href="#">Upgrade to Pro</a> to link rich company details.</p>
+
+                            <!-- Pro with nothing to pick from, or "+ Create a new company". -->
+                            <input type="text" class="form-control" name="me_new_company_name" id="me_new_company_name" placeholder="Your company name" style="display:none;">
+                            <small id="meNewCompanyHint" class="form-text text-muted" style="display:none;">
+                                We&rsquo;ll create this company when you save — you can add a logo and colours next.
+                            </small>
                         </div>
-                    </div>
-
-                    <!-- Profile type -->
-                    <div class="form-row" style="display:none">
-                        <div class="form-group col-md-6">
-                            <label for="wpcf-profile-type">Profile type</label>
-                            <select class="form-control" name="wpcf-profile-type" id="wpcf-profile-type">
-                                <option value="standard">Standard</option>
-                                <option value="pro">Pro</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <!-- Photo -->
-                    <div class="form-row">
-
                     </div>
 
                     <!-- Contact details -->
@@ -287,20 +331,6 @@ class Module {
                         <div class="form-group col-md-6">
                             <label for="wpcf-work-phone-number">Direct Line</label><span class="badge bg-warning">Pro only</span>
                             <input type="text" class="form-control" name="wpcf-work-phone-number" id="wpcf-work-phone-number" value="">
-                        </div>
-                    </div>
-                    <div class="form-group col-md-6">
-                        <label>Profile picture</label>
-                        <div class="d-flex align-items-center">
-                            <img id="meProfilePhotoPreview"
-                                 src=""
-                                 alt=""
-                                 style="max-width:64px;max-height:64px;border-radius:50%;display:none;margin-right:10px;">
-                            <button type="button"
-                                    class="btn btn-outline-secondary btn-sm"
-                                    id="meProfilePhotoButton">
-                                Choose picture
-                            </button>
                         </div>
                     </div>
                 </div>
@@ -372,6 +402,12 @@ public static function render_profile_preview_shell() : void {
             // Standard preview markup: only shown when profile type is not "pro" (handled by JS).
             self::render_standard_preview_markup();
             ?>
+
+            <!-- Covers the panes while a company's branding is being fetched. -->
+            <div id="mePreviewLoading" class="me-preview-loading" role="status" aria-live="polite" aria-hidden="true">
+                <div class="me-preview-loading__spinner" aria-hidden="true"></div>
+                <p class="me-preview-loading__text">Loading company branding&hellip;</p>
+            </div>
         </div>
 
     </div>
@@ -399,15 +435,6 @@ private static function render_preview_toggle() : void {
                 aria-selected="false">
             Pro
         </button>
-
-        <a href="#"
-           class="ajax_add_to_cart add_to_cart_button profile-add-to-cart btn btn-warning btn-sm me-upsell-btn"
-           data-product_id=""
-           data-cart_item_key=""
-           data-product_sku=""
-           data-me-preview-upsell>
-            Upgrade to Pro &mdash; R199
-        </a>
     </div>
     <?php
 }
@@ -430,8 +457,8 @@ private static function render_pro_preview_markup() : void {
             <button type="button" class="btn btn-link btn-sm text-secondary" id="meEditCompanyDesignBtn" style="display:none;">
                 <i class="fas fa-palette"></i> Edit company design
             </button>
-            <p id="meNoCompanyMsg" class="small text-muted mt-2 px-2" style="display:none;">
-                You have no company linked &mdash; link a company to configure your profile look and feel.
+            <p id="meProSampleNote" class="small text-muted mt-2 px-2" style="display:none;">
+                Sample branding &mdash; create your company to make this yours.
             </p>
             <div id="meEditCompanyDesignWarning" class="alert alert-warning mt-2 text-left p-2" style="display:none;">
                 <p class="mb-2 small"><strong>This will stop editing the profile.</strong><br>Any unsaved changes will be lost.</p>

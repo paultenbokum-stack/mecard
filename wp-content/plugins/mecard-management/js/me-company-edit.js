@@ -744,6 +744,10 @@
 (function($){
     'use strict';
 
+    // Set to true once a company has been created in this modal session, so the
+    // underlying Toolset list can be refreshed when the modal closes.
+    let meCompanyCreated = false;
+
     function loadCompanyForm(companyId){
         const $modal     = $('#companyEditModal');
         const $container = $('#me-modal-form-container');
@@ -754,7 +758,7 @@
 
         $.post(MECARD_COMPANY.ajaxurl, {
             action:    'me_load_company_form_custom',
-            company_id: companyId,
+            company_id: companyId || 0,
             _wpnonce:  MECARD_COMPANY.nonce
         })
             .done(function(resp){
@@ -764,6 +768,7 @@
                     return;
                 }
                 $container.html(resp.data.html);
+                $modal.find('.modal-title').text(resp.data.title || 'Edit Company');
 
                 // 🔑 bind previews/editors AFTER HTML is in the DOM
                 if (typeof window.initMeCompanyForm === 'function') {
@@ -834,11 +839,10 @@
             // Ensure required fields are present
             fd.append('action', 'me_save_company_form_custom');
 
-            // company_id from form data attribute
-            var companyId = $form.data('post-id');
-            if (companyId) {
-                fd.append('company_id', companyId);
-            }
+            // company_id from the form data attribute. Always send it: 0 is
+            // meaningful — it tells the server to create the company.
+            var companyId = parseInt($form.attr('data-post-id'), 10) || 0;
+            fd.append('company_id', companyId);
 
             // Fallback nonce if needed (prefer the hidden input already in the form)
             if (!fd.has('_wpnonce') && window.MECARD_COMPANY && MECARD_COMPANY.nonce) {
@@ -859,8 +863,19 @@
                     if (resp && resp.success) {
                         // Optional: show a toast/notice
                         console.log('[me] Saved:', resp.data);
+
+                        if (resp.data && resp.data.created && resp.data.company_id) {
+                            // The company exists now — adopt its ID so a second Save
+                            // updates it instead of creating a duplicate, and let the
+                            // user carry on into the logo / Pro / design tabs.
+                            meCompanyCreated = true;
+                            $form.attr('data-post-id', resp.data.company_id);
+                            $form.data('post-id', resp.data.company_id);
+                            $modal.find('.modal-title').text('Edit Company');
+                        }
+
                         // You can flash a success message in your modal footer:
-                        $('<span class="text-success ml-2 me-save-okay">Saved ✓</span>')
+                        $('<span class="text-success ml-2 me-save-okay">' + (resp.data && resp.data.created ? 'Created ✓' : 'Saved ✓') + '</span>')
                             .appendTo($btn.parent())
                             .delay(1500)
                             .fadeOut(400, function(){ $(this).remove(); });
@@ -887,11 +902,36 @@
         }
     });
 
-    // Global entry point so other scripts can open a company in the editor
+    // A new company won't be in the underlying Toolset list until the page
+    // re-renders, so refresh once the user is done in the modal.
+    $(document).on('hidden.bs.modal', '#companyEditModal', function(){
+        if (meCompanyCreated) {
+            meCompanyCreated = false;
+            window.location.reload();
+        }
+    });
+
+    // Global entry point so other scripts can open a company in the editor.
+    // Pass 0 (or nothing) to open it in "add" mode.
     window.MeOpenCompanyEditor = function(companyId) {
+        meCompanyCreated = false;
         $('#companyEditModal').modal('show');
-        loadCompanyForm(companyId);
+        loadCompanyForm(companyId || 0);
     };
+
+    // The Companies tab's "Add Company" button still carries the Toolset modal
+    // markup. Take it over so it opens this editor instead of the CRED form.
+    $(function(){
+        $('[data-target="#companyAddModal"]')
+            .removeAttr('data-toggle')
+            .removeAttr('data-target')
+            .addClass('js-me-add-company');
+    });
+
+    $(document).on('click', '.js-me-add-company', function(e){
+        e.preventDefault();
+        window.MeOpenCompanyEditor(0);
+    });
 
 })(jQuery);
 

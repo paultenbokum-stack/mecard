@@ -1997,35 +1997,50 @@ function get_tag_order_id($tag_id) {
 }
 
 
+/**
+ * "Upgrade to Pro" control on each profile card in the management console.
+ *
+ * Routes through the entitlements flow (the MECARD_PROFILE_UPGRADE_PRODUCT_ID
+ * product tagged with the profile), the same as the profile editor. The old
+ * "?add-to-cart=<profile_id>" route granted Pro on order creation, before the
+ * customer had paid, and never produced an entitlement row.
+ */
 function profile_upgrade_form() {
     global $post;
-    $inbasket = false;
-    $itemkey = '';
-    if (WC()->cart) {
-        $cartitems = WC()->cart->get_cart();
-        if ($cartitems) {
-            foreach ($cartitems as $key => $item) {
-                if ($item['product_id'] == $post->ID) {
-                    $inbasket = true;
-                    $itemkey = $key;
-                    break;
-                }
-            }
-        }
+
+    if ( ! $post instanceof WP_Post || $post->post_type !== 'mecard-profile' ) {
+        return '';
     }
 
+    $profile_id = (int) $post->ID;
 
-    if ($inbasket) {
-
-        $form = '<a href="'.wc_get_cart_remove_url($itemkey).'" id="'.$itemkey.'" class="remove remove_from_cart_button remove-profile-from-cart" aria-label="Remove this item" data-product_id="'.$post->ID.'" data-cart_item_key="'.$itemkey.'" data-product_sku="">
-        <button class="add-button"><i class="far fa-check-square"></i> Pro Upgrade selected</button></a>';
-
-    } else {
-       $form = '<a class="ajax_add_to_cart add_to_cart_button profile-add-to-cart" data-product_id="'.$post->ID.'" data-cart_item_key="" data-product_sku href="?add-to-cart='.$post->ID.'"><button class="add-button">Upgrade to Pro</button></a>&nbsp;&nbsp;<div class="mytooltip no-dots"><i class="far fa-question-circle"></i><span class="mytooltiptext">Upgrade your online profile to your company\'s branding. Customise your company branding by editing it in the company section above. </span></div>';
+    $type = strtolower( (string) get_post_meta( $profile_id, 'wpcf-profile-type', true ) );
+    if ( in_array( $type, [ 'pro', 'professional' ], true ) ) {
+        return '';
     }
 
+    $tooltip = '&nbsp;&nbsp;<div class="mytooltip no-dots"><i class="far fa-question-circle"></i><span class="mytooltiptext">Upgrade your online profile to your company\'s branding. Customise your company branding by editing it in the company section above. </span></div>';
 
-    return $form;
+    // Already paid for one that hasn't been spent — send them to the editor to
+    // apply it rather than selling them another.
+    $available = class_exists( '\Me\Entitlements\Module' )
+        ? \Me\Entitlements\Module::available_pro_upgrade_count( get_current_user_id() )
+        : 0;
+
+    if ( $available > 0 ) {
+        return '<a href="#" class="mecard-use-upgrade" onclick="window.NewMeOpenProfileEditor(' . $profile_id . ');return false;">'
+            . '<button class="add-button"><i class="far fa-check-square"></i> Use your Pro upgrade</button></a>' . $tooltip;
+    }
+
+    $item_key = \Me\Profile_Editor\Module::upgrade_cart_item_key( $profile_id );
+
+    if ( $item_key !== '' ) {
+        return '<a href="' . esc_url( wc_get_cart_remove_url( $item_key ) ) . '" class="mecard-remove-upgrade" aria-label="Remove this item" data-cart_item_key="' . esc_attr( $item_key ) . '">'
+            . '<button class="add-button"><i class="far fa-check-square"></i> Pro Upgrade selected</button></a>';
+    }
+
+    return '<a class="mecard-add-upgrade" href="' . esc_url( \Me\Profile_Editor\Module::upgrade_add_url( $profile_id ) ) . '">'
+        . '<button class="add-button">Upgrade to Pro</button></a>' . $tooltip;
 }
 
 add_shortcode('profile_upgrade_form','profile_upgrade_form');
@@ -2520,32 +2535,47 @@ function me_load_company_form_custom(){
         wp_send_json_error(['message'=>'Invalid nonce.'], 403);
     }
 
+    // company_id 0 means "adding a new company" — same form, no values.
     $post_id = isset($_POST['company_id']) ? absint($_POST['company_id']) : 0;
-    if (!$post_id || !($post = get_post($post_id))) {
-        wp_send_json_error(['message'=>'Company not found.'], 404);
-    }
-    if ( ! is_user_logged_in() || ! me_is_post_owner( $post_id ) ) {
-        wp_send_json_error(['message' => 'You do not have permission to edit this item.'], 403);
-    }
+    $is_new  = ! $post_id;
 
-
+    if ( ! is_user_logged_in() ) {
+        wp_send_json_error(['message' => 'Please sign in first.'], 403);
+    }
+    if ( ! $is_new ) {
+        if ( ! ( $post = get_post($post_id) ) || $post->post_type !== 'company' ) {
+            wp_send_json_error(['message'=>'Company not found.'], 404);
+        }
+        if ( ! me_is_post_owner( $post_id ) ) {
+            wp_send_json_error(['message' => 'You do not have permission to edit this item.'], 403);
+        }
+    }
 
     // Fetch values
     $get = function($key){ return get_post_meta(get_the_ID(), $key, true); };
-    setup_postdata($post);
-    $title = get_the_title($post_id);
-    $logo_id = get_post_thumbnail_id($post_id);
-    $logo_url = $logo_id ? wp_get_attachment_image_url($logo_id, 'full') : '';
 
-    $meta = [];
+    $title    = '';
+    $logo_id  = 0;
+    $logo_url = '';
+    $meta     = [];
     $keys = [
         'wpcf-company-address','wpcf-company-telephone-number','wpcf-company-website','wpcf-support-email',
         'wpcf-heading-font','wpcf-heading-font-colour','wpcf-normal-font','wpcf-normal-font-colour',
         'wpcf-accent-colour','wpcf-button-text-colour','wpcf-download-button-colour','wpcf-download-button-text-colour',
         'wpcf-company-description','wpcf-custom-css'
     ];
-    foreach($keys as $k){ $meta[$k] = get_post_meta($post_id, $k, true); }
-    wp_reset_postdata();
+
+    if ( $is_new ) {
+        foreach($keys as $k){ $meta[$k] = ''; }
+    } else {
+        setup_postdata($post);
+        $title = get_the_title($post_id);
+        $logo_id = get_post_thumbnail_id($post_id);
+        $logo_url = $logo_id ? wp_get_attachment_image_url($logo_id, 'full') : '';
+
+        foreach($keys as $k){ $meta[$k] = get_post_meta($post_id, $k, true); }
+        wp_reset_postdata();
+    }
 
     if ( function_exists( 'wp_enqueue_editor' ) ) {
         wp_enqueue_editor();
@@ -2646,8 +2676,10 @@ function me_load_company_form_custom(){
                             <div id="me-extra-buttons" class="me-rfg-list" data-rfg-slug="more-links-company">
                                 <?php
                                 // --- PREFILL from Toolset RFG children ---
+                                // A company being created has no ID yet, and Toolset
+                                // fatals when asked for relations of element 0.
                                 $child_posts = [];
-                                if (function_exists('toolset_get_related_posts')) {
+                                if (!$is_new && function_exists('toolset_get_related_posts')) {
                                     // Fetch children in current order
                                     $child_posts = toolset_get_related_posts(
                                         $post_id,
@@ -3089,7 +3121,11 @@ function me_load_company_form_custom(){
     <?php
     $html = ob_get_clean();
 
-    wp_send_json_success(['title'=>$title, 'html'=>$html]);
+    wp_send_json_success([
+        'title'  => $is_new ? 'Add Company' : ( $title ?: 'Edit Company' ),
+        'html'   => $html,
+        'is_new' => $is_new,
+    ]);
 
 }
 
@@ -3105,11 +3141,40 @@ function me_save_company_form_custom(){
         wp_send_json_error(['message'=>'Invalid nonce.'], 403);
     }
 
+    if ( ! is_user_logged_in() ) {
+        wp_send_json_error(['message'=>'Please sign in first.'], 403);
+    }
+
+    // company_id 0 means the form was opened in "add" mode — create the record
+    // here, then fall through to the normal save path.
     $post_id = isset($_POST['company_id']) ? absint($_POST['company_id']) : 0;
-    if (!$post_id || !get_post($post_id)) wp_send_json_error(['message'=>'Company not found.'], 404);
-   // if (!current_user_can('edit_post', $post_id)) wp_send_json_error(['message'=>'No permission.'], 403);
-    if ( ! is_user_logged_in() || ! me_is_post_owner( $post_id ) ) {
-        wp_send_json_error(['message'=>'No permission.'], 403);
+    $created = false;
+
+    if ( ! $post_id ) {
+        $new_title = isset($_POST['post_title']) ? sanitize_text_field(wp_unslash($_POST['post_title'])) : '';
+        if ( $new_title === '' ) {
+            wp_send_json_error(['message'=>'Please enter a company name.'], 400);
+        }
+
+        $post_id = wp_insert_post([
+            'post_type'   => 'company',
+            'post_status' => 'publish',
+            'post_author' => get_current_user_id(),
+            'post_title'  => $new_title,
+        ], true);
+
+        if ( is_wp_error($post_id) || ! $post_id ) {
+            wp_send_json_error(['message'=>'Could not create the company.'], 500);
+        }
+
+        $post_id = (int) $post_id;
+        $created = true;
+    } else {
+        if ( ! get_post($post_id) ) wp_send_json_error(['message'=>'Company not found.'], 404);
+        // if (!current_user_can('edit_post', $post_id)) wp_send_json_error(['message'=>'No permission.'], 403);
+        if ( ! me_is_post_owner( $post_id ) ) {
+            wp_send_json_error(['message'=>'No permission.'], 403);
+        }
     }
 
     // ----------------- helper: detect the real RFG child post type -----------------
@@ -3290,7 +3355,10 @@ function me_save_company_form_custom(){
     }
 
     wp_send_json_success([
-        'message'         => 'Saved.',
+        'message'         => $created ? 'Company created.' : 'Saved.',
+        'company_id'      => $post_id,
+        'created'         => $created,
+        'company_title'   => get_the_title($post_id),
         'rfg_post_type'   => $rfg_pt,                // <-- helpful debug
         'received_rows'   => count($rows),           // <-- helpful debug
         'created_childs'  => array_values($to_connect),

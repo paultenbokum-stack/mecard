@@ -542,6 +542,53 @@ button.company {
     display: block;
 }
 
+/* Overlay while a picked company's branding is being fetched */
+.me-preview-panes {
+    position: relative;
+}
+
+.me-preview-loading {
+    display: none;
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 5;
+    background: rgba(255, 255, 255, .8);
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.me-preview-loading.is-loading {
+    display: flex;
+}
+
+.me-preview-loading__spinner {
+    width: 28px;
+    height: 28px;
+    border: 3px solid rgba(0, 0, 0, .15);
+    border-top-color: rgba(0, 0, 0, .5);
+    border-radius: 50%;
+    animation: me-preview-spin .8s linear infinite;
+}
+
+.me-preview-loading__text {
+    margin: 0;
+    font-size: 13px;
+    color: #555;
+}
+
+@keyframes me-preview-spin {
+    to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .me-preview-loading__spinner { animation: none; }
+}
+
 /* When profile is already Pro, Standard pane is hidden entirely
    (.me-preview-shell.is-professional set by JS) */
 .me-preview-shell.is-professional #mePreviewTabStandard,

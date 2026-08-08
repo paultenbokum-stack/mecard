@@ -6,8 +6,33 @@
         console.error('[MeCard] ajaxurl missing');
     }
 
-    let current = { kind: 'profile', post_id: null, company_id: 0 };
+    let current = {
+        kind: 'profile',
+        post_id: null,
+        company_id: 0,
+        mode: 'edit',
+        // A standard profile that already has a company linked keeps the picker,
+        // otherwise the link would become invisible and unmanageable.
+        legacyCompanyLink: false,
+        entitlements: {}
+    };
     let meProfileFrame = null;
+
+    // ---------- Profile type (Standard / Pro radio) ----------
+    function profileTypeValue(){
+        return $('input[name="wpcf-profile-type"]:checked').val() || 'standard';
+    }
+
+    function setProfileTypeValue(val){
+        const type = (val || 'standard').toString().toLowerCase();
+        const isPro = (type === 'pro' || type === 'professional');
+        $('#me-profile-type-' + (isPro ? 'pro' : 'standard')).prop('checked', true);
+    }
+
+    function isProType(val){
+        const t = (val || '').toString().toLowerCase();
+        return t === 'pro' || t === 'professional';
+    }
 
     // Pane scope references — elements are rendered in wp_footer at priority 10, before this script
     var $proPane = $('#mePreviewProPane');
@@ -18,24 +43,37 @@
     }
 
     // ---------- UI state ----------
+    function saveButtonLabel(){
+        return current.mode === 'add' ? 'Create profile' : 'Save';
+    }
+
     function setSaveUI(state){
         const $m = $('#meProfileEditorModal');
         const $save  = $m.find('.js-me-save');
         const $close = $m.find('.js-me-close');
 
         if (state === 'saving') {
-            $save.prop('disabled', true).text('Saving…');
+            $save.prop('disabled', true).text(current.mode === 'add' ? 'Creating…' : 'Saving…');
             $close.hide();
         } else if (state === 'saved') {
             $save.prop('disabled', false).text('Saved ✓');
             $close.show().text('Close');
         } else if (state === 'dirty') {
-            $save.prop('disabled', false).text('Save');
+            $save.prop('disabled', false).text(saveButtonLabel());
             $close.show().text('Close without saving');
         } else { // idle
-            $save.prop('disabled', false).text('Save');
+            $save.prop('disabled', false).text(saveButtonLabel());
             $close.show().text('Close');
         }
+    }
+
+    // Switch the modal between "add a new profile" and "edit an existing one".
+    function setEditorMode(mode){
+        current.mode = mode;
+        const isAdd = (mode === 'add');
+
+        $('#meProfileEditorTitle').text(isAdd ? 'Add a MeCard profile' : 'Edit profile');
+        $('#meProfileEditorSubtitle').text(isAdd ? 'Fill in the details, then click Create profile.' : '');
     }
 
     // ---------- Preview toggle (Standard / Pro) ----------
@@ -63,22 +101,21 @@
 
         const $stdTab  = $wrap.find('.me-preview-tab[data-me-preview-tab="standard"]');
         const $toggle  = $wrap.find('.me-preview-toggle');
-        const $upsell  = $wrap.find('[data-me-preview-upsell]');
         const $stdPane = $wrap.find('.me-preview-pane[data-me-preview-pane="standard"]');
 
-        if (isPro) {
+        // Already-paid Pro profiles have no Standard version to compare against.
+        // A profile that is only *asking* for Pro keeps both tabs, but lands on Pro.
+        if (isPro && current.entitlements && current.entitlements.isPro) {
             $stdTab.hide();
             $stdPane.hide();
-            $upsell.hide();
             $toggle.hide();
-            setPreviewMode('pro');
         } else {
             $toggle.show();
             $stdTab.show();
             $stdPane.show();
-            $upsell.show();
-            setPreviewMode('standard');
         }
+
+        setPreviewMode(isPro ? 'pro' : 'standard');
     }
 
     // Click handling (event delegation: works even if modal HTML is injected)
@@ -232,19 +269,23 @@
     }
 
     // ---------- Update company block in both panes ----------
-    function updateCompanyBlock(company, profile) {
-        // -- Pro pane --
-        field($proPane, 'company-name').text((company && company.title) ? company.title : ((profile && profile.company_name) || ''));
+    // proOverride, when given, is used for the Pro pane only. It carries the
+    // sample branding, which must never leak into the Standard preview.
+    function updateCompanyBlock(company, profile, proOverride) {
+        const proCompany = proOverride || company;
 
-        if (company && company.logo_url) {
-            field($proPane, 'company-logo').attr('src', company.logo_url).show();
+        // -- Pro pane --
+        field($proPane, 'company-name').text((proCompany && proCompany.title) ? proCompany.title : ((profile && profile.company_name) || ''));
+
+        if (proCompany && proCompany.logo_url) {
+            field($proPane, 'company-logo').attr('src', proCompany.logo_url).show();
         } else {
             field($proPane, 'company-logo').hide();
         }
 
-        field($proPane, 'company-description').html(company && company.desc_html ? company.desc_html : '');
+        field($proPane, 'company-description').html(proCompany && proCompany.desc_html ? proCompany.desc_html : '');
 
-        const addr = company && company.address ? company.address : '';
+        const addr = proCompany && proCompany.address ? proCompany.address : '';
         if (addr) {
             const maps = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(addr);
             field($proPane, 'company-address-text').text(addr);
@@ -256,19 +297,19 @@
             field($proPane, 'company-directions').hide().attr('href', '#');
         }
 
-        if (company && company.website) {
-            field($proPane, 'company-website').show().attr('href', company.website);
+        if (proCompany && proCompany.website) {
+            field($proPane, 'company-website').show().attr('href', proCompany.website);
         } else {
             field($proPane, 'company-website').hide().attr('href', '#');
         }
 
-        if (company && company.tel) {
-            field($proPane, 'company-phone').show().attr('href', 'tel:' + company.tel);
+        if (proCompany && proCompany.tel) {
+            field($proPane, 'company-phone').show().attr('href', 'tel:' + proCompany.tel);
         } else {
             field($proPane, 'company-phone').hide().attr('href', '#');
         }
 
-        // -- Standard pane --
+        // -- Standard pane -- always the real company, never the sample.
         var stdCompanyText = (company && company.title) ? company.title : ((profile && profile.company_name) || '');
         field($stdPane, 'company-name').text(stdCompanyText);
         var $stdRoleCompany = field($stdPane, 'role-company');
@@ -278,9 +319,10 @@
             $stdRoleCompany.hide();
         }
 
-        if (addr) {
-            const mapsStd = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(addr);
-            field($stdPane, 'company-address').text(addr);
+        const stdAddr = company && company.address ? company.address : '';
+        if (stdAddr) {
+            const mapsStd = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(stdAddr);
+            field($stdPane, 'company-address').text(stdAddr);
             field($stdPane, 'company-address-row').show();
             field($stdPane, 'btn-directions').show();
             field($stdPane, 'company-directions').attr('href', mapsStd);
@@ -355,11 +397,274 @@
         }
     }
 
-    // ---------- Load profile into form + preview ----------
-    function updateUpsellButton(post_id) {
-        $('[data-me-preview-upsell]')
-            .attr('data-product_id', post_id)
-            .attr('href', '?add-to-cart=' + post_id);
+    // Does this user own any company worth picking from?
+    function hasSelectableCompanies(){
+        return $('#company_parent option').filter(function(){
+            return parseInt(this.value, 10) > 0;
+        }).length > 0;
+    }
+
+    // Are we collecting a name for a company that doesn't exist yet?
+    function isCreatingCompany(){
+        return $('#company_parent').val() === 'new'
+            || (isProType(profileTypeValue()) && !current.legacyCompanyLink && !hasSelectableCompanies());
+    }
+
+    /**
+     * One of three controls, never more:
+     *   'picker' — the dropdown (Pro, and the user owns companies)
+     *   'new'    — a name box for a company we'll create on save
+     *   'text'   — the plain company-name string kept on Standard profiles
+     */
+    function applyCompanyFieldState(mode){
+        const $select = $('#company_parent');
+        const $text   = $('#wpcf-company-r');
+        const $newName = $('#me_new_company_name');
+        const $newHint = $('#meNewCompanyHint');
+        const $label  = $('#company_parent_label');
+
+        $select.toggle(mode === 'picker' || mode === 'new')
+               .prop('disabled', mode === 'text')
+               .closest('.form-group').toggleClass('me-company-group--locked', mode === 'text');
+
+        if (mode === 'new') {
+            // The select still posts, and when we entered this mode automatically
+            // (Pro with no companies) it is hidden and nobody has touched it — so
+            // pin it to "new" or the save would read its default of 0.
+            $select.val('new');
+
+            // With nothing to pick from there is no point showing an empty dropdown.
+            if (!hasSelectableCompanies()) {
+                $select.hide();
+            }
+        }
+
+        $text.toggle(mode === 'text');
+        // Only needs a gap when it sits under a visible dropdown; with no
+        // companies it follows the label directly.
+        $newName.toggle(mode === 'new')
+                .prop('disabled', mode !== 'new')
+                .toggleClass('has-picker-above', mode === 'new' && hasSelectableCompanies());
+        $newHint.toggle(mode === 'new');
+
+        $label.text(mode === 'picker' ? 'Company' : 'Company name');
+    }
+
+    // Make sure the picker lists this company and has it selected.
+    function adoptCompanyOption(id, title){
+        const $select = $('#company_parent');
+
+        if (!$select.find('option[value="' + id + '"]').length) {
+            $('<option>').attr('value', id).text(title || ('Company #' + id))
+                .insertBefore($select.find('option[value="new"]'));
+        }
+
+        $select.val(String(id));
+        $('#me_new_company_name').val('');
+    }
+
+    function companyFieldMode(){
+        if (!isProType(profileTypeValue()) && !current.legacyCompanyLink) {
+            return 'text';
+        }
+        return isCreatingCompany() ? 'new' : 'picker';
+    }
+
+    /**
+     * Pro with no company yet would render a card with the whole company half
+     * blank — logo, name, address, description and all three company buttons
+     * missing. That reads as broken at exactly the moment we're asking someone
+     * to pay, so fill it with clearly-labelled sample content instead.
+     */
+    function isShowingSampleCompany(){
+        return isProType(profileTypeValue()) && !current.company_id;
+    }
+
+    function sampleCompany(){
+        const typed = $.trim($('#me_new_company_name').val() || $('#wpcf-company-r').val() || '');
+
+        return {
+            title:     typed || 'Your Company',
+            logo_url:  S.companyPlaceholder || '',
+            desc_html: 'Add a short description of what your company does — it appears here on your Pro card.',
+            address:   '123 Main Road, Cape Town',
+            website:   '#',
+            tel:       '#',
+            design:    { accent: '#0170b9' }
+        };
+    }
+
+    // Re-render the company half of the preview from whatever state we're in.
+    function refreshCompanyPreview(){
+        const sample = isShowingSampleCompany();
+        const company = sample ? sampleCompany() : (current.company || {});
+
+        applyCompanyDesignToPreview(company);
+        updateCompanyBlock(current.company || {}, readProfileFromForm(), sample ? company : null);
+        $('#meProSampleNote').toggle(sample);
+    }
+
+    function setCompanyPreviewLoading(isLoading){
+        $('#mePreviewLoading')
+            .toggleClass('is-loading', !!isLoading)
+            .attr('aria-hidden', isLoading ? 'false' : 'true');
+    }
+
+    // Pull the picked company's branding so the Pro preview re-skins immediately,
+    // without having to save first.
+    function reloadCompanyPreview(company_id){
+        const id = parseInt(company_id, 10) || 0;
+
+        if (!id) {
+            current.company_id = 0;
+            current.company    = {};
+            syncCompanyFieldToType();
+            refreshCompanyPreview();
+            return $.Deferred().resolve().promise();
+        }
+
+        const data = {
+            action: 'me_profile_company_preview',
+            company_id: id
+        };
+        data[S.nonceField || '_wpnonce'] = S.nonceProfile;
+
+        setCompanyPreviewLoading(true);
+
+        // .done() before .always() so the new branding is painted before the
+        // overlay lifts — otherwise the old design flashes back for a frame.
+        return $.post(S.ajaxurl, data).done(function(res){
+            if (!res || !res.success) {
+                console.error('Company preview load failed', res);
+                return;
+            }
+            const company = res.data.company || {};
+
+            current.company_id = company.id || 0;
+            current.company    = company;
+
+            syncCompanyFieldToType();
+            refreshCompanyPreview();
+        }).fail(function(xhr){
+            console.error('Company preview AJAX error', xhr && xhr.responseText);
+        }).always(function(){
+            setCompanyPreviewLoading(false);
+        });
+    }
+
+    $(document).on('change', '#company_parent', function(){
+        const val = $(this).val();
+
+        if (val === 'new') {
+            // Nothing to fetch yet — fall back to sample branding and let them
+            // name the company.
+            current.company_id = 0;
+            current.company    = {};
+            syncCompanyFieldToType();
+            refreshCompanyPreview();
+            $('#me_new_company_name').focus();
+            return;
+        }
+
+        reloadCompanyPreview(val);
+    });
+
+    // The name they're typing is the company name, so keep the preview in step.
+    $(document).on('input', '#me_new_company_name', function(){
+        refreshCompanyPreview();
+    });
+
+    function syncCompanyFieldToType(){
+        const mode = companyFieldMode();
+        applyCompanyFieldState(mode);
+
+        // "Edit company design" needs a company that actually exists.
+        $('#meEditCompanyDesignBtn').toggle(mode === 'picker' && !!current.company_id);
+    }
+
+    // ---------- Pro upgrade entitlements ----------
+    function applyEntitlementState(ent){
+        if (!ent) return; // no payload — leave the radio as it is
+        current.entitlements = ent;
+
+        const available = parseInt(ent.available, 10) || 0;
+        const price     = ent.upgradePrice || 'R199';
+        const $std  = $('#me-profile-type-standard');
+        const $pro  = $('#me-profile-type-pro');
+        const $note = $('#meProfileTypeProNote');
+
+        if (ent.isPro) {
+            // Already paid for. Releasing a consumed upgrade is a refund
+            // decision, not an edit, so there is no way back to Standard here.
+            $pro.prop('checked', true).prop('disabled', false);
+            $std.prop('disabled', true);
+            $note.text('Active on this profile.');
+        } else {
+            $std.prop('disabled', false);
+            $pro.prop('disabled', false);
+
+            if (available > 0) {
+                $pro.prop('checked', true);
+                $note.text(available === 1
+                    ? '1 upgrade left on your account — this profile will use it.'
+                    : available + ' upgrades left on your account — this profile will use one.');
+            } else if (ent.upgradeInCart) {
+                $pro.prop('checked', true);
+                $note.text('Upgrade is in your basket — check out to activate Pro.');
+            } else {
+                $std.prop('checked', true);
+                $note.text(price + ' — added to your basket when you save.');
+            }
+        }
+
+        renderUpgradeMessage();
+    }
+
+    // Tells the user what saving with Pro selected will actually do.
+    function renderUpgradeMessage(){
+        const ent  = current.entitlements || {};
+        const $msg = $('#meProfileTypeUpgradeMsg');
+
+        if (ent.isPro || !isProType(profileTypeValue())) {
+            $msg.hide().text('').removeClass('text-success');
+            return;
+        }
+
+        if ((parseInt(ent.available, 10) || 0) > 0) {
+            $msg.hide().text('').removeClass('text-success');
+            return;
+        }
+
+        $msg.text(ent.upgradeInCart
+            ? 'The Pro upgrade is in your basket. Check out to activate it.'
+            : 'Saving will add the Pro upgrade to your basket. It activates once you check out.'
+        ).addClass('text-success').show();
+    }
+
+    $(document).on('change', 'input[name="wpcf-profile-type"]', function(){
+        syncCompanyFieldToType();
+        syncPreviewVisibilityFromType(profileTypeValue());
+        renderUpgradeMessage();
+    });
+
+    function resetProfileForm(){
+        const $f = $('#newMeProfileForm');
+        if ($f.length && $f[0].reset) {
+            $f[0].reset();
+        }
+
+        $('#me_profile_post_id').val('');
+        $('#me_profile_photo_id').val('');
+        $('#meProfilePhotoPreview').attr('src', '').hide();
+        $('input[name="wpcf-profile-type"]').prop('disabled', false);
+        setProfileTypeValue('standard');
+        $('#meProfileTypeUpgradeMsg').hide().text('');
+        $('#company_parent').val('0');
+        $('#wpcf-company-r').val('');
+
+        if ($.fn.tab) {
+            $('#profile-main-tab').tab('show');
+        }
     }
 
     function loadProfile(post_id){
@@ -382,44 +687,23 @@
             const profile = res.data.profile || {};
             const company = res.data.company || {};
 
-            current.company_id = company.id || 0;
+            current.company_id       = company.id || 0;
+            current.company          = company;
+            current.legacyCompanyLink = (parseInt(profile.company_parent, 10) || 0) > 0;
 
             populateProfileForm(profile);
-            syncPreviewVisibilityFromType(profile.type);
-            applyCompanyDesignToPreview(company);
-            updateCompanyBlock(company, profile);
+            // Entitlements have the final say on the radio: Pro is preselected
+            // when there are upgrades to spend, and locked when already paid for.
+            applyEntitlementState(res.data.entitlements);
+
+            syncPreviewVisibilityFromType(profileTypeValue());
             populatePreview(profile, company);
             updatePreviewSocialsFromForm();
             updatePreviewPrimaryButtonsFromForm();
-            updateUpsellButton(post_id);
 
-            // Lock or unlock company section based on profile type / existing link
-            var companyLinkEnabled = !!profile.company_link_enabled;
-            var $companySelect     = $('#company_parent');
-            var $companyTextInput  = $('#wpcf-company-r');
-            var $companyLabel      = $('#company_parent_label');
-            var $upgradeHint       = $('.me-company-upgrade-hint');
-
-            if (companyLinkEnabled) {
-                $companySelect.show().prop('disabled', false).closest('.form-group').removeClass('me-company-group--locked');
-                $companyTextInput.hide();
-                $companyLabel.text('Company (parent)');
-                $upgradeHint.hide();
-                if (current.company_id) {
-                    $('#meEditCompanyDesignBtn').show();
-                    $('#meNoCompanyMsg').hide();
-                } else {
-                    $('#meEditCompanyDesignBtn').hide();
-                    $('#meNoCompanyMsg').show();
-                }
-            } else {
-                $companySelect.hide().prop('disabled', true).closest('.form-group').addClass('me-company-group--locked');
-                $companyTextInput.show();
-                $companyLabel.text('Company name');
-                $upgradeHint.show();
-                $('#meEditCompanyDesignBtn').hide();
-                $('#meNoCompanyMsg').hide();
-            }
+            syncCompanyFieldToType();
+            refreshCompanyPreview();
+            renderUpgradeMessage();
             $('#meEditCompanyDesignWarning').hide();
             setLoading(false);
 
@@ -430,7 +714,7 @@
     }
 
     function populateProfileForm(p){
-        $('#me_profile_post_id').val(current.post_id);
+        $('#me_profile_post_id').val(current.post_id || '');
 
         $('#wpcf-first-name').val(p.first || '');
         $('#wpcf-last-name').val(p.last || '');
@@ -439,7 +723,7 @@
         $('#wpcf-mobile-number').val(p.mobile || '');
         $('#wpcf-whatsapp-number').val(p.wa || '');
         $('#wpcf-work-phone-number').val(p.direct_line || '');
-        $('#wpcf-profile-type').val(p.type || 'standard');
+        setProfileTypeValue(p.type || 'standard');
         $('#company_parent').val(p.company_parent || 0);
         $('#wpcf-company-r').val(p.company_name || '');
 
@@ -498,18 +782,17 @@
     }
 
     // ---------- Live preview as user edits ----------
-    $('#newMeProfileForm').on('input change', function(){
-        setSaveUI('dirty');
-
-        const p = {
+    function readProfileFromForm(){
+        return {
             first:  $('#wpcf-first-name').val(),
             last:   $('#wpcf-last-name').val(),
             job:    $('#wpcf-job-title').val(),
             email:  $('#wpcf-email-address').val(),
             mobile: $('#wpcf-mobile-number').val(),
             wa:     $('#wpcf-whatsapp-number').val(),
-            type:   $('#wpcf-profile-type').val(),
+            type:   profileTypeValue(),
             company_parent: parseInt($('#company_parent').val(), 10) || 0,
+            company_name:   $('#wpcf-company-r').val(),
             photo_url: $('#meProfilePhotoPreview').is(':visible') ? $('#meProfilePhotoPreview').attr('src') : '',
             soc: {
                 facebook:  $('#wpcf-facebook-url').val(),
@@ -520,16 +803,17 @@
                 tiktok:    $('#wpcf-tiktok-url').val()
             }
         };
+    }
 
-        // Company data doesn't change live; read from rendered pane
-        const c = {
-            title:     field($proPane, 'company-name').text(),
-            logo_url:  field($proPane, 'company-logo').attr('src'),
-            desc_html: field($proPane, 'company-description').html(),
-            design: {} // CSS vars already applied via applyCompanyDesignToPreview
-        };
+    $('#newMeProfileForm').on('input change', function(){
+        setSaveUI('dirty');
+
+        const p = readProfileFromForm();
+        // The picked company is kept in `current`, refreshed by reloadCompanyPreview().
+        const c = current.company || {};
 
         syncPreviewVisibilityFromType(p.type);
+        refreshCompanyPreview();
         populatePreview(p, c);
         updatePreviewSocialsFromForm();
         updatePreviewPrimaryButtonsFromForm();
@@ -537,10 +821,19 @@
 
     // ---------- Save ----------
     $(document).on('click', '#meProfileEditorModal .js-me-save', function(){
-        const $f  = $('#newMeProfileForm');
-        const fd  = new FormData($f[0]);
+        const isAdd = (current.mode === 'add');
+        const $f    = $('#newMeProfileForm');
 
-        fd.append('action', 'me_save_profile_form');
+        if (isAdd && !$.trim($('#wpcf-first-name').val() || '')) {
+            alert('Please enter a first name before creating the profile.');
+            $('#profile-main-tab').tab && $('#profile-main-tab').tab('show');
+            $('#wpcf-first-name').focus();
+            return;
+        }
+
+        const fd = new FormData($f[0]);
+
+        fd.append('action', isAdd ? 'me_profile_create' : 'me_save_profile_form');
         fd.append(S.nonceField || '_wpnonce', S.nonceProfile);
 
         setSaveUI('saving');
@@ -553,14 +846,57 @@
             contentType: false
         }).done(function(res){
             if (res && res.success) {
+                const saved = res.data || {};
+
+                if (isAdd) {
+                    // The profile now exists — flip the modal into edit mode so a
+                    // second Save updates it instead of creating a duplicate.
+                    current.post_id = parseInt(saved.post_id, 10) || 0;
+
+                    $('#me_profile_post_id').val(current.post_id);
+                    setEditorMode('edit');
+                }
+
+                current.company_id = (saved.company && saved.company.id) || 0;
+                current.company    = saved.company || {};
+
+                // A company just created inline now exists — put it in the picker
+                // and select it, so we drop out of "create" mode and sample branding.
+                if (current.company_id) {
+                    adoptCompanyOption(current.company_id, current.company.title || '');
+                }
+
+                // An upgrade may have just been spent or basketed, so re-read first:
+                // the radio and preview both follow the entitlement state.
+                applyEntitlementState(saved.entitlements);
+
+                if (saved.profile) {
+                    current.legacyCompanyLink = (parseInt(saved.profile.company_parent, 10) || 0) > 0;
+                    if (saved.entitlements && saved.entitlements.isPro) {
+                        setProfileTypeValue(saved.profile.type);
+                    }
+                    syncPreviewVisibilityFromType(profileTypeValue());
+                    populatePreview(saved.profile, current.company);
+                    updatePreviewSocialsFromForm();
+                    updatePreviewPrimaryButtonsFromForm();
+                }
+
+                syncCompanyFieldToType();
+                refreshCompanyPreview();
+                renderUpgradeMessage();
+
                 setSaveUI('saved');
                 refreshUnderlyingToolsetViews();
             } else {
                 console.error('Save failed', res);
+                const msg = res && res.data && res.data.message;
+                if (msg) alert(msg);
                 setSaveUI('dirty');
             }
         }).fail(function(xhr){
             console.error('AJAX error', xhr && xhr.responseText);
+            const msg = xhr && xhr.responseJSON && xhr.responseJSON.data && xhr.responseJSON.data.message;
+            if (msg) alert(msg);
             setSaveUI('dirty');
         });
     });
@@ -572,6 +908,7 @@
 
     // ---------- Open modal helper (matches existing button calls) ----------
     window.NewMeOpenProfileEditor = function(post_id){
+        setEditorMode('edit');
         $('#meProfileEditorModal').modal('show');
         setLoading(true);
 
@@ -580,6 +917,41 @@
                 setLoading(false);
             });
     };
+
+    // ---------- Open the same modal to create a new profile ----------
+    // post_id 0 makes the loader hand back a blank profile plus the current
+    // entitlement state, so add and edit run through one path.
+    window.NewMeOpenProfileAdd = function(){
+        current.company_id        = 0;
+        current.company           = {};
+        current.legacyCompanyLink = false;
+
+        setEditorMode('add');
+        resetProfileForm();
+
+        $('#meProfileEditorModal').modal('show');
+        setLoading(true);
+
+        loadProfile(0)
+            .always(function(){
+                setLoading(false);
+            });
+    };
+
+    // The management console's "Add Profile" button still carries the Toolset
+    // modal markup (data-target="#profileAddModal"). Take the button over so it
+    // opens this editor instead of the CRED form.
+    $(function(){
+        $('[data-target="#profileAddModal"]')
+            .removeAttr('data-toggle')
+            .removeAttr('data-target')
+            .addClass('js-me-add-profile');
+    });
+
+    $(document).on('click', '.js-me-add-profile', function(e){
+        e.preventDefault();
+        window.NewMeOpenProfileAdd();
+    });
 
     // ---------- Media frame for profile photo ----------
     $(document).on('click', '#meProfilePhotoButton', function(e){

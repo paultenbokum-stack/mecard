@@ -305,6 +305,29 @@ class Module {
     }
 
     /**
+     * How many paid pro upgrades the user has left to spend on a profile.
+     * Only counts rows that are paid for but not yet attached to a profile.
+     */
+    public static function available_pro_upgrade_count( int $user_id ) : int {
+        if ( $user_id <= 0 ) {
+            return 0;
+        }
+
+        global $wpdb;
+        $table = self::table_name();
+        if ( ! $wpdb->get_var( "SHOW TABLES LIKE '{$table}'" ) ) {
+            return 0;
+        }
+
+        return (int) $wpdb->get_var( $wpdb->prepare(
+            "SELECT COUNT(*) FROM {$table} WHERE owner_user_id = %d AND type = %s AND status = %s",
+            $user_id,
+            'pro_upgrade',
+            'paid_unassigned'
+        ) );
+    }
+
+    /**
      * Whether the user has a pending pro upgrade — either an entitlement row
      * that hasn't been consumed yet, or an on-hold/pending order containing
      * an upgrade product (covers the BACS gap where cart rows are cancelled
@@ -383,6 +406,13 @@ class Module {
     }
 
     private static function assign_next_available_upgrade( int $profile_id, int $owner_user_id ) : void {
+        // Never spend a paid upgrade on a placeholder post. Toolset's CRED forms
+        // create a "CRED Auto Draft" mecard-profile on every page render, which
+        // would otherwise consume the user's upgrade and throw it away.
+        if ( ! in_array( get_post_status( $profile_id ), [ 'publish', 'private', 'draft', 'pending' ], true ) ) {
+            return;
+        }
+
         $current_type = (string) get_post_meta( $profile_id, 'wpcf-profile-type', true );
         if ( in_array( strtolower( $current_type ), [ 'professional', 'pro' ], true ) ) {
             return;

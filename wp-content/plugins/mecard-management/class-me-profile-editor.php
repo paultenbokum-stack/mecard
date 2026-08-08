@@ -8,11 +8,21 @@ if (!defined('ABSPATH')) exit;
 
 class Module {
 
+    /** Depth counter for suspend_upgrade_autoassign() / resume_upgrade_autoassign(). */
+    private static $autoassign_suspended = 0;
+
     public static function init() : void {
-        add_action('wp_ajax_me_profile_load',      [__CLASS__, 'ajax_profile_load']);
-        add_action('wp_ajax_me_save_profile_form', [__CLASS__, 'ajax_save_profile_form']);
+        add_action('wp_ajax_me_profile_load',            [__CLASS__, 'ajax_profile_load']);
+        add_action('wp_ajax_me_save_profile_form',       [__CLASS__, 'ajax_save_profile_form']);
+        add_action('wp_ajax_me_profile_create',          [__CLASS__, 'ajax_profile_create']);
+        add_action('wp_ajax_me_profile_company_preview', [__CLASS__, 'ajax_company_preview']);
+        add_action('template_redirect',                  [__CLASS__, 'maybe_handle_upgrade_link']);
     }
 
+    /**
+     * Loads a profile for the editor. A post_id of 0 means "adding a new one",
+     * in which case a blank skeleton is returned so add and edit share one path.
+     */
     public static function ajax_profile_load() : void {
         if (!check_ajax_referer('me-profile-edit-nonce', '_wpnonce', false)) {
             wp_send_json_error(['message' => 'Invalid nonce'], 403);
@@ -22,27 +32,287 @@ class Module {
         }
 
         $post_id = isset($_POST['post_id']) ? absint($_POST['post_id']) : 0;
-        if (!$post_id) {
-            wp_send_json_error(['message' => 'Missing post_id'], 400);
+
+        if ($post_id) {
+            $post = get_post($post_id);
+            if (!$post || $post->post_type !== 'mecard-profile') {
+                wp_send_json_error(['message' => 'Invalid profile'], 404);
+            }
+            $is_owner = (int) $post->post_author === get_current_user_id();
+            if (!$is_owner && !current_user_can('edit_post', $post_id)) {
+                wp_send_json_error(['message' => 'No permission'], 403);
+            }
+
+            // Reuse your existing helpers
+            $profile = Preview_Module::get_profile_data($post_id);
+        } else {
+            $profile = self::blank_profile_data();
         }
 
-        $post = get_post($post_id);
-        if (!$post || $post->post_type !== 'mecard-profile') {
-            wp_send_json_error(['message' => 'Invalid profile'], 404);
-        }
-        $is_owner = (int) $post->post_author === get_current_user_id();
-        if (!$is_owner && !current_user_can('edit_post', $post_id)) {
-            wp_send_json_error(['message' => 'No permission'], 403);
-        }
-
-        // Reuse your existing helpers
-        $profile = Preview_Module::get_profile_data($post_id);
         $company_id = $profile['company_parent'] ?? 0;
         $company = $company_id ? Preview_Module::get_company_data($company_id) : [];
 
         wp_send_json_success([
-            'profile' => $profile,
-            'company' => $company,
+            'profile'      => $profile,
+            'company'      => $company,
+            'entitlements' => self::entitlement_state($post_id),
+        ]);
+    }
+
+    /**
+     * Empty profile in the same shape as Preview_Module::get_profile_data(), used
+     * when the editor opens in add mode. A new profile starts as Pro when the
+     * user has a paid upgrade waiting to be spent.
+     */
+    protected static function blank_profile_data() : array {
+        $has_upgrade = self::available_upgrade_count() > 0;
+
+        return [
+            'first'                => '',
+            'last'                 => '',
+            'job'                  => '',
+            'email'                => '',
+            'mobile'               => '',
+            'wa'                   => '',
+            'direct_line'          => '',
+            'company_name'         => '',
+            'company_logo_id'      => 0,
+            'company_logo_url'     => '',
+            'type'                 => $has_upgrade ? 'professional' : 'standard',
+            'company_parent'       => 0,
+            'company_link_enabled' => $has_upgrade,
+            'photo_id'             => 0,
+            'photo_url'            => '',
+            'soc'                  => [
+                'facebook'  => '',
+                'twitter'   => '',
+                'linkedin'  => '',
+                'instagram' => '',
+                'youtube'   => '',
+                'tiktok'    => '',
+            ],
+        ];
+    }
+
+    /**
+     * Everything the profile-type radio needs: how many paid upgrades are left,
+     * whether this profile is already Pro (and therefore locked), and what the
+     * "buy one" call to action should say.
+     */
+    protected static function entitlement_state(int $post_id) : array {
+        $type    = $post_id ? strtolower((string) get_post_meta($post_id, 'wpcf-profile-type', true)) : '';
+        $is_pro  = in_array($type, ['pro', 'professional'], true);
+        $product = self::upgrade_product_id();
+
+        $price = '';
+        if ($product && function_exists('wc_get_product')) {
+            $wc_product = wc_get_product($product);
+            if ($wc_product && function_exists('wc_price')) {
+                // wc_price() returns markup with an entity-encoded currency symbol.
+                $price = trim(html_entity_decode(
+                    wp_strip_all_tags(wc_price($wc_product->get_price())),
+                    ENT_QUOTES,
+                    'UTF-8'
+                ));
+            }
+        }
+
+        return [
+            'available'        => self::available_upgrade_count(),
+            'isPro'            => $is_pro,
+            'upgradeProductId' => $product,
+            'upgradePrice'     => $price ?: 'R199',
+            'upgradeInCart'    => $product ? self::upgrade_in_cart($post_id) : false,
+            'basketUrl'        => function_exists('wc_get_cart_url') ? wc_get_cart_url() : '',
+        ];
+    }
+
+    protected static function available_upgrade_count() : int {
+        if (!class_exists('\\Me\\Entitlements\\Module')) {
+            return 0;
+        }
+        return \Me\Entitlements\Module::available_pro_upgrade_count(get_current_user_id());
+    }
+
+    protected static function upgrade_product_id() : int {
+        return defined('MECARD_PROFILE_UPGRADE_PRODUCT_ID') ? (int) MECARD_PROFILE_UPGRADE_PRODUCT_ID : 0;
+    }
+
+    /**
+     * Cart item key for the Pro upgrade tied to this profile, or '' if there
+     * isn't one. Public so the console list can render its own basket state.
+     */
+    public static function upgrade_cart_item_key(int $post_id) : string {
+        if (!function_exists('WC') || !WC()->cart) {
+            return '';
+        }
+        $product = self::upgrade_product_id();
+        foreach (WC()->cart->get_cart() as $key => $item) {
+            if ((int) ($item['product_id'] ?? 0) !== $product) {
+                continue;
+            }
+            if ((int) ($item['mecard_profile_id'] ?? 0) === $post_id) {
+                return (string) $key;
+            }
+        }
+        return '';
+    }
+
+    /** Is a Pro upgrade for this profile already in the basket? */
+    protected static function upgrade_in_cart(int $post_id) : bool {
+        return self::upgrade_cart_item_key($post_id) !== '';
+    }
+
+    /**
+     * Company details for the live preview, so switching the company picker
+     * re-skins the Pro preview without saving first.
+     */
+    public static function ajax_company_preview() : void {
+        if (!check_ajax_referer('me-profile-edit-nonce', '_wpnonce', false)) {
+            wp_send_json_error(['message' => 'Invalid nonce'], 403);
+        }
+        if (!is_user_logged_in()) {
+            wp_send_json_error(['message' => 'Not allowed'], 403);
+        }
+
+        $company_id = isset($_POST['company_id']) ? absint($_POST['company_id']) : 0;
+        if (!$company_id) {
+            wp_send_json_success(['company' => []]);
+        }
+
+        $company = get_post($company_id);
+        if (!$company || $company->post_type !== 'company') {
+            wp_send_json_error(['message' => 'Invalid company'], 404);
+        }
+        $is_owner = (int) $company->post_author === get_current_user_id();
+        if (!$is_owner && !current_user_can('edit_post', $company_id)) {
+            wp_send_json_error(['message' => 'No permission'], 403);
+        }
+
+        wp_send_json_success([
+            'company' => Preview_Module::get_company_data($company_id),
+        ]);
+    }
+
+    /** Put a Pro upgrade for this profile in the basket, unless one is there already. */
+    protected static function add_upgrade_to_basket(int $post_id) : bool {
+        $product = self::upgrade_product_id();
+        if ($product <= 0 || !function_exists('WC') || !WC()->cart) {
+            return false;
+        }
+        if (self::upgrade_in_cart($post_id)) {
+            return true;
+        }
+        return (bool) WC()->cart->add_to_cart($product, 1, 0, [], ['mecard_profile_id' => $post_id]);
+    }
+
+    /** Drop an unpaid Pro upgrade for this profile back out of the basket. */
+    protected static function remove_upgrade_from_basket(int $post_id) : void {
+        $key = self::upgrade_cart_item_key($post_id);
+        if ($key !== '' && function_exists('WC') && WC()->cart) {
+            WC()->cart->remove_cart_item($key);
+        }
+    }
+
+    /**
+     * Nonce-protected link that puts a Pro upgrade for $profile_id in the basket
+     * and returns to the current page. Used by the console list's upgrade button.
+     */
+    public static function upgrade_add_url(int $profile_id) : string {
+        $url = add_query_arg(
+            'mecard_add_upgrade',
+            $profile_id,
+            remove_query_arg(['mecard_add_upgrade', '_wpnonce'])
+        );
+
+        return wp_nonce_url($url, 'mecard-add-upgrade-' . $profile_id);
+    }
+
+    public static function maybe_handle_upgrade_link() : void {
+        if (empty($_GET['mecard_add_upgrade'])) {
+            return;
+        }
+
+        $profile_id = absint($_GET['mecard_add_upgrade']);
+        $nonce      = isset($_GET['_wpnonce']) ? sanitize_text_field(wp_unslash($_GET['_wpnonce'])) : '';
+
+        if (!$profile_id || !is_user_logged_in() || !wp_verify_nonce($nonce, 'mecard-add-upgrade-' . $profile_id)) {
+            wp_die('This upgrade link has expired. Please go back and try again.');
+        }
+
+        $post     = get_post($profile_id);
+        $is_owner = $post && (int) $post->post_author === get_current_user_id();
+        if (!$post || $post->post_type !== 'mecard-profile' || (!$is_owner && !current_user_can('edit_post', $profile_id))) {
+            wp_die('You do not have permission to upgrade this profile.');
+        }
+
+        self::add_upgrade_to_basket($profile_id);
+
+        wp_safe_redirect(remove_query_arg(['mecard_add_upgrade', '_wpnonce']));
+        exit;
+    }
+
+    /**
+     * Create a brand new mecard-profile from the shared editor form.
+     *
+     * Replaces the Toolset "Add MeCard Profile" CRED form so adding and editing
+     * both run through the same markup and the same save routine.
+     */
+    public static function ajax_profile_create() : void {
+        if (!check_ajax_referer('me-profile-edit-nonce', '_wpnonce', false)) {
+            wp_send_json_error(['message' => 'Invalid nonce'], 403);
+        }
+        if (!is_user_logged_in()) {
+            wp_send_json_error(['message' => 'Not allowed'], 403);
+        }
+
+        $user_id = get_current_user_id();
+
+        $first = isset($_POST['wpcf-first-name']) ? sanitize_text_field($_POST['wpcf-first-name']) : '';
+        $last  = isset($_POST['wpcf-last-name'])  ? sanitize_text_field($_POST['wpcf-last-name'])  : '';
+        if ($first === '') {
+            wp_send_json_error(['message' => 'Please enter a first name for this profile.'], 400);
+        }
+
+        // The profile is born Standard; going Pro is decided by the form and paid
+        // for out of an upgrade entitlement (see apply_requested_profile_type).
+        self::suspend_upgrade_autoassign();
+        $post_id = wp_insert_post([
+            'post_type'   => 'mecard-profile',
+            'post_status' => 'publish',
+            'post_title'  => trim($first . ' ' . $last),
+            'post_author' => $user_id,
+            'meta_input'  => [
+                'me_profile_owner_user_id' => $user_id,
+                'wpcf-profile-type'        => 'standard',
+            ],
+        ], true);
+        self::resume_upgrade_autoassign();
+
+        if (is_wp_error($post_id) || !$post_id) {
+            wp_send_json_error(['message' => 'Could not create the profile.'], 500);
+        }
+
+        $post_id = (int) $post_id;
+
+        self::save_profile_meta($post_id);
+
+        // first_profile_created is normally flagged on save_post_mecard-profile,
+        // but that hook skips AJAX requests, so flag the team route here.
+        if (!get_user_meta($user_id, '_mecard_conv_fired', true)) {
+            update_user_meta($user_id, '_mecard_conv_pending', 'team');
+        }
+
+        $profile    = Preview_Module::get_profile_data($post_id);
+        $company_id = $profile['company_parent'] ?? 0;
+        $company    = $company_id ? Preview_Module::get_company_data($company_id) : [];
+
+        wp_send_json_success([
+            'message'      => 'Profile created',
+            'post_id'      => $post_id,
+            'profile'      => $profile,
+            'company'      => $company,
+            'entitlements' => self::entitlement_state($post_id),
         ]);
     }
 
@@ -64,7 +334,31 @@ class Module {
             wp_send_json_error(['message' => 'No permission or invalid post'], 403);
         }
 
-        // Save core meta – same keys you already use
+        self::save_profile_meta($post_id);
+
+        // Return fresh JSON so JS can refresh preview
+        $profile = Preview_Module::get_profile_data($post_id);
+        $company_id = $profile['company_parent'] ?? 0;
+        $company = $company_id ? Preview_Module::get_company_data($company_id) : [];
+
+        wp_send_json_success([
+            'message'      => 'Profile saved',
+            'profile'      => $profile,
+            'company'      => $company,
+            'entitlements' => self::entitlement_state($post_id),
+        ]);
+    }
+
+    /**
+     * Write the posted editor form onto a profile. Shared by create and save.
+     * Assumes the caller has already checked the nonce and permissions.
+     */
+    protected static function save_profile_meta(int $post_id) : void {
+        self::suspend_upgrade_autoassign();
+
+        // Save core meta – same keys you already use.
+        // wpcf-profile-type is deliberately absent: Pro is granted by spending an
+        // upgrade entitlement, not by whatever the form posted.
         $fields = [
             'wpcf-first-name',
             'wpcf-last-name',
@@ -73,7 +367,6 @@ class Module {
             'wpcf-mobile-number',
             'wpcf-whatsapp-number',
             'wpcf-work-phone-number',
-            'wpcf-profile-type',
             'wpcf-company-r',
             'wpcf-company_name',
             'wpcf-facebook-url',
@@ -89,11 +382,32 @@ class Module {
             }
         }
 
-        $company_parent = isset($_POST['company_parent']) ? absint($_POST['company_parent']) : 0;
-        update_post_meta($post_id, 'company_parent', $company_parent);
+        // Only touch the company link when the picker was actually on the form.
+        // Standard profiles show a plain company-name text box instead, and a
+        // missing field must not be read as "detach the company".
+        $company_posted = isset($_POST['company_parent']);
+        $company_parent = 0;
+
+        if ($company_posted) {
+            $requested = sanitize_text_field($_POST['company_parent']);
+
+            if ($requested === 'new') {
+                // The user named a company that doesn't exist yet. Nothing in the
+                // editor could create one before — both company save handlers
+                // require an existing ID — so make it here.
+                $new_name = isset($_POST['me_new_company_name'])
+                    ? sanitize_text_field($_POST['me_new_company_name'])
+                    : '';
+                $company_parent = $new_name !== '' ? self::create_company($new_name) : 0;
+            } else {
+                $company_parent = absint($requested);
+            }
+
+            update_post_meta($post_id, 'company_parent', $company_parent);
+        }
 
         // Keep Toolset relationship in sync with the post meta value
-        if (function_exists('toolset_get_related_posts')) {
+        if ($company_posted && function_exists('toolset_get_related_posts')) {
             $existing_parents = toolset_get_related_posts(
                 $post_id,
                 'company-mecard-profile',
@@ -136,16 +450,102 @@ class Module {
             }
         }
 
-        // Return fresh JSON so JS can refresh preview
-        $profile = Preview_Module::get_profile_data($post_id);
-        $company_id = $profile['company_parent'] ?? 0;
-        $company = $company_id ? Preview_Module::get_company_data($company_id) : [];
+        // Keep the post title in step with the name, the way the Toolset forms did.
+        $first = isset($_POST['wpcf-first-name']) ? sanitize_text_field($_POST['wpcf-first-name']) : '';
+        $last  = isset($_POST['wpcf-last-name'])  ? sanitize_text_field($_POST['wpcf-last-name'])  : '';
+        $title = trim($first . ' ' . $last);
+        if ($title !== '' && $title !== get_the_title($post_id)) {
+            wp_update_post([
+                'ID'         => $post_id,
+                'post_title' => $title,
+            ]);
+        }
 
-        wp_send_json_success([
-            'message' => 'Profile saved',
-            'profile' => $profile,
-            'company' => $company,
-        ]);
+        self::resume_upgrade_autoassign();
+
+        self::apply_requested_profile_type($post_id);
+    }
+
+    /**
+     * Create a company owned by the current user. Mirrors
+     * Single_Editor\Module::create_company_for_profile(); branding is filled in
+     * afterwards via the "Edit company design" button.
+     */
+    protected static function create_company(string $name) : int {
+        $company_id = wp_insert_post([
+            'post_type'   => 'company',
+            'post_status' => 'publish',
+            'post_author' => get_current_user_id(),
+            'post_title'  => $name,
+        ], true);
+
+        return is_wp_error($company_id) ? 0 : (int) $company_id;
+    }
+
+    /**
+     * Honour the Standard / Pro radio.
+     *
+     * Pro is only ever granted by spending a paid upgrade entitlement, and once a
+     * profile is Pro this form will not take it back — releasing a consumed
+     * upgrade is a refund decision, not an edit.
+     */
+    protected static function apply_requested_profile_type(int $post_id) : void {
+        $current = strtolower((string) get_post_meta($post_id, 'wpcf-profile-type', true));
+        if (in_array($current, ['pro', 'professional'], true)) {
+            return;
+        }
+
+        $requested = isset($_POST['wpcf-profile-type'])
+            ? strtolower(sanitize_text_field($_POST['wpcf-profile-type']))
+            : '';
+
+        if (!in_array($requested, ['pro', 'professional'], true)) {
+            if ($current === '') {
+                update_post_meta($post_id, 'wpcf-profile-type', 'standard');
+            }
+            // Backing out of Pro should not leave an unpaid upgrade in the basket.
+            self::remove_upgrade_from_basket($post_id);
+            return;
+        }
+
+        if (class_exists('\\Me\\Entitlements\\Module')) {
+            $owner = (int) get_post_meta($post_id, 'me_profile_owner_user_id', true);
+            if ($owner <= 0) {
+                $owner = (int) get_post_field('post_author', $post_id);
+            }
+            // Consumes one paid_unassigned pro_upgrade row and flips the meta to
+            // "professional". Does nothing when the user has none left.
+            \Me\Entitlements\Module::assign_available_entitlements_for_profile($post_id, $owner);
+        }
+
+        $after = strtolower((string) get_post_meta($post_id, 'wpcf-profile-type', true));
+        if (in_array($after, ['pro', 'professional'], true)) {
+            return;
+        }
+
+        // Nothing to spend — the profile stays Standard and the R199 upgrade goes
+        // into the basket. Checkout consumes it and flips the profile to Pro.
+        update_post_meta($post_id, 'wpcf-profile-type', 'standard');
+        self::add_upgrade_to_basket($post_id);
+    }
+
+    /**
+     * Entitlements auto-assigns any spare upgrade on every profile save. That
+     * would override the radio, so it is muted while this editor writes and the
+     * assignment is made explicitly instead.
+     */
+    protected static function suspend_upgrade_autoassign() : void {
+        if (self::$autoassign_suspended === 0 && class_exists('\\Me\\Entitlements\\Module')) {
+            remove_action('save_post_mecard-profile', ['Me\\Entitlements\\Module', 'maybe_assign_on_profile_save'], 20);
+        }
+        self::$autoassign_suspended++;
+    }
+
+    protected static function resume_upgrade_autoassign() : void {
+        self::$autoassign_suspended = max(0, self::$autoassign_suspended - 1);
+        if (self::$autoassign_suspended === 0 && class_exists('\\Me\\Entitlements\\Module')) {
+            add_action('save_post_mecard-profile', ['Me\\Entitlements\\Module', 'maybe_assign_on_profile_save'], 20, 3);
+        }
     }
 }
 

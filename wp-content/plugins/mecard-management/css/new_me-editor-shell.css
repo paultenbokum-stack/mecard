@@ -8,17 +8,18 @@
     pointer-events: none;
 }
 
-.me-company-upgrade-hint {
-    font-size: 0.85em;
-    color: #666;
-    margin-top: 6px;
-    margin-bottom: 0;
+/* Space between the company dropdown and the "new company" name box */
+#me_new_company_name.has-picker-above {
+    margin-top: 8px;
 }
 
-.me-company-upgrade-hint a {
-    color: #1a73e8;
-    text-decoration: underline;
+/* Caption under the Pro preview while it is showing sample company branding */
+#meProSampleNote {
+    font-size: 0.85em;
+    font-style: italic;
+    color: #666;
 }
+
 .me-editor {
     position: relative;
     display: flex;
