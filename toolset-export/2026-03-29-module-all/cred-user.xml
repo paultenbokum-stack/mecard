@@ -1,0 +1,739 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<forms>
+    <form>
+        <ID>1672</ID>
+        <post_content>[creduserform]
+	[cred_field field=&#039;form_messages&#039; class=&#039;alert alert-warning&#039;]
+	&lt;div class=&quot;form-group&quot;&gt;
+		&lt;label for=&quot;%%FORM_ID%%_first_name&quot;&gt;[cred_i18n name=&#039;first_name-label&#039;]First name[/cred_i18n]&lt;/label&gt;
+		[cred_field field=&#039;first_name&#039; class=&#039;form-control&#039; output=&#039;bootstrap&#039;]
+	&lt;/div&gt;
+	&lt;div class=&quot;form-group&quot;&gt;
+		&lt;label for=&quot;%%FORM_ID%%_last_name&quot;&gt;[cred_i18n name=&#039;last_name-label&#039;]Last name[/cred_i18n]&lt;/label&gt;
+		[cred_field field=&#039;last_name&#039; class=&#039;form-control&#039; output=&#039;bootstrap&#039;]
+	&lt;/div&gt;
+	&lt;div class=&quot;form-group&quot;&gt;
+		&lt;label for=&quot;%%FORM_ID%%_user_email&quot;&gt;[cred_i18n name=&#039;user_email-label&#039;]Email[/cred_i18n]&lt;/label&gt;
+		[cred_field field=&#039;user_email&#039; class=&#039;form-control&#039; output=&#039;bootstrap&#039;]
+	&lt;/div&gt;
+	&lt;div class=&quot;form-group&quot;&gt;
+		&lt;label for=&quot;%%FORM_ID%%_user_pass&quot;&gt;[cred_i18n name=&#039;user_pass-label&#039;]Password[/cred_i18n]&lt;/label&gt;
+		[cred_field field=&#039;user_pass&#039; class=&#039;form-control&#039; output=&#039;bootstrap&#039;]
+&lt;label for=&quot;%%FORM_ID%%_user_pass2&quot;&gt;[cred_i18n name=&#039;user_pass2-label&#039;]Repeat Password[/cred_i18n]&lt;/label&gt;[cred_field field=&#039;user_pass2&#039; class=&#039;form-control&#039; output=&#039;bootstrap&#039;]
+	&lt;/div&gt;
+	[cred_field field=&#039;form_submit&#039; output=&#039;bootstrap&#039; value=&#039;Create Account&#039; class=&#039;btn btn-primary btn-lg&#039;]
+[/creduserform]</post_content>
+        <post_title>Add new Profile Editor</post_title>
+        <post_name>add-new-profile-editor</post_name>
+        <post_type>cred-user-form</post_type>
+        <meta>
+            <commerce>
+                <associate_product>form</associate_product>
+                <clear_cart>1</clear_cart>
+                <messages>
+                    <checkout></checkout>
+                    <thankyou></thankyou>
+                </messages>
+                <order_cancelled>
+                    <post_status>draft</post_status>
+                </order_cancelled>
+                <order_completed>
+                    <post_status>publish</post_status>
+                </order_completed>
+                <order_processing>
+                    <post_status>draft</post_status>
+                </order_processing>
+                <order_refunded>
+                    <post_status>draft</post_status>
+                </order_refunded>
+            </commerce>
+            <extra>
+                <css></css>
+                <editor_origin>html</editor_origin>
+                <js></js>
+                <messages>
+                    <cred_message_access_error_can_not_use_form></cred_message_access_error_can_not_use_form>
+                    <cred_message_add_new_taxonomy>Add New</cred_message_add_new_taxonomy>
+                    <cred_message_add_taxonomy>Add</cred_message_add_taxonomy>
+                    <cred_message_edit_skype_button>Edit Skype Button</cred_message_edit_skype_button>
+                    <cred_message_email_already_exists>Sorry, that email address is already used!</cred_message_email_already_exists>
+                    <cred_message_enter_valid_captcha>Wrong CAPTCHA</cred_message_enter_valid_captcha>
+                    <cred_message_enter_valid_colorpicker>Please use a valid hexadecimal value</cred_message_enter_valid_colorpicker>
+                    <cred_message_enter_valid_date>Please enter a valid date</cred_message_enter_valid_date>
+                    <cred_message_enter_valid_email>Please enter a valid email address</cred_message_enter_valid_email>
+                    <cred_message_enter_valid_number>Please enter numeric data</cred_message_enter_valid_number>
+                    <cred_message_enter_valid_url>Please enter a valid URL address</cred_message_enter_valid_url>
+                    <cred_message_field_required>This field is required</cred_message_field_required>
+                    <cred_message_file_type_not_allowed>File type not allowed</cred_message_file_type_not_allowed>
+                    <cred_message_hide_popular>Hide Popular</cred_message_hide_popular>
+                    <cred_message_image_height_larger>Image height larger than %dpx</cred_message_image_height_larger>
+                    <cred_message_image_width_larger>Image width larger than %dpx</cred_message_image_width_larger>
+                    <cred_message_invalid_edit_user_role>This form can not edit users with a role of %%EDITED_USER_ROLE%%</cred_message_invalid_edit_user_role>
+                    <cred_message_invalid_form_submission>Invalid User Form Submission (nonce failure)</cred_message_invalid_form_submission>
+                    <cred_message_invalid_username>The username can only contain alphanumeric characters, spaces, -, _, . or @</cred_message_invalid_username>
+                    <cred_message_missing_captcha>Missing CAPTCHA</cred_message_missing_captcha>
+                    <cred_message_no_data_submitted>Invalid User Form Submission (maybe a file has a size greater than allowed)</cred_message_no_data_submitted>
+                    <cred_message_not_valid_image>Not Valid Image</cred_message_not_valid_image>
+                    <cred_message_passwords_do_not_match>Passwords do not match</cred_message_passwords_do_not_match>
+                    <cred_message_post_not_saved_plural>The user was not saved because of the following %NN problems:</cred_message_post_not_saved_plural>
+                    <cred_message_post_not_saved_singular>The user was not saved because of the following problem:</cred_message_post_not_saved_singular>
+                    <cred_message_post_saved>User Saved</cred_message_post_saved>
+                    <cred_message_remove_taxonomy>Remove</cred_message_remove_taxonomy>
+                    <cred_message_show_captcha>Show CAPTCHA</cred_message_show_captcha>
+                    <cred_message_show_popular>Show Popular</cred_message_show_popular>
+                    <cred_message_upload_failed>Upload Failed</cred_message_upload_failed>
+                    <cred_message_username_already_exists>Sorry, that username already exists!</cred_message_username_already_exists>
+                    <cred_message_values_do_not_match>Field values do not match</cred_message_values_do_not_match>
+                </messages>
+                <scaffold>{\\\&quot;fields\\\&quot;:[{\\\&quot;scaffold_field_id\\\&quot;:\\\&quot;form_messages\\\&quot;,\\\&quot;field\\\&quot;:\\\&quot;form_messages\\\&quot;,\\\&quot;class\\\&quot;:\\\&quot;alert alert-warning\\\&quot;,\\\&quot;isRepetitive\\\&quot;:false,\\\&quot;isNested\\\&quot;:false,\\\&quot;numColumns\\\&quot;:1,\\\&quot;sizeColumn\\\&quot;:1,\\\&quot;fieldtype\\\&quot;:\\\&quot;formElement\\\&quot;},{\\\&quot;scaffold_field_id\\\&quot;:\\\&quot;user_login\\\&quot;,\\\&quot;field\\\&quot;:\\\&quot;user_login\\\&quot;,\\\&quot;class\\\&quot;:\\\&quot;form-control\\\&quot;,\\\&quot;output\\\&quot;:\\\&quot;bootstrap\\\&quot;,\\\&quot;label\\\&quot;:\\\&quot;Username\\\&quot;,\\\&quot;isNested\\\&quot;:false,\\\&quot;numColumns\\\&quot;:1,\\\&quot;sizeColumn\\\&quot;:1,\\\&quot;fieldtype\\\&quot;:\\\&quot;basic\\\&quot;},{\\\&quot;scaffold_field_id\\\&quot;:\\\&quot;first_name\\\&quot;,\\\&quot;field\\\&quot;:\\\&quot;first_name\\\&quot;,\\\&quot;class\\\&quot;:\\\&quot;form-control\\\&quot;,\\\&quot;output\\\&quot;:\\\&quot;bootstrap\\\&quot;,\\\&quot;label\\\&quot;:\\\&quot;First name\\\&quot;,\\\&quot;isNested\\\&quot;:false,\\\&quot;numColumns\\\&quot;:1,\\\&quot;sizeColumn\\\&quot;:1,\\\&quot;fieldtype\\\&quot;:\\\&quot;basic\\\&quot;},{\\\&quot;scaffold_field_id\\\&quot;:\\\&quot;last_name\\\&quot;,\\\&quot;field\\\&quot;:\\\&quot;last_name\\\&quot;,\\\&quot;class\\\&quot;:\\\&quot;form-control\\\&quot;,\\\&quot;output\\\&quot;:\\\&quot;bootstrap\\\&quot;,\\\&quot;label\\\&quot;:\\\&quot;Last name\\\&quot;,\\\&quot;isNested\\\&quot;:false,\\\&quot;numColumns\\\&quot;:1,\\\&quot;sizeColumn\\\&quot;:1,\\\&quot;fieldtype\\\&quot;:\\\&quot;basic\\\&quot;},{\\\&quot;scaffold_field_id\\\&quot;:\\\&quot;user_email\\\&quot;,\\\&quot;field\\\&quot;:\\\&quot;user_email\\\&quot;,\\\&quot;class\\\&quot;:\\\&quot;form-control\\\&quot;,\\\&quot;output\\\&quot;:\\\&quot;bootstrap\\\&quot;,\\\&quot;label\\\&quot;:\\\&quot;Email\\\&quot;,\\\&quot;isNested\\\&quot;:false,\\\&quot;numColumns\\\&quot;:1,\\\&quot;sizeColumn\\\&quot;:1,\\\&quot;fieldtype\\\&quot;:\\\&quot;basic\\\&quot;},{\\\&quot;scaffold_field_id\\\&quot;:\\\&quot;user_pass\\\&quot;,\\\&quot;field\\\&quot;:\\\&quot;user_pass\\\&quot;,\\\&quot;class\\\&quot;:\\\&quot;form-control\\\&quot;,\\\&quot;output\\\&quot;:\\\&quot;bootstrap\\\&quot;,\\\&quot;confirm_pass\\\&quot;:\\\&quot;yes\\\&quot;,\\\&quot;label\\\&quot;:\\\&quot;Password\\\&quot;,\\\&quot;isNested\\\&quot;:false,\\\&quot;numColumns\\\&quot;:1,\\\&quot;sizeColumn\\\&quot;:1,\\\&quot;fieldtype\\\&quot;:\\\&quot;basic\\\&quot;},{\\\&quot;scaffold_field_id\\\&quot;:\\\&quot;nickname\\\&quot;,\\\&quot;field\\\&quot;:\\\&quot;nickname\\\&quot;,\\\&quot;class\\\&quot;:\\\&quot;form-control\\\&quot;,\\\&quot;output\\\&quot;:\\\&quot;bootstrap\\\&quot;,\\\&quot;label\\\&quot;:\\\&quot;Nickname\\\&quot;,\\\&quot;isNested\\\&quot;:false,\\\&quot;numColumns\\\&quot;:1,\\\&quot;sizeColumn\\\&quot;:1,\\\&quot;fieldtype\\\&quot;:\\\&quot;basic\\\&quot;},{\\\&quot;scaffold_field_id\\\&quot;:\\\&quot;form_submit\\\&quot;,\\\&quot;field\\\&quot;:\\\&quot;form_submit\\\&quot;,\\\&quot;output\\\&quot;:\\\&quot;bootstrap\\\&quot;,\\\&quot;value\\\&quot;:\\\&quot;Create Account\\\&quot;,\\\&quot;class\\\&quot;:\\\&quot;btn btn-primary btn-lg\\\&quot;,\\\&quot;isRepetitive\\\&quot;:false,\\\&quot;isNested\\\&quot;:false,\\\&quot;numColumns\\\&quot;:1,\\\&quot;sizeColumn\\\&quot;:1,\\\&quot;fieldtype\\\&quot;:\\\&quot;formElement\\\&quot;}],\\\&quot;options\\\&quot;:[\\\&quot;autogeneratedUsername\\\&quot;,\\\&quot;autogeneratedNickname\\\&quot;]}</scaffold>
+            </extra>
+            <form_settings>
+                <form>
+                    <action>message</action>
+                    <action_message>Thanks, you are signed up.</action_message>
+                    <action_page></action_page>
+                    <autogenerate_nickname_scaffold>0</autogenerate_nickname_scaffold>
+                    <autogenerate_password_scaffold>0</autogenerate_password_scaffold>
+                    <autogenerate_username_scaffold>0</autogenerate_username_scaffold>
+                    <has_media_button>1</has_media_button>
+                    <has_media_manager>1</has_media_manager>
+                    <has_toolset_buttons>1</has_toolset_buttons>
+                    <hide_comments>0</hide_comments>
+                    <include_captcha_scaffold>0</include_captcha_scaffold>
+                    <include_wpml_scaffold>0</include_wpml_scaffold>
+                    <redirect_delay>0</redirect_delay>
+                    <theme>minimal</theme>
+                    <type>new</type>
+                    <use_ajax>0</use_ajax>
+                    <user_role>[&quot;profile_owner&quot;]</user_role>
+                </form>
+                <post>
+                    <post_status></post_status>
+                    <post_type></post_type>
+                </post>
+            </form_settings>
+            <notification>
+                <enable>1</enable>
+                <notifications>
+                    <notifications_item>
+                        <disabled>0</disabled>
+                        <event>
+                            <any_all>ALL</any_all>
+                            <post_status>publish</post_status>
+                            <type>form_submit</type>
+                        </event>
+                        <from>
+                            <address></address>
+                            <name>MeCard Admin</name>
+                        </from>
+                        <mail>
+                            <body>Dear %%USER_FIRST_NAME%%,%%CRED_NL%%%%CRED_NL%%Congrats on signing up on the MeCard Website. Your account will allow you to edit the profile details for MeCard profiles assigned to you.%%CRED_NL%%%%CRED_NL%%This means that you\&#039;ll be able to keep your profile info updated, so that you only share your latest contact details with the people you meet.%%CRED_NL%%%%CRED_NL%%Kind regards,%%CRED_NL%%%%CRED_NL%%The MeCard team%%CRED_NL%%%%CRED_NL%%If you didn\&#039;t sign up, and receieved this email in error, please forward thisd email to info@mecard.co.za.</body>
+                            <subject>Thanks for signing up, %%USER_FIRST_NAME%%!</subject>
+                        </mail>
+                        <name>Profile edit signup</name>
+                        <to>
+                            <mail_field>
+                                <address_field>user_email</address_field>
+                                <lastname_field>last_name</lastname_field>
+                                <name_field>first_name</name_field>
+                                <to_type>to</to_type>
+                            </mail_field>
+                            <specific_mail>
+                                <address></address>
+                            </specific_mail>
+                            <type>
+                                <type_item>mail_field</type_item>
+                            </type>
+                            <user_id_field>
+                                <field_name></field_name>
+                                <to_type>to</to_type>
+                            </user_id_field>
+                            <wp_user>
+                                <to_type>to</to_type>
+                                <user></user>
+                            </wp_user>
+                        </to>
+                    </notifications_item>
+                </notifications>
+            </notification>
+            <post_expiration>
+                <enable>0</enable>
+            </post_expiration>
+            <wizard>0</wizard>
+        </meta>
+    </form>
+    <form>
+        <ID>285</ID>
+        <post_content>[creduserform]
+	[cred_field field=&#039;form_messages&#039; class=&#039;alert alert-warning&#039;]
+	&lt;div class=&quot;form-group&quot;&gt;
+		&lt;label for=&quot;%%FORM_ID%%_first_name&quot;&gt;[cred_i18n name=&#039;first_name-label&#039;]First name[/cred_i18n]&lt;/label&gt;
+		[cred_field field=&#039;first_name&#039; class=&#039;form-control&#039; output=&#039;bootstrap&#039;]
+	&lt;/div&gt;
+	&lt;div class=&quot;form-group&quot;&gt;
+		&lt;label for=&quot;%%FORM_ID%%_last_name&quot;&gt;[cred_i18n name=&#039;last_name-label&#039;]Last name[/cred_i18n]&lt;/label&gt;
+		[cred_field field=&#039;last_name&#039; class=&#039;form-control&#039; output=&#039;bootstrap&#039;]
+	&lt;/div&gt;
+	&lt;div class=&quot;form-group&quot;&gt;
+		&lt;label for=&quot;%%FORM_ID%%_user_email&quot;&gt;[cred_i18n name=&#039;user_email-label&#039;]Email[/cred_i18n]&lt;/label&gt;
+		[cred_field field=&#039;user_email&#039; class=&#039;form-control&#039; output=&#039;bootstrap&#039;]
+	&lt;/div&gt;
+	&lt;div class=&quot;form-group&quot;&gt;
+		&lt;label for=&quot;%%FORM_ID%%_mobile_number&quot;&gt;[cred_i18n name=&#039;mobile_number-label&#039;]Mobile Number[/cred_i18n]&lt;/label&gt;
+		[cred_field field=&#039;mobile_number&#039; force_type=&#039;field&#039; class=&#039;form-control&#039; output=&#039;bootstrap&#039;]
+	&lt;/div&gt;
+	&lt;div class=&quot;form-group&quot;&gt;
+		&lt;label for=&quot;%%FORM_ID%%_user_pass&quot;&gt;[cred_i18n name=&#039;user_pass-label&#039;]Password[/cred_i18n]&lt;/label&gt;
+		[cred_field field=&#039;user_pass&#039; class=&#039;form-control&#039; output=&#039;bootstrap&#039;]
+&lt;label for=&quot;%%FORM_ID%%_user_pass2&quot;&gt;[cred_i18n name=&#039;user_pass2-label&#039;]Repeat Password[/cred_i18n]&lt;/label&gt;[cred_field field=&#039;user_pass2&#039; class=&#039;form-control&#039; output=&#039;bootstrap&#039;]
+	&lt;/div&gt;
+	[cred_field field=&#039;form_submit&#039; output=&#039;bootstrap&#039; value=&#039;Submit&#039; class=&#039;btn btn-primary btn-lg&#039;]
+[/creduserform]</post_content>
+        <post_title>MeCard User</post_title>
+        <post_name>mecard-user</post_name>
+        <post_type>cred-user-form</post_type>
+        <meta>
+            <commerce>
+                <associate_product>form</associate_product>
+                <clear_cart>1</clear_cart>
+                <messages>
+                    <checkout></checkout>
+                    <thankyou></thankyou>
+                </messages>
+                <order_cancelled>
+                    <post_status>draft</post_status>
+                </order_cancelled>
+                <order_completed>
+                    <post_status>publish</post_status>
+                </order_completed>
+                <order_processing>
+                    <post_status>draft</post_status>
+                </order_processing>
+                <order_refunded>
+                    <post_status>draft</post_status>
+                </order_refunded>
+            </commerce>
+            <extra>
+                <css></css>
+                <editor_origin>html</editor_origin>
+                <js></js>
+                <messages>
+                    <cred_message_access_error_can_not_use_form></cred_message_access_error_can_not_use_form>
+                    <cred_message_add_new_taxonomy>Add New</cred_message_add_new_taxonomy>
+                    <cred_message_add_taxonomy>Add</cred_message_add_taxonomy>
+                    <cred_message_edit_skype_button>Edit Skype Button</cred_message_edit_skype_button>
+                    <cred_message_email_already_exists>Sorry, that email address is already used!</cred_message_email_already_exists>
+                    <cred_message_enter_valid_captcha>Wrong CAPTCHA</cred_message_enter_valid_captcha>
+                    <cred_message_enter_valid_colorpicker>Please use a valid hexadecimal value</cred_message_enter_valid_colorpicker>
+                    <cred_message_enter_valid_date>Please enter a valid date</cred_message_enter_valid_date>
+                    <cred_message_enter_valid_email>Please enter a valid email address</cred_message_enter_valid_email>
+                    <cred_message_enter_valid_number>Please enter numeric data</cred_message_enter_valid_number>
+                    <cred_message_enter_valid_url>Please enter a valid URL address</cred_message_enter_valid_url>
+                    <cred_message_field_required>This field is required</cred_message_field_required>
+                    <cred_message_file_type_not_allowed>File type not allowed</cred_message_file_type_not_allowed>
+                    <cred_message_hide_popular>Hide Popular</cred_message_hide_popular>
+                    <cred_message_image_height_larger>Image height larger than %dpx</cred_message_image_height_larger>
+                    <cred_message_image_width_larger>Image width larger than %dpx</cred_message_image_width_larger>
+                    <cred_message_invalid_edit_user_role>This form can not edit users with a role of %%EDITED_USER_ROLE%%</cred_message_invalid_edit_user_role>
+                    <cred_message_invalid_form_submission>Invalid User Form Submission (nonce failure)</cred_message_invalid_form_submission>
+                    <cred_message_invalid_username>The username can only contain alphanumeric characters, spaces, -, _, . or @</cred_message_invalid_username>
+                    <cred_message_missing_captcha>Missing CAPTCHA</cred_message_missing_captcha>
+                    <cred_message_no_data_submitted>Invalid User Form Submission (maybe a file has a size greater than allowed)</cred_message_no_data_submitted>
+                    <cred_message_not_valid_image>Not Valid Image</cred_message_not_valid_image>
+                    <cred_message_passwords_do_not_match>Passwords do not match</cred_message_passwords_do_not_match>
+                    <cred_message_post_not_saved_plural>The user was not saved because of the following %NN problems:</cred_message_post_not_saved_plural>
+                    <cred_message_post_not_saved_singular>The user was not saved because of the following problem:</cred_message_post_not_saved_singular>
+                    <cred_message_post_saved>User Saved</cred_message_post_saved>
+                    <cred_message_remove_taxonomy>Remove</cred_message_remove_taxonomy>
+                    <cred_message_show_captcha>Show CAPTCHA</cred_message_show_captcha>
+                    <cred_message_show_popular>Show Popular</cred_message_show_popular>
+                    <cred_message_upload_failed>Upload Failed</cred_message_upload_failed>
+                    <cred_message_username_already_exists>Sorry, that username already exists!</cred_message_username_already_exists>
+                    <cred_message_values_do_not_match>Field values do not match</cred_message_values_do_not_match>
+                </messages>
+                <scaffold>{\\\&quot;fields\\\&quot;:[{\\\&quot;scaffold_field_id\\\&quot;:\\\&quot;form_messages\\\&quot;,\\\&quot;field\\\&quot;:\\\&quot;form_messages\\\&quot;,\\\&quot;class\\\&quot;:\\\&quot;alert alert-warning\\\&quot;,\\\&quot;isRepetitive\\\&quot;:false,\\\&quot;isNested\\\&quot;:false,\\\&quot;numColumns\\\&quot;:1,\\\&quot;sizeColumn\\\&quot;:1,\\\&quot;fieldtype\\\&quot;:\\\&quot;formElement\\\&quot;},{\\\&quot;scaffold_field_id\\\&quot;:\\\&quot;first_name\\\&quot;,\\\&quot;field\\\&quot;:\\\&quot;first_name\\\&quot;,\\\&quot;class\\\&quot;:\\\&quot;form-control\\\&quot;,\\\&quot;output\\\&quot;:\\\&quot;bootstrap\\\&quot;,\\\&quot;isRepetitive\\\&quot;:false,\\\&quot;label\\\&quot;:\\\&quot;First name\\\&quot;,\\\&quot;isNested\\\&quot;:false,\\\&quot;numColumns\\\&quot;:1,\\\&quot;sizeColumn\\\&quot;:1,\\\&quot;fieldtype\\\&quot;:\\\&quot;basic\\\&quot;},{\\\&quot;scaffold_field_id\\\&quot;:\\\&quot;last_name\\\&quot;,\\\&quot;field\\\&quot;:\\\&quot;last_name\\\&quot;,\\\&quot;class\\\&quot;:\\\&quot;form-control\\\&quot;,\\\&quot;output\\\&quot;:\\\&quot;bootstrap\\\&quot;,\\\&quot;isRepetitive\\\&quot;:false,\\\&quot;label\\\&quot;:\\\&quot;Last name\\\&quot;,\\\&quot;isNested\\\&quot;:false,\\\&quot;numColumns\\\&quot;:1,\\\&quot;sizeColumn\\\&quot;:1,\\\&quot;fieldtype\\\&quot;:\\\&quot;basic\\\&quot;},{\\\&quot;scaffold_field_id\\\&quot;:\\\&quot;user_email\\\&quot;,\\\&quot;field\\\&quot;:\\\&quot;user_email\\\&quot;,\\\&quot;class\\\&quot;:\\\&quot;form-control\\\&quot;,\\\&quot;output\\\&quot;:\\\&quot;bootstrap\\\&quot;,\\\&quot;isRepetitive\\\&quot;:false,\\\&quot;label\\\&quot;:\\\&quot;Email\\\&quot;,\\\&quot;isNested\\\&quot;:false,\\\&quot;numColumns\\\&quot;:1,\\\&quot;sizeColumn\\\&quot;:1,\\\&quot;fieldtype\\\&quot;:\\\&quot;basic\\\&quot;},{\\\&quot;scaffold_field_id\\\&quot;:\\\&quot;mobile_number\\\&quot;,\\\&quot;field\\\&quot;:\\\&quot;mobile_number\\\&quot;,\\\&quot;force_type\\\&quot;:\\\&quot;field\\\&quot;,\\\&quot;class\\\&quot;:\\\&quot;form-control\\\&quot;,\\\&quot;output\\\&quot;:\\\&quot;bootstrap\\\&quot;,\\\&quot;isRepetitive\\\&quot;:false,\\\&quot;label\\\&quot;:\\\&quot;Mobile Number\\\&quot;,\\\&quot;isNested\\\&quot;:false,\\\&quot;numColumns\\\&quot;:1,\\\&quot;sizeColumn\\\&quot;:1,\\\&quot;fieldtype\\\&quot;:\\\&quot;meta\\\&quot;},{\\\&quot;scaffold_field_id\\\&quot;:\\\&quot;user_pass\\\&quot;,\\\&quot;field\\\&quot;:\\\&quot;user_pass\\\&quot;,\\\&quot;class\\\&quot;:\\\&quot;form-control\\\&quot;,\\\&quot;output\\\&quot;:\\\&quot;bootstrap\\\&quot;,\\\&quot;confirm_pass\\\&quot;:\\\&quot;yes\\\&quot;,\\\&quot;isRepetitive\\\&quot;:false,\\\&quot;label\\\&quot;:\\\&quot;Password\\\&quot;,\\\&quot;isNested\\\&quot;:false,\\\&quot;numColumns\\\&quot;:1,\\\&quot;sizeColumn\\\&quot;:1,\\\&quot;fieldtype\\\&quot;:\\\&quot;basic\\\&quot;},{\\\&quot;scaffold_field_id\\\&quot;:\\\&quot;nickname\\\&quot;,\\\&quot;field\\\&quot;:\\\&quot;nickname\\\&quot;,\\\&quot;class\\\&quot;:\\\&quot;form-control\\\&quot;,\\\&quot;output\\\&quot;:\\\&quot;bootstrap\\\&quot;,\\\&quot;label\\\&quot;:\\\&quot;Nickname\\\&quot;,\\\&quot;isNested\\\&quot;:false,\\\&quot;numColumns\\\&quot;:1,\\\&quot;sizeColumn\\\&quot;:1,\\\&quot;fieldtype\\\&quot;:\\\&quot;basic\\\&quot;},{\\\&quot;scaffold_field_id\\\&quot;:\\\&quot;user_login\\\&quot;,\\\&quot;field\\\&quot;:\\\&quot;user_login\\\&quot;,\\\&quot;class\\\&quot;:\\\&quot;form-control\\\&quot;,\\\&quot;output\\\&quot;:\\\&quot;bootstrap\\\&quot;,\\\&quot;label\\\&quot;:\\\&quot;Username\\\&quot;,\\\&quot;isNested\\\&quot;:false,\\\&quot;numColumns\\\&quot;:1,\\\&quot;sizeColumn\\\&quot;:1,\\\&quot;fieldtype\\\&quot;:\\\&quot;basic\\\&quot;},{\\\&quot;scaffold_field_id\\\&quot;:\\\&quot;form_submit\\\&quot;,\\\&quot;field\\\&quot;:\\\&quot;form_submit\\\&quot;,\\\&quot;output\\\&quot;:\\\&quot;bootstrap\\\&quot;,\\\&quot;value\\\&quot;:\\\&quot;Submit\\\&quot;,\\\&quot;class\\\&quot;:\\\&quot;btn btn-primary btn-lg\\\&quot;,\\\&quot;isRepetitive\\\&quot;:false,\\\&quot;isNested\\\&quot;:false,\\\&quot;numColumns\\\&quot;:1,\\\&quot;sizeColumn\\\&quot;:1,\\\&quot;fieldtype\\\&quot;:\\\&quot;formElement\\\&quot;}],\\\&quot;options\\\&quot;:[\\\&quot;autogeneratedUsername\\\&quot;,\\\&quot;autogeneratedNickname\\\&quot;]}</scaffold>
+            </extra>
+            <form_settings>
+                <form>
+                    <action>page</action>
+                    <action_message></action_message>
+                    <action_page>profile</action_page>
+                    <autogenerate_nickname_scaffold>0</autogenerate_nickname_scaffold>
+                    <autogenerate_password_scaffold>0</autogenerate_password_scaffold>
+                    <autogenerate_username_scaffold>0</autogenerate_username_scaffold>
+                    <has_media_button>1</has_media_button>
+                    <has_media_manager>1</has_media_manager>
+                    <has_toolset_buttons>1</has_toolset_buttons>
+                    <hide_comments>0</hide_comments>
+                    <include_captcha_scaffold>0</include_captcha_scaffold>
+                    <include_wpml_scaffold>0</include_wpml_scaffold>
+                    <redirect_delay>0</redirect_delay>
+                    <theme>minimal</theme>
+                    <type>edit</type>
+                    <use_ajax>0</use_ajax>
+                    <user_role>[&quot;author&quot;]</user_role>
+                </form>
+                <post>
+                    <post_status></post_status>
+                    <post_type></post_type>
+                </post>
+            </form_settings>
+            <notification>
+                <enable>1</enable>
+            </notification>
+            <post_expiration>
+                <enable>0</enable>
+            </post_expiration>
+            <wizard>0</wizard>
+        </meta>
+    </form>
+    <form>
+        <ID>284</ID>
+        <post_content>[creduserform]
+[cred_field field=&#039;form_messages&#039; class=&#039;alert alert-warning&#039;]
+&lt;div class=&quot;row&quot;&gt;
+	&lt;div class=&quot;col-sm-12 col-md-6&quot;&gt;
+		&lt;label for=&quot;%%FORM_ID%%_first_name&quot;&gt;[cred_i18n name=&#039;first_name-label&#039;]Account First name[/cred_i18n]&lt;/label&gt;
+		[cred_field field=&#039;first_name&#039; class=&#039;form-control&#039; output=&#039;bootstrap&#039;]
+      
+	&lt;/div&gt;
+	&lt;div class=&quot;col-sm-12 col-md-6&quot;&gt;
+		&lt;label for=&quot;%%FORM_ID%%_last_name&quot;&gt;[cred_i18n name=&#039;last_name-label&#039;]Account Last name[/cred_i18n]&lt;/label&gt;
+		[cred_field field=&#039;last_name&#039; class=&#039;form-control&#039; output=&#039;bootstrap&#039;]
+	&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;spacer-20&quot;&gt;&lt;/div&gt;
+&lt;div class=&quot;row&quot;&gt;
+	&lt;div class=&quot;col-sm-12 col-md-6&quot;&gt;
+		&lt;label for=&quot;%%FORM_ID%%_user_email&quot;&gt;[cred_i18n name=&#039;user_email-label&#039;]Account Email[/cred_i18n]&lt;/label&gt;
+		[cred_field field=&#039;user_email&#039; class=&#039;form-control&#039; output=&#039;bootstrap&#039;]
+	&lt;/div&gt;
+	&lt;div class=&quot;col-sm-12 col-md-6&quot;&gt;
+		&lt;label for=&quot;%%FORM_ID%%_mobile_number&quot;&gt;[cred_i18n name=&#039;mobile_number-label&#039;]Mobile Number[/cred_i18n]&lt;/label&gt;
+		[cred_field field=&#039;user-mobile-number&#039; force_type=&#039;field&#039; class=&#039;form-control&#039; output=&#039;bootstrap&#039;]
+	&lt;/div&gt;
+ &lt;/div&gt;
+&lt;div class=&quot;spacer-20&quot;&gt;&lt;/div&gt;
+&lt;div class=&quot;row&quot;&gt;
+	&lt;div class=&quot;col-sm-12 col-md-6&quot;&gt;
+		&lt;label for=&quot;%%FORM_ID%%_user_pass&quot;&gt;[cred_i18n name=&#039;user_pass-label&#039;]Password[/cred_i18n]&lt;/label&gt;
+		[cred_field field=&#039;user_pass&#039; class=&#039;form-control&#039; output=&#039;bootstrap&#039;]
+  &lt;/div&gt;
+  &lt;div class=&quot;col-sm-12 col-md-6&quot;&gt;
+&lt;label for=&quot;%%FORM_ID%%_user_pass2&quot;&gt;[cred_i18n name=&#039;user_pass2-label&#039;]Repeat Password[/cred_i18n]&lt;/label&gt;
+      [cred_field field=&#039;user_pass2&#039; class=&#039;form-control&#039; output=&#039;bootstrap&#039;]
+	&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;spacer-20&quot;&gt;&lt;/div&gt;
+	[cred_field field=&#039;recaptcha&#039; class=&#039;form-control&#039; output=&#039;bootstrap&#039;]
+	[cred_field field=&#039;form_submit&#039; output=&#039;bootstrap&#039; value=&#039;Submit&#039; class=&#039;btn btn-primary btn-lg&#039;]
+[/creduserform]</post_content>
+        <post_title>MeCard User Add</post_title>
+        <post_name>mecard-user-add</post_name>
+        <post_type>cred-user-form</post_type>
+        <meta>
+            <commerce>
+                <associate_product>form</associate_product>
+                <clear_cart>1</clear_cart>
+                <messages>
+                    <checkout></checkout>
+                    <thankyou></thankyou>
+                </messages>
+                <order_cancelled>
+                    <post_status>draft</post_status>
+                </order_cancelled>
+                <order_completed>
+                    <post_status>publish</post_status>
+                </order_completed>
+                <order_processing>
+                    <post_status>draft</post_status>
+                </order_processing>
+                <order_refunded>
+                    <post_status>draft</post_status>
+                </order_refunded>
+            </commerce>
+            <extra>
+                <css>.spacer-20 {%%CRED_NL%% height: 20px; %%CRED_NL%%}</css>
+                <editor_origin>html</editor_origin>
+                <js>// in a small inline script on the form page%%CRED_NL%%localStorage.setItem(\&#039;justSignedUp\&#039;, \&#039;1\&#039;);</js>
+                <messages>
+                    <cred_message_access_error_can_not_use_form></cred_message_access_error_can_not_use_form>
+                    <cred_message_add_new_taxonomy>Add New</cred_message_add_new_taxonomy>
+                    <cred_message_add_taxonomy>Add</cred_message_add_taxonomy>
+                    <cred_message_edit_skype_button>Edit Skype Button</cred_message_edit_skype_button>
+                    <cred_message_email_already_exists>Sorry, that email address is already used!</cred_message_email_already_exists>
+                    <cred_message_enter_valid_captcha>Wrong CAPTCHA</cred_message_enter_valid_captcha>
+                    <cred_message_enter_valid_colorpicker>Please use a valid hexadecimal value</cred_message_enter_valid_colorpicker>
+                    <cred_message_enter_valid_date>Please enter a valid date</cred_message_enter_valid_date>
+                    <cred_message_enter_valid_email>Please enter a valid email address</cred_message_enter_valid_email>
+                    <cred_message_enter_valid_number>Please enter numeric data</cred_message_enter_valid_number>
+                    <cred_message_enter_valid_url>Please enter a valid URL address</cred_message_enter_valid_url>
+                    <cred_message_field_required>This field is required</cred_message_field_required>
+                    <cred_message_file_type_not_allowed>File type not allowed</cred_message_file_type_not_allowed>
+                    <cred_message_hide_popular>Hide Popular</cred_message_hide_popular>
+                    <cred_message_image_height_larger>Image height larger than %dpx</cred_message_image_height_larger>
+                    <cred_message_image_width_larger>Image width larger than %dpx</cred_message_image_width_larger>
+                    <cred_message_invalid_edit_user_role>This form can not edit users with a role of %%EDITED_USER_ROLE%%</cred_message_invalid_edit_user_role>
+                    <cred_message_invalid_form_submission>Invalid User Form Submission (nonce failure)</cred_message_invalid_form_submission>
+                    <cred_message_invalid_username>The username can only contain alphanumeric characters, spaces, -, _, . or @</cred_message_invalid_username>
+                    <cred_message_missing_captcha>Missing CAPTCHA</cred_message_missing_captcha>
+                    <cred_message_no_data_submitted>Invalid User Form Submission (maybe a file has a size greater than allowed)</cred_message_no_data_submitted>
+                    <cred_message_not_valid_image>Not Valid Image</cred_message_not_valid_image>
+                    <cred_message_passwords_do_not_match>Passwords do not match</cred_message_passwords_do_not_match>
+                    <cred_message_post_not_saved_plural>The user was not saved because of the following %NN problems:</cred_message_post_not_saved_plural>
+                    <cred_message_post_not_saved_singular>The user was not saved because of the following problem:</cred_message_post_not_saved_singular>
+                    <cred_message_post_saved>User Saved</cred_message_post_saved>
+                    <cred_message_remove_taxonomy>Remove</cred_message_remove_taxonomy>
+                    <cred_message_show_captcha>Show CAPTCHA</cred_message_show_captcha>
+                    <cred_message_show_popular>Show Popular</cred_message_show_popular>
+                    <cred_message_upload_failed>Upload Failed</cred_message_upload_failed>
+                    <cred_message_username_already_exists>Sorry, that username already exists!</cred_message_username_already_exists>
+                    <cred_message_values_do_not_match>Field values do not match</cred_message_values_do_not_match>
+                </messages>
+                <scaffold>{\&quot;fields\&quot;:[{\&quot;scaffold_field_id\&quot;:\&quot;form_messages\&quot;,\&quot;field\&quot;:\&quot;form_messages\&quot;,\&quot;class\&quot;:\&quot;alert alert-warning\&quot;,\&quot;isNested\&quot;:false,\&quot;numColumns\&quot;:1,\&quot;sizeColumn\&quot;:1,\&quot;fieldtype\&quot;:\&quot;formElement\&quot;},{\&quot;scaffold_field_id\&quot;:\&quot;user_login\&quot;,\&quot;field\&quot;:\&quot;user_login\&quot;,\&quot;class\&quot;:\&quot;form-control\&quot;,\&quot;output\&quot;:\&quot;bootstrap\&quot;,\&quot;label\&quot;:\&quot;Username\&quot;,\&quot;isNested\&quot;:false,\&quot;numColumns\&quot;:1,\&quot;sizeColumn\&quot;:1,\&quot;fieldtype\&quot;:\&quot;basic\&quot;},{\&quot;scaffold_field_id\&quot;:\&quot;user_pass\&quot;,\&quot;field\&quot;:\&quot;user_pass\&quot;,\&quot;class\&quot;:\&quot;form-control\&quot;,\&quot;output\&quot;:\&quot;bootstrap\&quot;,\&quot;confirm_pass\&quot;:\&quot;yes\&quot;,\&quot;label\&quot;:\&quot;Password\&quot;,\&quot;isNested\&quot;:false,\&quot;numColumns\&quot;:1,\&quot;sizeColumn\&quot;:1,\&quot;fieldtype\&quot;:\&quot;basic\&quot;},{\&quot;scaffold_field_id\&quot;:\&quot;user_email\&quot;,\&quot;field\&quot;:\&quot;user_email\&quot;,\&quot;class\&quot;:\&quot;form-control\&quot;,\&quot;output\&quot;:\&quot;bootstrap\&quot;,\&quot;label\&quot;:\&quot;Email\&quot;,\&quot;isNested\&quot;:false,\&quot;numColumns\&quot;:1,\&quot;sizeColumn\&quot;:1,\&quot;fieldtype\&quot;:\&quot;basic\&quot;},{\&quot;scaffold_field_id\&quot;:\&quot;nickname\&quot;,\&quot;field\&quot;:\&quot;nickname\&quot;,\&quot;class\&quot;:\&quot;form-control\&quot;,\&quot;output\&quot;:\&quot;bootstrap\&quot;,\&quot;label\&quot;:\&quot;Nickname\&quot;,\&quot;isNested\&quot;:false,\&quot;numColumns\&quot;:1,\&quot;sizeColumn\&quot;:1,\&quot;fieldtype\&quot;:\&quot;basic\&quot;},{\&quot;scaffold_field_id\&quot;:\&quot;first_name\&quot;,\&quot;field\&quot;:\&quot;first_name\&quot;,\&quot;class\&quot;:\&quot;form-control\&quot;,\&quot;output\&quot;:\&quot;bootstrap\&quot;,\&quot;label\&quot;:\&quot;First name\&quot;,\&quot;isNested\&quot;:false,\&quot;numColumns\&quot;:1,\&quot;sizeColumn\&quot;:1,\&quot;fieldtype\&quot;:\&quot;basic\&quot;},{\&quot;scaffold_field_id\&quot;:\&quot;last_name\&quot;,\&quot;field\&quot;:\&quot;last_name\&quot;,\&quot;class\&quot;:\&quot;form-control\&quot;,\&quot;output\&quot;:\&quot;bootstrap\&quot;,\&quot;label\&quot;:\&quot;Last name\&quot;,\&quot;isNested\&quot;:false,\&quot;numColumns\&quot;:1,\&quot;sizeColumn\&quot;:1,\&quot;fieldtype\&quot;:\&quot;basic\&quot;},{\&quot;scaffold_field_id\&quot;:\&quot;description\&quot;,\&quot;field\&quot;:\&quot;description\&quot;,\&quot;class\&quot;:\&quot;form-control\&quot;,\&quot;output\&quot;:\&quot;bootstrap\&quot;,\&quot;label\&quot;:\&quot;Biographical info\&quot;,\&quot;isNested\&quot;:false,\&quot;numColumns\&quot;:1,\&quot;sizeColumn\&quot;:1,\&quot;fieldtype\&quot;:\&quot;basic\&quot;},{\&quot;scaffold_field_id\&quot;:\&quot;user-mobile-number\&quot;,\&quot;field\&quot;:\&quot;user-mobile-number\&quot;,\&quot;force_type\&quot;:\&quot;field\&quot;,\&quot;class\&quot;:\&quot;form-control\&quot;,\&quot;output\&quot;:\&quot;bootstrap\&quot;,\&quot;label\&quot;:\&quot;Mobile Number\&quot;,\&quot;isNested\&quot;:false,\&quot;numColumns\&quot;:1,\&quot;sizeColumn\&quot;:1,\&quot;fieldtype\&quot;:\&quot;meta\&quot;},{\&quot;scaffold_field_id\&quot;:\&quot;recaptcha\&quot;,\&quot;field\&quot;:\&quot;recaptcha\&quot;,\&quot;class\&quot;:\&quot;form-control\&quot;,\&quot;output\&quot;:\&quot;bootstrap\&quot;,\&quot;isNested\&quot;:false,\&quot;numColumns\&quot;:1,\&quot;sizeColumn\&quot;:1,\&quot;fieldtype\&quot;:\&quot;formElement\&quot;},{\&quot;scaffold_field_id\&quot;:\&quot;form_submit\&quot;,\&quot;field\&quot;:\&quot;form_submit\&quot;,\&quot;output\&quot;:\&quot;bootstrap\&quot;,\&quot;value\&quot;:\&quot;Submit\&quot;,\&quot;class\&quot;:\&quot;btn btn-primary btn-lg\&quot;,\&quot;isNested\&quot;:false,\&quot;numColumns\&quot;:1,\&quot;sizeColumn\&quot;:1,\&quot;fieldtype\&quot;:\&quot;formElement\&quot;}],\&quot;options\&quot;:[]}</scaffold>
+            </extra>
+            <form_settings>
+                <form>
+                    <action>page</action>
+                    <action_message></action_message>
+                    <action_page>manage-mecard-profiles/dashboard</action_page>
+                    <action_post></action_post>
+                    <action_user></action_user>
+                    <autogenerate_nickname_scaffold>0</autogenerate_nickname_scaffold>
+                    <autogenerate_password_scaffold>0</autogenerate_password_scaffold>
+                    <autogenerate_username_scaffold>0</autogenerate_username_scaffold>
+                    <has_media_button>1</has_media_button>
+                    <has_media_manager>1</has_media_manager>
+                    <has_toolset_buttons>1</has_toolset_buttons>
+                    <hide_comments>0</hide_comments>
+                    <include_captcha_scaffold>0</include_captcha_scaffold>
+                    <include_wpml_scaffold>0</include_wpml_scaffold>
+                    <redirect_delay>0</redirect_delay>
+                    <theme>minimal</theme>
+                    <type>new</type>
+                    <use_ajax>1</use_ajax>
+                    <user_role>[&quot;author&quot;]</user_role>
+                </form>
+                <post>
+                    <post_status></post_status>
+                    <post_type></post_type>
+                </post>
+            </form_settings>
+            <notification>
+                <enable>1</enable>
+                <notifications>
+                    <notifications_item>
+                        <event>
+                            <any_all>ALL</any_all>
+                            <post_status>publish</post_status>
+                            <type>form_submit</type>
+                        </event>
+                        <from>
+                            <address></address>
+                            <name></name>
+                        </from>
+                        <mail>
+                            <body>Dear Admin,%%CRED_NL%%%%CRED_NL%%A new User has signed up on the mecard.co.za website:%%CRED_NL%%%%CRED_NL%%Login: %%USER_LOGIN_NAME%%%%CRED_NL%%Name: %%USER_FIRST_NAME%% %%USER_LAST_NAME%%%%CRED_NL%%Email: %%USER_EMAIL%%%%CRED_NL%%Reg date: %%DATE_TIME%%%%CRED_NL%%%%CRED_NL%%</body>
+                            <subject>New Mecard User: %%USER_FIRST_NAME%% %%USER_LAST_NAME%%</subject>
+                        </mail>
+                        <name>New Mecard Signup</name>
+                        <to>
+                            <mail_field>
+                                <address_field></address_field>
+                                <lastname_field></lastname_field>
+                                <name_field></name_field>
+                                <to_type>to</to_type>
+                            </mail_field>
+                            <specific_mail>
+                                <address></address>
+                            </specific_mail>
+                            <type>
+                                <type_item>wp_user</type_item>
+                            </type>
+                            <user_id_field>
+                                <field_name></field_name>
+                                <to_type>to</to_type>
+                            </user_id_field>
+                            <wp_user>
+                                <to_type>to</to_type>
+                                <user>info@taggable.co.za</user>
+                            </wp_user>
+                        </to>
+                    </notifications_item>
+                </notifications>
+            </notification>
+            <post_expiration>
+                <enable>0</enable>
+            </post_expiration>
+            <wizard>0</wizard>
+        </meta>
+    </form>
+    <custom_fields>
+        <form_fields>
+            <user_email>
+                <post_type>user</post_type>
+                <post_labels>Email</post_labels>
+                <id>user_email</id>
+                <wp_default>1</wp_default>
+                <slug>user_email</slug>
+                <type>email</type>
+                <name>Email</name>
+                <description>Email</description>
+                <data>
+                    <repetitive>0</repetitive>
+                    <validate>
+                        <email>
+                            <active>1</active>
+                            <message>Please enter a valid email address</message>
+                        </email>
+                        <required>
+                            <active>1</active>
+                            <value>1</value>
+                            <message>This field is required</message>
+                        </required>
+                    </validate>
+                    <disabled_by_type>0</disabled_by_type>
+                </data>
+            </user_email>
+            <user_url>
+                <post_type>user</post_type>
+                <post_labels>Website</post_labels>
+                <id>user_url</id>
+                <wp_default>1</wp_default>
+                <slug>user_url</slug>
+                <type>textfield</type>
+                <name>Website</name>
+                <description>Url</description>
+            </user_url>
+            <form>
+                <id>creduserform</id>
+                <name>User Form Container</name>
+                <slug>creduserform</slug>
+                <type>creduserform</type>
+                <cred_builtin>1</cred_builtin>
+                <description>User Form (required)</description>
+            </form>
+            <form_submit>
+                <value>Submit</value>
+                <id>form_submit</id>
+                <name>Form Submit</name>
+                <slug>form_submit</slug>
+                <type>form_submit</type>
+                <cred_builtin>1</cred_builtin>
+                <description>Form Submit Button</description>
+            </form_submit>
+            <form_messages>
+                <value></value>
+                <id>form_messages</id>
+                <name>Form Messages</name>
+                <slug>form_messages</slug>
+                <type>form_messages</type>
+                <cred_builtin>1</cred_builtin>
+                <description>Form Messages Container</description>
+            </form_messages>
+            <user_login>
+                <post_type>user</post_type>
+                <post_labels>Username</post_labels>
+                <id>user_login</id>
+                <wp_default>1</wp_default>
+                <slug>user_login</slug>
+                <type>textfield</type>
+                <name>Username</name>
+                <description>Username</description>
+                <data>
+                    <repetitive>0</repetitive>
+                    <validate>
+                        <username>
+                            <active>1</active>
+                            <value>1</value>
+                            <message>The username can only contain alphanumeric characters, spaces, -, _, . or @</message>
+                        </username>
+                        <required>
+                            <active>1</active>
+                            <value>1</value>
+                            <message>This field is required</message>
+                        </required>
+                    </validate>
+                    <disabled_by_type>0</disabled_by_type>
+                </data>
+            </user_login>
+            <nickname>
+                <post_type>user</post_type>
+                <post_labels>Nickname</post_labels>
+                <id>nickname</id>
+                <wp_default>1</wp_default>
+                <slug>nickname</slug>
+                <type>textfield</type>
+                <name>Nickname</name>
+                <description>Nickname</description>
+            </nickname>
+            <user_pass>
+                <post_type>user</post_type>
+                <post_labels>Password</post_labels>
+                <id>user_pass</id>
+                <wp_default>1</wp_default>
+                <slug>user_pass</slug>
+                <type>password</type>
+                <name>Password</name>
+                <description>Password</description>
+                <data>
+                    <repetitive>0</repetitive>
+                    <validate>
+                        <required>
+                            <active>1</active>
+                            <value>1</value>
+                            <message>This field is required</message>
+                        </required>
+                    </validate>
+                    <disabled_by_type>0</disabled_by_type>
+                </data>
+            </user_pass>
+            <user_pass2>
+                <post_type>user</post_type>
+                <post_labels>Repeat Password</post_labels>
+                <id>user_pass2</id>
+                <wp_default>1</wp_default>
+                <slug>user_pass2</slug>
+                <type>password</type>
+                <name>Repeat Password</name>
+                <description>Repeat Password</description>
+                <data>
+                    <repetitive>0</repetitive>
+                    <validate>
+                        <equalto>
+                            <active>1</active>
+                            <args>
+                                <args_item>$value</args_item>
+                                <args_item>user_pass</args_item>
+                            </args>
+                            <message>Passwords do not match</message>
+                        </equalto>
+                    </validate>
+                    <disabled_by_type>0</disabled_by_type>
+                </data>
+            </user_pass2>
+        </form_fields>
+        <user_fields>
+            <user_email>
+                <post_type>user</post_type>
+                <post_labels>Email</post_labels>
+                <id>user_email</id>
+                <wp_default>1</wp_default>
+                <slug>user_email</slug>
+                <type>email</type>
+                <name>Email</name>
+                <description>Email</description>
+                <data>
+                    <repetitive>0</repetitive>
+                    <validate>
+                        <email>
+                            <active>1</active>
+                            <message>Please enter a valid email address</message>
+                        </email>
+                        <required>
+                            <active>1</active>
+                            <value>1</value>
+                            <message>This field is required</message>
+                        </required>
+                    </validate>
+                    <disabled_by_type>0</disabled_by_type>
+                </data>
+            </user_email>
+            <user_url>
+                <post_type>user</post_type>
+                <post_labels>Website</post_labels>
+                <id>user_url</id>
+                <wp_default>1</wp_default>
+                <slug>user_url</slug>
+                <type>textfield</type>
+                <name>Website</name>
+                <description>Url</description>
+            </user_url>
+        </user_fields>
+        <custom_fields>
+            <user-mobile-number>
+                <id>user-mobile-number</id>
+                <slug>user-mobile-number</slug>
+                <type>phone</type>
+                <name>Mobile Number</name>
+                <description></description>
+                <data>
+                    <placeholder></placeholder>
+                    <user_default_value></user_default_value>
+                    <repetitive>0</repetitive>
+                    <disabled_by_type>0</disabled_by_type>
+                </data>
+                <meta_key>wpcf-user-mobile-number</meta_key>
+                <meta_type>usermeta</meta_type>
+                <post_labels>user-mobile-number</post_labels>
+                <post_type>user</post_type>
+                <plugin_type>types</plugin_type>
+                <plugin_type_prefix>wpcf-</plugin_type_prefix>
+            </user-mobile-number>
+            <first_name>
+                <id>first_name</id>
+                <slug>first_name</slug>
+                <type>textfield</type>
+                <name>First Name</name>
+                <data></data>
+                <meta_key>first_name</meta_key>
+                <post_type>user</post_type>
+                <meta_type>usermeta</meta_type>
+                <post_labels>First Name</post_labels>
+                <plugin_type></plugin_type>
+                <plugin_type_prefix></plugin_type_prefix>
+            </first_name>
+            <last_name>
+                <id>last_name</id>
+                <slug>last_name</slug>
+                <type>textfield</type>
+                <name>Last Name</name>
+                <data></data>
+                <meta_key>last_name</meta_key>
+                <post_type>user</post_type>
+                <meta_type>usermeta</meta_type>
+                <post_labels>Last Name</post_labels>
+                <plugin_type></plugin_type>
+                <plugin_type_prefix></plugin_type_prefix>
+            </last_name>
+            <description>
+                <id>description</id>
+                <slug>description</slug>
+                <type>wysiwyg</type>
+                <name>Biographical Info</name>
+                <data></data>
+                <meta_key>description</meta_key>
+                <post_type>user</post_type>
+                <meta_type>usermeta</meta_type>
+                <post_labels>Biographical Info</post_labels>
+                <plugin_type></plugin_type>
+                <plugin_type_prefix></plugin_type_prefix>
+            </description>
+        </custom_fields>
+        <extra_fields>
+            <recaptcha>
+                <id>re_captcha</id>
+                <slug>recaptcha</slug>
+                <name>reCaptcha</name>
+                <type>recaptcha</type>
+                <cred_builtin>1</cred_builtin>
+                <description>Adds Image Captcha to your forms to prevent automatic submision by bots</description>
+            </recaptcha>
+            <_featured_image>
+                <id>_featured_image</id>
+                <slug>_featured_image</slug>
+                <name>Featured Image</name>
+                <type>image</type>
+                <cred_builtin>1</cred_builtin>
+                <description>Featured Image</description>
+                <supports></supports>
+            </_featured_image>
+        </extra_fields>
+        <form_fields_count>9</form_fields_count>
+        <user_fields_count>2</user_fields_count>
+        <custom_fields_count>4</custom_fields_count>
+        <taxonomies_count>0</taxonomies_count>
+        <parents_count>0</parents_count>
+        <extra_fields_count>2</extra_fields_count>
+    </custom_fields>
+</forms>
