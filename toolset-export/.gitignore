@@ -1,0 +1,3 @@
+# Database dumps contain customer PII: never commit them.
+*.sql
+*.sql.gz
