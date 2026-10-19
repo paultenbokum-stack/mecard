@@ -1,0 +1,17 @@
+# Local dev database: docker compose up -d
+# Port 5435 so it doesn't clash with the Nextag (5434) and GuestWave (5432) databases.
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: mecard
+      POSTGRES_USER: mecard
+      POSTGRES_PASSWORD: mecard_dev
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "127.0.0.1:5435:5432"
+
+volumes:
+  pgdata:
