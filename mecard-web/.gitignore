@@ -51,3 +51,6 @@ next-env.d.ts
 .env*.local
 .env
 /drizzle/meta/_journal.json.bak
+
+# image masters cached by the local image driver
+/.media-cache/

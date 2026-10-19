@@ -243,7 +243,7 @@ async function main() {
 
   // More links: per profile (more-links) and company-wide (more-links-company)
   const linkPosts = await q(
-    `SELECT ID, post_type, post_title, menu_order FROM wp_posts
+    `SELECT ID, post_type, post_title, menu_order, post_date_gmt, post_modified_gmt FROM wp_posts
       WHERE post_type IN ('more-links', 'more-links-company') AND post_status = 'publish'`,
   );
   const lm = await meta(["more-links", "more-links-company"]);
@@ -263,6 +263,8 @@ async function main() {
           url: str(m["wpcf-site-url"] || m["wpcf-button-url"]),
           icon: clip(m["wpcf-button-icon"], 100),
           sortOrder: int(m["toolset-post-sortorder"]) ?? Number(p.menu_order ?? 0),
+          createdAt: utc(p.post_date_gmt) ?? new Date(),
+          updatedAt: utc(p.post_modified_gmt) ?? new Date(),
         };
       })
       .filter((l) => l.profileId || l.companyId),

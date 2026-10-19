@@ -128,6 +128,9 @@ export const profileLinks = pgTable(
     url: text("url").notNull().default(""),
     icon: varchar("icon", { length: 100 }).notNull().default(""),
     sortOrder: integer("sort_order").notNull().default(0),
+    // The Toolset views ordered company links by last change, profile links by creation.
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
   },
   (t) => [index("links_profile").on(t.profileId), index("links_company").on(t.companyId)],
 );
