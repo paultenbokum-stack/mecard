@@ -63,7 +63,7 @@ instead).
 
 | URL | What it does |
 | --- | --- |
-| `/t/<slug>/` | The printed card URL. Linked card → its profile (tracked as an NFC tap); unlinked card → the empty site page, as WordPress showed; trashed card, or one linked to an archived profile → 404. `/t/ABC/` and `/T/abc/` redirect to `/t/abc/`. |
+| `/t/<slug>/` | The printed card URL. Linked card → its profile (tracked as an NFC tap, and saving the contact on the first tap when the card has auto-download on); unlinked card → "this card isn't set up yet" with a link to activate it at `/manage/`; trashed card, or one linked to an archived profile → 404. `/t/ABC/` and `/T/abc/` redirect to `/t/abc/`. |
 | `/mecard-profile/<slug>/` | A profile's own page. Archived profiles → 404. |
 | `/vcard/?profile_id=…` | The contact file, same URL as WordPress. |
 | `/wp-content/uploads/…` | Every image, old links included. `?w=` picks a width, `?fmt=jpeg` a JPEG. |
@@ -73,7 +73,9 @@ instead).
 The pages are ports of the plugin's `templates/profile-pro.php` and `profile-standard.php`
 with the same markup and class names; `src/app/(card)/card.css` holds only the rules from
 the ~35 WordPress stylesheets that matched them. Pro profiles get the company branding and
-custom CSS, scoped to the profile (`src/lib/branding.ts`). The pages are the same for every
+custom CSS, scoped to the profile (`src/lib/branding.ts`); CSS written for the whole page or
+the profile container is mapped onto the profile, and one-off fixes for companies whose
+branding was broken on WordPress live in `src/lib/company-css-fixes.ts`. The pages are the same for every
 visitor and cached (ISR, 5 minutes); everything per-visitor runs in the browser
 (`CardBehaviour.tsx`).
 

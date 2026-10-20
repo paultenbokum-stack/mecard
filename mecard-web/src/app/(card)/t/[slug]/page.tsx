@@ -1,15 +1,15 @@
 import type { Metadata } from "next";
 import { notFound, permanentRedirect } from "next/navigation";
 import { CardPage } from "@/components/card/CardPage";
-import { SiteFooter, SiteHeader } from "@/components/card/SiteChrome";
+import { UnlinkedCard } from "@/components/card/UnlinkedCard";
 import { cardMetadata } from "@/lib/card-metadata";
 import { getCardBySlug, getProfileView, needsCanonicalRedirect } from "@/lib/public-profile";
 import { siteUrl } from "@/lib/site";
 
 // /t/<slug>/ — the URL printed on every card, NFC chip and QR code. It must
-// keep answering exactly as WordPress did (single-t.php):
+// keep resolving as it did on WordPress (single-t.php):
 //   linked to a live profile → that profile, with tag tracking (source "nfc");
-//   not linked to a profile  → the empty site page (200), as WordPress showed;
+//   not linked to a profile  → "this card isn't set up yet" (200; WordPress showed an empty page);
 //   trashed tag, or unknown  → 404;
 //   linked to an archived profile → 404, like the profile's own page.
 
@@ -18,10 +18,11 @@ import { siteUrl } from "@/lib/site";
 export const revalidate = 300;
 export const generateStaticParams = async () => [];
 
-// Cards carry an "auto download vCard" setting, but WordPress read it from the
-// profile instead of the card, so it has never fired. Off unless
-// MECARD_VCARD_AUTO_DOWNLOAD=on.
-const AUTO_DOWNLOAD_ENABLED = process.env.MECARD_VCARD_AUTO_DOWNLOAD === "on";
+// Each card's "auto download vCard" setting: the first tap on that card saves
+// the contact. (WordPress read the setting from the profile instead of the
+// card, so it never fired there.) MECARD_VCARD_AUTO_DOWNLOAD=off switches it
+// off everywhere.
+const AUTO_DOWNLOAD_ENABLED = process.env.MECARD_VCARD_AUTO_DOWNLOAD !== "off";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -49,15 +50,7 @@ export default async function TagPage({ params }: Props) {
   const { card, view } = found;
   if (needsCanonicalRedirect(slug)) permanentRedirect(`/t/${card.slug}/`);
 
-  if (!view) {
-    return (
-      <>
-        <SiteHeader />
-        <main id="content" />
-        <SiteFooter />
-      </>
-    );
-  }
+  if (!view) return <UnlinkedCard />;
 
   return (
     <CardPage

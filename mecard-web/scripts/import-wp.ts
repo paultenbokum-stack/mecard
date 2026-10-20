@@ -31,6 +31,15 @@ const uploadPath = (url: string) => {
   return m ? m[0] : null;
 };
 const clip = (v: unknown, n: number) => str(v).slice(0, n);
+// WordPress stored post titles (company names, card titles) and some fields HTML-
+// escaped ("H&amp;M", "Matt&#8217;s") and its templates printed them as HTML.
+// Plain text here: React escapes on output.
+const ENTITIES: Record<string, string> = { amp: "&", lt: "<", gt: ">", quot: '"', apos: "'", nbsp: " ", ndash: "–", mdash: "—", hellip: "…", rsquo: "’", lsquo: "‘", rdquo: "”", ldquo: "“" };
+const decode = (v: unknown) =>
+  str(v).replace(/&(#x[0-9a-f]+|#\d+|[a-z]+);/gi, (m, e: string) =>
+    e[0] === "#" ? String.fromCodePoint(e[1].toLowerCase() === "x" ? parseInt(e.slice(2), 16) : Number(e.slice(1))) : (ENTITIES[e.toLowerCase()] ?? m),
+  );
+const text = (v: unknown, n: number) => decode(v).slice(0, n);
 
 async function main() {
   const { db } = await import("../src/db/client");
@@ -149,12 +158,12 @@ async function main() {
       const m = cm.get(Number(p.ID)) ?? {};
       return {
         id: Number(p.ID),
-        name: clip(p.post_title, 255),
+        name: text(p.post_title, 255),
         slug: uniqueSlug(str(p.post_name), Number(p.ID)),
         ownerId: user(p.post_author),
         phone: clip(m["wpcf-company-telephone-number"], 100),
         website: clip(m["wpcf-company-website"], 500),
-        address: str(m["wpcf-company-address"]),
+        address: decode(m["wpcf-company-address"]),
         supportEmail: clip(m["wpcf-support-email"], 255),
         descriptionHtml: str(m["wpcf-company-description"]),
         logoPath: attachment(m._thumbnail_id),
@@ -166,7 +175,7 @@ async function main() {
         buttonTextColour: clip(m["wpcf-button-text-colour"], 20),
         downloadColour: clip(m["wpcf-download-button-colour"], 20),
         downloadTextColour: clip(m["wpcf-download-button-text-colour"], 20),
-        customCss: str(m["wpcf-custom-css"]),
+        customCss: decode(m["wpcf-custom-css"]),
         createdAt: utc(p.post_date_gmt) ?? new Date(),
         updatedAt: utc(p.post_modified_gmt) ?? new Date(),
       };
@@ -217,14 +226,14 @@ async function main() {
         managerId: user(p.post_author),
         companyId: company(profileCompany.get(id) ?? m.company_parent),
         type: type === "professional" ? "pro" : type,
-        firstName: clip(m["wpcf-first-name"], 100),
-        lastName: clip(m["wpcf-last-name"], 100),
-        jobTitle: clip(m["wpcf-job-title"], 200),
+        firstName: text(m["wpcf-first-name"], 100),
+        lastName: text(m["wpcf-last-name"], 100),
+        jobTitle: text(m["wpcf-job-title"], 200),
         email: clip(m["wpcf-email-address"] || m["wpcf-email_address"], 255),
         mobile: clip(m["wpcf-mobile-number"], 50),
         whatsapp: clip(m["wpcf-whatsapp-number"], 50),
         workPhone: clip(m["wpcf-work-phone-number"], 50),
-        companyName: clip(m["wpcf-company-r"] || m["wpcf-company_name"], 255),
+        companyName: text(m["wpcf-company-r"] || m["wpcf-company_name"], 255),
         website: clip(m["wpcf-website"], 500),
         socials,
         photoPath: attachment(m._thumbnail_id),
@@ -259,7 +268,7 @@ async function main() {
           id,
           profileId: p.post_type === "more-links" ? profile(linkProfile.get(id)) : null,
           companyId: p.post_type === "more-links-company" ? company(linkCompany.get(id)) : null,
-          label: clip(m["wpcf-site-name"] || m["wpcf-button-text"] || p.post_title, 255),
+          label: text(m["wpcf-site-name"] || m["wpcf-button-text"] || p.post_title, 255),
           url: str(m["wpcf-site-url"] || m["wpcf-button-url"]),
           icon: clip(m["wpcf-button-icon"], 100),
           sortOrder: int(m["toolset-post-sortorder"]) ?? Number(p.menu_order ?? 0),
@@ -396,15 +405,15 @@ async function main() {
       return {
         id,
         slug: uniqueSlug(str(p.post_name).replace(/__trashed$/, ""), id),
-        title: clip(p.post_title, 255),
+        title: text(p.post_title, 255),
         ownerId: user(p.post_author),
         profileId: profile(cardProfile.get(id)),
         companyId: company(cardCompany.get(id)),
         orderId: order && orderIds.has(order) ? order : null,
         type: clip(m["wpcf-tag-type"], 30),
-        label: clip(m["wpcf-card-label"], 255),
-        nameOnCard: clip(m["wpcf-name-on-card"], 255),
-        jobTitleOnCard: clip(m["wpcf-job-title-on-card"], 255),
+        label: text(m["wpcf-card-label"], 255),
+        nameOnCard: text(m["wpcf-name-on-card"], 255),
+        jobTitleOnCard: text(m["wpcf-job-title-on-card"], 255),
         frontPath: uploadPath(m["wpcf-card-front"] ?? ""),
         backPath: uploadPath(m["wpcf-card-back"] ?? ""),
         qrX: clip(m["wpcf-qr-x"], 20),

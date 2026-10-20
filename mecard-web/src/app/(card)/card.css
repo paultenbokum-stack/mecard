@@ -427,3 +427,12 @@ iframe#vcard-download { position: absolute; width: 0; height: 0; border: 0; over
 .mecard-qr-branding { text-align: center; margin-top: 6px; padding: 4px 0; }
 .mecard-qr-branding__text { font-size: 11px; color: #999; letter-spacing: 0.3px; }
 .mecard-qr-branding__text strong { font-weight: 600; color: #666; }
+
+/* Card not linked to a profile yet */
+.mc-unlinked { display: flex; justify-content: center; padding: 48px 20px 64px; }
+.mc-unlinked__box { max-width: 420px; text-align: center; }
+:where(.mecard-site) .mc-unlinked h1 { font-size: 26px; line-height: 1.3; margin-bottom: 0.6em; color: var(--ast-global-color-2); }
+.mc-unlinked__box p { margin-bottom: 1.25em; }
+:where(.mecard-site) .mc-unlinked__btn { display: inline-block; padding: 14px 28px; border-radius: 10px; background: var(--ast-global-color-0); color: #fff; font-weight: 600; }
+:where(.mecard-site) .mc-unlinked__btn:hover, :where(.mecard-site) .mc-unlinked__btn:focus { background: var(--ast-global-color-1); color: #fff; }
+.mc-unlinked__alt { margin-top: 1.5em; font-size: 0.9em; }

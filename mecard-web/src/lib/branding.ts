@@ -1,3 +1,4 @@
+import { COMPANY_CSS_FIXES } from "./company-css-fixes";
 import type { Company } from "./public-profile";
 
 // Company branding on pro profiles, ported from
@@ -5,31 +6,33 @@ import type { Company } from "./public-profile";
 
 // The var(--font-…) families are self-hosted by next/font (app/(card)/fonts.ts).
 const FONT_STACKS: Record<string, string> = {
-  opensans: '"Open Sans", sans-serif',
+  opensans: 'var(--font-open-sans), "Open Sans", sans-serif',
   Montserrat: "var(--font-montserrat), Montserrat, sans-serif",
   Roboto: "var(--font-roboto), Roboto, sans-serif",
-  playfairdisplay: '"Playfair Display", serif',
+  playfairdisplay: 'var(--font-playfair), "Playfair Display", serif',
   Merriweather: "var(--font-merriweather), Merriweather, serif",
   Helvetica: "Helvetica, Arial, sans-serif",
 };
 
+/**
+ * The company's chosen font, or "" when it chose none (the theme fonts apply).
+ * WordPress printed these through esc_attr(), which turned the quotes in
+ * "Open Sans" and "Playfair Display" into &quot; — invalid CSS, so browsers
+ * ignored those choices and showed the theme font. They now apply.
+ */
 export function fontToStack(value: string): string {
-  return FONT_STACKS[value] ?? (value || '"Montserrat", sans-serif');
+  return FONT_STACKS[value] ?? value;
 }
 
-// WordPress printed these values through esc_attr(), which turns `"` into
-// &quot; — so any stack with a quoted family name ("Open Sans", the default
-// "Montserrat") was invalid CSS and the browser dropped it, leaving the theme
-// fonts. Visitors have only ever seen the unquoted stacks, so only those apply.
-// Anything that isn't plainly a colour or font list is dropped too.
-function cssValue(v: string): string | null {
-  if (!v || v.includes('"')) return null;
-  return /^[#\w\s,.()%-]+$/.test(v) ? v.trim() : null;
-}
+// Only plain colour and font-list values; anything that could break out of
+// the declaration is left out.
+const COLOUR = /^[#\w\s,.()%-]+$/;
+const FONT = /^[\w\s,.()"'-]+$/;
 
 function decl(prop: string, value: string) {
-  const v = cssValue(value);
-  return v ? `${prop}: ${v};` : "";
+  const v = value.trim();
+  if (!v || !(prop === "font-family" ? FONT : COLOUR).test(v)) return "";
+  return `${prop}: ${v};`;
 }
 
 export interface Design {
@@ -69,7 +72,7 @@ export function designCss(profileId: number, company: Company): string {
     `#vcard-button-${profileId}.vcard-button { ${decl("background-color", d.download)} }`,
     `#vcard-button-${profileId}.vcard-button a { ${decl("color", d.downloadText)} ${decl("font-family", d.bodyFont)} text-decoration: none; }`,
   ];
-  return [rules.join("\n"), scopeCss(company.customCss, scope)].filter(Boolean).join("\n");
+  return [rules.join("\n"), scopeCss(company.customCss, scope), scopeCss(COMPANY_CSS_FIXES[company.id] ?? "", scope)].filter(Boolean).join("\n");
 }
 
 /**
@@ -124,10 +127,47 @@ function scopeBlock(src: string, scope: string, imports: string[]): string {
       .split(",")
       .map((s) => s.trim())
       .filter(Boolean)
-      .map((s) => `${scope} ${s}`);
-    if (selectors.length) out.push(`${selectors.join(", ")} {${inner}}`);
+      .map((s) => scopeSelector(s, scope));
+    if (selectors.length) out.push(`${selectors.join(", ")} {${withFontFallback(inner)}}`);
   }
   return out.join("\n");
+}
+
+// Companies name fonts phones don't have ("Brandon", 'Calibri') with no
+// fallback, which would drop to the browser's serif default now that their
+// rules apply. Give such lists a sans-serif fallback.
+const GENERIC = /\b(serif|sans-serif|monospace|cursive|fantasy|system-ui|inherit|initial|unset|var\()/i;
+export function withFontFallback(declarations: string): string {
+  return declarations.replace(/(font-family\s*:\s*)([^;}!]+?)(\s*!important)?(\s*)(?=;|}|$)/gi, (m, prop: string, value: string, imp = "", ws = "") =>
+    GENERIC.test(value) ? m : `${prop}${value.trim()}, sans-serif${imp}${ws}`,
+  );
+}
+
+// Company CSS was written before WordPress started scoping it, so many rules
+// address the profile container itself ("div.pro-profile-container h1") or the
+// page around it ("body", "div#content"). Prefixed blindly, as WordPress did,
+// those never match; they apply to the profile instead. Rules for the theme
+// footer (mostly hiding the copyright line) apply to the footer of this page,
+// the only page the style block is on.
+const SELF = /^(?:div)?\.pro-profile-container(?![\w-])/i;
+const PAGE = /^(?:html|body|#page|(?:div)?#content|\.site-content|\.hfeed|(?:div)?\.mecard-public-card)(?![\w-])\s*/i;
+const CHROME: [RegExp, string][] = [
+  [/^\.ast-footer-copyright(?![\w-])/i, ".mc-site-footer__copy"],
+  [/^(?:\.site-footer|footer|#colophon)(?![\w-])/i, ".mc-site-footer"],
+  [/^(?:\.site-header|header|#masthead)(?![\w-])/i, ".mc-site-header"],
+];
+
+export function scopeSelector(selector: string, scope: string): string {
+  let s = selector.trim();
+  for (const [re, target] of CHROME) if (re.test(s)) return s.replace(re, target);
+  let page = false;
+  while (PAGE.test(s)) {
+    s = s.replace(PAGE, "");
+    page = true;
+  }
+  if (SELF.test(s)) return scope + s.replace(SELF, "");
+  if (page) return s ? `${scope} ${s.replace(/^>\s*/, "> ")}` : scope;
+  return `${scope} ${s}`;
 }
 
 function matchBrace(src: string, open: number): number {
