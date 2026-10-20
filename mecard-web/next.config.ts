@@ -21,6 +21,20 @@ const nextConfig: NextConfig = {
       // Invites sent from WordPress pointed at the request post; open invites
       // for the signed-in email are listed on /manage/.
       to("/request/:slug/", "/manage/"),
+      // Site pages: copies and old pages that are dropped, and links on the
+      // live pages that already led nowhere (get-started, teams).
+      to("/home-page/", "/"),
+      to("/home-page-2/", "/"),
+      to("/how-it-works-2/", "/how-it-works/"),
+      to("/order-the-classic-mecard/", "/cards/"),
+      to("/get-mecard/", "/cards/"),
+      to("/get-started/", "/sign-up/"),
+      to("/get-started-teams/", "/sign-up/"),
+      to("/teams/", "/for-teams/"),
+      to("/contact/", "/contact-us/"),
+      to("/onboarding/", "/sign-up/"),
+      to("/communication-preferences/", "/"),
+      to("/temporarily-unavailable/", "/"),
     ];
   },
   async rewrites() {

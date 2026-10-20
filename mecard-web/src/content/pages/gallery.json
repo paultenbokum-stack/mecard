@@ -1,0 +1,11 @@
+{
+  "id": 16012,
+  "path": "/gallery/",
+  "title": "Gallery",
+  "seoTitle": "Gallery - MeCard",
+  "description": "",
+  "showTitle": true,
+  "container": "ast-plain-container",
+  "modified": "Sun Oct 29 2023 10:11:38 GMT+0200 (South Africa Standard Time)",
+  "html": "<p>See some of our favourite designs that have come across our desk :)</p>\n\n<div style=\"height:20px\" aria-hidden=\"true\" class=\"wp-block-spacer\"></div>\n\n<div data-mc-slot=\"gallery\"></div>"
+}
