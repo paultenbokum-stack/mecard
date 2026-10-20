@@ -8,8 +8,8 @@ import { hashPassword, needsRehash, verifyPassword } from "@/lib/password";
 import { onNewUser, userByLogin } from "@/lib/accounts";
 
 // Google is optional (replaces Nextend Social Login): only wired when both env
-// vars are set. The login page shows the button when NEXT_PUBLIC_AUTH_GOOGLE=1.
-const googleEnabled = !!(process.env.AUTH_GOOGLE_ID && process.env.AUTH_GOOGLE_SECRET);
+// vars are set; the login page shows the button only then.
+export const googleEnabled = !!(process.env.AUTH_GOOGLE_ID && process.env.AUTH_GOOGLE_SECRET);
 
 const byEmail = (email: string) => sql`lower(${users.email}) = ${email.toLowerCase()}`;
 

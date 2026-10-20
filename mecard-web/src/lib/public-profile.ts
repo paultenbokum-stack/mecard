@@ -3,20 +3,13 @@ import { and, asc, desc, eq } from "drizzle-orm";
 import { db } from "@/db/client";
 import { cards, companies, profileLinks, profiles } from "@/db/schema";
 import { normalizeSlug } from "./profile-format";
+import type { ProfileView } from "./profile-view";
 
 // Data for the public card pages (/t/<slug>/ and /mecard-profile/<slug>/),
 // shaped like Me\Preview\Module::get_profile_data() / get_company_data().
 
-export type Profile = typeof profiles.$inferSelect;
-export type Company = typeof companies.$inferSelect;
-export type Link = Pick<typeof profileLinks.$inferSelect, "id" | "label" | "url" | "icon">;
-
-export interface ProfileView {
-  profile: Profile;
-  company: Company | null;
-  companyLinks: Link[];
-  profileLinks: Link[];
-}
+export type { Company, Link, Profile, ProfileView } from "./profile-view";
+export { companyLabel, displayName, fullName } from "./profile-view";
 
 export { isPro } from "./profile-format";
 
@@ -37,6 +30,12 @@ export const getCardBySlug = cache(async (slug: string) => {
   return c ?? null;
 });
 
+// Links keep the order the editor saved (sort_order 1, 2, …). Links nobody has
+// reordered yet are all 0 and keep the Toolset views' order: company links most
+// recently changed first (ties oldest post first), profile links newest first.
+export const COMPANY_LINK_ORDER = [asc(profileLinks.sortOrder), desc(profileLinks.updatedAt), asc(profileLinks.id)] as const;
+export const PROFILE_LINK_ORDER = [asc(profileLinks.sortOrder), desc(profileLinks.createdAt), desc(profileLinks.id)] as const;
+
 export const getProfileView = cache(async (profileId: number): Promise<ProfileView | null> => {
   const [profile] = await db.select().from(profiles).where(eq(profiles.id, profileId)).limit(1);
   if (!profile) return null;
@@ -44,11 +43,9 @@ export const getProfileView = cache(async (profileId: number): Promise<ProfileVi
   const linkCols = { id: profileLinks.id, label: profileLinks.label, url: profileLinks.url, icon: profileLinks.icon };
   const [companyLinks, ownLinks] = await Promise.all([
     company
-      ? // Toolset view: most recently changed first; ties came back oldest post first.
-        db.select(linkCols).from(profileLinks).where(eq(profileLinks.companyId, company.id)).orderBy(desc(profileLinks.updatedAt), asc(profileLinks.id))
+      ? db.select(linkCols).from(profileLinks).where(eq(profileLinks.companyId, company.id)).orderBy(...COMPANY_LINK_ORDER)
       : [],
-    // Toolset view: newest first.
-    db.select(linkCols).from(profileLinks).where(eq(profileLinks.profileId, profile.id)).orderBy(desc(profileLinks.createdAt), desc(profileLinks.id)),
+    db.select(linkCols).from(profileLinks).where(eq(profileLinks.profileId, profile.id)).orderBy(...PROFILE_LINK_ORDER),
   ]);
   return { profile, company: company ?? null, companyLinks, profileLinks: ownLinks };
 });
@@ -62,10 +59,3 @@ export async function profilePaths(profileId: number): Promise<string[]> {
     .where(and(eq(cards.profileId, profileId), eq(cards.archived, false)));
   return [...(p ? [`/mecard-profile/${p.slug}/`] : []), ...tagRows.map((t) => `/t/${t.slug}/`)];
 }
-
-export const fullName = (p: Pick<Profile, "firstName" | "lastName">) => `${p.firstName} ${p.lastName}`.trim();
-
-/** "Jane Doe" — the WordPress post title, used in titles and file names. */
-export const displayName = (p: Profile) => fullName(p) || p.slug;
-
-export const companyLabel = (v: Pick<ProfileView, "profile" | "company">) => v.company?.name || v.profile.companyName;

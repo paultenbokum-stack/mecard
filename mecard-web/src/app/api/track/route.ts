@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { db } from "@/db/client";
 import { events } from "@/db/schema";
+import { isProfileOwner } from "@/lib/access";
 import { currentUserId } from "@/lib/session";
 import { clientInfo, eventRow, newSessionId, SESSION_COOKIE } from "@/lib/tracking";
 
@@ -17,8 +18,15 @@ export async function POST(req: NextRequest) {
   if (!body || typeof body !== "object") return NextResponse.json({ error: "invalid_body" }, { status: 400 });
 
   const cookie = req.cookies.get(SESSION_COOKIE)?.value ?? null;
-  const row = eventRow({ body, sessionCookie: cookie, userId: await currentUserId(), ...clientInfo(req.headers) });
+  const userId = await currentUserId();
+  const row = eventRow({ body, sessionCookie: cookie, userId, ...clientInfo(req.headers) });
   if (!row) return NextResponse.json({ error: "invalid_event" }, { status: 400 });
+
+  // Owners looking at their own card don't count as views (the page skips
+  // sending them too; this covers pages opened before the check came back).
+  if (row.name === "profile_viewed" && userId && row.profileId && (await isProfileOwner(userId, row.profileId))) {
+    return NextResponse.json({ ok: true, skipped: "owner" });
+  }
 
   // First event from this browser: give it the long-lived session id WordPress
   // set on page load. A client-made "cs-…" id stands in for this one event.

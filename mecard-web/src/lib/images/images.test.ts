@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import sharp from "sharp";
 import { imageUrl, masterKey, pickWidth, sourceCandidates, uploadKey } from "./paths";
-import { loadMaster, renderVariant, type MediaIndex, type MediaRow } from "./pipeline";
+import { loadMaster, renderVariant, storeUpload, type MediaIndex, type MediaRow } from "./pipeline";
 import { GcsStore, metadataToken, type BlobStore } from "./store";
 
 class MemoryStore implements BlobStore {
@@ -154,4 +154,22 @@ test("metadataToken caches the token until shortly before it expires", async () 
   assert.equal(await token(), "t1");
   now = 3541 * 1000;
   assert.equal(await token(), "t2");
+});
+
+test("storeUpload saves a WebP master that loadMaster then serves", async () => {
+  const deps = { media: new MemoryStore(), archive: new MemoryStore(), index: new MemoryIndex() };
+  const path = await storeUpload(await png(2400, 1600), deps, { id: "abc123", now: new Date("2026-10-20T12:00:00Z") });
+  assert.equal(path, "/wp-content/uploads/mecard/2026/10/abc123.webp");
+  const key = uploadKey(path!)!;
+  assert.equal(deps.index.rows.get(key)?.width, 1200);
+  const master = await loadMaster(key, deps);
+  assert.equal((await sharp(master!).metadata()).format, "webp");
+  assert.deepEqual(deps.archive.reads, []);
+});
+
+test("storeUpload refuses files that aren't images", async () => {
+  const deps = { media: new MemoryStore(), archive: new MemoryStore(), index: new MemoryIndex() };
+  assert.equal(await storeUpload(Buffer.from("<?php echo 1;"), deps, { id: "x" }), null);
+  assert.equal(await storeUpload(Buffer.alloc(0), deps, { id: "x" }), null);
+  assert.equal(deps.media.files.size, 0);
 });

@@ -94,6 +94,42 @@ npm run build && npx next start -p 3001
 BASE_URL=http://localhost:3001 npm run check:urls
 ```
 
+## Accounts and the logged-in screens
+
+| URL | What it does |
+| --- | --- |
+| `/my-account/` | Login with email or WordPress username and the existing password (rehashed to bcrypt on first login), or Google when `AUTH_GOOGLE_ID`/`AUTH_GOOGLE_SECRET` are set. Logged-in people go to `/manage/` (or `?next=`). |
+| `/my-account/lost-password/`, `/my-account/reset-password/?token=` | Password reset by email: a one-hour, single-use link (only its hash is stored). Without `RESEND_API_KEY` the email is printed in the dev server terminal. |
+| `/my-account/customer-logout/` | Log out (asks first, like WooCommerce). |
+| `/manage/` | The logged-in home: your profiles (search, archive/restore, add), invites waiting for you, Pro upgrade status, and `?activate=<card>` — the "Activate this card" flow from an unlinked card. |
+| `/manage/cards/` | Live cards and cards not linked yet: link, change profile, unlink, label, auto-save-contact. |
+| `/manage/companies/`, `/manage/company/<id>/` | Companies you own: details, logo, fonts, colours, custom CSS, company buttons (live preview on one of its profiles), and the Team tab (people, invites). |
+| `/manage/profile/<id>/` | Profile editor with a live preview. Standard profiles: details, photo, socials. Pro adds the direct line and "My Links". A paid, unused Pro upgrade can be applied here (saving also applies it, as on WordPress). |
+| `/invite/<id>/<token>/` | The link in an invite email; accepting makes you the profile's owner. |
+| `/api/upload/` | Photo and logo uploads: stored as a WebP master under `/wp-content/uploads/mecard/…`, served by the image route. |
+
+Who may edit what (`src/lib/access.ts`): a profile by its owner, its manager (the WordPress
+post author), the owner of its company, or an admin; a company by its owner or an admin; a
+card by its owner, its company's owner, or whoever may edit the profile it opens.
+
+Old URLs keep working: `/wp-login.php` (with `action=lostpassword|rp|logout` and
+`redirect_to`), `/login/`, `/password-recovery/`, the `/manage-mecard-profiles/…` console
+tabs, `/invite-user/` and old `/request/<slug>/` invite links.
+
+On card pages, signed-in owners get the "Edit Profile" bar and, on free profiles, the Pro
+upsell in the share panel; their own visits aren't counted as views (`/api/me/card/`, and
+`/api/track/` drops `profile_viewed` from owners).
+
+**Signing in as a real customer locally** — give imported accounts a local-only password
+(refuses to run unless `DATABASE_URL` is on localhost; `npm run import:wp` restores the
+real hashes):
+
+```
+npm run dev:password -- jacques@nxtlevelcoach.co.za tvanzyl@entersekt.com chantel@brandhouseco.co.za
+```
+
+The default password is in `scripts/dev-password.ts`.
+
 ## Deploying
 
 See `deploy/README.md`. MeCard gets its own Google Cloud project.

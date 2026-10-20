@@ -1,0 +1,135 @@
+/* Logged-in screens: login, /manage/ and the editors. The look follows the
+   plugin's me-single-manage.css / me-single-editor.css (soft blue panels,
+   pill buttons) inside the Astra page shell from card.css. */
+
+.acc { padding: 0 16px 56px; }
+.acc__wrap { max-width: 980px; margin: 0 auto; }
+.acc__wrap--narrow { max-width: 440px; }
+.acc__wrap--wide { max-width: 1180px; }
+
+:where(.mecard-site) .acc h1 { font-size: 30px; line-height: 1.25; color: #173a63; margin: 28px 0 6px; }
+:where(.mecard-site) .acc h2 { font-size: 21px; line-height: 1.3; color: #173a63; margin: 0 0 10px; }
+:where(.mecard-site) .acc h3 { font-size: 17px; line-height: 1.3; color: #173a63; margin: 0 0 8px; font-weight: 600; }
+:where(.mecard-site) .acc p { margin-bottom: 1em; }
+.acc__eyebrow { margin: 28px 0 0; font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #5f7591; }
+:where(.mecard-site) .acc__eyebrow + h1 { margin-top: 4px; }
+.acc__lead { color: #4b5d73; }
+.acc__muted { color: #6b7c90; font-size: 0.92em; }
+
+/* Sub navigation (me-subnav) */
+.acc-subnav { display: flex; flex-wrap: wrap; gap: 4px; margin: 28px 0 0; border-bottom: 1px solid #0170b9; padding: 0; }
+:where(.mecard-site) .acc-subnav a { display: inline-block; padding: 8px 16px; margin-bottom: -1px; border: 1px solid #0170b9; border-radius: 4px 4px 0 0; font-size: 0.875em; font-weight: 500; color: #0170b9; background: #f8f9fa; }
+:where(.mecard-site) .acc-subnav a:hover { background: #e8f0fb; color: #0170b9; }
+:where(.mecard-site) .acc-subnav a[aria-current="page"] { background: #0170b9; color: #fff; }
+
+/* Panels */
+.acc-panel { margin: 20px 0; padding: 22px; border: 1px solid #d6e0ec; border-radius: 20px; background: #f8fbff; }
+.acc-panel--white { background: #fff; }
+.acc-panel--notice { background: #fff8e6; border-color: #f1dca4; }
+.acc-panel--ok { background: #eefaf3; border-color: #b9e4cb; }
+.acc-panel--error { background: #fdf0f0; border-color: #efc2c2; }
+.acc-panel__head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 16px; margin-bottom: 12px; }
+:where(.mecard-site) .acc-panel__head h2 { margin: 0; }
+
+/* Buttons (pill style from the plugin) */
+:where(.mecard-site) .acc-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 40px; padding: 0 16px;
+  border-radius: 999px; border: 1px solid #c9d7e8; background: #fff; color: #173a63; font-weight: 600; font-size: 15px; line-height: 1.2;
+  cursor: pointer; text-decoration: none; white-space: nowrap;
+}
+:where(.mecard-site) .acc-btn:hover, :where(.mecard-site) .acc-btn:focus { background: #eef4fb; color: #173a63; border-color: #b6c9df; }
+:where(.mecard-site) .acc-btn--primary { background: #1673d1; border-color: #1673d1; color: #fff; }
+:where(.mecard-site) .acc-btn--primary:hover, :where(.mecard-site) .acc-btn--primary:focus { background: #0f5fb0; border-color: #0f5fb0; color: #fff; }
+:where(.mecard-site) .acc-btn--cta { background: #1a9e5c; border-color: #1a9e5c; color: #fff; }
+:where(.mecard-site) .acc-btn--cta:hover, :where(.mecard-site) .acc-btn--cta:focus { background: #14804a; border-color: #14804a; color: #fff; }
+:where(.mecard-site) .acc-btn--danger { color: #b02a2a; border-color: #e7bcbc; }
+:where(.mecard-site) .acc-btn--danger:hover { background: #fdf0f0; color: #8f1d1d; border-color: #dba4a4; }
+:where(.mecard-site) .acc-btn--small { min-height: 32px; padding: 0 12px; font-size: 13px; }
+:where(.mecard-site) .acc-btn--block { display: flex; width: 100%; }
+:where(.mecard-site) .acc-btn:disabled { opacity: 0.55; cursor: default; }
+:where(.mecard-site) .acc-link { background: none; border: 0; padding: 0; color: var(--ast-global-color-0); font: inherit; cursor: pointer; text-decoration: underline; }
+:where(.mecard-site) .acc-link:hover, :where(.mecard-site) .acc-link:focus { background: none; color: var(--ast-global-color-1); }
+.acc-actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 14px; }
+
+/* Forms */
+.acc-form { display: grid; gap: 14px; }
+.acc-grid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+.acc-field { display: grid; gap: 4px; min-width: 0; }
+:where(.mecard-site) .acc-field label, .acc-field__label { margin: 0; font-weight: 600; font-size: 14px; color: #2c4562; }
+.acc-field__hint { font-size: 12.5px; color: #6b7c90; }
+:where(.mecard-site) .acc input[type="text"], :where(.mecard-site) .acc input[type="email"], :where(.mecard-site) .acc input[type="password"],
+:where(.mecard-site) .acc input[type="url"], :where(.mecard-site) .acc input[type="tel"], :where(.mecard-site) .acc input[type="search"],
+:where(.mecard-site) .acc select, :where(.mecard-site) .acc textarea {
+  width: 100%; min-width: 0; padding: 9px 11px; border: 1px solid #c9d4e0; border-radius: 8px; background: #fff; color: #1d2b3a;
+  font: inherit; font-size: 15px; line-height: 1.4; box-shadow: none; height: auto;
+}
+:where(.mecard-site) .acc textarea { min-height: 110px; resize: vertical; }
+:where(.mecard-site) .acc textarea.acc-code { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 13px; min-height: 220px; }
+:where(.mecard-site) .acc input:focus, :where(.mecard-site) .acc select:focus, :where(.mecard-site) .acc textarea:focus { outline: 2px solid #9cc4ee; outline-offset: 0; border-color: #1673d1; }
+.acc-colour { display: flex; gap: 8px; align-items: center; }
+:where(.mecard-site) .acc-colour input[type="color"] { width: 44px; height: 38px; padding: 2px; border: 1px solid #c9d4e0; border-radius: 8px; background: #fff; flex: none; }
+.acc-check { display: flex; gap: 8px; align-items: flex-start; font-size: 15px; }
+:where(.mecard-site) .acc-check label { margin: 0; font-weight: 400; }
+.acc-error { color: #b02a2a; font-size: 14px; margin: 0; }
+.acc-ok { color: #14804a; font-size: 14px; margin: 0; }
+.acc-divider { display: flex; align-items: center; gap: 12px; color: #6b7c90; font-size: 13px; margin: 6px 0; }
+.acc-divider::before, .acc-divider::after { content: ""; flex: 1; border-top: 1px solid #d6e0ec; }
+
+/* Google button */
+:where(.mecard-site) .acc-google { display: flex; width: 100%; align-items: center; justify-content: center; gap: 10px; min-height: 44px; border: 1px solid #c9d4e0; border-radius: 999px; background: #fff; color: #1d2b3a; font-weight: 600; }
+:where(.mecard-site) .acc-google:hover, :where(.mecard-site) .acc-google:focus { background: #f3f6fa; color: #1d2b3a; border-color: #b6c9df; }
+
+/* Lists of profiles and cards */
+.acc-list { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+.acc-item { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px; padding: 12px 14px; border: 1px solid #dfe7f1; border-radius: 14px; background: #fff; }
+.acc-item__main { flex: 1 1 220px; min-width: 0; display: flex; align-items: center; gap: 12px; }
+.acc-item__text { min-width: 0; }
+.acc-item__title { font-weight: 600; color: #173a63; overflow-wrap: anywhere; }
+.acc-item__sub { font-size: 13.5px; color: #6b7c90; overflow-wrap: anywhere; }
+.acc-item__actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.acc-avatar { width: 46px; height: 46px; border-radius: 50%; object-fit: cover; background: #e5ecf4; flex: none; }
+.acc-thumb { width: 72px; height: 46px; border-radius: 6px; object-fit: cover; background: #e5ecf4; flex: none; border: 1px solid #dfe7f1; }
+.acc-logo { max-width: 160px; max-height: 70px; object-fit: contain; }
+.acc-badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11.5px; font-weight: 700; letter-spacing: 0.03em; text-transform: uppercase; background: #e5ecf4; color: #3d5574; vertical-align: middle; }
+.acc-badge--pro { background: #1673d1; color: #fff; }
+.acc-badge--live { background: #d9f2e4; color: #14804a; }
+.acc-badge--wait { background: #fff1cc; color: #8a6200; }
+.acc-badge--off { background: #eceff3; color: #6b7c90; }
+.acc-toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 14px; }
+.acc-toolbar > input[type="search"] { flex: 1 1 220px; }
+.acc-empty { padding: 18px; border: 1px dashed #c9d7e8; border-radius: 14px; text-align: center; color: #5f7591; background: #fff; }
+.acc-more { margin-top: 12px; text-align: center; }
+
+/* Inline expanding forms (card linking, invites) */
+.acc-details { width: 100%; }
+.acc-details > summary { list-style: none; cursor: pointer; }
+.acc-details > summary::-webkit-details-marker { display: none; }
+.acc-inline-form { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 10px; }
+.acc-inline-form > select, .acc-inline-form > input { flex: 1 1 220px; width: auto !important; }
+
+/* Editor: form + live preview */
+.acc-editor { display: grid; gap: 24px; grid-template-columns: minmax(0, 1fr); align-items: start; }
+@media (min-width: 960px) { .acc-editor { grid-template-columns: minmax(0, 1fr) 400px; } }
+.acc-editor__preview { position: relative; }
+@media (min-width: 960px) { .acc-editor__preview { position: sticky; top: 16px; } }
+.acc-phone { border: 10px solid #1d2b3a; border-radius: 34px; overflow: hidden; background: #fff; box-shadow: 0 18px 40px rgba(23, 58, 99, 0.18); }
+.acc-phone__screen { height: 680px; overflow-y: auto; overflow-x: hidden; }
+.acc-phone__screen .mc-card-container { padding: 0; }
+.acc-phone__label { text-align: center; font-size: 12.5px; color: #6b7c90; margin-top: 10px; }
+.acc-preview-inert { pointer-events: none; }
+
+.acc-photo { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.acc-photo img { width: 88px; height: 88px; border-radius: 50%; object-fit: cover; background: #e5ecf4; }
+.acc-photo--logo img { width: auto; max-width: 180px; height: 72px; border-radius: 8px; object-fit: contain; background: #fff; border: 1px solid #dfe7f1; padding: 6px; }
+
+.acc-links { display: grid; gap: 10px; }
+.acc-link-row { display: grid; gap: 8px; grid-template-columns: 1fr; padding: 12px; border: 1px solid #dfe7f1; border-radius: 12px; background: #fff; }
+@media (min-width: 640px) { .acc-link-row { grid-template-columns: 1fr 1.4fr auto; align-items: end; } .acc-link-row--icon { grid-template-columns: 1fr 1.4fr 0.8fr auto; } }
+.acc-link-row__tools { display: flex; gap: 6px; }
+
+.acc-tabs { display: flex; flex-wrap: wrap; gap: 6px; margin: 18px 0 4px; }
+:where(.mecard-site) .acc-tabs a { padding: 7px 14px; border-radius: 999px; border: 1px solid #c9d7e8; background: #fff; color: #173a63; font-weight: 600; font-size: 14px; }
+:where(.mecard-site) .acc-tabs a[aria-current="page"] { background: #173a63; border-color: #173a63; color: #fff; }
+
+.acc-savebar { position: sticky; bottom: 0; z-index: 5; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; padding: 12px 16px; margin-top: 18px; background: rgba(255, 255, 255, 0.96); border: 1px solid #d6e0ec; border-radius: 14px; box-shadow: 0 -6px 18px rgba(23, 58, 99, 0.08); }
+.acc-savebar__status { flex: 1; font-size: 14px; color: #5f7591; }

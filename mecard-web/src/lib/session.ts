@@ -4,18 +4,20 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { db } from "@/db/client";
 import { users } from "@/db/schema";
+import { loginUrl } from "./auth-paths";
 
 export async function currentUserId(): Promise<number | null> {
   const s = await auth();
   return s?.user?.id ? Number(s.user.id) : null;
 }
 
-/** Logged-in user id, or a redirect to the login page (like WordPress /my-account/). */
-export async function requireUserId(): Promise<number> {
+/** Logged-in user id, or a redirect to the login page (like WordPress /my-account/), coming back to `next` after. */
+export async function requireUserId(next?: string): Promise<number> {
   const id = await currentUserId();
-  if (!id) redirect("/my-account/");
+  if (!id) redirect(loginUrl(next));
   return id;
 }
+
 
 /** True when the user is still an admin in the database (the session flag lasts until logout). */
 export async function isAdminUser(userId: number): Promise<boolean> {

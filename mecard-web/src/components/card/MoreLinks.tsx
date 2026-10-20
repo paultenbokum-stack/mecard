@@ -1,5 +1,5 @@
 import { safeHref } from "@/lib/profile-format";
-import type { ProfileView } from "@/lib/public-profile";
+import type { ProfileView } from "@/lib/profile-view";
 
 // The two Toolset views on pro profiles: company-wide buttons
 // (loop-item-in-more-links-company), then the profile's own "My Links"

@@ -50,7 +50,7 @@ export default async function TagPage({ params }: Props) {
   const { card, view } = found;
   if (needsCanonicalRedirect(slug)) permanentRedirect(`/t/${card.slug}/`);
 
-  if (!view) return <UnlinkedCard />;
+  if (!view) return <UnlinkedCard slug={card.slug} />;
 
   return (
     <CardPage

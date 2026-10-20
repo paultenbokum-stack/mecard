@@ -3,8 +3,10 @@
 import Link from "next/link";
 import { useState } from "react";
 
-// Astra header and footer as WordPress rendered them around card pages for
-// logged-out visitors. Pro profiles show no header (the company logo leads).
+// Astra header and footer as WordPress rendered them. Card pages always get
+// the logged-out menu (they are cached for everyone; pro profiles show no
+// header at all); account pages switch menus like astra-child's
+// my_wp_nav_menu_args().
 
 const MENU = [
   ["How it works", "/how-it-works/"],
@@ -14,8 +16,20 @@ const MENU = [
   ["Contact Us", "/contact-us/"],
 ] as const;
 
-export function SiteHeader() {
+// The "logged-in" menu, with My Account's sub-items (Basket, Contact Us,
+// Log Out) brought up a level. Dashboard goes to the new /manage/ home.
+const MENU_LOGGED_IN = [
+  ["Dashboard", "/manage/"],
+  ["Gallery", "/gallery/"],
+  ["Shop", "/shop/"],
+  ["Basket", "/basket/"],
+  ["Contact Us", "/contact-us/"],
+  ["Log Out", "/my-account/customer-logout/"],
+] as const;
+
+export function SiteHeader({ loggedIn = false }: { loggedIn?: boolean }) {
   const [open, setOpen] = useState(false);
+  const menu = loggedIn ? MENU_LOGGED_IN : MENU;
   return (
     <header className="mc-site-header">
       <div className="mc-site-header__bar">
@@ -35,7 +49,7 @@ export function SiteHeader() {
           )}
         </button>
         <ul id="mc-site-menu" className="mc-site-header__menu mc-site-header__menu--desktop" style={{ display: "none" }}>
-          {MENU.map(([label, href]) => (
+          {menu.map(([label, href]) => (
             <li key={href}>
               <a href={href}>{label}</a>
             </li>
@@ -44,7 +58,7 @@ export function SiteHeader() {
       </div>
       {open ? (
         <ul className="mc-site-header__menu">
-          {MENU.map(([label, href]) => (
+          {menu.map(([label, href]) => (
             <li key={href}>
               <a href={href}>{label}</a>
             </li>

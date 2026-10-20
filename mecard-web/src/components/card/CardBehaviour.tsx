@@ -126,7 +126,48 @@ export function CardBehaviour({ config }: { config: CardConfig }) {
       track(name, meta ? { meta } : {});
     };
 
-    if (once(`view:${config.pageUrl}`)) push("profile_view");
+    // ── Owner extras (Me\Viral, single-mecard-profile.php) ──
+    // The page is the same for everyone; ask who is looking. Owners get the
+    // edit bar and, on free profiles, the Pro upsell in the share panel, and
+    // their own visits aren't counted as views. Visitors see the viral prompts.
+    let owner = false;
+    const access = once(`access:${config.pageUrl}`)
+      ? fetch(`/api/me/card/?profile_id=${config.profileId}`, { credentials: "same-origin", cache: "no-store" })
+          .then((r) => (r.ok ? (r.json() as Promise<{ canEdit?: boolean; isOwner?: boolean; editUrl?: string | null }>) : null))
+          .catch(() => null)
+      : Promise.resolve(null);
+    void access.then((a) => {
+      owner = !!a?.isOwner;
+      if (!owner) push("profile_view");
+      if (a?.canEdit && a.editUrl && !new URLSearchParams(location.search).has("me_preview")) showEditBar(a.editUrl);
+      if (owner && config.isFree) showOwnerUpsell();
+      if (owner) document.getElementById("mecard-watermark-strip")?.remove();
+    });
+    function showEditBar(href: string) {
+      const card = document.querySelector(".mecard-public-card");
+      if (!card || card.querySelector(".mecard-edit-bar")) return;
+      const bar = document.createElement("div");
+      bar.className = "mecard-edit-bar";
+      const a = document.createElement("a");
+      a.href = href;
+      a.innerHTML = '<i class="fas fa-pencil-alt" aria-hidden="true"></i> Edit Profile';
+      bar.append(a);
+      card.append(bar);
+      cleanups.push(() => bar.remove());
+    }
+    function showOwnerUpsell() {
+      const body = document.querySelector("#mecard-share-panel .container-fluid");
+      if (!body || document.getElementById("mecard-share-upsell")) return;
+      const box = document.createElement("div");
+      box.className = "mecard-share-upsell";
+      box.id = "mecard-share-upsell";
+      box.innerHTML =
+        `<a href="/manage/profile/${config.profileId}/?utm_source=watermark&amp;utm_medium=share_panel&amp;utm_campaign=pro_upsell" class="mecard-share-upsell__link" data-mecard-viral="share_panel">` +
+        '<span class="mecard-share-upsell__icon">&#9733;</span> <span class="mecard-share-upsell__text">Go Pro to remove MeCard branding from your shares</span></a>';
+      body.prepend(box);
+      cleanups.push(() => box.remove());
+    }
+    on("click", "#mecard-share-upsell a", () => track("pro_upsell_clicked", { meta: { surface: "share_panel" } }));
     on("click", "div.vcard-button", () => push("download-contact", { file_type: "vcard", file_url: null }));
     on("click", 'button[data-action="whatsapp-number"]', () => push("whatsapp_share"));
     on("click", 'button[data-action="copy-link"]', () => push("copy_link"));
@@ -168,7 +209,7 @@ export function CardBehaviour({ config }: { config: CardConfig }) {
     const shareFooter = config.isFree ? ` — Get yours at mecard.co.za` : "";
     let ctaShown = false;
     function showPostSaveCta() {
-      if (!config.isFree || ctaShown) return;
+      if (!config.isFree || ctaShown || owner) return;
       ctaShown = true;
       if (/android/i.test(navigator.userAgent)) {
         const slot = document.getElementById("mecard-download-cta-slot");

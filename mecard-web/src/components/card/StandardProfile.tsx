@@ -1,6 +1,6 @@
 import { imageUrl } from "@/lib/images/paths";
 import { mapsUrl, safeHref, telHref, whatsappDigits } from "@/lib/profile-format";
-import { companyLabel, type ProfileView } from "@/lib/public-profile";
+import { companyLabel, type ProfileView } from "@/lib/profile-view";
 import { SOCIAL_ICONS } from "./socials";
 
 // Port of templates/profile-standard.php (public context). The WordPress data

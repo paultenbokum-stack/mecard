@@ -436,3 +436,16 @@ iframe#vcard-download { position: absolute; width: 0; height: 0; border: 0; over
 :where(.mecard-site) .mc-unlinked__btn { display: inline-block; padding: 14px 28px; border-radius: 10px; background: var(--ast-global-color-0); color: #fff; font-weight: 600; }
 :where(.mecard-site) .mc-unlinked__btn:hover, :where(.mecard-site) .mc-unlinked__btn:focus { background: var(--ast-global-color-1); color: #fff; }
 .mc-unlinked__alt { margin-top: 1.5em; font-size: 0.9em; }
+
+/* Owner bar under the card (single-mecard-profile.php's .mecard-edit-bar), added by
+   CardBehaviour for whoever may edit the profile. */
+.mecard-edit-bar { padding: 12px 16px; text-align: center; border-top: 1px solid rgba(0, 0, 0, 0.06); }
+.mecard-edit-bar a { display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border: 1px solid #6c757d; border-radius: 4px; color: #6c757d; font-size: 14px; }
+.mecard-edit-bar a:hover, .mecard-edit-bar a:focus { background: #6c757d; color: #fff; }
+
+/* Pro upsell at the top of the share panel, for owners of free profiles (me-viral.css). */
+.mecard-share-upsell { margin-bottom: 12px; }
+.mecard-share-upsell__link { display: flex; align-items: center; gap: 8px; padding: 10px 14px; background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%); border: 1px solid #ffb74d; border-radius: 8px; color: #e65100; font-size: 13px; line-height: 1.4; text-decoration: none; transition: background 0.2s; }
+.mecard-share-upsell__link:hover, .mecard-share-upsell__link:focus { background: linear-gradient(135deg, #ffe0b2 0%, #ffcc80 100%); color: #e65100; text-decoration: none; }
+.mecard-share-upsell__icon { font-size: 18px; color: #ff9800; flex-shrink: 0; }
+.mecard-share-upsell__text { font-weight: 500; }

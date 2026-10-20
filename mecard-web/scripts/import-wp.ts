@@ -271,7 +271,9 @@ async function main() {
           label: text(m["wpcf-site-name"] || m["wpcf-button-text"] || p.post_title, 255),
           url: str(m["wpcf-site-url"] || m["wpcf-button-url"]),
           icon: clip(m["wpcf-button-icon"], 100),
-          sortOrder: int(m["toolset-post-sortorder"]) ?? Number(p.menu_order ?? 0),
+          // The live views ignored toolset-post-sortorder; 0 means "not reordered
+          // yet", which keeps their order (see public-profile.ts).
+          sortOrder: 0,
           createdAt: utc(p.post_date_gmt) ?? new Date(),
           updatedAt: utc(p.post_modified_gmt) ?? new Date(),
         };

@@ -104,3 +104,27 @@ export const PLACEHOLDER_SVG =
   '<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 300 300">' +
   '<rect width="300" height="300" fill="#e9ecef"/>' +
   '<circle cx="150" cy="118" r="46" fill="#ced4da"/><path d="M62 262c0-48 40-82 88-82s88 34 88 82z" fill="#ced4da"/></svg>';
+
+export const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
+
+/**
+ * A new upload from the editors (profile photo, company logo): resized once to
+ * a WebP master and recorded like a migrated image, so it is served by the
+ * same /wp-content/uploads/… route. Returns that path, or null when the file
+ * isn't an image.
+ */
+export async function storeUpload(original: Buffer, deps: ImageDeps, opts: { now?: Date; id: string }): Promise<string | null> {
+  if (!original.length || original.length > MAX_UPLOAD_BYTES) return null;
+  let master: Awaited<ReturnType<typeof toMaster>>;
+  try {
+    master = await toMaster(original);
+  } catch {
+    return null;
+  }
+  const now = opts.now ?? new Date();
+  const key = `mecard/${now.getUTCFullYear()}/${String(now.getUTCMonth() + 1).padStart(2, "0")}/${opts.id}.webp`;
+  const storageKey = masterKey(key);
+  await deps.media.write(storageKey, master.data, "image/webp");
+  await deps.index.record({ legacyPath: key, storageKey, width: master.width, height: master.height, bytes: master.data.length, restoredFromArchive: false });
+  return `/wp-content/uploads/${key}`;
+}
