@@ -216,7 +216,7 @@ export const orders = pgTable(
   {
     id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
     userId: integer("user_id").references(() => users.id, { onDelete: "set null" }),
-    // pending | on-hold | processing | completed | cancelled | refunded | failed | order-received
+    // pending | on-hold | processing | shipped | completed | cancelled | refunded | failed
     status: varchar("status", { length: 20 }).notNull().default("pending"),
     subtotalCents: integer("subtotal_cents").notNull().default(0),
     shippingCents: integer("shipping_cents").notNull().default(0),
@@ -228,6 +228,11 @@ export const orders = pgTable(
     bobgoOrderId: varchar("bobgo_order_id", { length: 64 }),
     bobgoStatus: varchar("bobgo_status", { length: 20 }),
     bobgoError: text("bobgo_error"),
+    // The courier's shipment, from Bob Go tracking or typed by staff.
+    trackingReference: varchar("tracking_reference", { length: 64 }).notNull().default(""),
+    courierName: varchar("courier_name", { length: 100 }).notNull().default(""),
+    shippedAt: timestamp("shipped_at", { withTimezone: true }),
+    deliveredAt: timestamp("delivered_at", { withTimezone: true }),
     paymentMethod: varchar("payment_method", { length: 50 }).notNull().default("payfast"),
     payfastPaymentId: varchar("payfast_payment_id", { length: 64 }),
     billingFirstName: varchar("billing_first_name", { length: 100 }).notNull().default(""),

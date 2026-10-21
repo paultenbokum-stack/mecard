@@ -6,9 +6,10 @@ import { sendEmail } from "@/lib/email";
 import { invoiceFilename, renderInvoice } from "@/lib/invoice";
 import { bankDetailsText } from "@/lib/invoice-settings";
 import { ORDER_STATUS_LABEL, PAYMENT_LABEL, rands } from "@/lib/money";
+import { PICKUP_METHOD } from "@/lib/shipping";
 
 // The WooCommerce emails the live site sends, as plain text:
-//   customer: processing, on hold, completed, refunded, customer note
+//   customer: processing, on hold, shipped (new), completed (delivered or collected), refunded, customer note
 //   shop:     new order (paid), cancelled, failed
 
 const appUrl = () => process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
@@ -50,7 +51,12 @@ export function orderSummary(o: Order, items: Item[]): string {
   return [`Order #${o.id}`, "", ...lines, "", ...totals, "", "Billing address:", ...address.map((l) => `  ${l}`)].join("\n");
 }
 
-const customerCopy: Partial<Record<string, { subject: (id: number) => string; intro: string }>> = {
+const courierLine = (o: Order) =>
+  o.trackingReference
+    ? `${o.courierName || "The courier"} has it, tracking reference ${o.trackingReference}. You can follow it on your order page.`
+    : "You can follow it on your order page.";
+
+const customerCopy: Partial<Record<string, { subject: (id: number) => string; intro: string | ((o: Order, prev: string) => string) }>> = {
   processing: {
     subject: (id) => `Your MeCard order #${id} has been received!`,
     intro: "Thank you for your order. We've received your payment and are now processing it.",
@@ -59,9 +65,19 @@ const customerCopy: Partial<Record<string, { subject: (id: number) => string; in
     subject: (id) => `Your MeCard order #${id} is on hold`,
     intro: "Thanks for your order. It's on hold until we confirm that payment has been received.",
   },
+  shipped: {
+    subject: (id) => `Your MeCard order #${id} is on its way`,
+    intro: (o) => `Good news: your order has been shipped. ${courierLine(o)}`,
+  },
   completed: {
-    subject: (id) => `Your MeCard order #${id} is now complete`,
-    intro: "We have finished processing your order.",
+    subject: (id) => `Your MeCard order #${id} is complete`,
+    // Delivered after shipping; collected for local pickup; otherwise (Pro upgrades) just done.
+    intro: (o, prev) =>
+      prev === "shipped"
+        ? "Your order has been delivered. We hope you enjoy your MeCards! If anything isn't right, just reply to this email."
+        : o.shippingMethod === PICKUP_METHOD.label
+          ? "Thanks for collecting your order. We hope you enjoy your MeCards!"
+          : "We have finished processing your order.",
   },
   refunded: {
     subject: (id) => `Your MeCard order #${id} has been refunded`,
@@ -100,7 +116,7 @@ export async function sendOrderStatusEmails(orderId: number, prev: string, next:
       await sendEmail({
         to: order.billingEmail,
         subject: c.subject(order.id),
-        text: `Hi ${order.billingFirstName || "there"},\n\n${c.intro}\n\n${eftNote}${summary}\n\nView your order: ${appUrl()}/my-account/view-order/${order.id}/\n\nThanks for using MeCard!`,
+        text: `Hi ${order.billingFirstName || "there"},\n\n${typeof c.intro === "function" ? c.intro(order, prev) : c.intro}\n\n${eftNote}${summary}\n\nView your order: ${appUrl()}/my-account/view-order/${order.id}/\n\nThanks for using MeCard!`,
         ...(pdf ? { attachments: [{ filename: invoiceFilename(order.id), content: Buffer.from(pdf) }] } : {}),
       });
     }

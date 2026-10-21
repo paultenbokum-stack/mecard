@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { db } from "@/db/client";
 import { cards } from "@/db/schema";
 import { CARD_FLAGS, isCardFlag } from "@/lib/admin-cards";
+import { shipOrderIfCardsShipped } from "@/lib/order-shipping";
 import { slugify } from "@/lib/slug";
 import { requireAdmin } from "@/lib/session";
 
@@ -25,29 +26,33 @@ function back(form: FormData, outcome: { saved?: string; error?: string }): neve
 
 /** One production flag, ticked or unticked on the list (the checkbox posts "on" when ticked). */
 export async function setCardFlagAction(form: FormData) {
-  await requireAdmin();
+  const me = await requireAdmin();
   const id = Number(form.get("card_id"));
   const flag = str(form, "flag");
   if (!isCardFlag(flag)) back(form, { error: "Unknown step." });
   const on = form.get("value") === "on";
-  await db
+  const [c] = await db
     .update(cards)
     .set({ [flag]: on, updatedAt: new Date() })
-    .where(eq(cards.id, id));
+    .where(eq(cards.id, id))
+    .returning({ orderId: cards.orderId });
   const label = CARD_FLAGS.find(([k]) => k === flag)![1];
-  back(form, { saved: `Card ${id}: ${label.toLowerCase()} ${on ? "ticked" : "unticked"}.` });
+  const orderShipped = flag === "shipped" && on && (await shipOrderIfCardsShipped(c?.orderId ?? null, { by: me }));
+  back(form, { saved: `Card ${id}: ${label.toLowerCase()} ${on ? "ticked" : "unticked"}.${orderShipped ? ` All its order's cards are shipped, so order #${c!.orderId} is now shipped.` : ""}` });
 }
 
 /** All the flags at once, from the card page. */
 export async function saveCardFlagsAction(form: FormData) {
-  await requireAdmin();
+  const me = await requireAdmin();
   const id = Number(form.get("card_id"));
   const values = Object.fromEntries(CARD_FLAGS.map(([k]) => [k, form.get(k) === "on"]));
-  await db
+  const [c] = await db
     .update(cards)
     .set({ ...values, updatedAt: new Date() })
-    .where(eq(cards.id, id));
-  back(form, { saved: "Production steps saved." });
+    .where(eq(cards.id, id))
+    .returning({ orderId: cards.orderId });
+  const orderShipped = values.shipped && (await shipOrderIfCardsShipped(c?.orderId ?? null, { by: me }));
+  back(form, { saved: `Production steps saved.${orderShipped ? ` Order #${c!.orderId} is now shipped.` : ""}` });
 }
 
 export async function saveCardLabelAction(form: FormData) {

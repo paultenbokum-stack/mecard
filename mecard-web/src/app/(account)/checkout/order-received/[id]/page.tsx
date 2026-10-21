@@ -6,7 +6,7 @@ import { db } from "@/db/client";
 import { cards, orderItems, orders } from "@/db/schema";
 import { BankDetails, OrderDetails } from "@/components/shop/OrderDetails";
 import { cardTypesFor, PRODUCT } from "@/lib/catalog";
-import { formatDate, ORDER_STATUS_LABEL, rands } from "@/lib/money";
+import { formatDate, ORDER_STATUS_LABEL, PAID_STATUSES, rands } from "@/lib/money";
 import { requireUserId } from "@/lib/session";
 
 export const metadata: Metadata = { title: { absolute: "Order received - MeCard" } };
@@ -21,7 +21,7 @@ export default async function OrderReceivedPage({ params }: { params: Promise<{ 
     db.select().from(orderItems).where(eq(orderItems.orderId, id)),
     db.select({ designSubmitted: cards.designSubmitted, type: cards.type }).from(cards).where(and(eq(cards.orderId, id), eq(cards.archived, false))),
   ]);
-  const paid = ["processing", "completed"].includes(order.status);
+  const paid = PAID_STATUSES.includes(order.status);
   const hasCards = items.some((i) => cardTypesFor(i.productId).length);
   const hasUpgrades = items.some((i) => i.productId === PRODUCT.proUpgrade);
   const designable = orderCards.filter((c) => c.type !== "phonetag");

@@ -6,7 +6,17 @@ import { cards, entitlements, orderItems, orderNotes, orders, profiles, users } 
 import { CARD_TYPES } from "@/components/account/Bits";
 import { SubmitButton } from "@/components/admin/SubmitButton";
 import { AdminHeader, type AdminSearchParams, Badge, Card, Flash } from "@/components/admin/ui";
-import { addOrderNoteAction, deleteOrderNoteAction, sendToBobgoAction, setOrderStatusAction, updateOrderAddressAction } from "@/lib/admin-actions";
+import {
+  addOrderNoteAction,
+  checkTrackingAction,
+  deleteOrderNoteAction,
+  markCollectedAction,
+  markDeliveredAction,
+  markShippedAction,
+  sendToBobgoAction,
+  setOrderStatusAction,
+  updateOrderAddressAction,
+} from "@/lib/admin-actions";
 import { cardProgress } from "@/lib/admin-cards";
 import { bobgoEnabled } from "@/lib/bobgo";
 import { hasInvoice } from "@/lib/invoice";
@@ -246,10 +256,71 @@ export default async function AdminOrder({ params, searchParams }: { params: Pro
             </form>
             <ul className="adm-small adm-muted" style={{ paddingLeft: 18, margin: "12px 0 0" }}>
               <li>On hold → Processing marks an EFT payment as received: Pro upgrades and bundles take effect, and the cards go to production.</li>
+              <li>Shipped marks the order&apos;s cards shipped; Completed means delivered (or collected).</li>
               <li>Cancelled archives the order&apos;s cards that haven&apos;t shipped and cancels its entitlements.</li>
               <li>The customer is emailed for Processing, On hold, Completed and Refunded.</li>
               <li>Refunded doesn&apos;t move money: refund the payment in PayFast or by EFT as well.</li>
             </ul>
+          </Card>
+
+          <Card title="Shipping">
+            {o.shippingMethod ? <p className="adm-small" style={{ marginTop: 0 }}>{o.shippingMethod}</p> : null}
+            {o.trackingReference || o.shippedAt ? (
+              <p className="adm-small">
+                {o.courierName || "Courier"}
+                {o.trackingReference ? <>, tracking <strong>{o.trackingReference}</strong></> : null}
+                {o.shippedAt ? <><br />Shipped {formatDate(o.shippedAt, true)}</> : null}
+                {o.deliveredAt ? <><br />Delivered {formatDate(o.deliveredAt, true)}</> : null}
+              </p>
+            ) : null}
+            {o.status === "processing" && o.shippingMethod === PICKUP_METHOD.label ? (
+              <form action={markCollectedAction}>
+                <input type="hidden" name="order_id" value={o.id} />
+                <SubmitButton className="adm-btn adm-btn--primary" busy="Saving…" confirm="Mark this order collected? It will be completed and the customer emailed.">
+                  <i className="fas fa-hand-holding" aria-hidden="true" /> Collected
+                </SubmitButton>
+              </form>
+            ) : o.status === "processing" && o.shippingMethod ? (
+              <details>
+                <summary className="adm-small">Mark shipped by hand</summary>
+                <form action={markShippedAction} className="adm-form" style={{ gridTemplateColumns: "1fr", marginTop: 8 }}>
+                  <input type="hidden" name="order_id" value={o.id} />
+                  <div className="adm-field">
+                    <label htmlFor="ship-courier">Courier (optional)</label>
+                    <input id="ship-courier" name="courier" className="adm-input" />
+                  </div>
+                  <div className="adm-field">
+                    <label htmlFor="ship-ref">Tracking reference (optional)</label>
+                    <input id="ship-ref" name="reference" className="adm-input" />
+                  </div>
+                  <div>
+                    <SubmitButton className="adm-btn adm-btn--primary" busy="Saving…">
+                      <i className="fas fa-truck" aria-hidden="true" /> Mark shipped
+                    </SubmitButton>
+                  </div>
+                </form>
+              </details>
+            ) : null}
+            {o.status === "shipped" ? (
+              <form action={markDeliveredAction} style={{ marginTop: 8 }}>
+                <input type="hidden" name="order_id" value={o.id} />
+                <SubmitButton className="adm-btn adm-btn--primary" busy="Saving…" confirm="Mark this order delivered? It will be completed and the customer emailed.">
+                  <i className="fas fa-check" aria-hidden="true" /> Mark delivered
+                </SubmitButton>
+              </form>
+            ) : null}
+            {["processing", "shipped"].includes(o.status) && o.shippingMethod && o.shippingMethod !== PICKUP_METHOD.label ? (
+              <form action={checkTrackingAction} style={{ marginTop: 8 }}>
+                <input type="hidden" name="order_id" value={o.id} />
+                <SubmitButton className="adm-link adm-small" busy="Checking…">
+                  Check Bob Go tracking now
+                </SubmitButton>
+              </form>
+            ) : null}
+            <p className="adm-help" style={{ marginBottom: 0 }}>
+              Bob Go tracking is checked every hour: the order moves to Shipped when the courier collects it and to Completed when it&apos;s delivered, with an
+              email to the customer each time. Ticking Shipped on all its cards does the same.
+            </p>
           </Card>
 
           <Card title="Bob Go">
@@ -280,7 +351,7 @@ export default async function AdminOrder({ params, searchParams }: { params: Pro
               <>
                 {o.bobgoError ? <div className="adm-flash adm-flash--error adm-small">Last attempt failed: {o.bobgoError}</div> : null}
                 <p className="adm-muted">
-                  {["processing", "completed", "on-hold"].includes(o.status) ? "Not in Bob Go yet." : "Paid orders go to Bob Go automatically when they move to Processing."}
+                  {["processing", "shipped", "completed", "on-hold"].includes(o.status) ? "Not in Bob Go yet." : "Paid orders go to Bob Go automatically when they move to Processing."}
                 </p>
                 <form action={sendToBobgoAction}>
                   <input type="hidden" name="order_id" value={o.id} />

@@ -6,9 +6,10 @@ import { revalidatePath } from "next/cache";
 import { db } from "@/db/client";
 import { orderNotes, orders } from "@/db/schema";
 import { sendOrderToBobgo } from "@/lib/bobgo";
-import { ORDER_STATUS_LABEL } from "@/lib/money";
+import { ORDER_STATUS_LABEL, PAID_STATUSES } from "@/lib/money";
 import { sendCustomerNoteEmail } from "@/lib/order-emails";
 import { setOrderStatus } from "@/lib/orders";
+import { markOrderCollected, markOrderDelivered, markOrderShipped, syncOrderTracking } from "@/lib/order-shipping";
 import { requireAdmin } from "@/lib/session";
 
 // Staff actions on orders (WooCommerce's order screen). Every action checks
@@ -31,7 +32,7 @@ export async function setOrderStatusAction(form: FormData) {
   if (!(status in ORDER_STATUS_LABEL)) back(path, { error: "Unknown status." });
   // Marking an EFT order paid by hand records the payment date, as WooCommerce does.
   const [o] = await db.select({ paidAt: orders.paidAt }).from(orders).where(eq(orders.id, id));
-  const paid = (status === "processing" || status === "completed") && o && !o.paidAt ? { paidAt: new Date() } : {};
+  const paid = PAID_STATUSES.includes(status) && o && !o.paidAt ? { paidAt: new Date() } : {};
   const changed = await setOrderStatus(id, status, paid, { by: me });
   revalidatePath("/admin/orders/");
   const label = ORDER_STATUS_LABEL[status];
@@ -97,4 +98,34 @@ export async function sendToBobgoAction(form: FormData) {
     `/admin/orders/${id}/`,
     res.ok ? { saved: res.updated ? `Updated in Bob Go (Bob Go order ${res.id}).` : `Sent to Bob Go (Bob Go order ${res.id}).` } : { error: res.error },
   );
+}
+
+// ── Shipping: Processing → Shipped → Completed ──────────────────────────────
+
+export async function markShippedAction(form: FormData) {
+  const me = await requireAdmin();
+  const id = Number(form.get("order_id"));
+  const done = await markOrderShipped(id, { by: me, reference: str(form, "reference"), courier: str(form, "courier") });
+  back(`/admin/orders/${id}/`, done ? { saved: "Marked shipped: the customer has been emailed." } : { error: "The order is already shipped." });
+}
+
+export async function markDeliveredAction(form: FormData) {
+  const me = await requireAdmin();
+  const id = Number(form.get("order_id"));
+  const done = await markOrderDelivered(id, { by: me, note: "Marked delivered by staff." });
+  back(`/admin/orders/${id}/`, done ? { saved: "Marked delivered: the order is completed." } : { error: "The order is already completed." });
+}
+
+export async function markCollectedAction(form: FormData) {
+  const me = await requireAdmin();
+  const id = Number(form.get("order_id"));
+  await markOrderCollected(id, { by: me });
+  back(`/admin/orders/${id}/`, { saved: "Marked collected: the order is completed." });
+}
+
+export async function checkTrackingAction(form: FormData) {
+  await requireAdmin();
+  const id = Number(form.get("order_id"));
+  const result = await syncOrderTracking(id);
+  back(`/admin/orders/${id}/`, { saved: `Bob Go tracking: ${result}.` });
 }

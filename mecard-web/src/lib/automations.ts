@@ -15,10 +15,11 @@ import {
 import { cardCartKeysFor, removeLine } from "./cart";
 import { sendEmail } from "./email";
 import { BANK_ACCOUNT } from "./invoice-settings";
+import { ordersToTrack, syncOrderTracking } from "./order-shipping";
 import { rands } from "./money";
 import { siteUrl } from "./site";
 
-// The AutomateWoo workflows as one job, run on a schedule (see /api/cron/automations).
+// The AutomateWoo workflows, and Bob Go tracking, as one job run on a schedule (see /api/cron/automations/).
 // Safe to run as often as you like: every step records what it did.
 
 const ORPHAN_SWEEP_WINDOW = 90 * DAY;
@@ -226,10 +227,24 @@ async function runOnHold(now: Date, log: string[]) {
   return n;
 }
 
+/** Bob Go tracking (no webhooks): paid courier orders move to Shipped, then Completed when delivered. */
+async function runTracking(now: Date, log: string[]) {
+  const counts = { checked: 0, shipped: 0, delivered: 0 };
+  for (const { id } of await ordersToTrack(now)) {
+    const result = await syncOrderTracking(id);
+    counts.checked++;
+    if (result.startsWith("shipped")) counts.shipped++;
+    if (result.startsWith("delivered")) counts.delivered++;
+    if (/^(shipped|delivered)/.test(result)) log.push(`order ${id}: ${result}`);
+  }
+  return counts;
+}
+
 export async function runAutomations(now = new Date()) {
   const log: string[] = [];
   const baskets = await runBaskets(now, log);
   const orphanCards = await runOrphanCards(now, log);
   const onHoldReminders = await runOnHold(now, log);
-  return { ranAt: now.toISOString(), baskets, orphanCards, onHoldReminders, log };
+  const tracking = await runTracking(now, log);
+  return { ranAt: now.toISOString(), baskets, orphanCards, onHoldReminders, tracking, log };
 }

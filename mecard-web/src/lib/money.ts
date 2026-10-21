@@ -11,10 +11,14 @@ export function randsToCents(v: string): number | null {
   return /^\d+(\.\d{1,2})?$/.test(t) ? Math.round(Number(t) * 100) : NaN;
 }
 
+/** Paid orders: being made, on their way, or delivered. */
+export const PAID_STATUSES = ["processing", "shipped", "completed"];
+
 export const ORDER_STATUS_LABEL: Record<string, string> = {
   pending: "Pending payment",
   "on-hold": "On hold",
   processing: "Processing",
+  shipped: "Shipped",
   completed: "Completed",
   cancelled: "Cancelled",
   refunded: "Refunded",

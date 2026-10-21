@@ -49,8 +49,14 @@ WordPress IDs. It is safe to re-run and takes about 10 seconds on the October 20
 | `request` posts | `profile_invites` |
 | Toolset relationships | foreign keys: `profiles.company_id`, `cards.profile_id`, `cards.company_id`, `cards.order_id`, `profile_links.*_id`, `profile_invites.profile_id` |
 | WooCommerce orders, items, notes, products, coupons | `orders`, `order_items`, `order_notes`, `products`, `coupons` |
+| YITH quotes (orders with `ywraq-*` statuses) | `quotes`, keeping their numbers |
 | `wp_mecard_entitlements` | `entitlements` |
 | `wp_mecard_events` | `events` |
+
+Baskets aren't imported, so at cutover `npm run cards:archive-abandoned` (run by
+`deploy/5-migrate-import.ps1` after the import) archives the cards WordPress still had "in a
+basket" and cancels their in-basket entitlement rows. It never touches a live basket, so it
+is safe to run again.
 
 Images are referenced by their original `/wp-content/uploads/…` path and served by the
 image route below.
@@ -183,14 +189,25 @@ WooCommerce and Toolset back office:
   billing, status changes with their emails and entitlement effects, Bob Go, history notes).
 - **Card processing**: ordered cards by the step they wait for (design, check, print,
   encode, package, ship), each step a tick; labels; a key ring's printed code becomes its
-  `/t/` address. Packaged cards count as done once the order is completed, and completing
-  an order marks its packaged cards shipped.
+  `/t/` address. Ticking Shipped on all of an order's cards ships the order.
 - **Encoding file**: the batch between "design received" and "packaged":
   `encoding.csv` (GoToTags), `print.csv` (Bartender) and `images.zip` with the original
   artwork named as the print CSV names it.
 - **Quotes**: edit lines, prices, a discount, the note, expiry and status; save and send.
   An accepted quote's discount carries through checkout to the order.
 - **Coupons** and **Entitlements** (change a row's status, give Pro upgrades).
+
+### Shipping: Processing → Shipped → Completed
+
+Paid orders are Processing while the cards are made. **Shipped** (new; WooCommerce had no
+such status) when the courier collects the parcel: the hourly job reads Bob Go's public
+tracking (`api.bobgo.co.za/tracking`, by shop domain and order number, as the uAfrica
+Shipping plugin's tracking page did; Bob Go has no webhooks for this), or staff press
+"Mark shipped", or tick Shipped on all the order's cards. The order's cards are marked
+shipped and the customer gets "Your order is on its way". **Completed** when Bob Go says
+delivered, or staff press "Mark delivered"; local pickup goes straight to Completed with
+"Collected". Customers see the courier, reference and tracking steps on their order page.
+Orders already delivered when the job first sees them get only the delivered email.
 
 ## Scheduled jobs (AutomateWoo)
 
@@ -206,6 +223,7 @@ Scheduler (`deploy/8-scheduler.ps1`). Rules in `src/lib/automation-rules.ts`:
   (Trash Abandoned Tags), looking back 90 days only.
 - EFT orders still on hold 2 days after going on hold get the payment reminder with the
   bank details (once; orders on hold for over 7 days are left alone).
+- Bob Go tracking for paid courier orders from the last 60 days (see Shipping above).
 
 Locally: set `CRON_SECRET` in `.env.local` and
 `curl -X POST -H "Authorization: Bearer <secret>" http://localhost:3000/api/cron/automations/`.

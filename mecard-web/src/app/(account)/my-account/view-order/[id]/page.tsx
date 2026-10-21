@@ -9,6 +9,7 @@ import { BankDetails, OrderDetails } from "@/components/shop/OrderDetails";
 import { hasInvoice } from "@/lib/invoice";
 import { formatDate, ORDER_STATUS_LABEL } from "@/lib/money";
 import { requireUserId } from "@/lib/session";
+import { trackOrder } from "@/lib/shipment-tracking";
 
 export const metadata: Metadata = { title: { absolute: "Order - MeCard" } };
 
@@ -21,6 +22,9 @@ export default async function ViewOrderPage({ params }: { params: Promise<{ id: 
     db.select().from(orderItems).where(eq(orderItems.orderId, id)),
     db.select().from(orderNotes).where(and(eq(orderNotes.orderId, id), eq(orderNotes.customerNote, true))).orderBy(asc(orderNotes.createdAt)),
   ]);
+  // Where the parcel is (Bob Go tracking, as the old site's tracking page showed it).
+  const tracking = order.status === "shipped" || (order.status === "completed" && order.shippedAt) ? await trackOrder(order.id) : null;
+  const shipment = tracking?.shipments.find((s) => s.status !== "cancelled");
 
   return (
     <div className="acc__wrap">
@@ -57,6 +61,36 @@ export default async function ViewOrderPage({ params }: { params: Promise<{ id: 
               </li>
             ))}
           </ul>
+        </section>
+      ) : null}
+      {order.status === "shipped" || shipment ? (
+        <section className="acc-panel">
+          <h2>Delivery</h2>
+          <p style={{ marginBottom: shipment?.checkpoints?.length ? 12 : 0 }}>
+            {shipment ? <strong>{shipment.status_friendly ?? shipment.status}</strong> : "On its way"}
+            {order.courierName || shipment?.courier_name ? ` with ${order.courierName || shipment?.courier_name}` : ""}
+            {order.trackingReference ? `, tracking reference ${order.trackingReference}` : ""}
+            {order.shippedAt ? `. Shipped ${formatDate(order.shippedAt)}` : ""}
+            {order.deliveredAt ? `, delivered ${formatDate(order.deliveredAt)}` : ""}.
+          </p>
+          {shipment?.checkpoints?.length ? (
+            <ul className="acc-list">
+              {shipment.checkpoints.slice(0, 8).map((c, n) => (
+                <li className="acc-item" key={n}>
+                  <div className="acc-item__text">
+                    <div className="acc-item__sub">
+                      {c.time ? formatDate(new Date(c.time), true) : ""}
+                      {c.location ? ` · ${c.location}` : ""}
+                    </div>
+                    <div>
+                      {c.status_friendly ?? c.status}
+                      {c.message ? ` (${c.message})` : ""}
+                    </div>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          ) : null}
         </section>
       ) : null}
       {order.paymentMethod === "bacs" && order.status === "on-hold" ? <BankDetails orderId={order.id} /> : null}

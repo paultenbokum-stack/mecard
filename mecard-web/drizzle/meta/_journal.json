@@ -29,6 +29,13 @@
       "when": 1792570772180,
       "tag": "0003_quotes",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1792605369383,
+      "tag": "0004_order_shipping",
+      "breakpoints": true
     }
   ]
 }

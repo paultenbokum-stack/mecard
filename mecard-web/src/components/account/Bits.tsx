@@ -102,7 +102,7 @@ export const CARD_TYPES: Record<string, string> = {
 
 /** Where a new card is in production (the print workflow flags, in order). */
 export function cardStage(c: { designSubmitted: boolean; printed: boolean; shipped: boolean }): [string, "live" | "wait" | "off"] {
-  if (c.shipped) return ["Delivered", "live"];
+  if (c.shipped) return ["Shipped", "live"];
   if (c.printed) return ["Printed", "wait"];
   if (c.designSubmitted) return ["In production", "wait"];
   return ["Awaiting design", "off"];

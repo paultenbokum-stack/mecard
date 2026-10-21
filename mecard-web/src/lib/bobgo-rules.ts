@@ -150,7 +150,7 @@ export function orderUpdateRequest(bobgoId: number, o: OrderForBobgo) {
 
 /** Bob Go's payment_status for our order status (the plugin's get_payment_status()). */
 export function paymentStatusFor(status: string): string {
-  if (["processing", "completed"].includes(status)) return "paid";
+  if (["processing", "shipped", "completed"].includes(status)) return "paid";
   if (status === "on-hold") return "pending";
   if (status === "refunded") return "refunded";
   return "unpaid";
@@ -167,7 +167,8 @@ export type BobgoStatus = "cancelled" | "completed" | "processing";
  */
 export function bobgoStatusFor(next: string, prev?: string): BobgoStatus | null {
   if (next === "cancelled" || next === "failed") return "cancelled";
-  if (next === "refunded") return prev === "completed" ? null : "cancelled";
+  // Once the courier has it, a refund is between us and the customer.
+  if (next === "refunded") return prev === "completed" || prev === "shipped" ? null : "cancelled";
   if (next === "completed" || next === "processing") return next;
   return null;
 }

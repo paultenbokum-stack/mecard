@@ -15,7 +15,7 @@ export const INVOICE_SELLER = {
 export const VAT_RATE = 0.15;
 
 /** Orders that get an invoice: paid ones (and refunded ones, marked as such). */
-export const INVOICE_STATUSES = ["processing", "completed", "on-hold", "refunded"];
+export const INVOICE_STATUSES = ["processing", "shipped", "completed", "on-hold", "refunded"];
 
 /** Invoice numbers are the order number with this prefix (order 722 → me722), as on WordPress. */
 export const INVOICE_PREFIX = "me";
