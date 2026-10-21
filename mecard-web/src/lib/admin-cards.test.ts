@@ -11,8 +11,10 @@ test("custom cards go design → check → print → encode → pack → ship", 
   assert.equal(cardStage({ ...c, designSubmitted: true, designReceived: true }), "print");
   assert.equal(cardStage({ ...c, designSubmitted: true, designReceived: true, printed: true }), "encode");
   assert.equal(cardStage({ ...c, designSubmitted: true, designReceived: true, printed: true, encoded: true }), "pack");
-  assert.equal(cardStage({ ...c, packaged: true }), "ship");
-  assert.equal(cardStage({ ...c, packaged: true, shipped: true }), "done");
+  assert.equal(cardStage({ ...c, packaged: true }, "processing"), "ship");
+  assert.equal(cardStage({ ...c, packaged: true }, "completed"), "done");
+  assert.equal(cardStage({ ...c, packaged: true }), "done", "cards from before orders: packaged was the last step");
+  assert.equal(cardStage({ ...c, packaged: true, shipped: true }, "processing"), "done");
 });
 
 test("phone tags skip design and printing; key rings only need packing", () => {

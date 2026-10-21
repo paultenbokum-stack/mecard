@@ -46,10 +46,14 @@ export const PRINT_TYPES = ["contactcard", "classiccard"];
 /** Cards encoded from the encoding file (GoToTags). Key rings are encoded when they are made. */
 export const ENCODE_TYPES = ["contactcard", "classiccard", "phonetag"];
 
-/** Which step a card is waiting for (its Card Processing tab, besides To do and All). */
-export function cardStage(c: CardFlags & { type: string }): Exclude<CardStage, "todo" | "all"> {
+/**
+ * Which step a card is waiting for (its Card Processing tab, besides To do and
+ * All). `orderStatus`: its order's status, or nothing for cards without an order.
+ */
+export function cardStage(c: CardFlags & { type: string }, orderStatus?: string | null): Exclude<CardStage, "todo" | "all"> {
   if (c.shipped) return "done";
-  if (c.packaged) return "ship";
+  // Packaged was the last step ticked on the old site: completing the order sent it.
+  if (c.packaged) return orderStatus && orderStatus !== "completed" ? "ship" : "done";
   const prints = PRINT_TYPES.includes(c.type);
   if (prints && !c.designSubmitted) return "design";
   if (prints && !c.designReceived) return "check";

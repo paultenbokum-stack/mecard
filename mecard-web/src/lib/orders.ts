@@ -15,6 +15,7 @@ const PAID = ["processing", "completed"];
  *   - on hold or paid: the order's cards leave the basket (remove_cart_item_key);
  *   - paid: entitlements are processed (process_paid_order), so a Pro upgrade
  *     or bundle bought for a profile takes effect;
+ *   - completed: the order's packaged cards are marked shipped;
  *   - cancelled: entitlements are cancelled and the order's cards removed
  *     (delete_tags / delink_cards_from_cancelled_order); refunded: entitlements refunded.
  * Each change is written to the order history and sends WooCommerce's
@@ -35,6 +36,13 @@ export async function setOrderStatus(
       await tx.update(cards).set({ cartItemKey: null, updatedAt: new Date() }).where(eq(cards.orderId, orderId));
     }
     if (PAID.includes(next) && !PAID.includes(o.status)) await processPaidOrder(tx, orderId);
+    // Completed means sent: the order's packaged cards are on their way.
+    if (next === "completed") {
+      await tx
+        .update(cards)
+        .set({ shipped: true, updatedAt: new Date() })
+        .where(and(eq(cards.orderId, orderId), eq(cards.packaged, true), eq(cards.archived, false)));
+    }
     if (next === "cancelled" || next === "refunded") await cancelOrderEntitlements(tx, orderId, next === "refunded");
     if (next === "cancelled") {
       await tx

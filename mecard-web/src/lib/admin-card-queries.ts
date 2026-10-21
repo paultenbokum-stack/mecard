@@ -8,9 +8,10 @@ import { CARD_STAGES, type CardStage, ENCODE_TYPES, PRINT_TYPES } from "./admin-
 // Postgres only matches when the text is identical. The types are constants.
 const list = (types: string[]) => sql.raw(types.map((t) => `'${t.replace(/[^a-z]/g, "")}'`).join(", "));
 
-/** cardStage() in SQL, so the tabs can filter and count in the database. */
+/** cardStage() in SQL, so the tabs can filter and count in the database. Needs orders joined. */
 export const STAGE_SQL = sql<string>`case
   when ${cards.shipped} then 'done'
+  when ${cards.packaged} and (${cards.orderId} is null or ${orders.status} = 'completed') then 'done'
   when ${cards.packaged} then 'ship'
   when ${cards.type} in (${list(PRINT_TYPES)}) and not ${cards.designSubmitted} then 'design'
   when ${cards.type} in (${list(PRINT_TYPES)}) and not ${cards.designReceived} then 'check'
