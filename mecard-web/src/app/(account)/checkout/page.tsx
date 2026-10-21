@@ -31,7 +31,7 @@ export default async function CheckoutPage() {
   const [u] = await db.select().from(users).where(eq(users.id, userId));
   const lines = cart.lines.map((l) => ({ productId: l.productId, lineCents: l.lineCents }));
   const coupon = cart.couponCode ? await couponForLines(cart.couponCode, lines, userId) : null;
-  const discount = coupon?.ok ? coupon.discountCents : 0;
+  const discount = Math.min(cart.subtotalCents, (coupon?.ok ? coupon.discountCents : 0) + cart.quoteDiscountCents);
   const shipping = await shippingOptions(null, cart.lines, coupon);
 
   const summary = (
@@ -51,10 +51,16 @@ export default async function CheckoutPage() {
           <th>Subtotal</th>
           <td className="shop-num">{rands(cart.subtotalCents)}</td>
         </tr>
+        {cart.quoteDiscountCents > 0 ? (
+          <tr>
+            <th>Quote discount</th>
+            <td className="shop-num">-{rands(cart.quoteDiscountCents)}</td>
+          </tr>
+        ) : null}
         {coupon?.ok ? (
           <tr>
             <th>Coupon: {coupon.code}</th>
-            <td className="shop-num">-{rands(discount)}</td>
+            <td className="shop-num">-{rands(coupon.discountCents)}</td>
           </tr>
         ) : null}
         <tr>

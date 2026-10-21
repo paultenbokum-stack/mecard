@@ -2,7 +2,7 @@ import "server-only";
 import { randomBytes, randomUUID } from "node:crypto";
 import { and, asc, eq, inArray, isNull } from "drizzle-orm";
 import { db } from "@/db/client";
-import { cards, carts, entitlements, products, type CartLine } from "@/db/schema";
+import { cards, carts, entitlements, products, quotes, type CartLine } from "@/db/schema";
 import { cardCartKey, cardTypesFor, CARD_TYPE_FOR_ENTITLEMENT, entitlementTypesFor, isBundle, newCardSlug } from "./catalog";
 
 // The basket (WooCommerce cart plus the plugin's cart hooks):
@@ -164,7 +164,14 @@ export async function cartView(userId: number) {
       const product = { ...map.get(l.productId)!, priceCents: l.unitPriceCents ?? map.get(l.productId)!.priceCents };
       return { ...l, product, lineCents: product.priceCents * l.qty };
     });
-  return { lines, couponCode, subtotalCents: lines.reduce((n, l) => n + l.lineCents, 0) };
+  const subtotalCents = lines.reduce((n, l) => n + l.lineCents, 0);
+  // A discount staff gave on an accepted quote applies while its lines are in the basket.
+  const quoteIds = [...new Set(lines.map((l) => l.quoteId).filter((id): id is number => !!id))];
+  const quoted = quoteIds.length
+    ? await db.select({ id: quotes.id, discountCents: quotes.discountCents }).from(quotes).where(and(inArray(quotes.id, quoteIds), eq(quotes.status, "accepted")))
+    : [];
+  const quoteDiscountCents = Math.min(subtotalCents, quoted.reduce((n, q) => n + q.discountCents, 0));
+  return { lines, couponCode, subtotalCents, quoteIds, quoteDiscountCents };
 }
 
 /** The card cart keys of these basket lines (their cards are moved onto the order). */

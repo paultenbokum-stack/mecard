@@ -27,7 +27,7 @@ export default async function BasketPage({ searchParams }: { searchParams: Promi
     : new Map<number, string>();
   const lines = cart.lines.map((l) => ({ productId: l.productId, lineCents: l.lineCents }));
   const coupon = cart.couponCode ? await couponForLines(cart.couponCode, lines, userId) : null;
-  const discount = coupon?.ok ? coupon.discountCents : 0;
+  const discount = Math.min(cart.subtotalCents, (coupon?.ok ? coupon.discountCents : 0) + cart.quoteDiscountCents);
   const hasCards = cart.lines.some((l) => cardTypesFor(l.productId).length);
 
   return (
@@ -120,11 +120,17 @@ export default async function BasketPage({ searchParams }: { searchParams: Promi
                   <th>Subtotal</th>
                   <td className="shop-num">{rands(cart.subtotalCents)}</td>
                 </tr>
+                {cart.quoteDiscountCents > 0 ? (
+                  <tr>
+                    <th>Quote discount</th>
+                    <td className="shop-num">-{rands(cart.quoteDiscountCents)}</td>
+                  </tr>
+                ) : null}
                 {coupon ? (
                   <tr>
                     <th>Coupon: {cart.couponCode}</th>
                     <td className="shop-num">
-                      {coupon.ok ? `-${rands(discount)}${coupon.freeShipping ? " + free shipping" : ""}` : <span className="acc-error">{coupon.error}</span>}{" "}
+                      {coupon.ok ? `-${rands(coupon.discountCents)}${coupon.freeShipping ? " + free shipping" : ""}` : <span className="acc-error">{coupon.error}</span>}{" "}
                       <form action={removeCouponAction} style={{ display: "inline" }}>
                         <button type="submit" className="acc-link">
                           [Remove]

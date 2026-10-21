@@ -3,7 +3,7 @@
 import { and, eq, inArray } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { db } from "@/db/client";
-import { cards, orderItems, orderNotes, orders, products, profiles, users } from "@/db/schema";
+import { cards, orderItems, orderNotes, orders, products, profiles, quotes, users } from "@/db/schema";
 import { canEditProfile, viewer } from "@/lib/access";
 import { addToCart, cardCartKeysFor, cartView, clearCart, removeLine, setCouponCode, setLineQty } from "@/lib/cart";
 import { isForProfile, isVirtual, PRODUCT } from "@/lib/catalog";
@@ -94,7 +94,7 @@ export async function placeOrderAction(_: ShopState, form: FormData): Promise<Sh
   const lines = cart.lines.map((l) => ({ productId: l.productId, lineCents: l.lineCents }));
   const coupon = cart.couponCode ? await couponForLines(cart.couponCode, lines, userId) : null;
   if (coupon && !coupon.ok) return { error: `${coupon.error} Please remove the coupon in your basket to continue.` };
-  const discount = coupon?.ok ? coupon.discountCents : 0;
+  const discount = Math.min(cart.subtotalCents, (coupon?.ok ? coupon.discountCents : 0) + cart.quoteDiscountCents);
   // The delivery option is looked up again for this address (with Bob Go, a fresh quote), so its price is trusted.
   const { options } = await shippingOptions(addressFromForm(v), cart.lines, coupon);
   const shipping = options.find((o) => o.id === v("shipping_method")) ?? (options.length === 1 ? options[0] : undefined);
@@ -143,8 +143,15 @@ export async function placeOrderAction(_: ShopState, form: FormData): Promise<Sh
     // link_cards_to_order(): the basket cards now belong to the order.
     const keys = cardCartKeysFor(cart.lines, userId);
     if (keys.length) await tx.update(cards).set({ orderId: o.id, updatedAt: new Date() }).where(and(inArray(cards.cartItemKey, keys), eq(cards.archived, false)));
+    if (cart.quoteIds.length) {
+      await tx.update(quotes).set({ orderId: o.id, updatedAt: new Date() }).where(inArray(quotes.id, cart.quoteIds));
+      await tx.insert(orderNotes).values({
+        orderId: o.id,
+        body: `From quote ${cart.quoteIds.map((id) => `#${id}`).join(", ")}${cart.quoteDiscountCents ? `, with its discount of -${rands(cart.quoteDiscountCents)}` : ""}.`,
+      });
+    }
     if (coupon?.ok) {
-      await tx.insert(orderNotes).values({ orderId: o.id, body: `Coupon ${coupon.code} applied: -${rands(discount)}${coupon.freeShipping ? ", free shipping" : ""}.` });
+      await tx.insert(orderNotes).values({ orderId: o.id, body: `Coupon ${coupon.code} applied: -${rands(coupon.discountCents)}${coupon.freeShipping ? ", free shipping" : ""}.` });
     }
     await clearCart(tx, userId);
     return o.id;

@@ -3,7 +3,7 @@
 //   WP_DATABASE_URL=mysql://user:pass@127.0.0.1:3306/dbname npm run import:wp
 //
 // Empties every app table first, then copies users, companies, profiles, links,
-// cards, invites, products, orders, coupons, entitlements and events. IDs are
+// cards, invites, products, orders, quotes, coupons, entitlements and events. IDs are
 // kept, so order numbers and the entitlements table stay valid. Toolset
 // relationships become foreign keys. Riscura, the blog and contact form
 // submissions are left behind on purpose.
@@ -93,7 +93,7 @@ async function main() {
     console.log(`${label.padEnd(16)} ${rows.length}`);
   }
 
-  await db.execute(sql`TRUNCATE password_resets, media, events, entitlements, coupons, order_notes, order_items, orders,
+  await db.execute(sql`TRUNCATE password_resets, media, events, entitlements, coupons, quotes, order_notes, order_items, orders,
     products, profile_invites, cards, profile_links, profiles, companies, users RESTART IDENTITY CASCADE`);
 
   // Users
@@ -283,9 +283,13 @@ async function main() {
   );
 
   // Orders are needed before cards (cards point at their order).
-  const orderPosts = await q(
+  const allOrderPosts = await q(
     `SELECT ID, post_status, post_excerpt, post_date_gmt FROM wp_posts WHERE post_type = 'shop_order' AND post_status <> 'trash'`,
   );
+  // YITH Request a Quote kept its quotes as orders (wc-ywraq-* statuses): they become quotes.
+  const isQuote = (o: R) => str(o.post_status).includes("ywraq");
+  const orderPosts = allOrderPosts.filter((o) => !isQuote(o));
+  const quotePosts = allOrderPosts.filter(isQuote);
   const om = await meta(["shop_order"]);
   const orderIds = new Set(orderPosts.map((o) => Number(o.ID)));
   const items = await q(`SELECT order_item_id, order_id, order_item_type, order_item_name FROM wp_woocommerce_order_items`);
@@ -385,6 +389,43 @@ async function main() {
         createdAt: utc(n.comment_date_gmt) ?? new Date(),
       })),
     "order notes",
+  );
+
+  // Quotes (YITH), numbered as before. Statuses: new (asked), pending (sent), expired, accepted, rejected.
+  const QUOTE_STATUS: Record<string, string> = { new: "new", pending: "sent", expired: "expired", accepted: "accepted", rejected: "rejected" };
+  await insert(
+    s.quotes,
+    quotePosts.map((o) => {
+      const id = Number(o.ID);
+      const m = om.get(id) ?? {};
+      const qItems = (itemsByOrder.get(id) ?? [])
+        .filter((i) => i.order_item_type === "line_item")
+        .map((i) => {
+          const im = imeta.get(Number(i.order_item_id)) ?? {};
+          const qty = Number(im._qty || 0);
+          return { productId: Number(im._product_id || 0), name: str(i.order_item_name), qty, unitPriceCents: qty ? Math.round(cents(im._line_subtotal) / qty) : 0 };
+        });
+      const subtotal = qItems.reduce((t, i) => t + i.qty * i.unitPriceCents, 0);
+      const expire = str(m._ywcm_request_expire);
+      return {
+        id,
+        userId: user(m._customer_user),
+        status: QUOTE_STATUS[str(o.post_status).replace(/^wc-ywraq-/, "")] ?? "new",
+        name: clip(m.ywraq_customer_name || `${str(m._billing_first_name)} ${str(m._billing_last_name)}`.trim(), 200),
+        email: clip(m.ywraq_customer_email || m._billing_email, 255),
+        phone: clip(m._billing_phone, 50),
+        company: clip(m._billing_company, 255),
+        message: str(m.ywraq_customer_message),
+        items: qItems,
+        subtotalCents: subtotal,
+        discountCents: cents(m._cart_discount),
+        totalCents: cents(m._order_total),
+        note: str(m._ywcm_request_response),
+        expiresAt: /^\d{4}-\d{2}-\d{2}/.test(expire) ? new Date(`${expire.slice(0, 10)}T23:59:59+02:00`) : null,
+        createdAt: utc(o.post_date_gmt) ?? new Date(),
+      };
+    }),
+    "quotes",
   );
 
   // Cards and tags (post type `t`). Trashed ones are kept as archived so their
@@ -596,7 +637,7 @@ async function main() {
   // Continue numbering after the imported IDs.
   for (const t of [
     "users", "companies", "profiles", "profile_links", "cards", "profile_invites", "products",
-    "orders", "order_items", "order_notes", "coupons", "entitlements", "events",
+    "orders", "order_items", "order_notes", "quotes", "coupons", "entitlements", "events",
   ]) {
     await db.execute(sql.raw(`SELECT setval(pg_get_serial_sequence('${t}', 'id'), COALESCE((SELECT max(id) FROM ${t}), 0) + 1, false)`));
   }
