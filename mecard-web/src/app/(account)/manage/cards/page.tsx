@@ -132,9 +132,9 @@ export default async function CardsPage({ searchParams }: { searchParams: Promis
         <h2>Need more cards?</h2>
         <p>Order classic or custom cards, phone tags and key rings for yourself or your team.</p>
         <div className="acc-actions">
-          <a className="acc-btn acc-btn--cta" href="/shop/">
+          <Link className="acc-btn acc-btn--cta" href="/shop/">
             Order cards
-          </a>
+          </Link>
         </div>
       </section>
     </div>

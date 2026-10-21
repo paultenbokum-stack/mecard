@@ -127,9 +127,9 @@ export default async function ManageHome({ searchParams }: { searchParams: Promi
             <>
               <p className="acc-item__title">R199 once off</p>
               <div className="acc-actions">
-                <a className="acc-btn acc-btn--primary" href="/shop/">
+                <Link className="acc-btn acc-btn--primary" href="/shop/">
                   Get Pro
-                </a>
+                </Link>
               </div>
             </>
           )}
@@ -263,9 +263,9 @@ export default async function ManageHome({ searchParams }: { searchParams: Promi
           <Link className="acc-btn" href="/manage/companies/">
             {companies.length ? `Companies (${companies.length})` : "Create a team"}
           </Link>
-          <a className="acc-btn" href="/shop/">
+          <Link className="acc-btn" href="/shop/">
             Order cards
-          </a>
+          </Link>
         </div>
       </section>
     </div>
@@ -292,7 +292,7 @@ async function Activate({ slug, userId, isAdmin }: { slug: string; userId: numbe
           This card is registered to {maskEmail(card.ownerEmail)}. <Link href={LOGOUT}>Log out</Link> and sign in with that account to link it to a profile.
         </p>
         <p className="acc__muted" style={{ marginBottom: 0 }}>
-          Bought it for someone else? Ask whoever placed the order to link it, or <a href="/contact-us/">contact us</a>.
+          Bought it for someone else? Ask whoever placed the order to link it, or <Link href="/contact-us/">contact us</Link>.
         </p>
       </section>
     );

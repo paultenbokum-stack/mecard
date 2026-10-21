@@ -53,7 +53,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
         </p>
       </div>
       <p className="acc__muted">
-        New to MeCard? <a href="/sign-up/">Create your free MeCard</a>
+        New to MeCard? <Link href="/sign-up/">Create your free MeCard</Link>
       </p>
     </div>
   );

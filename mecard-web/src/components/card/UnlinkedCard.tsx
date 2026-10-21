@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { SiteFooter, SiteHeader } from "./SiteChrome";
 
 // A card that isn't linked to a profile yet. WordPress showed an empty page.
@@ -16,7 +17,7 @@ export function UnlinkedCard({ slug }: { slug: string }) {
             Activate this card
           </a>
           <p className="mc-unlinked__alt">
-            Don&apos;t have a MeCard account? <a href="/sign-up/">Create your free MeCard</a>
+            Don&apos;t have a MeCard account? <Link href="/sign-up/">Create your free MeCard</Link>
           </p>
         </div>
       </main>

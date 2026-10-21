@@ -130,6 +130,22 @@ npm run dev:password -- jacques@nxtlevelcoach.co.za tvanzyl@entersekt.com chante
 
 The default password is in `scripts/dev-password.ts`.
 
+## Public site pages
+
+`/`, `/how-it-works/`, `/for-teams/`, `/cards/`, `/free/`, `/gallery/`, `/contact-us/` and
+`/tsc/privacy-policy/` are the WordPress pages, exported from `wp_posts` into
+`src/content/pages/*.json` by `npm run export:pages` (WP_DATABASE_URL) and rendered inside
+Astra's page markup (`src/components/site/WpPage.tsx`). The converter (`src/lib/wp-content.ts`)
+adds what WordPress added at render time: layout classes, group inner containers, closed
+accordion panels, Toolset "logged in / logged out" blocks (switched in the browser, since
+the pages are static) and slots for the contact form and gallery.
+
+`src/app/(site)/site.css` holds every rule from live's stylesheets that matched these pages,
+in cascade order, scoped to the page wrapper. The gallery is a snapshot of the Instagram feed
+(`src/content/gallery.json`). The contact form emails CONTACT_TO (printed in the terminal in
+dev) with a honeypot instead of reCAPTCHA. Dropped pages and dead links redirect
+(`next.config.ts`); footer legal links stay on taggable.co.za as on live.
+
 ## Deploying
 
 See `deploy/README.md`. MeCard gets its own Google Cloud project.

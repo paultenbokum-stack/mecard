@@ -54,7 +54,8 @@ function layoutClasses(block: string, attrs: Attrs): string[] {
       out.push("is-layout-flow", "wp-block-column-is-layout-flow");
       break;
     case "group":
-      // Groups without a layout get an inner container instead (see wrapLegacyGroups).
+      // Full-width groups get no layout classes (see wrapGroupContent).
+      if (isFullWidthGroup(attrs)) break;
       if (layout.type === "flex") {
         out.push("is-layout-flex", "wp-block-group-is-layout-flex");
         if (layout.justifyContent) out.push(`is-content-justification-${layout.justifyContent}`);
@@ -83,26 +84,30 @@ export function conditionAudience(cond: string): "in" | "out" {
 }
 
 /**
- * Group blocks saved without a layout: on themes without theme.json (Astra)
- * WordPress renders their content inside <div class="wp-block-group__inner-container">.
+ * Astra has no theme.json, so WordPress renders every group's content inside
+ * <div class="wp-block-group__inner-container"> (wp_restore_group_inner_container),
+ * and full-width groups without their layout classes, as the live pages showed.
  */
-export function wrapLegacyGroups(html: string): string {
+function isFullWidthGroup(attrs: Attrs): boolean {
+  return !(attrs.layout as { type?: string } | undefined)?.type || attrs.align === "full";
+}
+
+export function wrapGroupContent(html: string): string {
   const token = /<!-- (\/?)wp:([a-z0-9/-]+)(?:\s+(\{(?:(?!-->)[\s\S])*?\}))?\s*(\/)?-->/g;
-  const stack: { name: string; legacy: boolean; innerStart: number }[] = [];
+  const stack: { name: string; innerStart: number }[] = [];
   const edits: [number, string][] = [];
   for (let m: RegExpExecArray | null; (m = token.exec(html)); ) {
-    const [, closing, name, json, selfClosing] = m;
+    const [, closing, name, , selfClosing] = m;
     if (selfClosing) continue;
     if (!closing) {
-      const legacy = name.replace(/^core\//, "") === "group" && !(parseAttrs(json).layout as { type?: string } | undefined)?.type;
-      const open = legacy ? /^\s*<div[^>]*>/.exec(html.slice(token.lastIndex)) : null;
-      stack.push({ name, legacy: !!open, innerStart: open ? token.lastIndex + open[0].length : -1 });
+      const open = name.replace(/^core\//, "") === "group" ? /^\s*<div\b[^>]*>/.exec(html.slice(token.lastIndex)) : null;
+      stack.push({ name, innerStart: open ? token.lastIndex + open[0].length : -1 });
       continue;
     }
     const top = stack.pop();
-    if (!top || top.name !== name || !top.legacy) continue;
+    if (!top || top.name !== name || top.innerStart < 0) continue;
     const end = html.lastIndexOf("</div>", m.index);
-    if (end <= top.innerStart) continue;
+    if (end <= top.innerStart || html.slice(top.innerStart, top.innerStart + 60).includes("wp-block-group__inner-container")) continue;
     edits.push([top.innerStart, '<div class="wp-block-group__inner-container">'], [end, "</div>"]);
   }
   for (const [at, text] of edits.sort((a, b) => b[0] - a[0])) html = html.slice(0, at) + text + html.slice(at);
@@ -117,7 +122,7 @@ export interface ConvertResult {
 
 export function convertPostContent(content: string): ConvertResult {
   const dropped: string[] = [];
-  let html = content.replace(/\r\n/g, "\n");
+  let html = wrapGroupContent(content.replace(/\r\n/g, "\n"));
 
   // 1. Layout classes, from each block comment onto the element right after it.
   html = html.replace(/<!-- wp:([a-z0-9/-]+)(?:\s+(\{(?:(?!-->)[\s\S])*?\}))?\s*(\/)?-->(\s*)<([a-z0-9]+)([^>]*?)class="([^"]*)"/g, (m, name: string, json: string | undefined, _self, ws: string, tag: string, before: string, cls: string) => {

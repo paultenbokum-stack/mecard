@@ -178,7 +178,8 @@ button.close { padding: 0; background-color: transparent; border: 0; }
 @media (min-width: 922px) {
   :where(.mecard-site) .mc-site-header__toggle { display: none; }
   .mc-site-header__menu { display: flex !important; border: 0; gap: 4px; }
-  .mc-site-header__menu a { border: 0; padding: 0 1em; }
+  .mc-site-header__menu a { border: 0; padding: 0 1em; color: var(--ast-global-color-0); }
+  .mc-site-header__menu a:hover, .mc-site-header__menu a:focus { color: var(--ast-global-color-1); }
   .mc-site-header__bar { flex-wrap: nowrap; }
 }
 

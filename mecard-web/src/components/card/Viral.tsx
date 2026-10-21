@@ -1,3 +1,4 @@
+import Link from "next/link";
 // Me\Viral\Module surfaces on free (standard) profiles, for visitors:
 // the "Get your own MeCard" link under the card, and the call to action shown
 // after someone saves the contact.
@@ -5,9 +6,9 @@
 export function WatermarkStrip() {
   return (
     <div className="mecard-watermark-strip" id="mecard-watermark-strip">
-      <a href="/sign-up/?utm_source=watermark&utm_medium=profile&utm_campaign=free_viral" className="mecard-watermark-strip__link" data-mecard-viral="profile_strip">
+      <Link href="/sign-up/?utm_source=watermark&utm_medium=profile&utm_campaign=free_viral" className="mecard-watermark-strip__link" data-mecard-viral="profile_strip">
         Get your own MeCard &rarr;
-      </a>
+      </Link>
     </div>
   );
 }
