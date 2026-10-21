@@ -42,7 +42,11 @@ try {
       Write-Step 'Importing WordPress data (npm run import:wp)'
       npm run import:wp
       if ($LASTEXITCODE -ne 0) { throw 'Import failed.' }
-      Write-Host 'Check the counts above against WordPress: users, workspaces, tags, orders, coupons.' -ForegroundColor Green
+      # Baskets aren't imported: cards still "in a basket" in WordPress are abandoned.
+      Write-Step 'Archiving abandoned basket cards (npm run cards:archive-abandoned)'
+      npm run cards:archive-abandoned
+      if ($LASTEXITCODE -ne 0) { throw 'Archiving abandoned cards failed.' }
+      Write-Host 'Check the counts above against WordPress: users, profiles, companies, cards, orders, quotes, coupons.' -ForegroundColor Green
     } else { Write-Host 'Import skipped.' }
   }
 } finally {

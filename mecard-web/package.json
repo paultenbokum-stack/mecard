@@ -13,6 +13,7 @@
     "db:migrate": "drizzle-kit migrate",
     "db:studio": "drizzle-kit studio",
     "import:wp": "tsx scripts/import-wp.ts",
+    "cards:archive-abandoned": "tsx scripts/archive-abandoned-cards.ts",
     "db:seed": "tsx scripts/seed-dev.ts",
     "check:urls": "tsx scripts/check-urls.ts",
     "dev:password": "tsx scripts/dev-password.ts",
