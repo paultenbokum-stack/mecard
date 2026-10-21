@@ -15,6 +15,8 @@ import {
   profileChoices,
 } from "@/lib/manage";
 import { normalizeSlug, isPro } from "@/lib/profile-format";
+import { redirect } from "next/navigation";
+import { accountState } from "@/lib/onboarding";
 import { requireUserId } from "@/lib/session";
 import { acceptInviteAction, addProfileAction, archiveProfileAction, linkCardAction } from "./actions";
 
@@ -26,6 +28,8 @@ export default async function ManageHome({ searchParams }: { searchParams: Promi
   const sp = await searchParams;
   const here = `/manage/${sp.activate ? `?activate=${encodeURIComponent(sp.activate)}` : ""}`;
   const v = await viewer(await requireUserId(here));
+  // A brand-new account (no profile, no cards) starts with onboarding.
+  if (!sp.activate && (await accountState(v.id)) === "first_time") redirect("/onboarding/");
   const archived = sp.show === "archived";
   const page = Math.max(1, Number(sp.page) || 1);
 

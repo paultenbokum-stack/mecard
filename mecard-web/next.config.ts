@@ -32,7 +32,6 @@ const nextConfig: NextConfig = {
       to("/get-started-teams/", "/sign-up/"),
       to("/teams/", "/for-teams/"),
       to("/contact/", "/contact-us/"),
-      to("/onboarding/", "/sign-up/"),
       to("/communication-preferences/", "/"),
       to("/temporarily-unavailable/", "/"),
     ];
