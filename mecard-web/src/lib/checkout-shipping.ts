@@ -3,6 +3,7 @@ import type { DeliveryAddress, ShipLine } from "@/lib/bobgo-rules";
 import { addressComplete } from "@/lib/bobgo-rules";
 import { bobgoEnabled, checkoutRates } from "@/lib/bobgo";
 import { isVirtual } from "@/lib/catalog";
+import { ADDITIONAL_SHIPPING_PRODUCT } from "@/lib/quote-rules";
 import type { CouponResult } from "@/lib/coupon-rules";
 import { PICKUP_METHOD, SHIPPING_METHODS } from "@/lib/shipping";
 
@@ -28,6 +29,11 @@ export async function shippingOptions(
   coupon: CouponResult | null,
 ): Promise<{ live: boolean; options: ShippingOption[] }> {
   if (!needsShipping(lines)) return { live: false, options: [NO_SHIPPING] };
+  // A quote's delivery is a line of its own (Additional Shipping), already paid for in the basket.
+  if (lines.some((l) => l.productId === ADDITIONAL_SHIPPING_PRODUCT)) {
+    const pickup = { id: PICKUP_METHOD.id, label: PICKUP_METHOD.label, cents: 0, note: PICKUP_METHOD.note };
+    return { live: false, options: [{ id: "quoted", label: "Delivery (included in your quote)", cents: 0 }, pickup] };
+  }
   const freeShipping = !!(coupon?.ok && coupon.freeShipping);
   const pickup: ShippingOption = { id: PICKUP_METHOD.id, label: PICKUP_METHOD.label, cents: 0, note: PICKUP_METHOD.note };
   if (freeShipping) return { live: bobgoEnabled(), options: [{ id: "free", label: "Free shipping", cents: 0 }, pickup] };

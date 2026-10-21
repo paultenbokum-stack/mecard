@@ -24,6 +24,9 @@ export default async function OrdersPage() {
     <div className="acc__wrap">
       <Subnav active="orders" />
       <h1>Orders</h1>
+      <p className="acc__muted">
+        <Link href="/my-account/quotes/">Your quotes</Link>
+      </p>
       {list.length ? (
         <section className="acc-panel acc-panel--white">
           <table className="shop-table">

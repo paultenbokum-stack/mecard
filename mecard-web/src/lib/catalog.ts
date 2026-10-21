@@ -61,8 +61,11 @@ export const CARD_TYPE_FOR_ENTITLEMENT: Partial<Record<EntitlementType, string>>
   phone_tag: "phonetag",
 };
 
-/** Profile upgrades are virtual: nothing to ship (mecard_force_virtual_profile_upgrades). */
-export const isVirtual = (productId: number) => productId === PRODUCT.proUpgrade;
+/**
+ * Profile upgrades are virtual: nothing to ship (mecard_force_virtual_profile_upgrades).
+ * So is "Additional Shipping" (57884), the delivery line on quotes.
+ */
+export const isVirtual = (productId: number) => productId === PRODUCT.proUpgrade || productId === 57884;
 
 /** Products that are for one profile: the upgrade, and the bundles (which include it). */
 export const isForProfile = (productId: number) => productId === PRODUCT.proUpgrade || isBundle(productId);

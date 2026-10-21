@@ -159,9 +159,32 @@ export async function cartView(userId: number) {
   const map = new Map(prods.map((p) => [p.id, p]));
   const lines = items
     .filter((l) => map.has(l.productId))
-    .map((l) => ({ ...l, product: map.get(l.productId)!, lineCents: map.get(l.productId)!.priceCents * l.qty }));
+    .map((l) => {
+      // Quote lines keep the quoted price.
+      const product = { ...map.get(l.productId)!, priceCents: l.unitPriceCents ?? map.get(l.productId)!.priceCents };
+      return { ...l, product, lineCents: product.priceCents * l.qty };
+    });
   return { lines, couponCode, subtotalCents: lines.reduce((n, l) => n + l.lineCents, 0) };
 }
 
 /** The card cart keys of these basket lines (their cards are moved onto the order). */
 export const cardCartKeysFor = (lines: Pick<CartLine, "key">[], userId: number) => lines.map((l) => cardCartKey(l.key, userId));
+
+/**
+ * An accepted quote goes into the basket: its lines at the quoted prices,
+ * creating cards and entitlement rows like any other line. Accepting the same
+ * quote again doesn't add it twice.
+ */
+export async function addQuoteLines(userId: number, quoteId: number, lines: { productId: number; qty: number; unitPriceCents: number }[]) {
+  await db.transaction(async (tx) => {
+    const [c] = await tx.select().from(carts).where(eq(carts.userId, userId)).for("update").limit(1);
+    const items = c?.items ?? [];
+    if (items.some((l) => l.quoteId === quoteId)) return;
+    for (const q of lines) {
+      const line: CartLine = { key: randomBytes(16).toString("hex"), productId: q.productId, qty: q.qty, profileId: null, unitPriceCents: q.unitPriceCents, quoteId };
+      items.push(line);
+      await syncLine(tx, userId, line);
+    }
+    await saveCart(tx, userId, items);
+  });
+}

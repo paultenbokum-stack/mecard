@@ -388,6 +388,9 @@ export interface CartLine {
   qty: number;
   /** The profile a Pro upgrade or bundle is for (mecard_profile_id). */
   profileId: number | null;
+  /** Lines from an accepted quote keep the quoted price. */
+  unitPriceCents?: number;
+  quoteId?: number;
 }
 
 export const carts = pgTable("carts", {
@@ -400,3 +403,40 @@ export const carts = pgTable("carts", {
   remindersSent: integer("reminders_sent").notNull().default(0),
   updatedAt: updatedAt(),
 });
+
+export interface QuoteLine {
+  productId: number;
+  name: string;
+  qty: number;
+  unitPriceCents: number;
+}
+
+// Quotes (replacing YITH Request a Quote): asked for at /request-quote/, sent
+// as an email with a PDF and a link to accept (into the basket, at the quoted
+// prices, then checkout) or reject. Valid for 10 days, as YITH was set up.
+export const quotes = pgTable(
+  "quotes",
+  {
+    id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
+    userId: integer("user_id").references(() => users.id, { onDelete: "set null" }),
+    // new | sent | accepted | rejected | expired
+    status: varchar("status", { length: 20 }).notNull().default("new"),
+    name: varchar("name", { length: 200 }).notNull().default(""),
+    email: varchar("email", { length: 255 }).notNull(),
+    phone: varchar("phone", { length: 50 }).notNull().default(""),
+    company: varchar("company", { length: 255 }).notNull().default(""),
+    message: text("message").notNull().default(""),
+    items: jsonb("items").$type<QuoteLine[]>().notNull().default([]),
+    subtotalCents: integer("subtotal_cents").notNull().default(0),
+    discountCents: integer("discount_cents").notNull().default(0),
+    totalCents: integer("total_cents").notNull().default(0),
+    // Shown to the customer on the quote (the admin's note when editing it).
+    note: text("note").notNull().default(""),
+    orderId: integer("order_id"),
+    expiresAt: timestamp("expires_at", { withTimezone: true }),
+    sentAt: timestamp("sent_at", { withTimezone: true }),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [index("quotes_user").on(t.userId), index("quotes_email").on(sql`lower(${t.email})`)],
+);

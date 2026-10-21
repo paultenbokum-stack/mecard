@@ -153,6 +153,9 @@ export default async function BasketPage({ searchParams }: { searchParams: Promi
                 Proceed to checkout
               </Link>
             </div>
+            <p className="acc__muted" style={{ textAlign: "center", marginBottom: 0 }}>
+              <Link href="/request-quote/">or ask for a quote</Link>
+            </p>
           </section>
         </div>
       )}
