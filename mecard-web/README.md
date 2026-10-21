@@ -146,6 +146,34 @@ in cascade order, scoped to the page wrapper. The gallery is a snapshot of the I
 dev) with a honeypot instead of reCAPTCHA. Dropped pages and dead links redirect
 (`next.config.ts`); footer legal links stay on taggable.co.za as on live.
 
+## Sign-up and the shop
+
+`/sign-up/` (Google or email) and `/onboarding/` port the plugin's first-time flow: the
+free profile is created from the account and filled in over four steps, then the customer
+lands on `/manage/`.
+
+The shop (`/shop/`, `/product/<slug>/`, `/basket/`, `/checkout/`, `/my-account/orders/`) is
+for logged-in customers, as on WordPress. It keeps the plugin's rules:
+
+- Adding a card product creates its card records at once (one per card, a bundle's card
+  and phone tag too), so they can be designed before paying; each unit also gets "in_cart"
+  entitlement rows (`src/lib/cart.ts`). The basket is stored per user (`carts`).
+- Placing the order moves those cards onto it. PayFast orders wait as "pending" until the
+  ITN (`/api/payfast/itn/`, also WooCommerce's old `/?wc-api=WC_Gateway_PayFast`); EFT
+  orders go "on hold" with the bank details on the page and in the email.
+- Paid (processing/completed): entitlements are processed, so a Pro upgrade or bundle bought
+  for a profile makes it Pro and links the bundle's card and tag to it; one bought without a
+  profile can be applied later in the profile editor (`src/lib/entitlements.ts`).
+  Cancelled: entitlements cancelled, the order's cards removed; refunded: entitlements refunded.
+- Delivery: Bob Go rates once the address is complete, plus local pickup; free shipping
+  only with a coupon that gives it; nothing to ship for a basket of Pro upgrades. Without
+  BOBGO_API_KEY, fixed Standard / Express prices stand in.
+- Emails and the invoice PDF (`me<order number>`, attached to the "received" email) come
+  from Nextag's modules, rebranded.
+
+Locally, the pay page has a "Simulate successful payment" button (PayFast can't reach
+localhost).
+
 ## Deploying
 
 See `deploy/README.md`. MeCard gets its own Google Cloud project.

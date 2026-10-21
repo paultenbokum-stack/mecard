@@ -377,3 +377,26 @@ export const passwordResets = pgTable("password_resets", {
     .references(() => users.id, { onDelete: "cascade" }),
   expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
 });
+
+// The basket, kept on the server (WooCommerce kept it in its session table) so
+// it follows the customer between devices and abandoned-basket reminders can
+// find it. One per user: checkout needs an account, as on WordPress.
+export interface CartLine {
+  /** Like WooCommerce's cart item key: ties the line to the cards and entitlements it created. */
+  key: string;
+  productId: number;
+  qty: number;
+  /** The profile a Pro upgrade or bundle is for (mecard_profile_id). */
+  profileId: number | null;
+}
+
+export const carts = pgTable("carts", {
+  userId: integer("user_id")
+    .primaryKey()
+    .references(() => users.id, { onDelete: "cascade" }),
+  items: jsonb("items").$type<CartLine[]>().notNull().default([]),
+  couponCode: varchar("coupon_code", { length: 50 }).notNull().default(""),
+  // Abandoned-basket reminders sent for the current contents (1 day, 5 days).
+  remindersSent: integer("reminders_sent").notNull().default(0),
+  updatedAt: updatedAt(),
+});

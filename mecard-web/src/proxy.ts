@@ -4,6 +4,9 @@ import { legacyLoginRedirect } from "@/lib/auth-paths";
 export function proxy(req: NextRequest) {
   const { pathname, searchParams, origin } = req.nextUrl;
 
+  // WooCommerce's PayFast notify URL, still on orders paid during the switch-over.
+  if (searchParams.get("wc-api") === "WC_Gateway_PayFast") return NextResponse.rewrite(new URL("/api/payfast/itn/", req.nextUrl));
+
   // Old WordPress login URLs (wp-login.php, the Toolset /login/ page).
   const login = legacyLoginRedirect(pathname, searchParams, origin);
   if (login) return NextResponse.redirect(new URL(login, req.nextUrl), 302);

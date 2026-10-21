@@ -96,7 +96,7 @@ export default async function EditProfilePage({ params, searchParams }: { params
             ) : (
               <>
                 <p className="acc-item__title">R199 once off</p>
-                <Link className="acc-btn acc-btn--cta" href="/shop/">
+                <Link className="acc-btn acc-btn--cta" href={`/product/profile-upgrade/?profile_id=${p.id}`}>
                   Upgrade to Pro
                 </Link>
               </>

@@ -3,6 +3,7 @@ import { CardShell } from "@/components/card/CardShell";
 import { SiteFooter, SiteHeader } from "@/components/card/SiteChrome";
 import { currentUserId } from "@/lib/session";
 import "./account.css";
+import "./shop.css";
 
 export const metadata: Metadata = { robots: { index: false, follow: false } };
 

@@ -8,6 +8,8 @@ const TABS = [
   ["home", "Home", "/manage/"],
   ["cards", "My Cards", "/manage/cards/"],
   ["companies", "Companies", "/manage/companies/"],
+  ["orders", "Orders", "/my-account/orders/"],
+  ["shop", "Shop", "/shop/"],
 ] as const;
 
 export function Subnav({ active }: { active: (typeof TABS)[number][0] | "" }) {

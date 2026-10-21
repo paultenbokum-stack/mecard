@@ -15,6 +15,13 @@
       "when": 1792438465682,
       "tag": "0001_profile_link_dates",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792567476992,
+      "tag": "0002_carts",
+      "breakpoints": true
     }
   ]
 }

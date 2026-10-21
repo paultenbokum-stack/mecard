@@ -131,7 +131,7 @@ export default async function ManageHome({ searchParams }: { searchParams: Promi
             <>
               <p className="acc-item__title">R199 once off</p>
               <div className="acc-actions">
-                <Link className="acc-btn acc-btn--primary" href="/shop/">
+                <Link className="acc-btn acc-btn--primary" href={`/product/profile-upgrade/?profile_id=${single.id}`}>
                   Get Pro
                 </Link>
               </div>
