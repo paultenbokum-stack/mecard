@@ -16,6 +16,7 @@ If Windows blocks the scripts, run them as
 | 5 | `.\deploy\5-migrate-import.ps1` | Through the Cloud SQL Auth Proxy: runs migrations, then (after you type IMPORT) wipes and imports the WordPress data. `-MigrateOnly` for migrations alone |
 | 6 | `.\deploy\6-domain.ps1` | HTTPS load balancer for mecard.co.za + www (static IP, managed certificate, http to https redirect); prints the IP for DNS |
 | 7 | `.\deploy\7-github-actions.ps1` | One time: lets GitHub Actions deploy (keyless Workload Identity Federation). After this, add the deploy workflow (see the Nextag one) so every push to `master` that touches `mecard-web` runs it: lint, typecheck, test, build, migrate, deploy |
+| 8 | `.\deploy\8-scheduler.ps1` | One time: a Cloud Scheduler job that runs the reminder emails and basket clean-up (`/api/cron/automations`) every hour, sending `CRON_SECRET` |
 | - | `.\deploy\backup.ps1` | Manual Cloud SQL backup |
 | - | `.\deploy\rollback.ps1 [-Revision <name>]` | Sends all traffic to the previous (or named) Cloud Run revision |
 

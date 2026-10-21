@@ -1,5 +1,5 @@
 # Step 3: put the app's keys in Secret Manager and let Cloud Run read them.
-# Asks for each missing secret (typing is hidden); AUTH_SECRET is generated for you.
+# Asks for each missing secret (typing is hidden); AUTH_SECRET and CRON_SECRET are generated for you.
 # Existing secrets are skipped; to change one, pass its name: -Update PAYFAST_PASSPHRASE,BOBGO_API_KEY
 # Usage: .\deploy\3-secrets.ps1 [-Project <project-id>] [-Update NAME,NAME]
 param([string]$Project, [string[]]$Update = @())
@@ -23,8 +23,8 @@ foreach ($name in $SecretNames) {
   $exists = Test-Gcloud secrets describe $name
   if ($exists -and ($Update -notcontains $name)) { Write-Host "$name exists, skipping."; continue }
 
-  if ($name -eq 'AUTH_SECRET') {
-    Write-Step 'AUTH_SECRET (generated)'
+  if ($name -eq 'AUTH_SECRET' -or $name -eq 'CRON_SECRET') {
+    Write-Step "$name (generated)"
     Set-Secret $name (New-RandomString 32)
     continue
   }

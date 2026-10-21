@@ -174,6 +174,43 @@ for logged-in customers, as on WordPress. It keeps the plugin's rules:
 Locally, the pay page has a "Simulate successful payment" button (PayFast can't reach
 localhost).
 
+## Staff admin
+
+`/admin/` (admins only: `users.is_admin`, WordPress administrators on import) replaces the
+WooCommerce and Toolset back office:
+
+- **Orders**: list by status, the order page (items, the order's cards and entitlements,
+  billing, status changes with their emails and entitlement effects, Bob Go, history notes).
+- **Card processing**: ordered cards by the step they wait for (design, check, print,
+  encode, package, ship), each step a tick; labels; a key ring's printed code becomes its
+  `/t/` address. Packaged cards count as done once the order is completed, and completing
+  an order marks its packaged cards shipped.
+- **Encoding file**: the batch between "design received" and "packaged":
+  `encoding.csv` (GoToTags), `print.csv` (Bartender) and `images.zip` with the original
+  artwork named as the print CSV names it.
+- **Quotes**: edit lines, prices, a discount, the note, expiry and status; save and send.
+  An accepted quote's discount carries through checkout to the order.
+- **Coupons** and **Entitlements** (change a row's status, give Pro upgrades).
+
+## Scheduled jobs (AutomateWoo)
+
+`POST /api/cron/automations/` with `Authorization: Bearer $CRON_SECRET`, hourly from Cloud
+Scheduler (`deploy/8-scheduler.ps1`). Rules in `src/lib/automation-rules.ts`:
+
+- Basket with cards, untouched for 15 minutes: "Confirm your MeCard Order"; after 1 day
+  "Still thinking it over?"; after 5 days "Complete your MeCard order". Any change to the
+  basket starts again.
+- After 7 days the basket is emptied, its cards archived and entitlement rows cancelled
+  (WooCommerce's 7-day session, as the emails promise).
+- Cards left marked "in a basket" that no longer holds them are archived after 30 days
+  (Trash Abandoned Tags), looking back 90 days only.
+- EFT orders still on hold 2 days after going on hold get the payment reminder with the
+  bank details (once; orders on hold for over 7 days are left alone).
+
+Locally: set `CRON_SECRET` in `.env.local` and
+`curl -X POST -H "Authorization: Bearer <secret>" http://localhost:3000/api/cron/automations/`.
+Emails print to the dev server log when Resend isn't set up.
+
 ## Deploying
 
 See `deploy/README.md`. MeCard gets its own Google Cloud project.
