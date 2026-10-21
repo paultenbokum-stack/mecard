@@ -73,6 +73,8 @@ try {
     "EMAIL_FROM: `"$EmailFrom`""
     "CONTACT_TO: `"$ContactTo`""
     "ORDER_NOTIFY_TO: `"$OrderNotifyTo`""
+    "MEDIA_BUCKET: `"$(Get-MediaBucket $Project)`""
+    "ARCHIVE_BUCKET: `"$(Get-ArchiveBucket $Project)`""
   ) | Set-Content -Path $envFile -Encoding ascii
 
   Write-Step "Deploying Cloud Run service '$Service'"

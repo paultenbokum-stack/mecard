@@ -58,4 +58,9 @@ function Set-Secret([string]$Name, [string]$Value) {
 
 function Get-ConnectionName([string]$Project) { return "${Project}:${Region}:${Instance}" }
 
+# Image buckets (names are global, so they carry the project id):
+# media = WebP masters made on first request; archive = every original upload.
+function Get-MediaBucket([string]$Project) { return "$Project-media" }
+function Get-ArchiveBucket([string]$Project) { return "$Project-uploads" }
+
 function Write-Step([string]$Text) { Write-Host "`n==> $Text" -ForegroundColor Cyan }

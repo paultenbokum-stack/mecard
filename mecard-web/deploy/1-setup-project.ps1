@@ -1,4 +1,5 @@
-# Step 1: select the (already created) project, enable the APIs, create the image registry.
+# Step 1: select the (already created) project, enable the APIs, create the image registry
+# and the two image buckets (private; Cloud Run reads and writes them).
 # Usage: .\deploy\1-setup-project.ps1 -Project <project-id>
 param([string]$Project)
 . "$PSScriptRoot\_common.ps1"
@@ -8,13 +9,26 @@ Write-Step "Using project $Project"
 Invoke-Gcloud config set project $Project
 
 Write-Step 'Enabling APIs (Cloud Run, Cloud SQL, Artifact Registry, Secret Manager, Cloud Build)'
-Invoke-Gcloud services enable run.googleapis.com sqladmin.googleapis.com artifactregistry.googleapis.com secretmanager.googleapis.com cloudbuild.googleapis.com
+Invoke-Gcloud services enable run.googleapis.com sqladmin.googleapis.com artifactregistry.googleapis.com secretmanager.googleapis.com cloudbuild.googleapis.com storage.googleapis.com
 
 Write-Step "Docker repository '$Repo' in $Region"
 if (Test-Gcloud artifacts repositories describe $Repo "--location=$Region") {
   Write-Host 'Already exists.'
 } else {
   Invoke-Gcloud artifacts repositories create $Repo --repository-format=docker "--location=$Region"
+}
+
+$number = "$(gcloud projects describe $Project --format='value(projectNumber)')".Trim()
+$sa = "serviceAccount:$number-compute@developer.gserviceaccount.com"
+# Archive class for the originals: cheapest to keep, read once per image when its master is made.
+foreach ($b in @(@{ Name = (Get-MediaBucket $Project); Class = 'STANDARD' }, @{ Name = (Get-ArchiveBucket $Project); Class = 'ARCHIVE' })) {
+  Write-Step "Bucket gs://$($b.Name) ($($b.Class), $Region)"
+  if (Test-Gcloud storage buckets describe "gs://$($b.Name)") { Write-Host 'Already exists.' }
+  else {
+    Invoke-Gcloud storage buckets create "gs://$($b.Name)" "--location=$Region" "--default-storage-class=$($b.Class)" `
+      --uniform-bucket-level-access --public-access-prevention
+  }
+  Invoke-Gcloud storage buckets add-iam-policy-binding "gs://$($b.Name)" "--member=$sa" --role=roles/storage.objectAdmin --format=none
 }
 
 Write-Host "`nDone. Next: .\deploy\2-database.ps1" -ForegroundColor Green
