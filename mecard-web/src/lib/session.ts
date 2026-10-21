@@ -25,9 +25,11 @@ export async function isAdminUser(userId: number): Promise<boolean> {
   return !!u?.isAdmin;
 }
 
-export async function requireAdmin(): Promise<number> {
+/** Staff screens (/admin/): signed-out visitors go to the login page first; customers to their account. */
+export async function requireAdmin(next = "/admin/"): Promise<number> {
   const s = await auth();
   const id = Number(s?.user?.id);
+  if (!id) redirect(loginUrl(next));
   if (!s?.user?.isAdmin || !id || !(await isAdminUser(id))) redirect("/my-account/");
   return id;
 }
