@@ -83,6 +83,11 @@ export default async function CardsPage({ searchParams }: { searchParams: Promis
                     </div>
                   </div>
                   <div className="acc-item__actions">
+                    {c.type === "contactcard" || c.type === "classiccard" ? (
+                      <Link className={`acc-btn acc-btn--small${!c.designSubmitted && !c.shipped ? " acc-btn--cta" : ""}`} href={`/manage/cards/${c.id}/`}>
+                        {c.designReceived || c.shipped ? "View design" : c.designSubmitted ? "Edit design" : "Design card"}
+                      </Link>
+                    ) : null}
                     {c.profileId ? (
                       <a className="acc-btn acc-btn--small" href={`/t/${c.slug}/`}>
                         Open

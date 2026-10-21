@@ -128,3 +128,29 @@ export async function storeUpload(original: Buffer, deps: ImageDeps, opts: { now
   await deps.index.record({ legacyPath: key, storageKey, width: master.width, height: master.height, bytes: master.data.length, restoredFromArchive: false });
   return `/wp-content/uploads/${key}`;
 }
+
+/**
+ * Card artwork (custom card front and back, classic card logo) goes to print,
+ * so the original PNG or JPG is kept in the archive store, under its upload
+ * path like every WordPress original, as well as the WebP master the pages
+ * show. Returns the path, or null when it isn't a PNG or JPG image.
+ */
+export async function storeArtwork(original: Buffer, deps: ImageDeps, opts: { now?: Date; id: string }): Promise<string | null> {
+  if (!original.length || original.length > MAX_UPLOAD_BYTES) return null;
+  let format: string | undefined;
+  try {
+    format = (await sharp(original).metadata()).format;
+  } catch {
+    return null;
+  }
+  const ext = format === "png" ? "png" : format === "jpeg" ? "jpg" : null;
+  if (!ext) return null;
+  const now = opts.now ?? new Date();
+  const key = `mecard/${now.getUTCFullYear()}/${String(now.getUTCMonth() + 1).padStart(2, "0")}/${opts.id}.${ext}`;
+  await deps.archive.write(key, original, ext === "png" ? "image/png" : "image/jpeg");
+  const master = await toMaster(original);
+  const storageKey = masterKey(key);
+  await deps.media.write(storageKey, master.data, "image/webp");
+  await deps.index.record({ legacyPath: key, storageKey, width: master.width, height: master.height, bytes: master.data.length, restoredFromArchive: false });
+  return `/wp-content/uploads/${key}`;
+}

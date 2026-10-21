@@ -99,6 +99,7 @@ export async function listCards(v: Viewer, opts: { linked: boolean; q?: string; 
         printed: cards.printed,
         shipped: cards.shipped,
         designSubmitted: cards.designSubmitted,
+        designReceived: cards.designReceived,
         profileId: cards.profileId,
         profileName: sql<string | null>`nullif(trim(${profiles.firstName} || ' ' || ${profiles.lastName}), '')`,
         companyName: companies.name,

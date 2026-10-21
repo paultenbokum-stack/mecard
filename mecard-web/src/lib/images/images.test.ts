@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import sharp from "sharp";
 import { imageUrl, masterKey, pickWidth, sourceCandidates, uploadKey } from "./paths";
-import { loadMaster, renderVariant, storeUpload, type MediaIndex, type MediaRow } from "./pipeline";
+import { loadMaster, renderVariant, storeArtwork, storeUpload, type MediaIndex, type MediaRow } from "./pipeline";
 import { GcsStore, metadataToken, type BlobStore } from "./store";
 
 class MemoryStore implements BlobStore {
@@ -172,4 +172,15 @@ test("storeUpload refuses files that aren't images", async () => {
   assert.equal(await storeUpload(Buffer.from("<?php echo 1;"), deps, { id: "x" }), null);
   assert.equal(await storeUpload(Buffer.alloc(0), deps, { id: "x" }), null);
   assert.equal(deps.media.files.size, 0);
+});
+
+test("storeArtwork keeps the original PNG for printing and a WebP master for the pages", async () => {
+  const deps = { media: new MemoryStore(), archive: new MemoryStore(), index: new MemoryIndex() };
+  const original = await png(856, 540);
+  const path = await storeArtwork(original, deps, { id: "card1", now: new Date("2026-10-21T08:00:00Z") });
+  assert.equal(path, "/wp-content/uploads/mecard/2026/10/card1.png");
+  assert.deepEqual(deps.archive.files.get("mecard/2026/10/card1.png"), original);
+  assert.equal((await sharp(deps.media.files.get("masters/mecard/2026/10/card1.png.webp")!).metadata()).format, "webp");
+  const webp = await sharp({ create: { width: 10, height: 10, channels: 3, background: "#000" } }).webp().toBuffer();
+  assert.equal(await storeArtwork(webp, deps, { id: "x" }), null); // print artwork must be PNG or JPG
 });

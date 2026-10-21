@@ -38,3 +38,20 @@
 .shop-steps li { margin-bottom: 6px; }
 .shop-steps .is-done { color: #14804a; }
 .shop-dev { margin-top: 20px; padding: 14px; border: 1px dashed #c9d7e8; border-radius: 12px; background: #fafcff; font-size: 14px; }
+
+/* Card design (true size: 8.56 × 5.4 cm, the frame the QR position is stored in). */
+.card-design__grid { display: grid; gap: 22px; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); align-items: start; }
+.card-design__label { font-weight: 600; color: #2c4562; margin-bottom: 8px; }
+.card-design__card { position: relative; width: 8.56cm; height: 5.4cm; border-radius: 0.3cm; overflow: hidden; background: #fff; box-shadow: 4px 4px 10px 4px rgba(128, 128, 128, 0.34); margin-bottom: 12px; touch-action: none; }
+.card-design__card > img { width: 100%; height: 100%; object-fit: cover; }
+.card-design__empty { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: #8a9bb0; border: 1px dashed #c9d7e8; border-radius: 0.3cm; }
+.card-design__qr { position: absolute; border: 1px solid rgba(0, 0, 0, 0.12); }
+.card-design__qr img { width: 100%; height: 100%; display: block; pointer-events: none; user-select: none; }
+.card-design__qr.is-editable { cursor: move; outline: 2px dashed rgba(22, 115, 209, 0.6); outline-offset: 2px; }
+.card-design__handle { position: absolute; right: -9px; bottom: -9px; width: 18px; height: 18px; border-radius: 4px; background: #1673d1; border: 2px solid #fff; box-shadow: 0 2px 8px rgba(13, 31, 56, 0.22); cursor: nwse-resize; }
+.card-design__card--classic { font-family: var(--font-montserrat), Montserrat, sans-serif; }
+.card-design__logo { position: absolute; top: 0.4cm; height: 3.5cm; width: 100%; padding: 0 0.4cm; display: flex; align-items: center; justify-content: center; }
+.card-design__logo img { max-width: 100%; max-height: 3.5cm; }
+.card-design__logo .card-design__empty { position: static; width: 100%; height: 100%; }
+:where(.mecard-site) .card-design__name { position: absolute; bottom: 0.9cm; width: 100%; text-align: center; margin: 0; color: #4b5563; font-weight: 600; font-size: 13px; }
+:where(.mecard-site) .card-design__title { position: absolute; bottom: 0.4cm; width: 100%; text-align: center; margin: 0; color: #6b7280; font-size: 11px; }
