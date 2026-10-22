@@ -2,17 +2,15 @@
 # Builds mecard-web as it is checked out, so commit first. The image tag defaults to the commit.
 # The reCAPTCHA site key is only needed once: it is saved on the Cloud Run service and read
 # back from there on later deploys (pass it again only to change it).
-# Usage: .\deploy\4-deploy.ps1 [-RecaptchaSiteKey <site key>] [-Project <id>] [-Tag v1] [-SiteUrl https://mecard.co.za]
+# Usage: .\deploy\4-deploy.ps1 [-RecaptchaSiteKey <site key>] [-Project <id>] [-Tag v1] [-Url https://mecard.co.za]
 param(
   [string]$Project,
   [string]$RecaptchaSiteKey,
   [string]$Tag,
-  [string]$SiteUrl = 'https://mecard.co.za',
-  [string]$EmailFrom = 'MeCard <info@mecard.co.za>',
-  [string]$ContactTo = 'info@taggable.co.za',
-  [string]$OrderNotifyTo = 'info@taggable.co.za'
+  [string]$Url
 )
 . "$PSScriptRoot\_common.ps1"
+if ($Url) { $SiteUrl = $Url }
 $Project = Get-Project $Project
 Push-Location $AppDir
 try {
@@ -62,7 +60,7 @@ try {
   }
   if ($secrets -notcontains 'DATABASE_URL=DATABASE_URL:latest') { throw 'DATABASE_URL secret missing: run 2-database.ps1 first.' }
 
-  # Plain settings go in a YAML file so EMAIL_FROM's spaces and <> survive.
+  # Plain settings go in a YAML file (mail addresses come from src/lib/mail-settings.ts).
   $envFile = [IO.Path]::GetTempFileName()
   @(
     "AUTH_URL: `"$SiteUrl`""
@@ -70,9 +68,6 @@ try {
     "NEXT_PUBLIC_APP_URL: `"$SiteUrl`""
     "NEXT_PUBLIC_RECAPTCHA_SITE_KEY: `"$RecaptchaSiteKey`""
     'PAYFAST_SANDBOX: ""'
-    "EMAIL_FROM: `"$EmailFrom`""
-    "CONTACT_TO: `"$ContactTo`""
-    "ORDER_NOTIFY_TO: `"$OrderNotifyTo`""
     "MEDIA_BUCKET: `"$(Get-MediaBucket $Project)`""
     "ARCHIVE_BUCKET: `"$(Get-ArchiveBucket $Project)`""
   ) | Set-Content -Path $envFile -Encoding ascii

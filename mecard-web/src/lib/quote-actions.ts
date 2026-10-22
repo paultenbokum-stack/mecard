@@ -8,6 +8,7 @@ import { clientInfo } from "@/lib/tracking";
 import { verifyQuoteToken } from "@/lib/quote-rules";
 import { acceptQuote, quoteById, quotePath, rejectQuote, requestQuote } from "@/lib/quotes";
 import { loginUrl } from "@/lib/auth-paths";
+import { CONTACT_TO } from "@/lib/mail-settings";
 import { currentUserId } from "@/lib/session";
 
 export type QuoteFormState = { error?: string } | null;
@@ -26,7 +27,7 @@ export async function requestQuoteAction(_: QuoteFormState, form: FormData): Pro
   if (!name) return { error: "Please enter your name." };
   if (!email) return { error: "Please enter a valid email address." };
   if (!form.get("terms")) return { error: "Please accept the terms and conditions." };
-  if (rateLimited(`quote:${clientInfo(await headers()).ip}`, Date.now(), 5)) return { error: "You've asked for several quotes already. Please email info@mecard.co.za." };
+  if (rateLimited(`quote:${clientInfo(await headers()).ip}`, Date.now(), 5)) return { error: `You've asked for several quotes already. Please email ${CONTACT_TO}.` };
   const q = await requestQuote({
     userId: await currentUserId(),
     name,

@@ -2,6 +2,7 @@ import "server-only";
 import { eq } from "drizzle-orm";
 import { db } from "@/db/client";
 import { orderItems, orders } from "@/db/schema";
+import { ORDER_NOTIFY_TO } from "@/lib/mail-settings";
 import { sendEmail } from "@/lib/email";
 import { invoiceFilename, renderInvoice } from "@/lib/invoice";
 import { bankDetailsText } from "@/lib/invoice-settings";
@@ -14,7 +15,7 @@ import { PICKUP_METHOD } from "@/lib/shipping";
 
 const appUrl = () => process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 /** Where shop notifications go (WooCommerce's "new order" recipient). */
-const shopInbox = () => process.env.ORDER_NOTIFY_TO || process.env.CONTACT_TO || "";
+const shopInbox = () => ORDER_NOTIFY_TO;
 
 type Order = typeof orders.$inferSelect;
 type Item = typeof orderItems.$inferSelect;

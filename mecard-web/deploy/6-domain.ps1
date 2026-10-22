@@ -4,8 +4,9 @@
 # Safe to re-run: existing pieces are skipped. Prints the IP to put in DNS.
 # The certificate is only issued once DNS points at that IP (usually 15-60 minutes).
 # Usage: .\deploy\6-domain.ps1 [-Project <id>] [-Domains mecard.co.za,www.mecard.co.za]
-param([string]$Project, [string[]]$Domains = @('mecard.co.za', 'www.mecard.co.za'))
+param([string]$Project, [string[]]$Domains)
 . "$PSScriptRoot\_common.ps1"
+if (-not $Domains) { $Domains = $SiteDomains }
 $Project = Get-Project $Project
 Invoke-Gcloud config set project $Project
 

@@ -1,5 +1,6 @@
 # Shared settings and helpers for the deploy scripts. Dot-sourced, not run directly.
 $ErrorActionPreference = 'Stop'
+. "$PSScriptRoot\config.ps1"
 
 $Region   = 'africa-south1'
 $Instance = 'mecard-db'
@@ -15,12 +16,10 @@ $SecretNames = @(
   'PAYFAST_MERCHANT_ID', 'PAYFAST_MERCHANT_KEY', 'PAYFAST_PASSPHRASE', 'BOBGO_API_KEY', 'RECAPTCHA_SECRET_KEY', 'CRON_SECRET'
 )
 
+# The project to work on: -Project, else the MeCard project from config.ps1.
 function Get-Project([string]$Project) {
   if ($Project) { return $Project }
-  $ErrorActionPreference = 'Continue'
-  $p = gcloud config get-value project 2>$null
-  if (-not $p) { throw 'No GCP project: pass -Project <id> or run: gcloud config set project <id>' }
-  return "$p".Trim()
+  return $DefaultProject
 }
 
 # Run gcloud and stop the script if it fails.

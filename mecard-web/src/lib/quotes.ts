@@ -7,6 +7,7 @@ import { db } from "@/db/client";
 import { products, quotes, users, type QuoteLine } from "@/db/schema";
 import { addQuoteLines } from "./cart";
 import { cardTypesFor, isVirtual } from "./catalog";
+import { ORDER_NOTIFY_TO } from "@/lib/mail-settings";
 import { sendEmail } from "./email";
 import { INVOICE_SELLER } from "./invoice-settings";
 import { formatDate, rands } from "./money";
@@ -16,7 +17,7 @@ import { siteUrl } from "./site";
 export type Quote = typeof quotes.$inferSelect;
 
 export const quotePath = (q: Pick<Quote, "id" | "email">) => `/quote/${q.id}/${quoteToken(q.id, q.email)}/`;
-const shopInbox = () => process.env.ORDER_NOTIFY_TO || process.env.CONTACT_TO || "";
+const shopInbox = () => ORDER_NOTIFY_TO;
 
 /**
  * A quote request (YITH with "automatic quote" on): priced at shop prices,

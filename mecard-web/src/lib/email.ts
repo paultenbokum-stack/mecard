@@ -1,10 +1,11 @@
 import "server-only";
 import { Resend } from "resend";
+import { MAIL_FROM } from "./mail-settings";
 
 // Same seam as GuestWave: Cloud Run blocks SMTP, so mail goes via Resend's API.
 // With no RESEND_API_KEY (local dev) messages are printed to the terminal.
 const apiKey = process.env.RESEND_API_KEY;
-const from = process.env.EMAIL_FROM ?? "MeCard <onboarding@resend.dev>";
+const from = MAIL_FROM;
 const resend = apiKey ? new Resend(apiKey) : null;
 
 export type Attachment = { filename: string; content: Buffer };

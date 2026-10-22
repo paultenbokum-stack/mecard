@@ -5,8 +5,9 @@
 # Run it once: it creates everything and prints the CNAME records to add at xneelo.
 # Run it again after adding them: once the certificate is ACTIVE it attaches it to the load balancer.
 # Usage: .\deploy\6b-dns-cert.ps1 [-Project <id>]
-param([string]$Project, [string[]]$Domains = @('mecard.co.za', 'www.mecard.co.za'))
+param([string]$Project, [string[]]$Domains)
 . "$PSScriptRoot\_common.ps1"
+if (-not $Domains) { $Domains = $SiteDomains }
 $Project = Get-Project $Project
 Invoke-Gcloud config set project $Project
 
