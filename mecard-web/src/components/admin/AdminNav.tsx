@@ -12,6 +12,10 @@ const items = [
   { href: "/admin/quotes/", label: "Quotes", icon: "fa-file-invoice" },
   { href: "/admin/coupons/", label: "Coupons", icon: "fa-percent" },
   { href: "/admin/entitlements/", label: "Entitlements", icon: "fa-key" },
+  { href: "/admin/users/", label: "Users", icon: "fa-users" },
+  { href: "/admin/companies/", label: "Companies", icon: "fa-building" },
+  { href: "/admin/profiles/", label: "Profiles", icon: "fa-id-badge" },
+  { href: "/admin/tags/", label: "Tags", icon: "fa-tags" },
 ];
 
 export function AdminNav() {

@@ -447,3 +447,19 @@ export const quotes = pgTable(
   },
   (t) => [index("quotes_user").on(t.userId), index("quotes_email").on(sql`lower(${t.email})`)],
 );
+
+// Who changed what in the staff screens (users, companies, profiles, tags).
+export const adminLog = pgTable(
+  "admin_log",
+  {
+    id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
+    actorId: integer("actor_id").references(() => users.id, { onDelete: "set null" }),
+    // user | company | profile | card
+    entity: varchar("entity", { length: 20 }).notNull(),
+    entityId: integer("entity_id").notNull(),
+    action: varchar("action", { length: 40 }).notNull(),
+    detail: text("detail").notNull().default(""),
+    createdAt: createdAt(),
+  },
+  (t) => [index("admin_log_entity").on(t.entity, t.entityId, t.createdAt)],
+);

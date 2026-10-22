@@ -43,6 +43,13 @@
       "when": 1792699885147,
       "tag": "0005_event_device",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1792700182486,
+      "tag": "0006_admin_log",
+      "breakpoints": true
     }
   ]
 }

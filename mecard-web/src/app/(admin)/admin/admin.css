@@ -148,3 +148,12 @@
 .adm-chart__bar:hover { fill: var(--navy); }
 .adm-chart__axis { stroke: var(--line); stroke-width: 1; }
 .adm-chart__label { font-size: 11px; fill: var(--muted); }
+
+/* Management screens */
+.adm-crumbs { font-size: 13px; color: var(--muted); margin-bottom: 6px; }
+.adm-filters { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 12px; }
+.adm-filters .adm-input { width: 260px; max-width: 100%; }
+.adm-dl { display: grid; grid-template-columns: max-content 1fr; gap: 4px 14px; margin: 0; font-size: 13px; }
+.adm-dl dt { color: var(--muted); }
+.adm-dl dd { margin: 0; }
+.adm-blockers { margin: 0 0 10px; padding-left: 18px; color: #8a2020; font-size: 13px; }

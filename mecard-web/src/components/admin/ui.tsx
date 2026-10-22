@@ -130,3 +130,30 @@ export function Card({ title, children, className = "" }: { title?: React.ReactN
     </section>
   );
 }
+
+/** Admin › Users › Jane Smith, on detail pages. */
+export function Breadcrumbs({ items }: { items: { href?: string; label: string }[] }) {
+  return (
+    <nav aria-label="Breadcrumb" className="adm-crumbs">
+      {items.map((i, n) => (
+        <span key={n}>
+          {n ? <span aria-hidden="true"> › </span> : null}
+          {i.href ? <Link href={i.href}>{i.label}</Link> : <span aria-current="page">{i.label}</span>}
+        </span>
+      ))}
+    </nav>
+  );
+}
+
+/** Sort choice for lists (submits with the filter form it sits in). */
+export function SortSelect({ value, options }: { value: string; options: [string, string][] }) {
+  return (
+    <select name="sort" defaultValue={value} className="adm-select" aria-label="Sort">
+      {options.map(([v, l]) => (
+        <option key={v} value={v}>
+          {l}
+        </option>
+      ))}
+    </select>
+  );
+}
