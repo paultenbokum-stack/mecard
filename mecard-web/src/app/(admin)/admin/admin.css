@@ -134,3 +134,17 @@
   .adm-main { padding: 16px; }
   .adm-grid, .adm-grid--2, .adm-form { grid-template-columns: 1fr; }
 }
+
+/* Stats page */
+.adm-section { margin: 22px 0 10px; }
+.adm-delta { display: block; font-size: 12px; color: var(--muted); margin-top: 2px; }
+.adm-delta--up { color: #1d6b3c; }
+.adm-delta--down { color: #a12323; }
+.adm-chart { margin: 0; }
+.adm-chart figcaption { display: flex; justify-content: space-between; align-items: baseline; font-size: 13px; color: var(--muted); margin-bottom: 6px; }
+.adm-chart figcaption strong { color: var(--navy); font-size: 16px; }
+.adm-chart svg { width: 100%; height: 160px; display: block; }
+.adm-chart__bar { fill: var(--blue); }
+.adm-chart__bar:hover { fill: var(--navy); }
+.adm-chart__axis { stroke: var(--line); stroke-width: 1; }
+.adm-chart__label { font-size: 11px; fill: var(--muted); }
