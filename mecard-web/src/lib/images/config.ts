@@ -7,6 +7,8 @@ import { GcsStore, LocalStore } from "./store";
 
 // Production: MEDIA_BUCKET (WebP masters) and ARCHIVE_BUCKET (every original
 // WordPress upload, stored under its upload path, e.g. 2024/03/photo.jpg).
+// With STORAGE_EMULATOR_HOST (npm run dev:all) the same buckets live in the
+// local fake-gcs-server, with no credentials.
 // Without them (local dev) originals come from wp-content/uploads in the
 // checkout (or LOCAL_UPLOADS_DIR) and masters are cached in .media-cache/.
 
@@ -27,8 +29,12 @@ let deps: ImageDeps | null = null;
 
 export function imageDeps(): ImageDeps {
   if (deps) return deps;
-  const { MEDIA_BUCKET, ARCHIVE_BUCKET, LOCAL_UPLOADS_DIR } = process.env;
-  if (MEDIA_BUCKET && ARCHIVE_BUCKET) {
+  const { MEDIA_BUCKET, ARCHIVE_BUCKET, LOCAL_UPLOADS_DIR, STORAGE_EMULATOR_HOST } = process.env;
+  if (MEDIA_BUCKET && ARCHIVE_BUCKET && STORAGE_EMULATOR_HOST) {
+    const local = async () => "local";
+    const endpoint = STORAGE_EMULATOR_HOST.replace(/\/+$/, "");
+    deps = { media: new GcsStore(MEDIA_BUCKET, local, fetch, endpoint), archive: new GcsStore(ARCHIVE_BUCKET, local, fetch, endpoint), index: dbIndex };
+  } else if (MEDIA_BUCKET && ARCHIVE_BUCKET) {
     deps = { media: new GcsStore(MEDIA_BUCKET), archive: new GcsStore(ARCHIVE_BUCKET), index: dbIndex };
   } else {
     deps = {

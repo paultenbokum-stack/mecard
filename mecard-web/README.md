@@ -9,7 +9,24 @@ https://claude.ai/code/artifact/1485c114-5f1f-4976-bd38-f9724dd441d3
 
 ## Run it locally
 
-Needs Node 20+ and Docker.
+Needs Node 20+ and Docker Desktop.
+
+### Everything, as on Google Cloud: `npm run dev:all`
+
+One command starts the local stand-ins (`docker-compose.yml`) and the app against them:
+
+| On Google Cloud | Locally |
+| --- | --- |
+| Cloud SQL | Postgres in Docker, localhost:5435 |
+| Cloud Storage buckets (media, archive) | fake-gcs-server, localhost:4443, seeded the first time with the images the data uses from `../wp-content/uploads` (delete `.gcs-seed/` to re-seed) |
+| Resend | Mailpit: every email the app sends, readable at http://localhost:8025 |
+| Cloud Scheduler (hourly job) | `scripts/local-cron.ts`, on the hour (`npm run cron:local -- --every 5` to watch it, `-- --once` for one run) |
+| PayFast, Bob Go | their sandboxes, when `.env.local` has sandbox keys; otherwise "Simulate successful payment" and fixed shipping prices |
+
+Keys for the laptop: `.\deploy\keys.ps1` (asks for each, hidden, and writes `.env.local`).
+The first time, also load data (below). Then `npm run dev:all` and open http://localhost:3000.
+
+### Just the app
 
 ```
 npm install

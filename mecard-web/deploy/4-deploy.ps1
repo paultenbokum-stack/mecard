@@ -28,8 +28,13 @@ try {
       $vars = ($json | Out-String | ConvertFrom-Json).spec.template.spec.containers[0].env
       $RecaptchaSiteKey = ($vars | Where-Object { $_.name -eq 'NEXT_PUBLIC_RECAPTCHA_SITE_KEY' } | Select-Object -First 1).value
     }
-    if (-not $RecaptchaSiteKey) { throw 'No reCAPTCHA site key saved yet: pass -RecaptchaSiteKey <site key> this once.' }
-    Write-Host 'Using the reCAPTCHA site key saved on the service.'
+    if (-not $RecaptchaSiteKey) {
+      # First deploy: the key keys.ps1 saved in .env.local.
+      $line = Get-Content (Join-Path $AppDir '.env.local') -ErrorAction SilentlyContinue | Where-Object { $_ -match '^NEXT_PUBLIC_RECAPTCHA_SITE_KEY=(.+)$' } | Select-Object -First 1
+      if ($line -match '=(.+)$') { $RecaptchaSiteKey = $Matches[1].Trim() }
+    }
+    if (-not $RecaptchaSiteKey) { throw 'No reCAPTCHA site key: run .\deploy\keys.ps1 (it asks for it), or pass -RecaptchaSiteKey <site key>.' }
+    Write-Host 'Using the saved reCAPTCHA site key.'
   }
 
   Write-Step 'Docker login for Artifact Registry'

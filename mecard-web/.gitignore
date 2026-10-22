@@ -54,3 +54,4 @@ next-env.d.ts
 
 # image masters cached by the local image driver
 /.media-cache/
+/.gcs-seed/

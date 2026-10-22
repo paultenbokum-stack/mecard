@@ -9,10 +9,10 @@ If Windows blocks the scripts, run them as
 
 | Order | Script | What it does |
 | --- | --- | --- |
-| 1 | `.\deploy\1-setup-project.ps1 -Project <id>` | Selects the project, enables the APIs, creates the `mecard` Docker repository and the two private image buckets (`<project>-media` for WebP masters, `<project>-uploads`, Archive class, for the original uploads) |
+| 1 | `.\deploy\1-setup-project.ps1` | Links billing (after you type LINK), selects the project, enables the APIs, creates the `mecard` Docker repository and the two private image buckets (`<project>-media` for WebP masters, `<project>-uploads`, Archive class, for the original uploads) |
 | 2 | `.\deploy\2-database.ps1` | Cloud SQL Postgres 16 `mecard-db` (about 10 min), database + user; the generated password goes straight into the `DATABASE_URL` secret |
-| 3 | `.\deploy\3-secrets.ps1` | Asks for each key (hidden typing), generates `AUTH_SECRET`, grants Cloud Run access to secrets and Cloud SQL. `-Update NAME,NAME` replaces existing ones |
-| 4 | `.\deploy\4-deploy.ps1` | Builds, pushes and deploys the current commit to the `mecard` Cloud Run service. The first time, add `-RecaptchaSiteKey <key>`; it is remembered after that |
+| 3 | `.\deploy\keys.ps1 -Cloud` (same as `3-secrets.ps1`) | Every key in one go: shows which are set, asks for the missing ones (hidden typing), checks them with the service where it can, saves them to Secret Manager, generates `AUTH_SECRET` and `CRON_SECRET`, and lets Cloud Run read them. Keys already set locally can be reused. `-Update NAME,NAME` asks again. Without `-Cloud` it does the same for `.env.local` (sandbox PayFast and Bob Go) |
+| 4 | `.\deploy\4-deploy.ps1` | Builds, pushes and deploys the current commit to the `mecard` Cloud Run service. The reCAPTCHA site key comes from `.env.local` (keys.ps1) the first time and is remembered on the service after that |
 | 5 | `.\deploy\5-migrate-import.ps1` | Through the Cloud SQL Auth Proxy: runs migrations, then (after you type IMPORT) wipes and imports the WordPress data. `-MigrateOnly` for migrations alone |
 | 6 | `.\deploy\6-domain.ps1` | HTTPS load balancer for mecard.co.za + www (static IP, managed certificate, http to https redirect); prints the IP for DNS |
 | 7 | `.\deploy\7-github-actions.ps1` | One time: lets GitHub Actions deploy (keyless Workload Identity Federation). After this, add the deploy workflow (see the Nextag one) so every push to `master` that touches `mecard-web` runs it: lint, typecheck, test, build, migrate, deploy |
@@ -21,7 +21,14 @@ If Windows blocks the scripts, run them as
 | - | `.\deploy\backup.ps1` | Manual Cloud SQL backup |
 | - | `.\deploy\rollback.ps1 [-Revision <name>]` | Sends all traffic to the previous (or named) Cloud Run revision |
 
-After step 1 the project is the gcloud default, so later scripts don't need `-Project`.
+Project, billing account, site address and the Xneelo connection are in `deploy/config.ps1`
+(the existing "Mecard" project, Taggable billing). The scripts always use that project, never
+gcloud's current default; `-Project` overrides. Step 1 links billing only after you type LINK.
+
+The uploads and the go-live day have their own runbooks: [IMAGES.md](IMAGES.md) (with
+`pull-uploads.ps1`, `npm run images:plan`, `9-images.ps1`, `npm run images:warm`) and
+[CUTOVER.md](CUTOVER.md) (the Xneelo DNS records, TTL, rollback).
+
 Step 5 needs `gcloud components install cloud-sql-proxy`. Run the import only at cutover,
 with WordPress in maintenance mode and a fresh export loaded locally. Later deploys are
 just step 4, plus `5-migrate-import.ps1 -MigrateOnly` when a commit adds a migration.

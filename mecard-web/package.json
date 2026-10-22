@@ -4,6 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:all": "node scripts/dev-all.mjs",
+    "cron:local": "tsx scripts/local-cron.ts",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
@@ -15,6 +17,7 @@
     "import:wp": "tsx scripts/import-wp.ts",
     "cards:archive-abandoned": "tsx scripts/archive-abandoned-cards.ts",
     "images:plan": "tsx scripts/migrate-images.ts",
+    "images:warm": "tsx scripts/warm-images.ts",
     "db:seed": "tsx scripts/seed-dev.ts",
     "check:urls": "tsx scripts/check-urls.ts",
     "dev:password": "tsx scripts/dev-password.ts",

@@ -54,16 +54,20 @@ export function metadataToken(fetchImpl: Fetch = fetch, now: () => number = Date
   };
 }
 
-/** Cloud Storage over its JSON API: no client library needed for two calls. */
+/**
+ * Cloud Storage over its JSON API: no client library needed for two calls.
+ * `endpoint` is Google's, or a local emulator (fake-gcs-server) in development.
+ */
 export class GcsStore implements BlobStore {
   constructor(
     private readonly bucket: string,
     private readonly token: TokenSource = metadataToken(),
     private readonly fetchImpl: Fetch = fetch,
+    private readonly endpoint = "https://storage.googleapis.com",
   ) {}
 
   async read(key: string) {
-    const url = `https://storage.googleapis.com/storage/v1/b/${this.bucket}/o/${encodeURIComponent(key)}?alt=media`;
+    const url = `${this.endpoint}/storage/v1/b/${this.bucket}/o/${encodeURIComponent(key)}?alt=media`;
     const res = await this.fetchImpl(url, { headers: { Authorization: `Bearer ${await this.token()}` } });
     if (res.status === 404) return null;
     if (!res.ok) throw new Error(`GCS read ${this.bucket}/${key} failed: ${res.status}`);
@@ -71,7 +75,7 @@ export class GcsStore implements BlobStore {
   }
 
   async write(key: string, data: Buffer, contentType: string) {
-    const url = `https://storage.googleapis.com/upload/storage/v1/b/${this.bucket}/o?uploadType=media&name=${encodeURIComponent(key)}`;
+    const url = `${this.endpoint}/upload/storage/v1/b/${this.bucket}/o?uploadType=media&name=${encodeURIComponent(key)}`;
     const res = await this.fetchImpl(url, {
       method: "POST",
       headers: { Authorization: `Bearer ${await this.token()}`, "Content-Type": contentType },

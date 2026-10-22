@@ -5,6 +5,7 @@
 //   npm run images:plan                                     dry run on ../wp-content/uploads
 //   npm run images:plan -- --source D:\live-uploads         dry run on a fresh copy from the live site
 //   npm run images:plan -- --source <dir> --stage <empty dir>   also lay out the files to upload (hard links)
+//   … --referenced                                          only the images the data uses (the local emulator seed)
 //
 // Then deploy/9-images.ps1 uploads the staged folder with `gcloud storage rsync`.
 //
@@ -19,8 +20,8 @@ import { config } from "dotenv";
 import { promises as fs, existsSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import postgres from "postgres";
-import { sourceCandidates, uploadKey } from "../src/lib/images/paths";
+import { sourceCandidates } from "../src/lib/images/paths";
+import { imageReferences as references } from "./image-refs";
 
 config({ path: ".env.local" });
 
@@ -30,6 +31,7 @@ const arg = (name: string) => {
 };
 const source = path.resolve(arg("source") ?? path.join(process.cwd(), "../wp-content/uploads"));
 const stage = arg("stage") ? path.resolve(arg("stage")!) : null;
+const onlyReferenced = process.argv.includes("--referenced");
 const reportFile = path.resolve(arg("report") ?? path.join(os.tmpdir(), "mecard-images-report.txt"));
 
 // Top-level folders that are not site images.
@@ -55,49 +57,6 @@ async function walk(dir: string, rel = ""): Promise<File[]> {
 
 const mb = (b: number) => `${(b / 1024 / 1024).toFixed(1)} MB`;
 
-/** Every upload path the app's data points at. */
-async function references(): Promise<Map<string, string>> {
-  const refs = new Map<string, string>(); // key → where it was found
-  const add = (raw: string | null | undefined, where: string) => {
-    if (!raw) return;
-    for (const m of raw.match(/\/wp-content\/uploads\/[^\s"'()<>?#]+/g) ?? [raw]) {
-      const key = uploadKey(m);
-      if (key && !refs.has(key)) refs.set(key, where);
-    }
-  };
-  if (process.env.DATABASE_URL) {
-    const sql = postgres(process.env.DATABASE_URL, { max: 1 });
-    try {
-      for (const r of await sql`SELECT id, logo_path, custom_css, description_html FROM companies`) {
-        add(r.logo_path, `company ${r.id} logo`);
-        add(r.custom_css, `company ${r.id} CSS`);
-        add(r.description_html, `company ${r.id} description`);
-      }
-      for (const r of await sql`SELECT id, photo_path, company_logo_path FROM profiles WHERE NOT archived`) {
-        add(r.photo_path, `profile ${r.id} photo`);
-        add(r.company_logo_path, `profile ${r.id} logo`);
-      }
-      for (const r of await sql`SELECT id, front_path, back_path FROM cards WHERE NOT archived`) {
-        add(r.front_path, `card ${r.id} front`);
-        add(r.back_path, `card ${r.id} back`);
-      }
-      for (const r of await sql`SELECT id, image_path, description FROM products`) {
-        add(r.image_path, `product ${r.id}`);
-        add(r.description, `product ${r.id} description`);
-      }
-    } finally {
-      await sql.end();
-    }
-  } else {
-    console.warn("No DATABASE_URL: only the site pages are checked.");
-  }
-  const content = path.join(process.cwd(), "src/content");
-  for (const f of await fs.readdir(content, { recursive: true })) {
-    if (String(f).endsWith(".json")) add(await fs.readFile(path.join(content, String(f)), "utf8"), `page ${f}`);
-  }
-  return refs;
-}
-
 async function main() {
   if (!existsSync(source)) throw new Error(`No uploads folder at ${source}`);
   console.log(`Uploads: ${source}`);
@@ -113,6 +72,9 @@ async function main() {
 
   const refs = await references();
   const missing = [...refs].filter(([key]) => !sourceCandidates(key).some((k) => uploadKeys.has(k)));
+  // The file each reference resolves to (its first candidate that exists).
+  const used = new Set([...refs.keys()].map((key) => sourceCandidates(key).find((k) => uploadKeys.has(k))).filter((k): k is string => !!k));
+  const chosen = onlyReferenced ? upload.filter((f) => used.has(f.key)) : upload;
 
   const lines = [
     `Source: ${source}`,
@@ -123,7 +85,7 @@ async function main() {
     `Left out as not images: ${all.length - images.length}`,
     `Skipped folders: ${SKIP_DIRS.map((r) => r.source).join(" ")}`,
     "",
-    `Images the data refers to: ${refs.size}; not found in this folder: ${missing.length}`,
+    `Images the data refers to: ${refs.size}; found: ${used.size} files (${mb(sum(upload.filter((f) => used.has(f.key))))}); not found: ${missing.length}`,
     ...missing.map(([key, where]) => `  MISSING ${key}  (${where})`),
   ];
   await fs.writeFile(reportFile, lines.join("\n") + "\n");
@@ -133,7 +95,7 @@ async function main() {
   if (stage) {
     if (existsSync(stage) && (await fs.readdir(stage)).length) throw new Error(`--stage must be a new or empty folder: ${stage}`);
     let linked = 0;
-    for (const f of upload) {
+    for (const f of chosen) {
       const to = path.join(stage, ...f.key.split("/"));
       await fs.mkdir(path.dirname(to), { recursive: true });
       try {
