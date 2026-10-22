@@ -81,6 +81,10 @@ export default async function AdminCompany({ params, searchParams }: { params: P
               </p>
             )}
           </Card>
+          <p className="adm-small" style={{ margin: "-10px 0 18px" }}>
+            <Link href={`/admin/profiles/?company=${c.id}`}>These profiles in the profile list</Link> (to filter, sort or add one) ·{" "}
+            <Link href={`/admin/tags/?q=${encodeURIComponent(c.name)}`}>this company&apos;s tags in the tag list</Link>
+          </p>
           <Card title={`Tags (${liveTags.length}${tags.length > liveTags.length ? `, ${tags.length - liveTags.length} archived` : ""})`}>
             {tags.length ? (
               <table className="adm-table adm-table--tight">
