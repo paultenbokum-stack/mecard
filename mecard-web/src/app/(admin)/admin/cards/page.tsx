@@ -97,9 +97,9 @@ export default async function AdminCards({ searchParams }: { searchParams: Promi
                     </Link>
                   </td>
                   <td className="adm-small">
-                    {ownerName || ownerEmail || "—"}
+                    {c.ownerId ? <Link href={`/admin/users/${c.ownerId}/`}>{ownerName || ownerEmail}</Link> : "—"}
                     <div className="adm-muted">
-                      {`${first ?? ""} ${last ?? ""}`.trim() || "No profile"}
+                      {c.profileId ? <Link href={`/admin/profiles/${c.profileId}/`}>{`${first ?? ""} ${last ?? ""}`.trim() || `Profile ${c.profileId}`}</Link> : "No profile"}
                       {jobTitle ? ` · ${jobTitle}` : ""}
                     </div>
                   </td>
