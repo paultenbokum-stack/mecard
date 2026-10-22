@@ -7,6 +7,8 @@ import { createHash, randomUUID } from "node:crypto";
 export const ALLOWED_EVENTS = new Set([
   // Engagement
   "profile_viewed", "share_intent", "vcard_downloaded", "contact_form_submitted", "recipient_ad_viewed",
+  // A tap on the card's own contact links (call, email, WhatsApp, SMS, website, map, socials): meta { kind, label }
+  "contact_action",
   // Onboarding
   "signup_started", "signup_completed", "profile_step1_saved", "profile_step2_saved", "look_confirmed",
   "a2hs_prompted", "a2hs_accepted", "a2hs_dismissed", "onboarding_completed",
@@ -63,6 +65,7 @@ export function eventRow({ body, sessionCookie, userId, ip, userAgent, country }
     referrer,
     country: country && /^[A-Za-z]{2}$/.test(country) ? country.toUpperCase() : null,
     uaHash: hashWithSalt(userAgent),
+    device: deviceClass(userAgent),
     ipHash: hashWithSalt(ip),
     meta: meta && JSON.stringify(meta).length <= 4000 ? meta : null,
   };
@@ -75,4 +78,20 @@ export function clientInfo(h: Headers) {
   // backend service is given that custom header; Cloudflare-style headers too.
   const country = h.get("x-client-region") || h.get("x-appengine-country") || h.get("cf-ipcountry") || null;
   return { ip, country, userAgent: h.get("user-agent") ?? "" };
+}
+
+/**
+ * Crawlers, link-preview fetchers (a card link pasted into WhatsApp or
+ * LinkedIn) and headless browsers: not people, so not counted.
+ */
+const BOT_UA = /\b(bot|crawler|spider)\b|[a-z]bot\/|crawl|slurp|facebookexternalhit|facebookcatalog|meta-externalagent|whatsapp\/|linkedinbot|slackbot|slack-imgproxy|twitterbot|telegrambot|discordbot|skypeuripreview|pinterestbot|embedly|quora link preview|redditbot|applebot|googlebot|google-inspectiontool|googleother|adsbot-google|mediapartners-google|google-pagerenderer|bingbot|bingpreview|yandex|baiduspider|duckduckbot|petalbot|semrush|ahrefs|mj12bot|dotbot|headlesschrome|phantomjs|puppeteer|playwright|lighthouse|chrome-lighthouse|pagespeed|curl\/|wget\/|python-requests|python-urllib|go-http-client|node-fetch|axios\/|okhttp/i;
+
+export const isBotUserAgent = (ua: string) => !ua.trim() || BOT_UA.test(ua);
+
+/** phone | tablet | desktop, from the user agent (iPads asking for desktop sites read as desktop). */
+export function deviceClass(ua: string): "phone" | "tablet" | "desktop" | null {
+  if (!ua.trim()) return null;
+  if (/ipad|tablet|playbook|silk|kindle|(android(?!.*mobile))/i.test(ua)) return "tablet";
+  if (/mobi|iphone|ipod|android|windows phone|blackberry|opera mini/i.test(ua)) return "phone";
+  return "desktop";
 }

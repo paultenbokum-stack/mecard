@@ -58,6 +58,7 @@ test("tracking: allowed events become rows like Me\\Tracking\\Module::log_event"
     referrer: "https://wa.me/x",
     country: "ZA",
     uaHash: hashWithSalt("UA"),
+    device: "desktop",
     ipHash: hashWithSalt("196.1.2.3"),
     meta: { entry_url_pattern: "t" },
   });

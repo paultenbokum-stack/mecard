@@ -1,5 +1,6 @@
 "use client";
 
+import { classifyContactLink } from "@/lib/contact-action";
 import { useEffect } from "react";
 
 // All the scripts a card page ran on WordPress, attached to the server-rendered
@@ -142,6 +143,19 @@ export function CardBehaviour({ config }: { config: CardConfig }) {
       if (a?.canEdit && a.editUrl && !new URLSearchParams(location.search).has("me_preview")) showEditBar(a.editUrl);
       if (owner && config.isFree) showOwnerUpsell();
       if (owner) document.getElementById("mecard-watermark-strip")?.remove();
+    });
+    // Taps on the card's own contact details (call, email, WhatsApp, website, map,
+    // socials, extra links): a beacon, so the tap itself is never held up.
+    // Owners trying their own links don't count, as with views.
+    on("click", "a[href]", (_e, el) => {
+      if (owner) return;
+      if (!el.closest(".mecard-public-card, .standard-profile-container")) return;
+      if (el.closest("#mecard-share-panel, .vcard-download, .mecard-edit-bar, [data-mecard-viral], .mecard-watermark-strip")) return;
+      const a = el as HTMLAnchorElement;
+      const field = a.getAttribute("data-me-field") || a.closest("[data-me-field]")?.getAttribute("data-me-field") || "";
+      const text = a.getAttribute("aria-label") || a.textContent || "";
+      const action = classifyContactLink(a.getAttribute("href") || "", field, text);
+      if (action) track("contact_action", { meta: action });
     });
     function showEditBar(href: string) {
       const card = document.querySelector(".mecard-public-card");

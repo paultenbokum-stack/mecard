@@ -355,6 +355,8 @@ export const events = pgTable(
     referrer: text("referrer"),
     country: varchar("country", { length: 2 }),
     uaHash: varchar("ua_hash", { length: 64 }),
+    // phone | tablet | desktop, from the user agent at the time (none before October 2026).
+    device: varchar("device", { length: 10 }),
     ipHash: varchar("ip_hash", { length: 64 }),
     meta: jsonb("meta").$type<Record<string, unknown>>(),
     createdAt: createdAt(),

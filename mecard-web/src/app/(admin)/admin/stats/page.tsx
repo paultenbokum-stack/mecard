@@ -103,6 +103,7 @@ export default async function AdminStats({ searchParams }: { searchParams: Promi
         <Tile label="Contacts saved (vCard)" value={c.vcards.toLocaleString("en-ZA")} now={c.vcards} before={p.vcards} />
         <Tile label="Saved per view" value={pct(c.vcards, c.views)} />
         <Tile label="Profiles viewed at least once" value={c.activeProfiles.toLocaleString("en-ZA")} now={c.activeProfiles} before={p.activeProfiles} />
+        <Tile label="Taps on contact details" value={c.contactTaps.toLocaleString("en-ZA")} now={c.contactTaps} before={p.contactTaps} note="call, email, WhatsApp, website, map, socials" />
         <Tile label="Shares" value={c.shares.toLocaleString("en-ZA")} now={c.shares} before={p.shares} />
       </div>
 
@@ -196,6 +197,8 @@ export default async function AdminStats({ searchParams }: { searchParams: Promi
         </Card>
         <Breakdown title="How profiles are shared" rows={s.shares} />
         <Breakdown title="Views by country" rows={s.countries} />
+        <Breakdown title="Taps on contact details, by kind" rows={s.contactKinds} empty="None yet: recorded from October 2026." />
+        <Breakdown title="Views by device" rows={s.devices} empty="No views in this period." />
       </div>
 
       <p className="adm-muted">

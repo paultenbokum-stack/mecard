@@ -36,6 +36,13 @@
       "when": 1792605369383,
       "tag": "0004_order_shipping",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1792699885147,
+      "tag": "0005_event_device",
+      "breakpoints": true
     }
   ]
 }

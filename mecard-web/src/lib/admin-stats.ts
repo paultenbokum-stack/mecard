@@ -19,6 +19,7 @@ export type PeriodTotals = {
   views: number;
   tapViews: number;
   vcards: number;
+  contactTaps: number;
   shares: number;
   forms: number;
   adViews: number;
@@ -34,6 +35,7 @@ async function totals(from: Date, to: Date): Promise<PeriodTotals> {
     select count(*) filter (where name = 'profile_viewed')::int as views,
            count(*) filter (where name = 'profile_viewed' and ${TAP})::int as "tapViews",
            count(*) filter (where name = 'vcard_downloaded')::int as vcards,
+           count(*) filter (where name = 'contact_action')::int as "contactTaps",
            count(*) filter (where name = 'share_intent')::int as shares,
            count(*) filter (where name = 'contact_form_submitted')::int as forms,
            count(*) filter (where name = 'recipient_ad_viewed')::int as "adViews",
@@ -78,7 +80,7 @@ export type Count = { label: string; n: number };
 
 async function breakdowns(r: StatsRange) {
   const inRange = sql`created_at >= ${iso(r.from)}::timestamptz and created_at < ${iso(r.to)}::timestamptz`;
-  const [sources, shares, countries, topProfiles, funnel, products] = await Promise.all([
+  const [sources, shares, countries, topProfiles, funnel, products, contactKinds, devices] = await Promise.all([
     rows<Count>(sql`
       select case when ${TAP} then 'Card (/t/: NFC or QR)' when coalesce(source, '') = '' then 'Profile link (direct)' else 'Link: ' || source end as label, count(*)::int as n
         from events where name = 'profile_viewed' and ${inRange} group by 1 order by 2 desc limit 8`),
@@ -104,6 +106,12 @@ async function breakdowns(r: StatsRange) {
         from order_items i join orders o on o.id = i.order_id
        where o.status in (${paid}) and coalesce(o.paid_at, o.created_at) >= ${iso(r.from)}::timestamptz and coalesce(o.paid_at, o.created_at) < ${iso(r.to)}::timestamptz
        group by 1 order by 3 desc limit 10`),
+    rows<Count>(sql`
+      select coalesce(meta->>'kind', 'other') as label, count(*)::int as n
+        from events where name = 'contact_action' and ${inRange} group by 1 order by 2 desc`),
+    rows<Count>(sql`
+      select coalesce(device, 'not recorded') as label, count(*)::int as n
+        from events where name = 'profile_viewed' and ${inRange} group by 1 order by 2 desc`),
   ]);
   const STEPS: [string, string][] = [
     ["signup_completed", "Signed up"],
@@ -113,7 +121,7 @@ async function breakdowns(r: StatsRange) {
     ["onboarding_completed", "Finished onboarding"],
   ];
   const f = new Map(funnel.map((x) => [x.label, x.n]));
-  return { sources, shares, countries, topProfiles, funnel: STEPS.map(([k, label]) => ({ label, n: f.get(k) ?? 0 })), products };
+  return { sources, shares, countries, topProfiles, funnel: STEPS.map(([k, label]) => ({ label, n: f.get(k) ?? 0 })), products, contactKinds, devices };
 }
 
 /** Right now, whatever the range: cards in use and Pro profiles. */
