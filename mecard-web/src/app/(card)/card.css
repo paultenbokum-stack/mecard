@@ -1,0 +1,526 @@
+/*
+ * Public card pages (/t/<slug>/ and /mecard-profile/<slug>/).
+ *
+ * WordPress loaded ~35 stylesheets on these pages. This file keeps only the
+ * rules that actually match the profile markup, in the same cascade order:
+ *   1. Bootstrap 4 (reboot, grid, cards, buttons, forms, utilities)
+ *   2. Astra theme base + its customizer output
+ *   3. mecard-management css/style.css
+ *   4. css/me-profile.css
+ *   5. css/me-viral.css
+ * Header and footer approximate the Astra header/footer builder.
+ * Font families come from next/font variables set on .mecard-site.
+ */
+
+/* ---------- 1. Bootstrap 4.5 (subset) ---------- */
+
+:root:has(.mecard-site) {
+  /* Astra: html { font-size: 106.25% } — 1rem = 17px */
+  font-size: 106.25%;
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
+:where(.mecard-site),
+:where(.mecard-site) *,
+:where(.mecard-site) *::before,
+:where(.mecard-site) *::after,
+.mecard-share-panel,
+.mecard-share-panel * {
+  box-sizing: border-box;
+}
+:where(.mecard-site) h1, :where(.mecard-site) h2, :where(.mecard-site) h3, :where(.mecard-site) h4, :where(.mecard-site) h5, :where(.mecard-site) h6 { margin-top: 0; margin-bottom: 0.5rem; font-weight: 500; line-height: 1.2; }
+:where(.mecard-site) p { margin-top: 0; margin-bottom: 1rem; }
+:where(.mecard-site) small { font-size: 80%; font-weight: 400; }
+:where(.mecard-site) img { vertical-align: middle; border-style: none; }
+:where(.mecard-site) svg { overflow: hidden; vertical-align: middle; }
+:where(.mecard-site) label { display: inline-block; margin-bottom: 0.5rem; }
+:where(.mecard-site) button { border-radius: 0; }
+:where(.mecard-site) button, :where(.mecard-site) input { margin: 0; font-family: inherit; font-size: inherit; line-height: inherit; overflow: visible; text-transform: none; }
+:where(.mecard-site) [type="button"], :where(.mecard-site) button { -webkit-appearance: button; appearance: button; }
+:where(.mecard-site) button:not(:disabled) { cursor: pointer; }
+:where(.mecard-site) [hidden] { display: none !important; }
+
+.container-fluid, .container-md { width: 100%; padding-right: 15px; padding-left: 15px; margin-right: auto; margin-left: auto; }
+@media (min-width: 768px) { .container-md { max-width: 720px; } }
+@media (min-width: 992px) { .container-md { max-width: 960px; } }
+@media (min-width: 1200px) { .container-md { max-width: 1140px; } }
+.row { display: flex; flex-wrap: wrap; margin-right: -15px; margin-left: -15px; }
+.col, .col-12, .col-2, .col-4, .col-sm-12 { position: relative; width: 100%; padding-right: 15px; padding-left: 15px; }
+.col { flex-basis: 0; flex-grow: 1; max-width: 100%; }
+.col-2 { flex: 0 0 16.666667%; max-width: 16.666667%; }
+.col-4 { flex: 0 0 33.333333%; max-width: 33.333333%; }
+.col-12 { flex: 0 0 100%; max-width: 100%; }
+@media (min-width: 576px) { .col-sm-12 { flex: 0 0 100%; max-width: 100%; } }
+
+.form-control { display: block; width: 100%; height: calc(1.5em + 0.75rem + 2px); padding: 0.375rem 0.75rem; font-size: 1rem; font-weight: 400; line-height: 1.5; color: #495057; background-color: #fff; background-clip: padding-box; border: 1px solid #ced4da; border-radius: 0.25rem; transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out; }
+.form-control:focus { color: #495057; background-color: #fff; border-color: #80bdff; outline: 0; box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25); }
+.form-control::placeholder { color: #6c757d; opacity: 1; }
+.form-group { margin-bottom: 1rem; }
+.form-text { display: block; margin-top: 0.25rem; }
+.invalid-feedback { display: none; width: 100%; margin-top: 0.25rem; font-size: 80%; color: #dc3545; }
+
+.btn { display: inline-block; font-weight: 400; color: #212529; text-align: center; vertical-align: middle; user-select: none; background-color: transparent; border: 1px solid transparent; padding: 0.375rem 0.75rem; font-size: 1rem; line-height: 1.5; border-radius: 0.25rem; transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out; }
+.btn:hover { color: #212529; text-decoration: none; }
+.btn:focus { outline: 0; box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25); }
+.btn-primary { color: #fff; background-color: #007bff; border-color: #007bff; }
+.btn-primary:hover, .btn-primary:focus { color: #fff; background-color: #0069d9; border-color: #0062cc; }
+.btn-success { color: #fff; background-color: #28a745; border-color: #28a745; }
+.btn-success:hover, .btn-success:focus { color: #fff; background-color: #218838; border-color: #1e7e34; }
+.btn-outline-secondary { color: #6c757d; border-color: #6c757d; }
+.btn-outline-secondary:hover { color: #fff; background-color: #6c757d; border-color: #6c757d; }
+.btn-sm { padding: 0.25rem 0.5rem; font-size: 0.875rem; line-height: 1.5; border-radius: 0.2rem; }
+
+.card { position: relative; display: flex; flex-direction: column; min-width: 0; word-wrap: break-word; background-color: #fff; background-clip: border-box; border: 1px solid rgba(0, 0, 0, 0.125); border-radius: 0.25rem; }
+.card-body { flex: 1 1 auto; min-height: 1px; padding: 1.25rem; }
+.card-title { margin-bottom: 0.75rem; }
+.close { float: right; font-size: 1.5rem; font-weight: 700; line-height: 1; color: #000; text-shadow: 0 1px 0 #fff; opacity: 0.5; }
+button.close { padding: 0; background-color: transparent; border: 0; }
+
+.d-block { display: block !important; }
+@media (min-width: 576px) { .d-sm-none { display: none !important; } }
+.justify-content-center { justify-content: center !important; }
+.mb-1 { margin-bottom: 0.25rem !important; }
+.mb-2 { margin-bottom: 0.5rem !important; }
+.mb-3 { margin-bottom: 1rem !important; }
+.mb-4 { margin-bottom: 1.5rem !important; }
+.mt-2 { margin-top: 0.5rem !important; }
+.mr-2 { margin-right: 0.5rem !important; }
+.py-3 { padding-top: 1rem !important; padding-bottom: 1rem !important; }
+.mx-auto { margin-right: auto !important; margin-left: auto !important; }
+.text-center { text-align: center !important; }
+.text-success { color: #28a745 !important; }
+.text-muted { color: #6c757d !important; }
+.text-danger { color: #dc3545 !important; }
+
+/* ---------- 2. Astra theme ---------- */
+
+.mecard-site {
+  --ast-global-color-0: #0170b9;
+  --ast-global-color-1: #3a3a3a;
+  --ast-global-color-2: #3a3a3a;
+  --ast-global-color-3: #4b4f58;
+  --ast-border-color: #dddddd;
+  margin: 0;
+  font-family: var(--font-source-sans), "Source Sans Pro", sans-serif;
+  font-weight: 400;
+  font-size: 17px;
+  font-size: 1rem;
+  /* em, as Astra set it: descendants inherit the computed 28.05px */
+  line-height: 1.65em;
+  color: var(--ast-global-color-3);
+  background: #fff;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+:where(.mecard-site) > main { flex: 1 0 auto; }
+:where(.mecard-site) a { color: var(--ast-global-color-0); text-decoration: none; transition: all 0.2s linear; }
+:where(.mecard-site) a:hover, :where(.mecard-site) a:focus { color: var(--ast-global-color-1); }
+:where(.mecard-site) img { height: auto; max-width: 100%; }
+:where(.mecard-site) h1, :where(.mecard-site) h2, :where(.mecard-site) h3, :where(.mecard-site) h4, :where(.mecard-site) h5, :where(.mecard-site) h6 {
+  clear: both;
+  font-family: var(--font-montserrat), Montserrat, sans-serif;
+  font-weight: 600;
+  color: var(--ast-global-color-2);
+  margin: 0;
+}
+:where(.mecard-site) h1 { font-size: 0.941176rem; line-height: 2em; }
+:where(.mecard-site) h2 { font-size: 2.352941rem; line-height: 1.3em; margin-bottom: 0.7em; }
+:where(.mecard-site) h4 { font-size: 1.411765rem; line-height: 1.2em; margin-bottom: 20px; }
+:where(.mecard-site) h5 { font-size: 1.176471rem; line-height: 1.2em; margin-bottom: 20px; }
+:where(.mecard-site) p { margin-bottom: 1.75em; }
+@media (max-width: 921px) {
+  :where(.mecard-site) h1 { font-size: 36px; }
+  :where(.mecard-site) h2 { font-size: 30px; }
+  :where(.mecard-site) h4 { font-size: 1.176471rem; }
+  :where(.mecard-site) h5 { font-size: 1rem; }
+}
+@media (max-width: 544px) {
+  :where(.mecard-site) h1 { font-size: 32px; }
+  :where(.mecard-site) h2 { font-size: 26px; }
+  :where(.mecard-site) h4 { font-size: 1.058824rem; }
+  :where(.mecard-site) h5 { font-size: 0.882353rem; }
+}
+:where(.mecard-site) .has-text-align-center { margin: 0 auto; text-align: center; }
+:where(.mecard-site) button {
+  border-style: solid;
+  border-width: 0;
+  border-color: var(--ast-global-color-0);
+  background-color: var(--ast-global-color-0);
+  color: #fff;
+  padding: 15px 30px;
+  font-family: inherit;
+  font-weight: inherit;
+  font-size: 1rem;
+  line-height: 1em;
+  border-radius: 2px;
+}
+:where(.mecard-site) button:hover, :where(.mecard-site) button:focus { color: #fff; background-color: var(--ast-global-color-1); border-color: var(--ast-global-color-1); }
+@media (max-width: 921px) { :where(.mecard-site) button { padding: 14px 28px; } }
+@media (max-width: 544px) { :where(.mecard-site) button { padding: 12px 24px; } }
+:where(.mecard-site) input[type="tel"] { color: #666; padding: 0.75em; height: auto; border: 1px solid var(--ast-border-color); border-radius: 2px; box-shadow: none; outline: none; }
+:where(.mecard-site) input[type="tel"]:focus { color: #111; background-color: #fff; border-color: var(--ast-border-color); box-shadow: none; }
+
+.screen-reader-text { position: absolute !important; width: 1px; height: 1px; overflow: hidden; clip: rect(1px, 1px, 1px, 1px); word-wrap: normal !important; }
+.screen-reader-text:focus { clip: auto !important; width: auto; height: auto; z-index: 100000; top: 5px; left: 5px; padding: 15px 23px 14px; background: #f1f1f1; }
+
+/* Site header (Astra mobile header, logged-out menu) */
+.mc-site-header { margin: 10px 10px 0; position: relative; z-index: 99; }
+.mc-site-header__bar { background: #fff; border-bottom: 1px solid #f2f5f7; }
+/* Boxed to the page content width (1200px, like .mc-home__wrap and the WordPress container) so the logo and menu line up with the page below. */
+.mc-site-header__inner { display: flex; align-items: center; gap: 8px; min-height: 94px; max-width: 1200px; margin: 0 auto; padding: 0 20px; }
+.mc-site-header__brand { margin-right: auto; }
+.mc-site-header__logo { padding: 17px 0; }
+.mc-site-header__brand .mc-site-header__logo { display: block; padding-bottom: 0; }
+:where(.mecard-site) .mc-site-header__tagline { margin: 0 0 12px; font-size: 15px; line-height: 1.5; color: #4b4f58; }
+.mc-site-header__logo img { width: 165px; height: auto; display: block; }
+:where(.mecard-site) .mc-site-header__toggle { background: transparent; border: 0; color: var(--ast-global-color-0); width: 44px; height: 44px; padding: 12px; line-height: 0; }
+:where(.mecard-site) .mc-site-header__toggle:hover, :where(.mecard-site) .mc-site-header__toggle:focus { background: transparent; color: var(--ast-global-color-0); }
+.mc-site-header__menu { list-style: none; margin: 0; padding: 0; border-top: 1px solid #eaeaea; }
+.mc-site-header__menu a { display: block; padding: 0 20px; line-height: 3; border-bottom: 1px solid #eaeaea; color: var(--ast-global-color-3); }
+@media (min-width: 922px) {
+  :where(.mecard-site) .mc-site-header__toggle { display: none; }
+  .mc-site-header__menu { display: flex !important; border: 0; gap: 4px; }
+  .mc-site-header__menu a { border: 0; padding: 0 1em; color: var(--ast-global-color-0); }
+  .mc-site-header__menu a:hover, .mc-site-header__menu a:focus { color: var(--ast-global-color-1); }
+  .mc-site-header__inner { flex-wrap: nowrap; }
+  /* Full width so the boxed content lines up with the page; the menu text ends on the content edge. */
+  .mc-site-header { margin-left: 0; margin-right: 0; }
+  .mc-site-header__menu--desktop:has(+ .mc-site-header__toggle) { margin-right: -1em; }
+}
+
+/* Site footer */
+.mc-site-footer { flex-shrink: 0; }
+.mc-site-footer__menu { background: #f9f9f9; border-top: 1px solid #f2f5f7; padding: 45px 20px; text-align: center; }
+.mc-site-footer__menu ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0; }
+.mc-site-footer__menu li { padding: 5px 0; }
+.mc-site-footer__copy { border-top: 1px solid #f2f5f7; padding: 20px; min-height: 121px; text-align: center; font-size: 1rem; }
+.mc-site-footer__copy p { margin: 0; }
+@media (min-width: 922px) { .mc-site-footer__menu ul { flex-direction: row; justify-content: center; gap: 1.5em; } }
+
+/* Headings in company descriptions sat flush on WordPress (theme content rules). */
+[data-me-field="company-description"] :is(h1, h2, h3, h4, h5, h6) { margin-bottom: 0; }
+
+/* 404 */
+.mc-not-found { max-width: 1240px; margin: 0 auto; padding: 4em 20px; }
+.mc-not-found h1 { font-size: 2.352941rem; line-height: 1.3; margin-bottom: 0.7em; }
+
+/* ---------- 3. mecard-management css/style.css ---------- */
+
+:where(.mecard-site) p:empty { display: none; }
+.mecard-share-fab {
+  position: fixed;
+  right: 14px;
+  bottom: 88px;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  border: 0;
+  outline: 0;
+  background: var(--mecard-accent);
+  color: var(--mecard-btn-text);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+  z-index: 10010;
+  cursor: pointer;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+:where(.mecard-site) button.mecard-share-fab { padding: 0; font-size: 17px; line-height: 1; --mecard-accent: #6c757d !important; --mecard-btn-text: #ffffff !important; background: var(--mecard-accent); color: var(--mecard-btn-text); }
+.mecard-share-fab:hover { filter: brightness(0.95); }
+.mecard-share-fab:active { transform: scale(0.98); box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2); filter: brightness(0.9); }
+.mecard-share-scrim { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.3); z-index: 10005; display: none; }
+.mecard-share-scrim.is-visible { display: block; }
+.mecard-share-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  background: #fff;
+  z-index: 10008;
+  transform: translateX(100%);
+  transition: transform 0.28s ease;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  visibility: hidden;
+}
+.mecard-share-panel.is-open { transform: translateX(0); visibility: visible; }
+@media (min-width: 992px) { .mecard-share-panel { width: 560px; } }
+body.mecard-share-open { overflow: hidden; }
+.mecard-share-panel h5 { font-size: 1.176471rem; line-height: 1.2em; }
+@media (max-width: 921px) { .mecard-share-panel h5 { font-size: 1rem; } }
+@media (max-width: 544px) { .mecard-share-panel h5 { font-size: 0.882353rem; } }
+#mecard-qr-canvas canvas, #mecard-qr-canvas img { max-width: 256px; width: 100%; height: auto; display: block; margin: 0 auto; }
+.mecard-share-panel .iti { width: 100%; }
+.mecard-share-panel .iti__flag-container { z-index: 2; }
+.mecard-share-panel .is-guided-target { box-shadow: 0 0 0 3px rgba(30, 115, 190, 0.2); border-radius: 12px; animation: mecardGuidedPulse 1.2s ease 2; }
+@keyframes mecardGuidedPulse {
+  0% { box-shadow: 0 0 0 0 rgba(30, 115, 190, 0.2); }
+  70% { box-shadow: 0 0 0 10px rgba(30, 115, 190, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(30, 115, 190, 0); }
+}
+.mecard-install-shot { margin-top: 14px; padding: 12px; border: 1px solid #d8e1eb; border-radius: 14px; background: linear-gradient(180deg, #fbfdff 0%, #f3f8fd 100%); overflow: hidden; }
+.mecard-install-shot__image { display: block; width: 100%; height: auto; border-radius: 10px; }
+.mecard-install-ios-steps { display: grid; gap: 18px; margin-bottom: 12px; }
+.mecard-install-ios-step__title { margin-bottom: 10px; color: #1f2937; font-size: 16px; font-weight: 700; }
+.mecard-install-shot--crop-bottom { max-height: 240px; padding: 0; }
+.mecard-install-shot--crop-home { max-height: 340px; padding: 0; }
+.iti--container { z-index: 10020; }
+.iti__arrow { border: none; }
+.mecard-share-panel #mecard-wa-msisdn { width: 100%; }
+.mecard-share-panel #mecard-wa-feedback[hidden] { display: none !important; }
+:where(.mecard-site) .mecard-share-panel button[data-action="whatsapp-number"] { background: #25d366; border-color: #25d366; color: #fff; transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease; }
+:where(.mecard-site) .mecard-share-panel button[data-action="whatsapp-number"]:hover,
+:where(.mecard-site) .mecard-share-panel button[data-action="whatsapp-number"]:focus { background: #1da851; border-color: #1da851; box-shadow: 0 0 0 0.2rem rgba(37, 211, 102, 0.2); }
+.mecard-share-panel .form-group { margin-bottom: 0 !important; }
+.mecard-share-panel .form-control, .mecard-share-panel .form-group label { font-size: 0.75rem; }
+
+div.mecard-social-item { display: inline-block; }
+div.mecard-social-item i.fab { font-size: 3em; margin: 0 10px; color: #000; }
+div.mecard-social-item i.fab.fa-tiktok { height: 42px; width: 42px; margin-bottom: 10px; font-size: 2.5em; border: 1px solid black; border-radius: 5px; color: #fff; background-color: #000; }
+div.pro-logo { border-bottom: 1px solid #000; }
+.profile-buttons { margin-top: 25px; }
+.profile-buttons button { border-radius: 5px; width: 100%; }
+:where(.mecard-site) .profile-buttons button.whatsapp { background-color: #01e675; }
+:where(.mecard-site) .profile-buttons button.email { background-color: #0170b9; }
+:where(.mecard-site) .profile-buttons button.phone { background-color: #0ab14b; }
+.profile-buttons a { color: #fff; font-size: 2em; text-decoration: none !important; }
+.profile-buttons .col-4 { display: flex; padding-left: 6px; padding-right: 6px; }
+.profile-buttons .col-4 > a { display: flex; flex: 1 1 auto; }
+.profile-buttons .col-4 > a > button { display: flex; flex: 1 1 auto; width: 100%; align-items: center; justify-content: center; min-height: 48px; }
+.profile-buttons .col-4 > a > button i { position: static; }
+div.job-title { text-align: center; font-style: italic; margin-top: 10px; }
+.mecard-section { margin: 20px 0; border-bottom: 1px solid black; border-top: 1px solid black; }
+.mecard-social { margin-top: 20px; }
+div.profile-image { margin: auto; text-align: center; }
+div.profile-image.pro { margin-top: -30px; padding: 5px; text-align: center; }
+div.profile-image img { max-width: 150px; border-radius: 20px; }
+div.profile-image.pro img { border: 1px solid black; padding: 5px; background-color: white; }
+:where(.mecard-site) button.company { background-color: lightgrey; border-radius: 5px; color: black; padding: 15px; width: 100%; margin: 5px 0; }
+button.company i { position: absolute; left: 10%; }
+.vcard-download { width: 100%; height: auto; }
+.vcard-button { background-color: #30b030; text-align: center; padding: 20px 0; }
+:where(.mecard-site) .vcard-button a { color: #000; font-size: 1em; text-transform: uppercase; text-align: center; font-weight: 700; text-decoration: none !important; }
+#download-message { background-color: lightgrey; border: 1px solid darkgrey; color: #333; font-size: 13px; font-weight: bold; display: none; padding: 10px; position: relative; bottom: 0; left: 0; width: 100%; height: 200px; text-align: center; }
+#download-message > div { text-align: center; padding: 20px 10px; }
+#download-message p { margin-bottom: 1em; }
+:where(.mecard-site) .more-links { background-color: lightgrey; margin: 10px 0; min-width: 100%; }
+:where(.mecard-site) .more-links:hover { background-color: lightgrey; margin: 10px 0; }
+.vcard-file { font-size: 1.5em; font-weight: 700; }
+iframe#vcard-download { position: absolute; width: 0; height: 0; border: 0; overflow: hidden; }
+@media only screen and (min-width: 997px) {
+  div:not(.phone-outline) > .vcard-download { position: relative; border-radius: 5px; width: 100%; margin: 20px auto auto; }
+  div:not(.phone-outline) > .vcard-download .vcard-button { border-radius: 5px; }
+  div.pro-profile-container h1 { font-size: 32px; }
+  div.pro-profile-container h2 { font-size: 26px; }
+}
+@media only screen and (max-width: 640px) {
+  .vcard-download { box-shadow: -1px -4px 15px 6px rgba(0, 0, 0, 0.25); }
+  .profile-buttons .col { padding-left: 5px; padding-right: 5px; }
+}
+
+/* ---------- 4. me-profile.css ---------- */
+
+.pro-logo { margin: 0; min-height: 120px; border-bottom: 1px solid #000; text-align: center; background: #fff; }
+.pro-logo img { display: block; max-width: 100%; height: auto; margin: 0 auto; }
+.profile-image.pro { margin-top: -30px; padding: 5px; text-align: center; position: relative; z-index: 1; }
+.profile-image.pro img { border: 1px solid #000; padding: 5px; background: #fff; border-radius: 20px; }
+.profile-image img { height: auto; display: block; margin: 0 auto; }
+.job-title { text-align: center; }
+.mecard-social { margin-bottom: 10px; }
+.mecard-social-item a { text-decoration: none; margin-left: -15px; }
+.mecard-social .mecard-social-item i.fab { color: #000; }
+.mecard-social .mecard-social-item a:hover i.fab { color: var(--me-accent, #0170b9); }
+
+/* Standard profile — mc-* design system */
+.mc-page { font-family: -apple-system, system-ui, sans-serif; -webkit-font-smoothing: antialiased; color: #0f172a; background: #f6f7f9; min-height: 100%; }
+.mc-main { padding: 8px 16px 24px; }
+.mc-card { background: #fff; border-radius: 22px; padding: 28px 20px 24px; text-align: center; box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 8px 24px -8px rgba(15, 23, 42, 0.1); }
+.mc-card__avatar { width: 104px; height: 104px; border-radius: 50%; background: #f1f3f6; box-shadow: inset 0 0 0 1px #e6e9ee; margin: 0 auto 16px; display: flex; align-items: flex-end; justify-content: center; overflow: hidden; }
+.mc-card__avatar img { width: 104px !important; height: 104px !important; max-width: none !important; border-radius: 50% !important; object-fit: cover; display: block; margin: 0; border: none; }
+.mc-card__avatar-placeholder { display: flex; align-items: flex-end; justify-content: center; width: 100%; height: 100%; color: #c4cad3; background: #f1f3f6; border-radius: 0; }
+.mc-card__avatar-placeholder svg { margin-bottom: -2px; }
+:where(.mecard-site) .mc-card__name { margin: 0; font-size: 24px !important; font-weight: 700; letter-spacing: -0.02em; color: #0f172a; line-height: 2em; }
+.mc-card__role { margin: 4px 0 0; font-size: 14px; color: #64748b; }
+:where(.mecard-site) .mc-card__role { margin: 4px 0 0; }
+.mc-card__role strong { color: #0f172a; font-weight: 600; }
+.mc-socials { display: flex; justify-content: center; gap: 10px; margin-top: 18px; flex-wrap: wrap; }
+:where(.mecard-site) .mc-social { width: 44px; height: 44px; border-radius: 10px; background: #f1f3f6; color: #475569; display: flex; align-items: center; justify-content: center; text-decoration: none; transition: background 0.15s, color 0.15s; font-size: 20px; margin: 0; }
+:where(.mecard-site) .mc-social:hover { background: #e7ecf2; color: #0f172a; }
+.mc-socials div.mecard-social-item i.fab { font-size: 30px !important; line-height: 1; margin: 0; color: inherit; }
+.mc-socials div.mecard-social-item i.fab.fa-tiktok { width: auto; height: auto; border: 0; background: transparent; color: inherit; margin: 0; }
+.mc-actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 14px; }
+:where(.mecard-site) .mc-action { background: #fff; border: none; border-radius: 14px; padding: 14px 6px 12px; display: flex; flex-direction: column; align-items: center; gap: 6px; font-family: inherit; cursor: pointer; text-decoration: none; box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 6px 16px -10px rgba(15, 23, 42, 0.15); transition: transform 0.1s; }
+.mc-action:active { transform: translateY(1px); }
+.mc-action__icon { width: 38px; height: 38px; border-radius: 10px; color: #fff; display: flex; align-items: center; justify-content: center; }
+.mc-action__icon--call { background: #16a34a; }
+.mc-action__icon--email { background: #1976d2; }
+.mc-action__icon--whatsapp { background: #25d366; }
+.mc-action__label { font-size: 12.5px; font-weight: 600; color: #0f172a; }
+.mc-details { background: #fff; border-radius: 18px; margin-top: 14px; padding: 4px 18px; box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03), 0 4px 14px -8px rgba(15, 23, 42, 0.08); color: #0f172a; }
+:where(.mecard-site) .mc-details__section-title { margin: 14px 0 2px !important; font-size: 11px !important; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #94a3b8 !important; line-height: 1.4 !important; }
+.mc-details__row { display: flex; align-items: center; gap: 14px; padding: 14px 0; border-bottom: 1px solid #f1f3f6; }
+.mc-details__row:last-child { border-bottom: none; }
+.mc-details__icon { flex: 0 0 auto; width: 32px; height: 32px; border-radius: 9px; display: flex; align-items: center; justify-content: center; }
+.mc-details__icon--blue { background: #f1f5fb; color: #1976d2; }
+.mc-details__text { flex: 1; min-width: 0; text-align: left; }
+.mc-details__label { font-size: 11px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: #94a3b8; }
+.mc-details__value { margin-top: 1px; font-size: 14.5px; font-weight: 500; color: #0f172a; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mc-details__value a { color: #1976d2; text-decoration: none; }
+.mc-company-actions { display: flex; flex-wrap: wrap; gap: 8px; padding: 12px 0 16px; }
+:where(.mecard-site) .mc-company-btn { display: inline-flex; align-items: center; gap: 6px; padding: 9px 16px; border-radius: 10px; background: #f1f3f6; color: #0f172a; font-size: 13.5px; font-weight: 600; text-decoration: none; transition: background 0.15s; }
+:where(.mecard-site) .mc-company-btn:hover { background: #e7ecf2; color: #0f172a; text-decoration: none; }
+
+.profile-buttons { margin-top: 4px; margin-bottom: 10px; }
+.profile-buttons .col a button { padding-left: 6px; padding-right: 6px; margin-bottom: 8px; }
+:where(.mecard-site) .profile-buttons button { width: 100%; height: 44px; border-radius: 10px; border: 0; display: inline-flex; align-items: center; justify-content: center; font-size: 18px; }
+:where(.mecard-site) button.company { width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 14px; border-radius: 12px; margin: 0 0 10px; border: 0; }
+.vcard-download { position: absolute; bottom: 0; left: 0; right: 0; background: #fff; border-top: 1px solid rgba(0, 0, 0, 0.08); }
+.vcard-button { padding: 14px; text-align: center; }
+:where(.mecard-site) .vcard-button a { text-decoration: none !important; display: inline-block; font-weight: 600; }
+
+/* Astra .ast-container: a flex row, so the card is as wide as its content (up to 480px). */
+.mc-card-container { display: flex; max-width: 1240px; margin: 0 auto; padding: 0 20px; }
+@media (max-width: 767px) { .mc-card-container { display: block; padding: 0; } }
+.mecard-public-card { max-width: 480px; margin: 24px auto; background: #fff; border: 1px solid rgba(0, 0, 0, 0.12); border-radius: 20px; overflow: hidden; box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08); }
+@media (max-width: 767px) {
+  .mecard-public-card { width: 100%; max-width: 100%; margin-left: 0; margin-right: 0; border: none; border-radius: 0; box-shadow: none; }
+}
+.mc-page .vcard-download { background: transparent; border-top: none; position: static; }
+.mc-page .vcard-button { padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px)); background: linear-gradient(to top, #f6f7f9 60%, rgba(246, 247, 249, 0)); text-align: center; }
+:where(.mecard-site) .mc-page .vcard-button a { display: flex; align-items: center; justify-content: center; gap: 9px; width: 100%; height: 52px; border-radius: 14px; background: #0f172a; color: #fff; font-family: -apple-system, system-ui, sans-serif; font-weight: 600; font-size: 15px; text-decoration: none; box-shadow: 0 6px 18px -6px rgba(15, 23, 42, 0.35); transition: transform 0.1s; }
+.mc-vcard-icon { display: none; }
+.mc-page .mc-vcard-icon { display: inline-block; vertical-align: middle; }
+:where(.mecard-site) .mc-page .vcard-button a:hover { text-decoration: none; color: #fff; }
+.mc-page .vcard-button a:active { transform: translateY(1px); }
+.mc-page #download-message { background: #fff; border-radius: 14px; margin: 0 16px 8px; padding: 14px 16px; box-shadow: 0 2px 12px rgba(15, 23, 42, 0.12); font-size: 14px; color: #0f172a; width: auto; }
+.mc-page #download-message p { margin: 0 0 4px; }
+.mc-page #download-message .vcard-file { font-weight: 600; }
+:where(.mecard-site) .mc-page #download-close { float: right; background: none; border: none; font-size: 18px; line-height: 1; cursor: pointer; color: #64748b; padding: 0; }
+#download-close { position: absolute; right: 10px; top: 6px; background: transparent; border: 0; color: #000; padding: 0; font-size: 1.5rem; line-height: 1; opacity: 0.5; }
+
+@media (max-width: 767px) {
+  .mecard-public-card .pro-profile-container,
+  .mecard-public-card .standard-profile-container,
+  .mecard-public-card .mc-page { padding-bottom: 88px; }
+  .mecard-public-card [data-me-field="vcard-button"] { position: fixed; left: 0; right: 0; bottom: 0; z-index: 10010; width: 100%; }
+  .mecard-public-card [data-me-field="vcard-button"] .vcard-download { position: static; width: 100%; border-top: 1px solid rgba(0, 0, 0, 0.08); box-shadow: 0 -6px 18px rgba(0, 0, 0, 0.12); padding-bottom: env(safe-area-inset-bottom, 0); background: #fff; }
+  .mecard-public-card .vcard-button { padding: 14px 16px; }
+}
+@media (min-width: 768px) {
+  .mc-page [data-me-field="vcard-button"] { position: static; }
+  .mc-page .vcard-button { padding: 12px 24px 24px; }
+}
+.me-photo-placeholder { width: 120px; height: 120px; border-radius: 999px; background: #e9ecef; display: flex; align-items: center; justify-content: center; margin: 0 auto; font-size: 48px; color: #adb5bd; }
+.profile-image.pro .me-photo-placeholder { border: 1px solid #000; padding: 5px; background: #fff; border-radius: 20px; color: #adb5bd; }
+
+/* ---------- 5. me-viral.css ---------- */
+
+.mecard-watermark-strip { text-align: center; padding: 16px 20px 24px; }
+:where(.mecard-site) .mecard-watermark-strip__link { font-size: 13px; font-weight: 400; color: #555; text-decoration: underline; }
+:where(.mecard-site) .mecard-watermark-strip__link:hover { color: #333; text-decoration: underline; }
+.mecard-post-save-cta { position: fixed; bottom: 0; left: 0; right: 0; z-index: 9990; padding: 12px 16px; transform: translateY(100%); transition: transform 0.4s cubic-bezier(0.32, 0.72, 0, 1); }
+.mecard-post-save-cta.is-visible { transform: translateY(0); }
+.mecard-post-save-cta__card { position: relative; background: #fff; border-radius: 14px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(0, 0, 0, 0.04); padding: 16px 40px 16px 16px; display: flex; align-items: center; gap: 12px; max-width: 480px; margin: 0 auto; }
+:where(.mecard-site) .mecard-post-save-cta__close { position: absolute; top: 8px; right: 8px; background: none; border: none; font-size: 18px; color: #999; cursor: pointer; padding: 4px 6px; line-height: 1; }
+:where(.mecard-site) .mecard-post-save-cta__text { flex: 1; font-size: 13px; color: #555; line-height: 1.3; margin: 0; }
+:where(.mecard-site) .mecard-post-save-cta__btn { flex-shrink: 0; padding: 10px 16px; background: linear-gradient(135deg, #0057ff 0%, #00a0ff 100%); color: #fff; font-size: 13px; font-weight: 600; text-align: center; text-decoration: none; border: none; border-radius: 10px; cursor: pointer; white-space: nowrap; transition: opacity 0.2s; }
+:where(.mecard-site) .mecard-post-save-cta__btn:hover { color: #fff; opacity: 0.9; }
+#download-message:has(.mecard-post-save-cta-inline) { height: auto !important; }
+.mecard-post-save-cta-inline { margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(0, 0, 0, 0.1); text-align: center; }
+:where(.mecard-site) .mecard-post-save-cta-inline__text { font-size: 13px; color: #666; font-weight: 400; margin: 0 0 10px; }
+:where(.mecard-site) .mecard-post-save-cta-inline__btn { display: inline-block; padding: 10px 20px; background: linear-gradient(135deg, #0057ff 0%, #00a0ff 100%); color: #fff; font-size: 13px; font-weight: 600; text-decoration: none; border-radius: 10px; transition: opacity 0.2s; }
+:where(.mecard-site) .mecard-post-save-cta-inline__btn:hover { color: #fff; opacity: 0.9; }
+.mecard-qr-branding { text-align: center; margin-top: 6px; padding: 4px 0; }
+.mecard-qr-branding__text { font-size: 11px; color: #999; letter-spacing: 0.3px; }
+.mecard-qr-branding__text strong { font-weight: 600; color: #666; }
+
+/* Card not linked to a profile yet */
+.mc-unlinked { display: flex; justify-content: center; padding: 48px 20px 64px; }
+.mc-unlinked__box { max-width: 420px; text-align: center; }
+:where(.mecard-site) .mc-unlinked h1 { font-size: 26px; line-height: 1.3; margin-bottom: 0.6em; color: var(--ast-global-color-2); }
+.mc-unlinked__box p { margin-bottom: 1.25em; }
+:where(.mecard-site) .mc-unlinked__btn { display: inline-block; padding: 14px 28px; border-radius: 10px; background: var(--ast-global-color-0); color: #fff; font-weight: 600; }
+:where(.mecard-site) .mc-unlinked__btn:hover, :where(.mecard-site) .mc-unlinked__btn:focus { background: var(--ast-global-color-1); color: #fff; }
+.mc-unlinked__alt { margin-top: 1.5em; font-size: 0.9em; }
+
+/* Owner bar under the card (single-mecard-profile.php's .mecard-edit-bar), added by
+   CardBehaviour for whoever may edit the profile. */
+.mecard-edit-bar { padding: 12px 16px; text-align: center; border-top: 1px solid rgba(0, 0, 0, 0.06); }
+.mecard-edit-bar a { display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border: 1px solid #6c757d; border-radius: 4px; color: #6c757d; font-size: 14px; }
+.mecard-edit-bar a:hover, .mecard-edit-bar a:focus { background: #6c757d; color: #fff; }
+
+/* Pro upsell at the top of the share panel, for owners of free profiles (me-viral.css). */
+.mecard-share-upsell { margin-bottom: 12px; }
+.mecard-share-upsell__link { display: flex; align-items: center; gap: 8px; padding: 10px 14px; background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%); border: 1px solid #ffb74d; border-radius: 8px; color: #e65100; font-size: 13px; line-height: 1.4; text-decoration: none; transition: background 0.2s; }
+.mecard-share-upsell__link:hover, .mecard-share-upsell__link:focus { background: linear-gradient(135deg, #ffe0b2 0%, #ffcc80 100%); color: #e65100; text-decoration: none; }
+.mecard-share-upsell__icon { font-size: 18px; color: #ff9800; flex-shrink: 0; }
+.mecard-share-upsell__text { font-weight: 500; }
+
+/* ---------- MeCard design system: site header and footer ----------
+   The MeCard chrome (not the profile itself, which keeps the company's branding)
+   on the design tokens from app/design-tokens.css. */
+.mc-site-header, .mc-site-footer {
+  --ast-global-color-0: var(--brand);
+  --ast-global-color-1: var(--brand-strong);
+  --ast-global-color-3: var(--ink-muted);
+  font-family: var(--font-text);
+}
+.mc-site-header__bar { background: var(--surface); border-bottom-color: var(--surface-muted); }
+:where(.mecard-site) .mc-site-header__tagline { color: var(--ink-muted); }
+.mc-site-header__menu, .mc-site-header__menu a { border-color: var(--surface-muted); }
+.mc-site-header__menu a { font-weight: 600; }
+@media (min-width: 922px) {
+  .mc-site-header__menu a { color: var(--ink-strong); border-radius: var(--radius-md); line-height: 2.5; }
+  .mc-site-header__menu a:hover, .mc-site-header__menu a:focus { color: var(--link); background: var(--brand-tint); }
+}
+/* My Account: a dropdown on desktop; on phones its links follow a heading in the menu. */
+.mc-site-header__menu ul { list-style: none; margin: 0; padding: 0; }
+.mc-site-header__menu-heading { display: block; padding: 0 20px; line-height: 3; font-weight: 700; color: var(--ink); border-bottom: 1px solid var(--surface-muted); }
+.mc-site-header__account-mobile li a { padding-left: 36px; }
+.mc-site-header__account { position: relative; }
+:where(.mecard-site) .mc-site-header__account-toggle { display: flex; align-items: center; gap: 6px; padding: 0 1em; background: none; border: 0; border-radius: var(--radius-md); font: inherit; font-weight: 600; line-height: 2.5; color: var(--ink-strong); cursor: pointer; }
+:where(.mecard-site) .mc-site-header__account-toggle:hover, :where(.mecard-site) .mc-site-header__account-toggle:focus, :where(.mecard-site) .mc-site-header__account-toggle[aria-expanded="true"] { color: var(--link); background: var(--brand-tint); }
+.mc-site-header__chevron { transition: transform 0.2s ease; }
+[aria-expanded="true"] > .mc-site-header__chevron { transform: rotate(180deg); }
+.mc-site-header__submenu { position: absolute; right: 0; top: calc(100% + 6px); min-width: 230px; padding: 6px !important; background: var(--surface); border: 1px solid var(--surface-muted); border-radius: var(--radius-md); box-shadow: var(--shadow-md); z-index: 100; }
+.mc-site-header__menu .mc-site-header__submenu a { display: block; white-space: nowrap; line-height: 2.5; padding: 0 12px; }
+/* Mini basket (WooCommerce's widget_shopping_cart): the header cart icon and its panel. */
+:where(.mecard-site) .mc-minicart__trigger { position: relative; display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; padding: 0; background: none; border: 0; border-radius: var(--radius-md); color: var(--ink-strong); font-size: 20px; cursor: pointer; }
+:where(.mecard-site) .mc-minicart__trigger:hover, :where(.mecard-site) .mc-minicart__trigger:focus { background: var(--brand-tint); color: var(--link); }
+.mc-minicart__count { position: absolute; top: 2px; right: 0; min-width: 20px; height: 20px; padding: 0 5px; border-radius: var(--radius-pill); background: var(--brand); color: var(--on-brand); font-family: var(--font-text); font-size: 12px; font-weight: 700; line-height: 20px; text-align: center; }
+.mc-minicart { position: fixed; inset: 0; z-index: 1000; }
+.mc-minicart__backdrop { position: absolute; inset: 0; background: rgba(15, 23, 41, 0.45); animation: mc-minicart-fade 0.2s ease; }
+.mc-minicart__panel { position: absolute; top: 0; right: 0; bottom: 0; width: min(420px, 100%); display: flex; flex-direction: column; background: var(--surface); color: var(--ink-muted); font-family: var(--font-text); box-shadow: var(--shadow-device); animation: mc-minicart-in 0.25s ease; }
+@keyframes mc-minicart-in { from { transform: translateX(100%); } to { transform: none; } }
+@keyframes mc-minicart-fade { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .mc-minicart__panel, .mc-minicart__backdrop { animation: none; } }
+.mc-minicart__head { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid var(--surface-muted); }
+:where(.mecard-site) .mc-minicart__head h2 { margin: 0; font-family: var(--font-display); font-size: 20px; font-weight: 700; color: var(--ink); }
+:where(.mecard-site) .mc-minicart__close, :where(.mecard-site) .mc-minicart__remove { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; padding: 0; background: none; border: 0; border-radius: var(--radius-md); color: var(--ink-muted); font-size: 18px; cursor: pointer; }
+:where(.mecard-site) .mc-minicart__close:hover, :where(.mecard-site) .mc-minicart__close:focus { background: var(--surface-subtle); color: var(--ink); }
+:where(.mecard-site) .mc-minicart__remove { width: 32px; height: 32px; font-size: 14px; }
+:where(.mecard-site) .mc-minicart__remove:hover, :where(.mecard-site) .mc-minicart__remove:focus { background: var(--surface-subtle); color: var(--danger); }
+.mc-minicart__remove:disabled { opacity: 0.5; cursor: default; }
+.mc-minicart__lines { flex: 1; overflow-y: auto; list-style: none; margin: 0; padding: 8px 20px; }
+.mc-minicart__line { display: grid; grid-template-columns: 64px minmax(0, 1fr) auto auto; gap: 12px; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--surface-muted); }
+.mc-minicart__thumb { width: 64px; height: 64px; border-radius: var(--radius-xs); border: 1px solid var(--surface-muted); object-fit: contain; background: var(--surface-subtle); }
+.mc-minicart__info { display: grid; gap: 2px; min-width: 0; }
+:where(.mecard-site) .mc-minicart__name { color: var(--ink); font-weight: 600; text-decoration: none; overflow-wrap: anywhere; }
+:where(.mecard-site) .mc-minicart__name:hover { color: var(--link); }
+.mc-minicart__for, .mc-minicart__qty { font-size: 14px; }
+.mc-minicart__total { font-weight: 600; color: var(--ink-strong); white-space: nowrap; }
+.mc-minicart__foot { padding: 16px 20px 20px; border-top: 1px solid var(--surface-muted); background: var(--surface-subtle); }
+.mc-minicart__subtotal { display: flex; justify-content: space-between; margin: 0; font-size: 17px; color: var(--ink); }
+.mc-minicart__note { margin: 4px 0 14px; font-size: 14px; }
+.mc-minicart__actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+:where(.mecard-site) .mc-minicart__btn { display: flex; align-items: center; justify-content: center; min-height: 44px; padding: 0 16px; border: 1px solid var(--surface-muted); border-radius: var(--radius-md); background: var(--surface); color: var(--ink); font-weight: 600; text-decoration: none; }
+:where(.mecard-site) .mc-minicart__btn:hover, :where(.mecard-site) .mc-minicart__btn:focus { border-color: var(--brand); color: var(--link); }
+:where(.mecard-site) .mc-minicart__btn--primary { background: var(--brand); border-color: var(--brand); color: var(--on-brand); }
+:where(.mecard-site) .mc-minicart__btn--primary:hover, :where(.mecard-site) .mc-minicart__btn--primary:focus { background: var(--brand-strong); border-color: var(--brand-strong); color: var(--on-brand); }
+.mc-minicart__empty { padding: 24px 20px; display: grid; gap: 14px; justify-items: start; }
+.mc-minicart__empty p { margin: 0; }
+.mc-site-footer__menu { background: var(--surface-subtle); border-top-color: var(--surface-muted); }
+.mc-site-footer__copy { border-top-color: var(--surface-muted); color: var(--ink-muted); font-size: 0.875rem; }

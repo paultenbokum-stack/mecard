@@ -1,0 +1,298 @@
+/* Logged-in screens: login, /manage/ and the editors. The look follows the
+   plugin's me-single-manage.css / me-single-editor.css (soft blue panels,
+   pill buttons) inside the Astra page shell from card.css. */
+
+.acc { padding: 0 16px 56px; }
+.acc__wrap { max-width: 980px; margin: 0 auto; }
+.acc__wrap--narrow { max-width: 440px; }
+.acc__wrap--wide { max-width: 1180px; }
+
+:where(.mecard-site) .acc h1 { font-size: 30px; line-height: 1.25; color: var(--ink); margin: 28px 0 6px; }
+:where(.mecard-site) .acc h2 { font-size: 21px; line-height: 1.3; color: var(--ink); margin: 0 0 10px; }
+:where(.mecard-site) .acc h3 { font-size: 17px; line-height: 1.3; color: var(--ink); margin: 0 0 8px; font-weight: 600; }
+:where(.mecard-site) .acc p { margin-bottom: 1em; }
+.acc__eyebrow { margin: 28px 0 0; font-family: var(--font-display); font-size: 12px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--link); }
+:where(.mecard-site) .acc__eyebrow + h1 { margin-top: 4px; }
+.acc__lead { color: var(--ink-muted); }
+.acc__muted { color: var(--ink-muted); font-size: 0.92em; }
+
+/* Sub navigation (me-subnav) */
+.acc-subnav { display: flex; flex-wrap: wrap; gap: 4px; margin: 28px 0 0; border-bottom: 1px solid var(--brand); padding: 0; }
+:where(.mecard-site) .acc-subnav a { display: inline-block; padding: 8px 16px; margin-bottom: -1px; border: 1px solid var(--brand); border-radius: 4px 4px 0 0; font-size: 0.875em; font-weight: 500; color: var(--brand); background: var(--surface-subtle); }
+:where(.mecard-site) .acc-subnav a:hover { background: var(--brand-tint); color: var(--brand); }
+:where(.mecard-site) .acc-subnav a[aria-current="page"] { background: var(--brand); color: var(--on-brand); }
+
+/* Panels */
+.acc-panel { margin: 20px 0; padding: 22px; border: 1px solid var(--surface-muted); border-radius: 20px; background: var(--surface-subtle); }
+.acc-panel--white { background: var(--surface); }
+.acc-panel--notice { background: #fff8e6; border-color: #f1dca4; }
+.acc-panel--ok { background: #eefaf3; border-color: #b9e4cb; }
+.acc-panel--error { background: #fdf0f0; border-color: #efc2c2; }
+.acc-panel__head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 16px; margin-bottom: 12px; }
+:where(.mecard-site) .acc-panel__head h2 { margin: 0; }
+
+/* Buttons (pill style from the plugin) */
+:where(.mecard-site) .acc-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 40px; padding: 0 16px;
+  border-radius: var(--radius-md); border: 1px solid var(--surface-muted); background: var(--surface); color: var(--ink-strong); font-weight: 600; font-size: 15px; line-height: 1.2;
+  cursor: pointer; text-decoration: none; white-space: nowrap;
+}
+:where(.mecard-site) .acc-btn:hover, :where(.mecard-site) .acc-btn:focus { background: var(--brand-tint); color: var(--ink); border-color: var(--brand); }
+:where(.mecard-site) .acc-btn--primary { background: var(--brand); border-color: var(--brand); color: var(--on-brand); }
+:where(.mecard-site) .acc-btn--primary:hover, :where(.mecard-site) .acc-btn--primary:focus { background: var(--brand-strong); border-color: var(--brand-strong); color: var(--on-brand); }
+:where(.mecard-site) .acc-btn--cta { background: var(--connect-strong); border-color: var(--connect-strong); color: var(--on-brand); }
+:where(.mecard-site) .acc-btn--cta:hover, :where(.mecard-site) .acc-btn--cta:focus { background: var(--connect-strong); border-color: var(--connect-strong); filter: brightness(0.9); color: var(--on-brand); }
+:where(.mecard-site) .acc-btn--danger { color: var(--danger); border-color: #e7bcbc; }
+:where(.mecard-site) .acc-btn--danger:hover { background: #fdf0f0; color: var(--danger); border-color: #dba4a4; }
+:where(.mecard-site) .acc-btn--small { min-height: 32px; padding: 0 12px; font-size: 13px; }
+:where(.mecard-site) .acc-btn--block { display: flex; width: 100%; }
+:where(.mecard-site) .acc-btn:disabled { opacity: 0.55; cursor: default; }
+:where(.mecard-site) .acc-link { background: none; border: 0; padding: 0; color: var(--ast-global-color-0); font: inherit; cursor: pointer; text-decoration: underline; }
+:where(.mecard-site) .acc-link:hover, :where(.mecard-site) .acc-link:focus { background: none; color: var(--ast-global-color-1); }
+.acc-actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 14px; }
+
+/* Forms */
+.acc-form { display: grid; gap: 14px; }
+.acc-grid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+.acc-field { display: grid; gap: 4px; min-width: 0; }
+:where(.mecard-site) .acc-field label, .acc-field__label { margin: 0; font-weight: 600; font-size: 14px; color: var(--ink-strong); }
+.acc-field__hint { font-size: 12.5px; color: var(--ink-muted); }
+:where(.mecard-site) .acc input[type="text"], :where(.mecard-site) .acc input[type="email"], :where(.mecard-site) .acc input[type="password"],
+:where(.mecard-site) .acc input[type="url"], :where(.mecard-site) .acc input[type="tel"], :where(.mecard-site) .acc input[type="search"],
+:where(.mecard-site) .acc select, :where(.mecard-site) .acc textarea {
+  width: 100%; min-width: 0; padding: 9px 11px; border: 1px solid var(--ink-subtle); border-radius: 8px; background: var(--surface); color: var(--ink);
+  font: inherit; font-size: 15px; line-height: 1.4; box-shadow: none; height: auto;
+}
+:where(.mecard-site) .acc textarea { min-height: 110px; resize: vertical; }
+:where(.mecard-site) .acc textarea.acc-code { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 13px; min-height: 220px; }
+:where(.mecard-site) .acc input:focus, :where(.mecard-site) .acc select:focus, :where(.mecard-site) .acc textarea:focus { outline: 2px solid var(--focus-ring); outline-offset: 0; border-color: var(--brand); }
+.acc-colour { display: flex; gap: 8px; align-items: center; }
+:where(.mecard-site) .acc-colour input[type="color"] { width: 44px; height: 38px; padding: 2px; border: 1px solid var(--ink-subtle); border-radius: 8px; background: var(--surface); flex: none; }
+.acc-check { display: flex; gap: 8px; align-items: flex-start; font-size: 15px; }
+:where(.mecard-site) .acc-check label { margin: 0; font-weight: 400; }
+.acc-error { color: var(--danger); font-size: 14px; margin: 0; }
+.acc-ok { color: var(--connect-strong); font-size: 14px; margin: 0; }
+.acc-divider { display: flex; align-items: center; gap: 12px; color: var(--ink-muted); font-size: 13px; margin: 6px 0; }
+.acc-divider::before, .acc-divider::after { content: ""; flex: 1; border-top: 1px solid var(--surface-muted); }
+
+/* Google button */
+:where(.mecard-site) .acc-google { display: flex; width: 100%; align-items: center; justify-content: center; gap: 10px; min-height: 44px; border: 1px solid var(--ink-subtle); border-radius: var(--radius-md); background: var(--surface); color: var(--ink); font-weight: 600; }
+:where(.mecard-site) .acc-google:hover, :where(.mecard-site) .acc-google:focus { background: var(--surface-subtle); color: var(--ink); border-color: var(--brand); }
+
+/* Lists of profiles and cards */
+.acc-list { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+.acc-item { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px; padding: 12px 14px; border: 1px solid var(--surface-muted); border-radius: 14px; background: var(--surface); }
+.acc-item__main { flex: 1 1 220px; min-width: 0; display: flex; align-items: center; gap: 12px; }
+.acc-item__text { min-width: 0; }
+.acc-item__title { font-weight: 600; color: var(--ink); overflow-wrap: anywhere; }
+.acc-item__sub { font-size: 13.5px; color: var(--ink-muted); overflow-wrap: anywhere; }
+.acc-item__actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.acc-avatar { width: 46px; height: 46px; border-radius: 50%; object-fit: cover; background: var(--surface-muted); flex: none; }
+.acc-thumb { width: 72px; height: 46px; border-radius: 6px; object-fit: cover; background: var(--surface-muted); flex: none; border: 1px solid var(--surface-muted); }
+.acc-logo { max-width: 160px; max-height: 70px; object-fit: contain; }
+.acc-badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11.5px; font-weight: 700; letter-spacing: 0.03em; text-transform: uppercase; background: var(--surface-muted); color: var(--ink-muted); vertical-align: middle; }
+.acc-badge--pro { background: var(--brand); color: var(--on-brand); }
+.acc-badge--live { background: #d9f2e4; color: var(--connect-strong); }
+.acc-badge--wait { background: #fff1cc; color: #8a6200; }
+.acc-badge--off { background: var(--surface-muted); color: var(--ink-muted); }
+.acc-toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 14px; }
+.acc-toolbar > input[type="search"] { flex: 1 1 220px; }
+.acc-empty { padding: 18px; border: 1px dashed var(--surface-muted); border-radius: 14px; text-align: center; color: var(--ink-muted); background: var(--surface); }
+.acc-more { margin-top: 12px; text-align: center; }
+
+/* Inline expanding forms (card linking, invites) */
+.acc-details { width: 100%; }
+.acc-details > summary { list-style: none; cursor: pointer; }
+.acc-details > summary::-webkit-details-marker { display: none; }
+.acc-inline-form { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 10px; }
+.acc-inline-form > select, .acc-inline-form > input { flex: 1 1 220px; width: auto !important; }
+
+/* Editor: form + live preview */
+.acc-editor { display: grid; gap: 24px; grid-template-columns: minmax(0, 1fr); align-items: start; }
+@media (min-width: 960px) { .acc-editor { grid-template-columns: minmax(0, 1fr) 400px; } }
+.acc-editor__preview { position: relative; }
+@media (min-width: 960px) { .acc-editor__preview { position: sticky; top: 16px; } }
+.acc-phone { border: 10px solid var(--device); border-radius: 34px; overflow: hidden; background: var(--surface); box-shadow: var(--shadow-device); }
+.acc-phone__screen { height: 680px; overflow-y: auto; overflow-x: hidden; transform: translateZ(0); } /* the transform keeps the card's fixed save bar inside the preview */
+.acc-phone__screen .mc-card-container { padding: 0; }
+.acc-phone__label { text-align: center; font-size: 12.5px; color: var(--ink-muted); margin-top: 10px; }
+.acc-preview-inert { pointer-events: none; }
+
+.acc-photo { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.acc-photo img { width: 88px; height: 88px; border-radius: 50%; object-fit: cover; background: var(--surface-muted); }
+.acc-photo--logo img { width: auto; max-width: 180px; height: 72px; border-radius: 8px; object-fit: contain; background: var(--surface); border: 1px solid var(--surface-muted); padding: 6px; }
+
+.acc-links { display: grid; gap: 10px; }
+.acc-link-row { display: grid; gap: 8px; grid-template-columns: 1fr; padding: 12px; border: 1px solid var(--surface-muted); border-radius: 12px; background: var(--surface); }
+@media (min-width: 640px) { .acc-link-row { grid-template-columns: 1fr 1.4fr auto; align-items: end; } .acc-link-row--icon { grid-template-columns: 1fr 1.4fr 0.8fr auto; } }
+.acc-link-row__tools { display: flex; gap: 6px; }
+
+.acc-tabs { display: flex; flex-wrap: wrap; gap: 6px; margin: 18px 0 4px; }
+:where(.mecard-site) .acc-tabs a { padding: 7px 14px; border-radius: 999px; border: 1px solid var(--surface-muted); background: var(--surface); color: var(--ink); font-weight: 600; font-size: 14px; }
+:where(.mecard-site) .acc-tabs a[aria-current="page"] { background: var(--ink); border-color: var(--ink); color: var(--on-brand); }
+
+.acc-savebar { position: sticky; bottom: 0; z-index: 5; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; padding: 12px 16px; margin-top: 18px; background: color-mix(in srgb, var(--surface) 96%, transparent); border: 1px solid var(--surface-muted); border-radius: 14px; box-shadow: 0 -6px 18px rgba(0, 102, 255, 0.08); }
+.acc-savebar__status { flex: 1; font-size: 14px; color: var(--ink-muted); }
+
+/* ---------- MeCard design system ----------
+   Colours above are design tokens (app/design-tokens.css). Here: type and hover lift. */
+.acc { color: var(--ink-muted); }
+:where(.mecard-site) .acc h1, :where(.mecard-site) .acc h2, :where(.mecard-site) .acc h3 { font-family: var(--font-display); color: var(--ink); }
+:where(.mecard-site) .acc h1 { font-weight: 700; letter-spacing: -0.01em; }
+:where(.mecard-site) .acc-btn { transition: all 0.2s ease; }
+:where(.mecard-site) .acc-btn--primary:hover, :where(.mecard-site) .acc-btn--primary:focus { box-shadow: var(--shadow-cta); }
+.acc-panel { border-radius: var(--radius-lg); }
+.acc-item { transition: border-color 0.2s ease, box-shadow 0.2s ease; }
+.acc-item:hover { border-color: var(--brand); box-shadow: var(--shadow-sm); }
+.acc-badge { border-radius: var(--radius-pill); }
+.acc-badge--pro { background: var(--brand); }
+.acc-badge--live { color: var(--connect-strong); }
+/* Profile URLs, card IDs and codes: the design system's mono voice. */
+.acc-mono, .acc-item__sub code, .acc code { font-family: var(--font-mono); font-size: 0.9em; letter-spacing: 0.02em; }
+
+/* My Account (WooCommerce's woocommerce-MyAccount-navigation + content): side menu on desktop, a row of tabs on phones. */
+.acc-myaccount { display: grid; gap: var(--space-6); grid-template-columns: minmax(0, 1fr); padding-top: var(--space-7); }
+.acc-myaccount__nav ul { list-style: none; margin: 0; padding: 0; display: flex; gap: var(--space-2); overflow-x: auto; }
+:where(.mecard-site) .acc-myaccount__nav a { display: block; white-space: nowrap; padding: var(--space-2) var(--space-4); border: 1px solid var(--surface-muted); border-radius: var(--radius-md); background: var(--surface); color: var(--ink-strong); font-weight: 600; font-size: 15px; text-decoration: none; }
+:where(.mecard-site) .acc-myaccount__nav a:hover { border-color: var(--brand); color: var(--link); }
+:where(.mecard-site) .acc-myaccount__nav a[aria-current="page"] { background: var(--brand-tint); border-color: var(--brand); color: var(--link); }
+:where(.mecard-site) .acc-myaccount__content > h1:first-child { margin-top: 0; }
+@media (min-width: 922px) {
+  .acc-myaccount { grid-template-columns: 240px minmax(0, 1fr); gap: var(--space-10); align-items: start; }
+  .acc-myaccount__nav { position: sticky; top: var(--space-6); }
+  .acc-myaccount__nav ul { flex-direction: column; gap: var(--space-1); overflow: visible; }
+  :where(.mecard-site) .acc-myaccount__nav a { border-color: transparent; background: none; }
+  :where(.mecard-site) .acc-myaccount__nav a:hover { background: var(--surface-subtle); border-color: transparent; }
+  :where(.mecard-site) .acc-myaccount__nav a[aria-current="page"] { background: var(--brand-tint); border-color: transparent; }
+}
+.acc-myaccount__tiles { display: grid; gap: var(--space-3); grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); margin: var(--space-5) 0; }
+:where(.mecard-site) .acc-myaccount__tile { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-4) var(--space-5); border: 1px solid var(--surface-muted); border-radius: var(--radius-md); background: var(--surface); color: var(--ink); font-weight: 600; text-decoration: none; transition: border-color 0.2s ease, box-shadow 0.2s ease; }
+:where(.mecard-site) .acc-myaccount__tile:hover { border-color: var(--brand); box-shadow: var(--shadow-sm); color: var(--ink); }
+.acc-myaccount__tile i { color: var(--link); font-size: 1.2em; width: 1.4em; text-align: center; }
+.acc-fieldset { border: 1px solid var(--surface-muted); border-radius: var(--radius-md); padding: var(--space-4) var(--space-5) var(--space-5); margin: 0; display: grid; gap: var(--space-3); min-width: 0; }
+:where(.mecard-site) .acc-fieldset legend { padding: 0 var(--space-2); font-family: var(--font-display); font-weight: 600; color: var(--ink); font-size: 16px; }
+.acc-fieldset p { margin: 0; }
+/* The orders table stacks into labelled rows on phones, as WooCommerce's shop_table_responsive does. */
+@media (max-width: 640px) {
+  .shop-table.shop-table--orders thead { display: none; }
+  .shop-table.shop-table--orders tr { display: block; padding: var(--space-2) 0; border-bottom: 1px solid var(--surface-muted); }
+  .shop-table.shop-table--orders td { display: flex; justify-content: space-between; gap: var(--space-3); border: 0; padding: var(--space-1) 0; text-align: right; }
+  .shop-table.shop-table--orders td[data-title]::before { content: attr(data-title); font-weight: 600; color: var(--ink-strong); text-align: left; }
+  .shop-table.shop-table--orders td.shop-table__actions { justify-content: flex-end; flex-wrap: wrap; padding-top: var(--space-2); }
+}
+/* The basket table: on phones each line becomes a card (image and name, then labelled price, quantity and subtotal), with remove top right. */
+@media (max-width: 640px) {
+  .shop-table.shop-table--basket thead { display: none; }
+  .shop-table.shop-table--basket tr { position: relative; display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: var(--space-1) var(--space-3); padding: var(--space-3) 40px var(--space-3) 0; border-bottom: 1px solid var(--surface-muted); }
+  .shop-table.shop-table--basket td { border: 0; padding: 0; }
+  .shop-table.shop-table--basket td.shop-table__thumb { grid-row: span 4; width: auto !important; }
+  .shop-table.shop-table--basket td[data-title] { display: flex; justify-content: space-between; align-items: center; gap: var(--space-3); text-align: right; }
+  .shop-table.shop-table--basket td[data-title]::before { content: attr(data-title); font-weight: 600; color: var(--ink-strong); text-align: left; }
+  .shop-table.shop-table--basket td.shop-table__remove { position: absolute; top: var(--space-3); right: 0; }
+}
+
+/* Page heading with its main action (Profiles → Add new profile, My Cards → Buy a new card). */
+.acc-pagehead { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-3) var(--space-4); margin: var(--space-7) 0 var(--space-2); }
+:where(.mecard-site) .acc .acc-pagehead h1 { margin: 0; }
+.acc-pagehead .acc-btn i { margin-right: 6px; }
+
+/* /manage/ modals (profile and card editors, buying a card): centred on desktop, full screen on phones. */
+.acc-modal { position: fixed; inset: 0; z-index: 1000; display: flex; align-items: center; justify-content: center; padding: var(--space-6); }
+.acc-modal__backdrop { position: absolute; inset: 0; background: rgba(15, 23, 41, 0.5); animation: acc-modal-fade 0.2s ease; }
+.acc-modal__panel { position: relative; display: flex; flex-direction: column; width: min(720px, 100%); max-height: calc(100vh - 2 * var(--space-6)); background: var(--surface-subtle); border-radius: var(--radius-lg); box-shadow: var(--shadow-device); overflow: hidden; animation: acc-modal-in 0.2s ease; }
+.acc-modal__panel--wide { width: min(1180px, 100%); }
+.acc-modal__head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); padding: var(--space-4) var(--space-6); background: var(--surface); border-bottom: 1px solid var(--surface-muted); }
+:where(.mecard-site) .acc-modal__head h2 { margin: 0; font-size: 20px; }
+:where(.mecard-site) .acc-modal__close { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; padding: 0; background: none; border: 0; border-radius: var(--radius-md); color: var(--ink-muted); font-size: 18px; cursor: pointer; }
+:where(.mecard-site) .acc-modal__close:hover, :where(.mecard-site) .acc-modal__close:focus { background: var(--surface-subtle); color: var(--ink); }
+.acc-modal__body { overflow-y: auto; padding: var(--space-5) var(--space-6) var(--space-6); }
+.acc-modal__body > .acc__lead:first-child { margin-top: 0; }
+@keyframes acc-modal-in { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+@keyframes acc-modal-fade { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .acc-modal__panel, .acc-modal__backdrop { animation: none; } }
+@media (max-width: 640px) {
+  .acc-modal { padding: 0; }
+  .acc-modal__panel { width: 100%; height: 100%; max-height: none; border-radius: 0; }
+  .acc-modal__head { padding: var(--space-3) var(--space-4); }
+  .acc-modal__body { padding: var(--space-4); }
+}
+
+/* Buy a new card (My Cards): one row per card or tag, with its quantity (or Pro profile) and Add to basket. */
+.acc-buy { list-style: none; margin: var(--space-4) 0 0; padding: 0; display: grid; gap: var(--space-3); }
+.acc-buy__item { display: grid; grid-template-columns: 88px minmax(0, 1fr) auto; gap: var(--space-4); align-items: center; padding: var(--space-4); background: var(--surface); border: 1px solid var(--surface-muted); border-radius: var(--radius-md); }
+.acc-buy__img { width: 112px; height: 88px; object-fit: contain; border-radius: var(--radius-xs); background: var(--surface-subtle); }
+:where(.mecard-site) .acc .acc-buy__name { margin: 0 0 2px; font-size: 17px; }
+.acc-buy__blurb { margin: 0 0 4px; font-size: 14px; }
+.acc-buy__form { display: grid; gap: 6px; justify-items: stretch; min-width: 170px; }
+.acc-buy__label { font-size: 13px; font-weight: 600; color: var(--ink-strong); }
+@media (max-width: 640px) {
+  .acc-buy__item { grid-template-columns: 64px minmax(0, 1fr); }
+  .acc-buy__img { width: 64px; height: 64px; }
+  .acc-buy__form { grid-column: 1 / -1; }
+}
+.acc-newtab { font-size: 0.75em; margin-left: 4px; opacity: 0.75; }
+
+/* The media picker (ImageLibrary): over everything, including the /manage/ modals. */
+.acc-library { z-index: 1100; }
+.acc-library__tabs { display: flex; gap: var(--space-2); margin-bottom: var(--space-4); border-bottom: 1px solid var(--surface-muted); }
+:where(.mecard-site) .acc-library__tabs button { padding: var(--space-2) var(--space-4); background: none; border: 0; border-bottom: 2px solid transparent; margin-bottom: -1px; color: var(--ink-muted); font: inherit; font-weight: 600; cursor: pointer; border-radius: 0; }
+:where(.mecard-site) .acc-library__tabs button[aria-selected="true"] { color: var(--link); border-bottom-color: var(--brand); }
+.acc-library__drop { display: grid; justify-items: center; gap: var(--space-3); padding: var(--space-10) var(--space-5); border: 2px dashed var(--surface-muted); border-radius: var(--radius-lg); background: var(--surface); text-align: center; }
+.acc-library__drop.is-dragging { border-color: var(--brand); background: var(--brand-tint); }
+.acc-library__drop > i { font-size: 36px; color: var(--link); }
+.acc-library__drop p { margin: 0; }
+.acc-library__grid { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-3); grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
+:where(.mecard-site) .acc-library__tile { position: relative; display: grid; gap: 6px; width: 100%; padding: var(--space-2); background: var(--surface); border: 2px solid var(--surface-muted); border-radius: var(--radius-md); color: var(--ink); font: inherit; text-align: left; cursor: pointer; }
+:where(.mecard-site) .acc-library__tile:hover { border-color: var(--brand); }
+:where(.mecard-site) .acc-library__tile[aria-pressed="true"] { border-color: var(--brand); box-shadow: 0 0 0 3px var(--brand-tint); }
+.acc-library__tile img, .acc-library__archived { width: 100%; aspect-ratio: 1; object-fit: contain; border-radius: var(--radius-xs); background: repeating-conic-gradient(var(--surface-subtle) 0 25%, var(--surface) 0 50%) 0 0 / 16px 16px; }
+.acc-library__archived { display: grid; place-items: center; align-content: center; gap: 6px; background: var(--surface-subtle); color: var(--ink-subtle); font-size: 28px; }
+.acc-library__name { font-size: 13px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.acc-library__shared { position: absolute; top: 12px; left: 12px; padding: 1px 8px; border-radius: var(--radius-pill); background: var(--ink); color: var(--on-brand); font-size: 11px; font-weight: 700; }
+.acc-library__foot { position: sticky; bottom: calc(-1 * var(--space-6)); display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); margin: var(--space-4) calc(-1 * var(--space-6)) calc(-1 * var(--space-6)); padding: var(--space-3) var(--space-6); background: var(--surface); border-top: 1px solid var(--surface-muted); }
+.acc-library__foot .acc__muted { font-size: 14px; overflow-wrap: anywhere; }
+:where(.mecard-site) .acc-photo__pick { padding: 0; background: none; border: 0; border-radius: 50%; cursor: pointer; line-height: 0; }
+:where(.mecard-site) .acc-photo--logo .acc-photo__pick { border-radius: 8px; }
+@media (max-width: 640px) {
+  .acc-library__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .acc-library__foot { bottom: calc(-1 * var(--space-4)); margin: var(--space-4) calc(-1 * var(--space-4)) calc(-1 * var(--space-4)); padding: var(--space-3) var(--space-4); }
+}
+
+/* My Account → My images */
+.acc-images { list-style: none; margin: var(--space-4) 0 0; padding: 0; display: grid; gap: var(--space-3); grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+.acc-images__item { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: var(--space-3); padding: var(--space-3); background: var(--surface); border: 1px solid var(--surface-muted); border-radius: var(--radius-md); }
+.acc-images__img { width: 96px; height: 96px; object-fit: contain; border-radius: var(--radius-xs); background: repeating-conic-gradient(var(--surface-subtle) 0 25%, var(--surface) 0 50%) 0 0 / 16px 16px; }
+.acc-images__img.acc-library__archived { font-size: 24px; }
+.acc-images__text { min-width: 0; display: grid; gap: 2px; align-content: start; }
+.acc-images__uses { font-size: 13.5px; margin-top: 4px; overflow-wrap: anywhere; }
+
+/* Upsells and offers on /manage (WordPress's "My MeCard Home") */
+.acc-upsell__kicker { margin: 0 0 var(--space-1); font-family: var(--font-display); font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--brand); }
+.acc-upsell h2 { margin-top: 0; }
+.acc-upsell__compare { display: flex; align-items: center; justify-content: center; gap: var(--space-4); margin: var(--space-4) 0; }
+.acc-upsell__compare img { width: 42%; max-width: 220px; height: auto; }
+.acc-upsell__arrow { font-family: var(--font-display); font-weight: 700; color: var(--ink-muted); white-space: nowrap; }
+.acc-upsell__benefits { margin: 0 0 var(--space-3); padding-left: 20px; color: var(--ink-muted); }
+.acc-upsell__price, .acc-upsell__offer-price { margin: 0; font-family: var(--font-display); font-weight: 700; color: var(--ink); }
+.acc-upsell__heading { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: var(--space-2) var(--space-4); }
+.acc-upsell__heading h2 { margin-bottom: var(--space-2); }
+.acc-upsell__artwork { margin: var(--space-3) 0; text-align: center; }
+.acc-upsell__artwork img { max-width: 100%; width: 320px; height: auto; }
+.acc-upsell__switch { display: flex; gap: var(--space-2); margin: var(--space-3) 0; }
+.acc-upsell__switch .is-active { background: var(--ink); border-color: var(--ink); color: var(--surface); }
+.acc-upsell__steps { margin: 0 0 var(--space-3); padding-left: 20px; }
+.acc-upsell__steps li { margin-bottom: var(--space-1); }
+.acc-upsell__classic { margin: var(--space-3) 0; }
+.acc-upsell__classic .card-design__card { max-width: 100%; touch-action: auto; }
+.acc-upsell__card-img { display: block; width: 8.56cm; max-width: 100%; height: auto; border-radius: var(--radius-md); box-shadow: var(--shadow-sm); }
+.acc-upsell__examples { display: flex; flex-wrap: wrap; gap: var(--space-4); margin: var(--space-3) 0; }
+.acc-upsell__examples figure { margin: 0; flex: 1 1 220px; max-width: 8.56cm; }
+.acc-upsell__examples figcaption { margin-top: var(--space-1); font-size: 13px; color: var(--ink-muted); }
+.acc-upsell__offers { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 0 var(--space-5); }
+.acc-upsell__offers > .acc-panel { margin-top: 0; }
+.acc-teamprompt { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-3); padding: 16px 22px; }
+.acc-teamstart h2 { margin-top: 0; }
+.acc-teamstart ul { margin: 0 0 var(--space-3); padding-left: 20px; color: var(--ink-muted); }
+.acc-single__head { margin-bottom: var(--space-2); }
+.acc-single__cards { list-style: none; margin: 0 0 var(--space-3); padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: var(--space-4); }
+.acc-single__cards li { display: grid; gap: var(--space-2); align-content: start; }

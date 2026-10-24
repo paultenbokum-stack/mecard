@@ -1,0 +1,67 @@
+/* Shop, basket, checkout and orders, in the same panel style as /manage/. */
+
+.shop-grid { display: grid; gap: 18px; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); margin: 20px 0; }
+.shop-card { display: flex; flex-direction: column; border: 1px solid var(--surface-muted); border-radius: var(--radius-lg); background: var(--surface); overflow: hidden; transition: border-color 0.2s ease, box-shadow 0.2s ease; }
+.shop-card:hover { border-color: var(--brand); box-shadow: var(--shadow-sm); }
+:where(.mecard-site) .shop-card__image { display: block; aspect-ratio: 4 / 3; background: var(--surface-subtle); }
+.shop-card__image img { width: 100%; height: 100%; object-fit: contain; padding: 14px; }
+.shop-card__body { display: flex; flex-direction: column; gap: 6px; padding: 14px 16px 16px; flex: 1; }
+:where(.mecard-site) .shop-card__title { font-family: var(--font-display); font-size: 17px; font-weight: 700; color: var(--ink); margin: 0; }
+.shop-card__desc { font-size: 14px; color: var(--ink-muted); margin: 0; flex: 1; }
+.shop-price { font-family: var(--font-display); font-weight: 700; color: var(--ink); }
+.shop-price del { color: var(--ink-subtle); font-weight: 400; margin-right: 6px; }
+
+.shop-product { display: grid; gap: 28px; grid-template-columns: minmax(0, 1fr); margin-top: 20px; }
+@media (min-width: 860px) { .shop-product { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
+.shop-product__image { border: 1px solid var(--surface-muted); border-radius: var(--radius-lg); background: var(--surface-subtle); padding: 20px; }
+.shop-product__image img { width: 100%; height: auto; }
+:where(.mecard-site) .shop-product .shop-price { font-size: 26px; display: block; margin: 6px 0 14px; }
+.shop-product__desc { color: var(--ink-strong); }
+.shop-product__desc img { max-width: 100%; height: auto; }
+.shop-qty { width: 84px !important; }
+
+.shop-table { width: 100%; border-collapse: collapse; font-size: 15px; }
+.shop-table th, .shop-table td { padding: 10px 8px; border-bottom: 1px solid var(--surface-muted); text-align: left; vertical-align: middle; }
+.shop-table thead th { font-size: 13px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--ink-muted); }
+.shop-table tfoot th { font-weight: 600; color: var(--ink-strong); }
+.shop-table--compact th { width: 40%; color: var(--ink-muted); font-weight: 600; }
+.shop-num { text-align: right !important; white-space: nowrap; }
+.shop-thumb { width: 56px; height: 56px; object-fit: contain; border-radius: 8px; background: var(--surface-subtle); }
+.shop-address { font-style: normal; line-height: 1.6; }
+
+.shop-checkout { display: grid; gap: 24px; grid-template-columns: minmax(0, 1fr); align-items: start; }
+@media (min-width: 960px) { .shop-checkout { grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); } }
+.shop-choice { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border: 1px solid var(--surface-muted); border-radius: var(--radius-md); background: var(--surface); margin-bottom: 8px; cursor: pointer; }
+.shop-choice input { margin-top: 4px; }
+.shop-choice small { display: block; color: var(--ink-muted); }
+
+.shop-steps { margin: 0 0 0 20px; padding: 0; }
+.shop-steps li { margin-bottom: 6px; }
+.shop-steps .is-done { color: var(--connect-strong); }
+.shop-dev { margin-top: 20px; padding: 14px; border: 1px dashed var(--surface-muted); border-radius: 12px; background: var(--surface-subtle); font-size: 14px; }
+
+/* Card design (true size: 8.56 × 5.4 cm, the frame the QR position is stored in). */
+.card-design__grid { display: grid; gap: 22px; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); align-items: start; }
+.card-design__label { font-weight: 600; color: var(--ink-strong); margin-bottom: 8px; }
+.card-design__card { position: relative; width: 8.56cm; height: 5.4cm; border-radius: 0.3cm; overflow: hidden; background: #fff; box-shadow: 4px 4px 10px 4px rgba(128, 128, 128, 0.34); margin-bottom: 12px; touch-action: none; }
+.card-design__card > img { width: 100%; height: 100%; object-fit: cover; }
+.card-design__empty { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: var(--ink-subtle); border: 1px dashed var(--surface-muted); border-radius: 0.3cm; }
+.card-design__qr { position: absolute; border: 1px solid rgba(0, 0, 0, 0.12); }
+.card-design__qr img { width: 100%; height: 100%; display: block; pointer-events: none; user-select: none; }
+.card-design__qr.is-editable { cursor: move; outline: 2px dashed var(--brand); outline-offset: 2px; }
+.card-design__handle { position: absolute; right: -9px; bottom: -9px; width: 18px; height: 18px; border-radius: 4px; background: var(--brand); border: 2px solid #fff; box-shadow: 0 2px 8px rgba(13, 31, 56, 0.22); cursor: nwse-resize; }
+.card-design__card--classic { font-family: var(--font-montserrat), Montserrat, sans-serif; }
+.card-design__logo { position: absolute; top: 0.4cm; height: 3.5cm; width: 100%; padding: 0 0.4cm; display: flex; align-items: center; justify-content: center; }
+.card-design__logo img { max-width: 100%; max-height: 3.5cm; }
+.card-design__logo .card-design__empty { position: static; width: 100%; height: 100%; }
+:where(.mecard-site) .card-design__name { position: absolute; bottom: 0.9cm; width: 100%; text-align: center; margin: 0; color: #4b5563; font-weight: 600; font-size: 13px; }
+:where(.mecard-site) .card-design__title { position: absolute; bottom: 0.4cm; width: 100%; text-align: center; margin: 0; color: #6b7280; font-size: 11px; }
+/* Card previews open their upload: WordPress's image placeholder while empty, a hint on hover or focus. */
+.card-design__empty { flex-direction: column; gap: 6px; text-align: center; font-size: 13px; }
+.card-design__empty img { width: 64px; height: 64px; opacity: 0.8; }
+.card-design__logo .card-design__empty img { width: 56px; height: 56px; }
+.card-design__card[data-upload] { cursor: pointer; }
+.card-design__card[data-upload]:hover, .card-design__card[data-upload]:focus-visible { box-shadow: 0 0 0 2px var(--brand), var(--shadow-sm); }
+.card-design__card[data-upload]:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 3px; }
+.card-design__card[data-upload]::after { content: attr(title); position: absolute; left: 50%; bottom: 8px; transform: translateX(-50%); padding: 4px 10px; border-radius: var(--radius-pill); background: rgba(15, 23, 41, 0.75); color: #fff; font-size: 12px; white-space: nowrap; opacity: 0; transition: opacity 0.15s ease; pointer-events: none; }
+.card-design__card[data-upload]:hover::after, .card-design__card[data-upload]:focus-visible::after { opacity: 1; }

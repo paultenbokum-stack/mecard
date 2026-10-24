@@ -1,0 +1,635 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<types>
+    <settings>
+        <add_resized_images_to_library>0</add_resized_images_to_library>
+        <images_remote>0</images_remote>
+        <images_remote_cache_time>36</images_remote_cache_time>
+        <help_box>by_types</help_box>
+        <hide_standard_custom_fields_metabox>show</hide_standard_custom_fields_metabox>
+        <postmeta_unfiltered_html>on</postmeta_unfiltered_html>
+        <usermeta_unfiltered_html>on</usermeta_unfiltered_html>
+    </settings>
+    <types>
+        <type>
+            <labels>
+                <name>MeCard Tags</name>
+                <singular_name>MeCard Tag</singular_name>
+                <add_new>Add New</add_new>
+                <add_new_item>Add New %s</add_new_item>
+                <edit_item>Edit %s</edit_item>
+                <new_item>New %s</new_item>
+                <view_item>View %s</view_item>
+                <search_items>Search %s</search_items>
+                <not_found>No %s found</not_found>
+                <not_found_in_trash>No %s found in Trash</not_found_in_trash>
+                <parent_item_colon>Parent text</parent_item_colon>
+                <all_items>All items</all_items>
+                <enter_title_here>Enter title here</enter_title_here>
+            </labels>
+            <slug>t</slug>
+            <description></description>
+            <public>public</public>
+            <menu_position>20--wpcf-add-menu-after--edit.php?post_type=page</menu_position>
+            <menu_icon></menu_icon>
+            <supports>
+                <title>1</title>
+                <editor>1</editor>
+                <author>1</author>
+            </supports>
+            <rewrite>
+                <enabled>1</enabled>
+                <custom>normal</custom>
+                <slug></slug>
+                <with_front>1</with_front>
+                <pages>1</pages>
+            </rewrite>
+            <has_archive></has_archive>
+            <show_ui>1</show_ui>
+            <show_in_menu>1</show_in_menu>
+            <show_in_menu_page></show_in_menu_page>
+            <publicly_queryable>1</publicly_queryable>
+            <exclude_from_search></exclude_from_search>
+            <hierarchical></hierarchical>
+            <query_var_enabled>1</query_var_enabled>
+            <query_var></query_var>
+            <can_export>1</can_export>
+            <show_in_rest>1</show_in_rest>
+            <rest_base></rest_base>
+            <show_in_nav_menus></show_in_nav_menus>
+            <register_meta_box_cb></register_meta_box_cb>
+            <permalink_epmask>EP_PERMALINK</permalink_epmask>
+            <update></update>
+            <_builtin></_builtin>
+            <_toolset_edit_last>1680111137</_toolset_edit_last>
+            <_wpcf_author_id>1</_wpcf_author_id>
+            <__types_id>t</__types_id>
+            <__types_title>MeCard Tags</__types_title>
+            <wpcf-post-type>t</wpcf-post-type>
+            <icon>nametag</icon>
+            <editor>classic</editor>
+            <custom-field-group>
+                <group_849>849</group_849>
+                <group_283>283</group_283>
+            </custom-field-group>
+            <custom_fields>
+                <wpcf-card-front>1</wpcf-card-front>
+                <wpcf-cart-item-key>1</wpcf-cart-item-key>
+                <wpcf-card-label>1</wpcf-card-label>
+                <wpcf-design-submitted>1</wpcf-design-submitted>
+                <wpcf-design-received>1</wpcf-design-received>
+                <wpcf-packaged>1</wpcf-packaged>
+            </custom_fields>
+            <has_archive_slug></has_archive_slug>
+            <show_in_rest_control>1</show_in_rest_control>
+            <is_repeating_field_group></is_repeating_field_group>
+            <is_intermediary_post_type></is_intermediary_post_type>
+            <id>t</id>
+            <hash>40fcc311408277cde8087d4e48d7b838</hash>
+            <checksum>40fcc311408277cde8087d4e48d7b838</checksum>
+        </type>
+        <type>
+            <labels>
+                <name>MeCard Profiles</name>
+                <singular_name>MeCard Profile</singular_name>
+                <add_new>Add New</add_new>
+                <add_new_item>Add New %s</add_new_item>
+                <edit_item>Edit %s</edit_item>
+                <new_item>New %s</new_item>
+                <view_item>View %s</view_item>
+                <search_items>Search %s</search_items>
+                <not_found>No %s found</not_found>
+                <not_found_in_trash>No %s found in Trash</not_found_in_trash>
+                <parent_item_colon>Parent text</parent_item_colon>
+                <all_items>All items</all_items>
+                <enter_title_here>Enter title here</enter_title_here>
+            </labels>
+            <slug>mecard-profile</slug>
+            <description></description>
+            <public>public</public>
+            <menu_position>20--wpcf-add-menu-after--edit.php?post_type=page</menu_position>
+            <menu_icon></menu_icon>
+            <supports>
+                <title>1</title>
+                <editor>1</editor>
+                <author>1</author>
+                <thumbnail>1</thumbnail>
+            </supports>
+            <rewrite>
+                <enabled>1</enabled>
+                <custom>normal</custom>
+                <slug></slug>
+                <with_front>1</with_front>
+                <feeds>1</feeds>
+                <pages>1</pages>
+            </rewrite>
+            <has_archive>1</has_archive>
+            <show_ui>1</show_ui>
+            <show_in_menu>1</show_in_menu>
+            <show_in_menu_page></show_in_menu_page>
+            <publicly_queryable>1</publicly_queryable>
+            <exclude_from_search></exclude_from_search>
+            <hierarchical></hierarchical>
+            <query_var_enabled>1</query_var_enabled>
+            <query_var></query_var>
+            <can_export>1</can_export>
+            <show_in_rest>1</show_in_rest>
+            <rest_base></rest_base>
+            <show_in_nav_menus>1</show_in_nav_menus>
+            <register_meta_box_cb></register_meta_box_cb>
+            <permalink_epmask>EP_PERMALINK</permalink_epmask>
+            <update></update>
+            <_builtin></_builtin>
+            <_toolset_edit_last>1753099588</_toolset_edit_last>
+            <_wpcf_author_id>1</_wpcf_author_id>
+            <__types_id>mecard-profile</__types_id>
+            <__types_title>MeCard Profiles</__types_title>
+            <wpcf-post-type>mecard-profile</wpcf-post-type>
+            <icon>businessman</icon>
+            <editor>block</editor>
+            <custom-field-group>
+                <group_282>282</group_282>
+            </custom-field-group>
+            <custom_fields>
+                <wpcf-email-address>1</wpcf-email-address>
+                <wpcf-mobile-number>1</wpcf-mobile-number>
+                <wpcf-profile-type>1</wpcf-profile-type>
+                <wpcf-job-title>1</wpcf-job-title>
+            </custom_fields>
+            <has_archive_slug></has_archive_slug>
+            <is_repeating_field_group></is_repeating_field_group>
+            <is_intermediary_post_type></is_intermediary_post_type>
+            <id>mecard-profile</id>
+            <hash>a44d58c84accebc5de4e36c9dc1d36ca</hash>
+            <checksum>a44d58c84accebc5de4e36c9dc1d36ca</checksum>
+        </type>
+        <type>
+            <labels>
+                <name>More links</name>
+                <singular_name>More links</singular_name>
+                <add_new>Add New</add_new>
+                <add_new_item>Add New %s</add_new_item>
+                <edit_item>Edit %s</edit_item>
+                <new_item>New %s</new_item>
+                <view_item>View %s</view_item>
+                <search_items>Search %s</search_items>
+                <not_found>No %s found</not_found>
+                <not_found_in_trash>No %s found in Trash</not_found_in_trash>
+                <parent_item_colon>Parent %s</parent_item_colon>
+                <menu_name>%s</menu_name>
+                <all_items>%s</all_items>
+            </labels>
+            <slug>more-links</slug>
+            <description></description>
+            <public></public>
+            <menu_position></menu_position>
+            <menu_icon></menu_icon>
+            <supports>
+                <post_title>1</post_title>
+                <author>1</author>
+                <custom-fields>1</custom-fields>
+            </supports>
+            <rewrite>
+                <enabled>1</enabled>
+                <slug></slug>
+                <with_front>1</with_front>
+                <feeds>1</feeds>
+                <pages>1</pages>
+            </rewrite>
+            <has_archive>1</has_archive>
+            <show_ui></show_ui>
+            <show_in_menu>1</show_in_menu>
+            <show_in_menu_page></show_in_menu_page>
+            <publicly_queryable></publicly_queryable>
+            <exclude_from_search>1</exclude_from_search>
+            <hierarchical></hierarchical>
+            <query_var_enabled>1</query_var_enabled>
+            <query_var></query_var>
+            <can_export>1</can_export>
+            <show_in_rest></show_in_rest>
+            <rest_base></rest_base>
+            <show_in_nav_menus></show_in_nav_menus>
+            <register_meta_box_cb></register_meta_box_cb>
+            <permalink_epmask>EP_PERMALINK</permalink_epmask>
+            <_toolset_edit_last>1633167887</_toolset_edit_last>
+            <_wpcf_author_id>1</_wpcf_author_id>
+            <is_repeating_field_group>1</is_repeating_field_group>
+            <id>more-links</id>
+            <__types_id>more-links</__types_id>
+            <__types_title>More links</__types_title>
+            <hash>755a7e2aec90a4d0eadbeee892dd0a8b</hash>
+            <checksum>755a7e2aec90a4d0eadbeee892dd0a8b</checksum>
+        </type>
+        <type>
+            <labels>
+                <name>Companies</name>
+                <singular_name>Company</singular_name>
+                <add_new>Add New</add_new>
+                <add_new_item>Add New %s</add_new_item>
+                <edit_item>Edit %s</edit_item>
+                <new_item>New %s</new_item>
+                <view_item>View %s</view_item>
+                <view_items>View %s</view_items>
+                <search_items>Search %s</search_items>
+                <not_found>No %s found</not_found>
+                <not_found_in_trash>No %s found in Trash</not_found_in_trash>
+                <parent_item_colon>Parent text</parent_item_colon>
+                <menu_name>%s</menu_name>
+                <all_items>All items</all_items>
+                <archives>%s Archives</archives>
+                <attributes>%s Attributes</attributes>
+                <insert_into_item>Insert into %s</insert_into_item>
+                <uploaded_to_this_item>Uploaded to this %s</uploaded_to_this_item>
+                <featured_image>Featured image</featured_image>
+                <set_featured_image>Set featured image</set_featured_image>
+                <remove_featured_image>Remove featured image</remove_featured_image>
+                <use_featured_image>Use as featured image</use_featured_image>
+                <filter_items_list>Filter %s list</filter_items_list>
+                <filter_by_date>Filter by date</filter_by_date>
+                <items_list_navigation>%s list navigation</items_list_navigation>
+                <items_list>%s list</items_list>
+                <item_published>%s published.</item_published>
+                <item_published_privately>%s published privately.</item_published_privately>
+                <item_reverted_to_draft>%s reverted to draft.</item_reverted_to_draft>
+                <item_trashed>%s trashed.</item_trashed>
+                <item_updated>%s updated.</item_updated>
+                <item_link>%s Link</item_link>
+                <item_link_description>A link to a %s.</item_link_description>
+                <enter_title_here>Enter title here</enter_title_here>
+            </labels>
+            <slug>company</slug>
+            <description></description>
+            <public>public</public>
+            <menu_position>20--wpcf-add-menu-after--edit.php?post_type=mecard-profile</menu_position>
+            <menu_icon></menu_icon>
+            <supports>
+                <title>1</title>
+                <editor>1</editor>
+                <author>1</author>
+                <thumbnail>1</thumbnail>
+            </supports>
+            <rewrite>
+                <enabled>1</enabled>
+                <custom>normal</custom>
+                <slug></slug>
+                <with_front>1</with_front>
+                <feeds>1</feeds>
+                <pages>1</pages>
+            </rewrite>
+            <has_archive>1</has_archive>
+            <show_ui>1</show_ui>
+            <show_in_menu>1</show_in_menu>
+            <show_in_menu_page></show_in_menu_page>
+            <publicly_queryable>1</publicly_queryable>
+            <exclude_from_search></exclude_from_search>
+            <hierarchical></hierarchical>
+            <query_var_enabled>1</query_var_enabled>
+            <query_var></query_var>
+            <can_export>1</can_export>
+            <show_in_rest>1</show_in_rest>
+            <rest_base></rest_base>
+            <show_in_nav_menus>1</show_in_nav_menus>
+            <register_meta_box_cb></register_meta_box_cb>
+            <permalink_epmask>EP_PERMALINK</permalink_epmask>
+            <update></update>
+            <_builtin></_builtin>
+            <_toolset_edit_last>1758539570</_toolset_edit_last>
+            <_wpcf_author_id>1</_wpcf_author_id>
+            <__types_id>company</__types_id>
+            <__types_title>Companies</__types_title>
+            <wpcf-post-type>company</wpcf-post-type>
+            <icon>building</icon>
+            <editor>block</editor>
+            <custom-field-group>
+                <group_4518>4518</group_4518>
+                <group_280>280</group_280>
+            </custom-field-group>
+            <has_archive_slug></has_archive_slug>
+            <is_repeating_field_group></is_repeating_field_group>
+            <is_intermediary_post_type></is_intermediary_post_type>
+            <id>company</id>
+            <hash>babbf1809b9f4f4a24b478eecd7b9946</hash>
+            <checksum>babbf1809b9f4f4a24b478eecd7b9946</checksum>
+        </type>
+        <type>
+            <labels>
+                <name>Contact Form Submissions</name>
+                <singular_name>Contact Form Submission</singular_name>
+                <add_new>Add New</add_new>
+                <add_new_item>Add New %s</add_new_item>
+                <edit_item>Edit %s</edit_item>
+                <new_item>New %s</new_item>
+                <view_item>View %s</view_item>
+                <search_items>Search %s</search_items>
+                <not_found>No %s found</not_found>
+                <not_found_in_trash>No %s found in Trash</not_found_in_trash>
+                <parent_item_colon>Parent text</parent_item_colon>
+                <all_items>All items</all_items>
+                <enter_title_here>Enter title here</enter_title_here>
+            </labels>
+            <slug>contact-submission</slug>
+            <description></description>
+            <public>public</public>
+            <menu_position>20--wpcf-add-menu-after--edit.php?post_type=company</menu_position>
+            <menu_icon></menu_icon>
+            <supports>
+                <title>1</title>
+                <editor>1</editor>
+            </supports>
+            <rewrite>
+                <enabled>1</enabled>
+                <custom>normal</custom>
+                <slug></slug>
+                <with_front>1</with_front>
+                <pages>1</pages>
+            </rewrite>
+            <has_archive></has_archive>
+            <show_ui>1</show_ui>
+            <show_in_menu>1</show_in_menu>
+            <show_in_menu_page></show_in_menu_page>
+            <publicly_queryable>1</publicly_queryable>
+            <exclude_from_search></exclude_from_search>
+            <hierarchical></hierarchical>
+            <query_var_enabled>1</query_var_enabled>
+            <query_var></query_var>
+            <can_export>1</can_export>
+            <show_in_rest>1</show_in_rest>
+            <rest_base></rest_base>
+            <show_in_nav_menus></show_in_nav_menus>
+            <register_meta_box_cb></register_meta_box_cb>
+            <permalink_epmask>EP_PERMALINK</permalink_epmask>
+            <update></update>
+            <_builtin></_builtin>
+            <_toolset_edit_last>1638717492</_toolset_edit_last>
+            <_wpcf_author_id>1</_wpcf_author_id>
+            <wpcf-post-type>contact-submission</wpcf-post-type>
+            <icon>admin-post</icon>
+            <editor>block</editor>
+            <dashboard_glance>1</dashboard_glance>
+            <custom-field-group>
+                <group_1200>1200</group_1200>
+            </custom-field-group>
+            <has_archive_slug></has_archive_slug>
+            <is_repeating_field_group></is_repeating_field_group>
+            <is_intermediary_post_type></is_intermediary_post_type>
+            <id>contact-submission</id>
+            <__types_id>contact-submission</__types_id>
+            <__types_title>Contact Form Submissions</__types_title>
+            <hash>d2d34fa7704b340121c80202d9c2e181</hash>
+            <checksum>d2d34fa7704b340121c80202d9c2e181</checksum>
+        </type>
+        <type>
+            <icon>admin-post</icon>
+            <labels>
+                <name>User Roles</name>
+                <singular_name>User Role</singular_name>
+                <add_new>Add New</add_new>
+                <add_new_item>Add New %s</add_new_item>
+                <edit_item>Edit %s</edit_item>
+                <new_item>New %s</new_item>
+                <view_item>View %s</view_item>
+                <search_items>Search %s</search_items>
+                <not_found>No %s found</not_found>
+                <not_found_in_trash>No %s found in Trash</not_found_in_trash>
+                <parent_item_colon>Parent text</parent_item_colon>
+                <all_items>All items</all_items>
+                <enter_title_here>Enter title here</enter_title_here>
+            </labels>
+            <slug>user-role</slug>
+            <editor>block</editor>
+            <description></description>
+            <public>public</public>
+            <menu_position>20--wpcf-add-menu-after--edit.php?post_type=mecard-profile</menu_position>
+            <supports>
+                <title>1</title>
+                <editor>1</editor>
+                <author>1</author>
+            </supports>
+            <rewrite>
+                <enabled>1</enabled>
+                <custom>normal</custom>
+                <slug></slug>
+                <with_front>1</with_front>
+                <pages>1</pages>
+            </rewrite>
+            <has_archive_slug></has_archive_slug>
+            <show_in_menu>1</show_in_menu>
+            <show_in_menu_page></show_in_menu_page>
+            <show_ui>1</show_ui>
+            <publicly_queryable>1</publicly_queryable>
+            <can_export>1</can_export>
+            <query_var_enabled>1</query_var_enabled>
+            <query_var></query_var>
+            <permalink_epmask>EP_PERMALINK</permalink_epmask>
+            <show_in_rest>1</show_in_rest>
+            <rest_base></rest_base>
+            <wpcf-post-type></wpcf-post-type>
+            <_builtin></_builtin>
+            <_toolset_edit_last>1638856276</_toolset_edit_last>
+            <_wpcf_author_id>1</_wpcf_author_id>
+            <is_repeating_field_group></is_repeating_field_group>
+            <is_intermediary_post_type></is_intermediary_post_type>
+            <exclude_from_search></exclude_from_search>
+            <hierarchical></hierarchical>
+            <has_archive></has_archive>
+            <show_in_nav_menus></show_in_nav_menus>
+            <id>user-role</id>
+            <__types_id>user-role</__types_id>
+            <__types_title>User Roles</__types_title>
+            <hash>c07337bb5109f8db376b4efdcc246084</hash>
+            <checksum>c07337bb5109f8db376b4efdcc246084</checksum>
+        </type>
+        <type>
+            <icon>admin-post</icon>
+            <labels>
+                <name>Requests</name>
+                <singular_name>Request</singular_name>
+                <add_new>Add New</add_new>
+                <add_new_item>Add New %s</add_new_item>
+                <edit_item>Edit %s</edit_item>
+                <new_item>New %s</new_item>
+                <view_item>View %s</view_item>
+                <search_items>Search %s</search_items>
+                <not_found>No %s found</not_found>
+                <not_found_in_trash>No %s found in Trash</not_found_in_trash>
+                <parent_item_colon>Parent text</parent_item_colon>
+                <all_items>All items</all_items>
+                <enter_title_here>Enter title here</enter_title_here>
+            </labels>
+            <slug>request</slug>
+            <editor>block</editor>
+            <description></description>
+            <public>public</public>
+            <menu_position>20--wpcf-add-menu-after--edit.php?post_type=user-role</menu_position>
+            <supports>
+                <title>1</title>
+                <editor>1</editor>
+                <author>1</author>
+            </supports>
+            <rewrite>
+                <enabled>1</enabled>
+                <custom>normal</custom>
+                <slug></slug>
+                <with_front>1</with_front>
+                <feeds>1</feeds>
+                <pages>1</pages>
+            </rewrite>
+            <has_archive>1</has_archive>
+            <has_archive_slug></has_archive_slug>
+            <show_in_menu>1</show_in_menu>
+            <show_in_menu_page></show_in_menu_page>
+            <show_ui>1</show_ui>
+            <publicly_queryable>1</publicly_queryable>
+            <can_export>1</can_export>
+            <show_in_nav_menus>1</show_in_nav_menus>
+            <query_var_enabled>1</query_var_enabled>
+            <query_var></query_var>
+            <permalink_epmask>EP_PERMALINK</permalink_epmask>
+            <show_in_rest>1</show_in_rest>
+            <rest_base></rest_base>
+            <wpcf-post-type></wpcf-post-type>
+            <_builtin></_builtin>
+            <_toolset_edit_last>1640504762</_toolset_edit_last>
+            <_wpcf_author_id>1</_wpcf_author_id>
+            <is_repeating_field_group></is_repeating_field_group>
+            <is_intermediary_post_type></is_intermediary_post_type>
+            <exclude_from_search></exclude_from_search>
+            <hierarchical></hierarchical>
+            <id>request</id>
+            <__types_id>request</__types_id>
+            <__types_title>Requests</__types_title>
+            <hash>13291d916796b433b95af251f6f29249</hash>
+            <checksum>13291d916796b433b95af251f6f29249</checksum>
+        </type>
+        <type>
+            <labels>
+                <name>Riscura Tags</name>
+                <singular_name>Riscura Tag</singular_name>
+                <add_new>Add New</add_new>
+                <add_new_item>Add New %s</add_new_item>
+                <edit_item>Edit %s</edit_item>
+                <new_item>New %s</new_item>
+                <view_item>View %s</view_item>
+                <search_items>Search %s</search_items>
+                <not_found>No %s found</not_found>
+                <not_found_in_trash>No %s found in Trash</not_found_in_trash>
+                <parent_item_colon>Parent text</parent_item_colon>
+                <all_items>All items</all_items>
+                <enter_title_here>Enter title here</enter_title_here>
+            </labels>
+            <slug>riscura</slug>
+            <description></description>
+            <public>public</public>
+            <menu_position>20--wpcf-add-menu-after--edit.php?post_type=request</menu_position>
+            <menu_icon></menu_icon>
+            <supports>
+                <title>1</title>
+                <editor>1</editor>
+                <author>1</author>
+            </supports>
+            <rewrite>
+                <enabled>1</enabled>
+                <custom>normal</custom>
+                <slug></slug>
+                <with_front>1</with_front>
+                <pages>1</pages>
+            </rewrite>
+            <has_archive></has_archive>
+            <show_ui>1</show_ui>
+            <show_in_menu>1</show_in_menu>
+            <show_in_menu_page></show_in_menu_page>
+            <publicly_queryable>1</publicly_queryable>
+            <exclude_from_search></exclude_from_search>
+            <hierarchical></hierarchical>
+            <query_var_enabled>1</query_var_enabled>
+            <query_var></query_var>
+            <can_export>1</can_export>
+            <show_in_rest>1</show_in_rest>
+            <rest_base></rest_base>
+            <show_in_nav_menus>1</show_in_nav_menus>
+            <register_meta_box_cb></register_meta_box_cb>
+            <permalink_epmask>EP_PERMALINK</permalink_epmask>
+            <update></update>
+            <_builtin></_builtin>
+            <_toolset_edit_last>1686311639</_toolset_edit_last>
+            <_wpcf_author_id>1</_wpcf_author_id>
+            <__types_id>riscura</__types_id>
+            <__types_title>Riscura Tags</__types_title>
+            <wpcf-post-type>riscura</wpcf-post-type>
+            <icon>admin-post</icon>
+            <editor>block</editor>
+            <custom-field-group>
+                <group_21903>21903</group_21903>
+            </custom-field-group>
+            <custom_fields>
+                <wpcf-first-name-r>1</wpcf-first-name-r>
+                <wpcf-last-name-r>1</wpcf-last-name-r>
+                <wpcf-company-r>1</wpcf-company-r>
+                <wpcf-assigned-r>1</wpcf-assigned-r>
+                <wpcf-opt-in-r>1</wpcf-opt-in-r>
+            </custom_fields>
+            <has_archive_slug></has_archive_slug>
+            <is_repeating_field_group></is_repeating_field_group>
+            <is_intermediary_post_type></is_intermediary_post_type>
+            <id>riscura</id>
+            <hash>5638678c1127424f7326ebe9faf30b07</hash>
+            <checksum>5638678c1127424f7326ebe9faf30b07</checksum>
+        </type>
+        <type>
+            <labels>
+                <name>More Links Company-Wide</name>
+                <singular_name>More Links Company-Wide</singular_name>
+                <add_new>Add New</add_new>
+                <add_new_item>Add New %s</add_new_item>
+                <edit_item>Edit %s</edit_item>
+                <new_item>New %s</new_item>
+                <view_item>View %s</view_item>
+                <search_items>Search %s</search_items>
+                <not_found>No %s found</not_found>
+                <not_found_in_trash>No %s found in Trash</not_found_in_trash>
+                <parent_item_colon>Parent %s</parent_item_colon>
+                <menu_name>%s</menu_name>
+                <all_items>%s</all_items>
+            </labels>
+            <slug>more-links-company</slug>
+            <description></description>
+            <public></public>
+            <menu_position></menu_position>
+            <menu_icon></menu_icon>
+            <supports>
+                <post_title>1</post_title>
+                <author>1</author>
+                <custom-fields>1</custom-fields>
+            </supports>
+            <rewrite>
+                <enabled>1</enabled>
+                <slug></slug>
+                <with_front>1</with_front>
+                <feeds>1</feeds>
+                <pages>1</pages>
+            </rewrite>
+            <has_archive>1</has_archive>
+            <show_ui></show_ui>
+            <show_in_menu>1</show_in_menu>
+            <show_in_menu_page></show_in_menu_page>
+            <publicly_queryable></publicly_queryable>
+            <exclude_from_search>1</exclude_from_search>
+            <hierarchical></hierarchical>
+            <query_var_enabled>1</query_var_enabled>
+            <query_var></query_var>
+            <can_export>1</can_export>
+            <show_in_rest></show_in_rest>
+            <rest_base></rest_base>
+            <show_in_nav_menus></show_in_nav_menus>
+            <register_meta_box_cb></register_meta_box_cb>
+            <permalink_epmask>EP_PERMALINK</permalink_epmask>
+            <_toolset_edit_last>1757389414</_toolset_edit_last>
+            <_wpcf_author_id>1</_wpcf_author_id>
+            <is_repeating_field_group>1</is_repeating_field_group>
+            <id>more-links-company</id>
+            <__types_id>more-links-company</__types_id>
+            <__types_title>More Links Company-Wide</__types_title>
+            <hash>0e089f443fb090bb552134455a5c3611</hash>
+            <checksum>0e089f443fb090bb552134455a5c3611</checksum>
+        </type>
+    </types>
+</types>

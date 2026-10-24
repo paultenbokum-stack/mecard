@@ -1,0 +1,40 @@
+# Local stand-ins for what runs on Google Cloud: docker compose up -d (npm run dev:all does it).
+#   postgres  Cloud SQL         localhost:5435 (not 5432/5434: GuestWave and Nextag use those)
+#   gcs       Cloud Storage     localhost:4443, buckets mecard-media and mecard-uploads
+#   mailpit   Resend            catches every email: http://localhost:8025
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: mecard
+      POSTGRES_USER: mecard
+      POSTGRES_PASSWORD: mecard_dev
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "127.0.0.1:5435:5432"
+
+  # fake-gcs-server: the archive bucket is filled at start from .gcs-seed/mecard-uploads
+  # (staged by `npm run images:plan -- --stage .gcs-seed/mecard-uploads --referenced`, as
+  # for the real bucket); objects the app writes (WebP masters, new uploads) persist in gcsdata.
+  gcs:
+    image: fsouza/fake-gcs-server:1.52.2
+    restart: unless-stopped
+    command: ["-scheme", "http", "-port", "4443", "-public-host", "localhost:4443", "-backend", "filesystem", "-filesystem-root", "/storage", "-data", "/seed"]
+    volumes:
+      - gcsdata:/storage
+      - ./.gcs-seed:/seed:ro
+    ports:
+      - "127.0.0.1:4443:4443"
+
+  mailpit:
+    image: axllent/mailpit:v1.27.4
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8025:8025"
+      - "127.0.0.1:1025:1025"
+
+volumes:
+  pgdata:
+  gcsdata:

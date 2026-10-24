@@ -1,0 +1,1 @@
+ALTER TABLE "events" ADD COLUMN "device" varchar(10);

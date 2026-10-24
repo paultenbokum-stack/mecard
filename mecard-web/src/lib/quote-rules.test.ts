@@ -1,0 +1,61 @@
+import { test } from "node:test";
+import assert from "node:assert/strict";
+import { effectiveStatus, quoteBillingLines, quotePrefill, quoteToken, quoteTotals, verifyQuoteToken } from "./quote-rules";
+
+const now = new Date("2026-10-21T12:00:00Z");
+
+test("quote totals add the lines and cap the discount at the subtotal", () => {
+  const items = [
+    { productId: 706, name: "Card", qty: 3, unitPriceCents: 39900 },
+    { productId: 57884, name: "Additional Shipping", qty: 1, unitPriceCents: 10000 },
+  ];
+  assert.deepEqual(quoteTotals(items), { subtotalCents: 129700, discountCents: 0, totalCents: 129700 });
+  assert.deepEqual(quoteTotals(items, 200000), { subtotalCents: 129700, discountCents: 129700, totalCents: 0 });
+});
+
+test("a sent quote past its date shows as expired", () => {
+  assert.equal(effectiveStatus({ status: "sent", expiresAt: new Date("2026-10-20T00:00:00Z") }, now), "expired");
+  assert.equal(effectiveStatus({ status: "sent", expiresAt: new Date("2026-10-30T00:00:00Z") }, now), "sent");
+});
+
+test("accepted and rejected quotes keep their status", () => {
+  assert.equal(effectiveStatus({ status: "accepted", expiresAt: new Date("2026-10-01T00:00:00Z") }, now), "accepted");
+  assert.equal(effectiveStatus({ status: "rejected", expiresAt: null }, now), "rejected");
+});
+
+test("quote tokens are tied to the quote and its email (case-insensitive)", () => {
+  const t = quoteToken(12, "A@Example.com");
+  assert.equal(verifyQuoteToken(12, "a@example.com", t), true);
+  assert.equal(verifyQuoteToken(13, "a@example.com", t), false);
+  assert.equal(verifyQuoteToken(12, "b@example.com", t), false);
+  assert.equal(verifyQuoteToken(12, "a@example.com", "short"), false);
+});
+
+test("quotePrefill: from the account, then the latest order, then the company", () => {
+  const user = { email: "ann@acme.co.za", firstName: "Ann", lastName: "Lee", displayName: "annl", phone: "" };
+  const order = { billingFirstName: "A", billingLastName: "L", billingEmail: "billing@acme.co.za", billingPhone: " 082 000 0000 ", billingCompany: "Acme (Pty) Ltd" };
+  const blank = { vatNumber: "", address1: "", address2: "", city: "", province: "", postcode: "", country: "" };
+  assert.deepEqual(quotePrefill(user, order), { name: "Ann Lee", email: "ann@acme.co.za", phone: "082 000 0000", company: "Acme (Pty) Ltd", ...blank });
+  assert.deepEqual(quotePrefill({ ...user, phone: "011 111 1111" }, order, { name: "Acme", phone: "012" }), { name: "Ann Lee", email: "ann@acme.co.za", phone: "011 111 1111", company: "Acme", ...blank });
+  assert.deepEqual(quotePrefill({ ...user, firstName: "", lastName: "" }, null, { name: "Acme", phone: "012" }), { name: "annl", email: "ann@acme.co.za", phone: "012", company: "Acme", ...blank });
+  assert.deepEqual(quotePrefill({ ...user, firstName: "", lastName: "", displayName: "" }, order), { name: "A L", email: "ann@acme.co.za", phone: "082 000 0000", company: "Acme (Pty) Ltd", ...blank });
+});
+
+test("quotePrefill: billing address from the latest order, VAT number from the company", () => {
+  const user = { email: "ann@acme.co.za", firstName: "Ann", lastName: "Lee", displayName: "", phone: "" };
+  const order = { billingFirstName: "", billingLastName: "", billingEmail: "", billingPhone: "", billingCompany: "", address1: " 1 Main Rd ", address2: "", city: "Cape Town", province: "WC", postcode: "8001", country: "ZA" };
+  const q = quotePrefill(user, order, { name: "Acme", phone: "", vatNumber: " 4123456789 " });
+  assert.deepEqual([q.vatNumber, q.address1, q.city, q.province, q.postcode, q.country], ["4123456789", "1 Main Rd", "Cape Town", "WC", "8001", "ZA"]);
+  assert.equal(quotePrefill(user, { ...order, address1: "" }).country, "");
+});
+
+test("quoteBillingLines: the address and VAT number as printed", () => {
+  assert.deepEqual(quoteBillingLines({ vatNumber: "4123456789", address1: "1 Main Rd", address2: "", city: "Cape Town", province: "WC", postcode: "8001", country: "ZA" }), [
+    "1 Main Rd",
+    "Cape Town 8001",
+    "WC",
+    "South Africa",
+    "VAT number: 4123456789",
+  ]);
+  assert.deepEqual(quoteBillingLines({ vatNumber: "", address1: "", address2: "", city: "", province: "", postcode: "", country: "" }), []);
+});

@@ -1,0 +1,11 @@
+{
+  "id": 1203,
+  "path": "/contact-us/",
+  "title": "Contact Us",
+  "seoTitle": "Contact Us - MeCard",
+  "description": "",
+  "showTitle": true,
+  "container": "ast-plain-container",
+  "modified": "Sat May 02 2026 12:51:18 GMT+0200 (South Africa Standard Time)",
+  "html": "<div class=\"wp-block-columns is-layout-flex wp-block-columns-is-layout-flex\">\n<div class=\"wp-block-column is-layout-flow wp-block-column-is-layout-flow\" style=\"flex-basis:66.66%\">\n<div class=\"wp-block-toolset-cred-form\"><div data-mc-slot=\"contact-form\"></div></div>\n</div>\n\n<div class=\"wp-block-column is-layout-flow wp-block-column-is-layout-flow\" style=\"flex-basis:33.33%\">\n<h4 class=\"wp-block-heading\">Taggable (Pty) Ltd</h4>\n\n<p>Zululami Coastal Estate<br>Sheffield Beach<br>4391<br>South Africa</p>\n\n<p>For sales queries, please call<br><strong>Paul </strong>or <strong>Carolyn </strong>on:<br><br><strong> (+27) 087 550 1130</strong></p>\n</div>\n</div>"
+}
