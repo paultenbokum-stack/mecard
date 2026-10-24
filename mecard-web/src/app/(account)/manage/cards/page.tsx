@@ -5,6 +5,8 @@ import { viewer } from "@/lib/access";
 import { CARD_TABS, cardProgress, cardTabLabel, DESIGNED_CARD_TYPES, isCardTab, type CardTab } from "@/lib/card-tabs";
 import { cardTabCounts, listCards, PAGE_SIZE } from "@/lib/manage";
 import { requireUserId } from "@/lib/session";
+import { BundleOffer, CardOffer } from "@/components/account/Upsells";
+import { loadUpsells } from "@/lib/upsells";
 import { Activate } from "./Activate";
 
 export const metadata: Metadata = { title: "My Cards" };
@@ -31,7 +33,7 @@ export default async function CardsPage({ searchParams }: { searchParams: Promis
   const sp = await searchParams;
   const v = await viewer(await requireUserId(`/manage/cards/${sp.activate ? `?activate=${encodeURIComponent(sp.activate)}` : ""}`));
   const page = Math.max(1, Number(sp.page) || 1);
-  const counts = await cardTabCounts(v);
+  const [counts, upsells] = await Promise.all([cardTabCounts(v), loadUpsells(v)]);
   // ?tab=new was the old "Not linked yet" list.
   const asked = sp.tab === "new" ? "unassigned" : sp.tab;
   const tab: CardTab = isCardTab(asked) ? asked : counts.live ? "live" : counts.design ? "design" : counts.progress ? "progress" : counts.unassigned ? "unassigned" : "live";
@@ -155,6 +157,13 @@ export default async function CardsPage({ searchParams }: { searchParams: Promis
         )}
         <Pager page={list.page} total={list.total} size={PAGE_SIZE} href={(n) => tabUrl(tab, { ...(sp.q ? { q: sp.q } : {}), page: String(n) })} />
       </section>
+
+      {upsells.bundleOffer || upsells.cardOffer ? (
+        <div className="acc-upsell__offers">
+          <BundleOffer u={upsells} showManageCards={false} />
+          <CardOffer u={upsells} />
+        </div>
+      ) : null}
     </div>
   );
 }

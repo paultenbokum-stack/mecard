@@ -3,17 +3,20 @@ import Link from "next/link";
 import { Avatar, ConfirmButton, DoneNotice, Pager, Subnav, NewTab } from "@/components/account/Bits";
 import { viewer } from "@/lib/access";
 import {
-  availableProUpgrades,
-  hasPendingUpgrade,
   invitesForUser,
   listCompanies,
   listProfiles,
   PAGE_SIZE,
 } from "@/lib/manage";
 import { isPro } from "@/lib/profile-format";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { accountState } from "@/lib/onboarding";
 import { requireUserId } from "@/lib/session";
+import { TeamPrompt } from "@/components/account/TeamPrompt";
+import { teamPromptCookie } from "@/lib/upsell-rules";
+import { BundleJourney, ProUpsell, UpgradeButton } from "@/components/account/Upsells";
+import { loadUpsells } from "@/lib/upsells";
 import { acceptInviteAction, archiveProfileAction } from "./actions";
 
 export const metadata: Metadata = { title: "Profiles" };
@@ -31,12 +34,11 @@ export default async function ManageHome({ searchParams }: { searchParams: Promi
   const archived = sp.show === "archived";
   const page = Math.max(1, Number(sp.page) || 1);
 
-  const [list, companies, invites, upgrades, pending, activeCount] = await Promise.all([
+  const [list, companies, invites, u, activeCount] = await Promise.all([
     listProfiles(v, { archived, q: sp.q, page }),
     listCompanies(v),
     invitesForUser(v.id),
-    availableProUpgrades(v.id),
-    hasPendingUpgrade(v.id),
+    loadUpsells(v),
     archived || sp.q ? listProfiles(v, { archived: false, page: 1 }).then((r) => r.total) : Promise.resolve(-1),
   ]);
   const totalActive = activeCount >= 0 ? activeCount : list.total;
@@ -44,8 +46,6 @@ export default async function ManageHome({ searchParams }: { searchParams: Promi
   // The list as it is now (search, page), for the profile editor to come back to.
   const listQs = new URLSearchParams({ ...(sp.q ? { q: sp.q } : {}), ...(page > 1 ? { page: String(page) } : {}) }).toString();
   const editHref = (id: number) => `/manage/profile/${id}/${listQs ? `?back=${encodeURIComponent(`/manage/?${listQs}`)}` : ""}`;
-  // A paid upgrade that's ready to use beats "waiting for EFT".
-  const waitingForEft = pending && upgrades === 0;
   const backUrl = (extra: Record<string, string | number | undefined> = {}) => {
     const u = new URLSearchParams();
     for (const [k, val] of Object.entries({ q: sp.q, show: sp.show, page: page > 1 ? page : undefined, ...extra })) if (val) u.set(k, String(val));
@@ -103,7 +103,7 @@ export default async function ManageHome({ searchParams }: { searchParams: Promi
               </div>
             </div>
           </div>
-          {!isPro(single) && waitingForEft ? <p className="acc__muted" style={{ marginTop: 12 }}>Your Pro upgrade is pending — we&rsquo;re just waiting for EFT confirmation.</p> : null}
+          {!isPro(single) && u.eftPending ? <p className="acc__muted" style={{ marginTop: 12 }}>Your Pro upgrade is pending — we&rsquo;re just waiting for EFT confirmation.</p> : null}
           <div className="acc-actions">
             <a className="acc-btn" href={`/mecard-profile/${single.slug}/`} target="_blank" rel="noopener">
               View profile <NewTab />
@@ -115,33 +115,9 @@ export default async function ManageHome({ searchParams }: { searchParams: Promi
         </section>
       ) : null}
 
-      {single && !isPro(single) && !waitingForEft ? (
-        <section className="acc-panel">
-          <p className="acc__eyebrow" style={{ marginTop: 0 }}>
-            Upgrade to Pro
-          </p>
-          <h2>Supercharge your profile</h2>
-          <ul>
-            <li>Customise look and feel to your company branding</li>
-            <li>Add company info</li>
-            <li>Extra buttons and links</li>
-          </ul>
-          {upgrades > 0 ? (
-            <p>
-              You have {upgrades === 1 ? "a Pro upgrade" : `${upgrades} Pro upgrades`} ready to use. <Link href={`/manage/profile/${single.id}/`}>Apply it in the profile editor.</Link>
-            </p>
-          ) : (
-            <>
-              <p className="acc-item__title">R199 once off</p>
-              <div className="acc-actions">
-                <Link className="acc-btn acc-btn--primary" href={`/product/profile-upgrade/?profile_id=${single.id}`}>
-                  Get Pro
-                </Link>
-              </div>
-            </>
-          )}
-        </section>
-      ) : null}
+      <BundleJourney u={u} />
+      {u.eftPending && !single ? <div className="acc-panel acc-panel--notice">Your Pro upgrade is pending &mdash; we&rsquo;re just waiting for EFT confirmation.</div> : null}
+      <ProUpsell u={u} />
 
       <section className="acc-panel" id="profiles">
         <div className="acc-panel__head">
@@ -191,6 +167,7 @@ export default async function ManageHome({ searchParams }: { searchParams: Promi
                       <Link className="acc-btn acc-btn--small acc-btn--primary" href={editHref(p.id)} scroll={false}>
                         Edit
                       </Link>
+                      {u.proUpsell && !isPro(p) && !u.upgradesReady ? <UpgradeButton profileId={p.id} /> : null}
                     </>
                   ) : null}
                   <form action={archiveProfileAction}>
@@ -217,21 +194,7 @@ export default async function ManageHome({ searchParams }: { searchParams: Promi
 
       </section>
 
-      <section className="acc-panel">
-        <h2>Cards and companies</h2>
-        <p>Link your cards and tags to profiles, and set up company branding for your team.</p>
-        <div className="acc-actions">
-          <Link className="acc-btn acc-btn--primary" href="/manage/cards/">
-            My cards
-          </Link>
-          <Link className="acc-btn" href="/manage/companies/">
-            {companies.length ? `Companies (${companies.length})` : "Create a team"}
-          </Link>
-          <Link className="acc-btn" href="/manage/cards/new/">
-            Buy a new card
-          </Link>
-        </div>
-      </section>
+      {totalActive >= 2 && !companies.length && !archived && !(await cookies()).has(teamPromptCookie(v.id)) ? <TeamPrompt userId={v.id} /> : null}
     </div>
   );
 }

@@ -838,7 +838,8 @@ div.me-classic-card__surface.card-front.classic .classic-job-title {
 .me-progress-upsell__bundle-img {
   display: block;
   width: 90%;
-  border-radius: 12px;
+  height: auto;
+  border-radius: var(--radius-md);
 }
 
 .me-auth-error {
@@ -872,3 +873,53 @@ div.me-classic-card__surface.card-front.classic .classic-job-title {
 .me-auth-entry__title, .me-step__title { font-family: var(--font-display); font-weight: 700; color: var(--ink); letter-spacing: -0.01em; }
 .me-auth-entry__eyebrow { font-family: var(--font-display); letter-spacing: 1.5px; color: var(--link); }
 .me-btn--primary:hover, .me-auth-form__submit:hover { background: var(--brand-strong); box-shadow: var(--shadow-cta); }
+.me-progress-upsell {
+  margin-top: 18px;
+  border-top: 1px solid var(--me-border);
+  padding-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.me-progress-upsell__heading {
+  margin: 0 0 8px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--me-blue);
+}
+
+.me-progress-upsell__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.me-progress-upsell__list li {
+  position: relative;
+  padding-left: 16px;
+  font-size: 13px;
+  color: var(--me-text);
+  line-height: 1.4;
+}
+
+.me-progress-upsell__list li::before {
+  content: "→";
+  position: absolute;
+  left: 0;
+  color: var(--me-muted);
+  font-size: 11px;
+  top: 1px;
+}
+
+.me-progress-upsell__bundle-img {
+  display: block;
+  width: 90%;
+  height: auto;
+  border-radius: var(--radius-md);
+}

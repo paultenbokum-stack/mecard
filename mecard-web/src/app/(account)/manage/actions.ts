@@ -6,6 +6,8 @@ import { canEditProfile, canManageCard, canManageCompany, viewer } from "@/lib/a
 import { acceptInvite } from "@/lib/invites";
 import { cardsListHref, isCardTab } from "@/lib/card-tabs";
 import { cardTabOf, createCompany, createProfile, linkCard, setProfileArchived, updateCardSettings } from "@/lib/manage";
+import { getCart, removeLine } from "@/lib/cart";
+import { isBundle } from "@/lib/catalog";
 import { requireUserId } from "@/lib/session";
 
 // Form actions on /manage/. Each checks the user's rights again (the page
@@ -103,4 +105,13 @@ export async function acceptInviteAction(form: FormData) {
   const v = await me();
   const res = await acceptInvite(id(form.get("invite_id")), v.id, { requireEmailMatch: true });
   back(form, res.ok ? "invite-accepted" : "invite-failed");
+}
+
+/** "Remove bundle" on the bundle journey: the bundle line (and the cards and entitlements it made) leave the basket. */
+export async function removeBundleAction(form: FormData) {
+  const userId = (await me()).id;
+  const key = String(form.get("key") ?? "");
+  const line = (await getCart(userId)).items.find((l) => l.key === key && isBundle(l.productId));
+  if (line) await removeLine(userId, key);
+  redirect("/manage/?done=bundle-removed");
 }

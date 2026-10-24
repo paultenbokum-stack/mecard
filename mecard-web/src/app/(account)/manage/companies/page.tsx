@@ -51,11 +51,22 @@ export default async function CompaniesPage({ searchParams }: { searchParams: Pr
             })}
           </ul>
         ) : (
-          <div className="acc-empty">You haven&rsquo;t set up a company yet.</div>
+          <div className="acc-teamstart">
+            <h2>Set up your team</h2>
+            <p>A company turns your profiles into a team:</p>
+            <ul>
+              <li>Shared company branding: logo, colours, contact details and buttons on every Pro profile</li>
+              <li>Manage your team&rsquo;s profiles and cards in one place, and invite people to take over their own</li>
+              <li>Bulk cards for the whole team, with a quote first if you need one</li>
+            </ul>
+            <p className="acc__muted">
+              Ordering for a larger team? <Link href="/request-quote/">Request a quote for bulk cards</Link>.
+            </p>
+          </div>
         )}
 
         <details className="acc-details" style={{ marginTop: 16 }} open={!companies.length}>
-          <summary className="acc-btn">+ Add a company</summary>
+          <summary className="acc-btn">{companies.length ? "+ Add a company" : "Create a team"}</summary>
           <form action={addCompanyAction} className="acc-inline-form">
             <input type="hidden" name="back" value="/manage/companies/" />
             <input type="text" name="name" required maxLength={255} placeholder="Company name" aria-label="Company name" />

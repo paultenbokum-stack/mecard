@@ -224,6 +224,21 @@ export function OnboardingWizard({ initial, userEmail }: { initial: Fields & { i
           ))}
         </ol>
         <div className="me-progress__extra">Then: Add Cards and configure more features</div>
+        <div className="me-progress-upsell">
+          <div className="me-progress-upsell__section">
+            <p className="me-progress-upsell__heading">Profile enhancements</p>
+            <ul className="me-progress-upsell__list">
+              <li>Custom branding &amp; colours</li>
+              <li>Pro layouts &amp; themes</li>
+              <li>Rich company information</li>
+            </ul>
+          </div>
+          <div className="me-progress-upsell__section">
+            <p className="me-progress-upsell__heading">Cards &amp; bundles</p>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img className="me-progress-upsell__bundle-img" src="/images/upsell/custom_bundle_new.webp" width={640} height={754} alt="MeCard custom card bundle: a custom card, a phone tag and a Pro profile" loading="lazy" />
+          </div>
+        </div>
       </div>
     </div>
   );
