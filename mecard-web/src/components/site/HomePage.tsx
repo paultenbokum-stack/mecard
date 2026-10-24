@@ -101,7 +101,7 @@ export function HomePage() {
             <p className="mc-home__lead">Create a professional profile in 60 seconds. Share it via NFC, QR code, or WhatsApp. No app to install.</p>
             <div className="mc-home__ctas">
               <Link href="/sign-up/" className="mc-btn mc-btn-primary mc-btn-lg mc-when-out">Create my free Profile</Link>
-              <Link href="/manage/" className="mc-btn mc-btn-primary mc-btn-lg mc-when-in">Go to Console</Link>
+              <Link href="/manage/" className="mc-btn mc-btn-primary mc-btn-lg mc-when-in">Go to Dashboard</Link>
               <Link href="/for-teams/" className="mc-btn mc-btn-outline mc-btn-lg">For my team</Link>
             </div>
           </div>
@@ -231,7 +231,7 @@ export function HomePage() {
             </div>
             <div className="mc-cta__actions">
               <Link href="/sign-up/" className="mc-btn mc-btn-primary mc-btn-lg mc-when-out">Create my free profile</Link>
-              <Link href="/manage/" className="mc-btn mc-btn-primary mc-btn-lg mc-when-in">Go to Console</Link>
+              <Link href="/manage/" className="mc-btn mc-btn-primary mc-btn-lg mc-when-in">Go to Dashboard</Link>
               <Link href="/for-teams/" className="mc-btn mc-btn-outline">For my team</Link>
             </div>
           </div>
