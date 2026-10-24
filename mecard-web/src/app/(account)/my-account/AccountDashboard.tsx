@@ -23,7 +23,7 @@ export async function AccountDashboard({ userId }: { userId: number }) {
         Hello <strong>{name}</strong> (not {name}? <Link href={LOGOUT}>Log out</Link>)
       </p>
       <p>
-        From your account dashboard you can manage <Link href="/manage/">your profiles and cards</Link>, view your <Link href="/my-account/orders/">orders</Link> and
+        From your account overview you can manage <Link href="/manage/">your profiles and cards</Link>, view your <Link href="/my-account/orders/">orders</Link> and
         download invoices, and edit <Link href="/my-account/edit-account/">your password and account details</Link>.
       </p>
       <div className="acc-myaccount__tiles">

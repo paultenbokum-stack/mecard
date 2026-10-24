@@ -5,11 +5,12 @@ import { LOGOUT } from "@/lib/auth-paths";
 // the page content, with the MeCard console in place of Downloads/Addresses.
 
 export const ACCOUNT_LINKS = [
-  ["dashboard", "Dashboard", "/my-account/"],
+  ["dashboard", "Overview", "/my-account/"],
   ["console", "My profiles and cards", "/manage/"],
   ["orders", "Orders", "/my-account/orders/"],
   ["quotes", "Quotes", "/my-account/quotes/"],
   ["edit-account", "Account details", "/my-account/edit-account/"],
+  ["help", "Get help", "/contact-us/"],
   ["logout", "Log out", LOGOUT],
 ] as const;
 

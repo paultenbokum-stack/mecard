@@ -18,20 +18,19 @@ const MENU = [
 ] as const;
 
 // The "logged-in" menu. My Account opens WooCommerce's account pages, as the
-// WordPress menu's My Account item did; Console is the /manage/ home. The
+// WordPress menu's My Account item did; Dashboard is the /manage/ home. The
 // basket is the cart icon beside the menu.
 const MENU_LOGGED_IN = [
-  ["Console", "/manage/"],
+  ["Dashboard", "/manage/"],
   ["Gallery", "/gallery/"],
-  ["Shop", "/shop/"],
-  ["Contact Us", "/contact-us/"],
 ] as const;
 
 const ACCOUNT_MENU = [
-  ["Dashboard", "/my-account/"],
+  ["Overview", "/my-account/"],
   ["My profiles and cards", "/manage/"],
   ["Orders", "/my-account/orders/"],
   ["Account details", "/my-account/edit-account/"],
+  ["Get help", "/contact-us/"],
   ["Log out", "/my-account/customer-logout/"],
 ] as const;
 
