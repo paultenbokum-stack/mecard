@@ -22,35 +22,73 @@ async function uploadArtwork(file: File): Promise<string> {
   return json.path;
 }
 
-function UploadButton({ label, onUploaded, onError }: { label: string; onUploaded: (p: string) => void; onError: (e: string) => void }) {
+/** One upload slot (logo, front or back): a hidden file picker that both its button and the card preview open. */
+function useUpload(onUploaded: (p: string) => void, onError: (e: string) => void) {
   const input = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
+  const picker = (
+    <input
+      ref={input}
+      type="file"
+      accept="image/png,image/jpeg"
+      hidden
+      onChange={async (e) => {
+        const f = e.target.files?.[0];
+        if (!f) return;
+        setBusy(true);
+        onError("");
+        try {
+          onUploaded(await uploadArtwork(f));
+        } catch (err) {
+          onError(err instanceof Error ? err.message : "Upload failed.");
+        } finally {
+          setBusy(false);
+          e.target.value = "";
+        }
+      }}
+    />
+  );
+  return { picker, busy, open: () => input.current?.click() };
+}
+
+type Upload = ReturnType<typeof useUpload>;
+
+function UploadButton({ upload, label }: { upload: Upload; label: string }) {
   return (
-    <>
-      <input
-        ref={input}
-        type="file"
-        accept="image/png,image/jpeg"
-        hidden
-        onChange={async (e) => {
-          const f = e.target.files?.[0];
-          if (!f) return;
-          setBusy(true);
-          onError("");
-          try {
-            onUploaded(await uploadArtwork(f));
-          } catch (err) {
-            onError(err instanceof Error ? err.message : "Upload failed.");
-          } finally {
-            setBusy(false);
-            e.target.value = "";
-          }
-        }}
-      />
-      <button type="button" className="acc-btn acc-btn--small" disabled={busy} onClick={() => input.current?.click()}>
-        {busy ? "Uploading…" : label}
-      </button>
-    </>
+    <button type="button" className="acc-btn acc-btn--small" disabled={upload.busy} onClick={upload.open}>
+      {upload.busy ? "Uploading…" : label}
+    </button>
+  );
+}
+
+/** Props that make a card preview open its upload: click, tap, Enter or Space (clicks on the QR code don't count). */
+function clickToUpload(upload: Upload, label: string, enabled: boolean) {
+  if (!enabled) return {};
+  return {
+    role: "button",
+    tabIndex: 0,
+    "aria-label": label,
+    title: label,
+    "data-upload": "",
+    onClick: (e: React.MouseEvent) => {
+      if (!(e.target as HTMLElement).closest(".card-design__qr")) upload.open();
+    },
+    onKeyDown: (e: React.KeyboardEvent) => {
+      if (e.target !== e.currentTarget || (e.key !== "Enter" && e.key !== " ")) return;
+      e.preventDefault();
+      upload.open();
+    },
+  } as const;
+}
+
+/** The empty slot: WordPress's image placeholder (plugin images/image-placeholder.jpg) and a hint. */
+function Placeholder({ hint }: { hint: string }) {
+  return (
+    <span className="card-design__empty">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src="/images/card/image-placeholder.png" alt="" />
+      <span>{hint}</span>
+    </span>
   );
 }
 
@@ -96,6 +134,9 @@ export function CardDesigner({
   const [busy, start] = useTransition();
   const qr = useQr(cardUrl, c.qrCodeColour, c.qrFillColour);
   const back = useRef<HTMLDivElement>(null);
+  const frontUpload = useUpload((p) => setC((x) => ({ ...x, frontPath: p })), setError);
+  const backUpload = useUpload((p) => setC((x) => ({ ...x, backPath: p })), setError);
+  const logoUpload = useUpload((p) => setK((x) => ({ ...x, frontPath: p })), setError);
   const drag = useRef<{ mode: "move" | "resize"; x: number; y: number; start: Custom } | null>(null);
 
   // The QR box moves; its corner handle (data-mode="resize") resizes it.
@@ -144,6 +185,9 @@ export function CardDesigner({
 
   return (
     <div className="card-design">
+      {frontUpload.picker}
+      {backUpload.picker}
+      {logoUpload.picker}
       {locked ? <div className="acc-panel acc-panel--notice">This design has been received by MeCard and can no longer be changed.</div> : null}
 
       {kind === "custom" ? (
@@ -152,17 +196,23 @@ export function CardDesigner({
           <div className="card-design__grid">
             <div>
               <div className="card-design__label">Card front</div>
-              <div className="card-design__card">
+              <div className="card-design__card" {...clickToUpload(frontUpload, c.frontPath ? "Click to replace the front design" : "Click to upload the front design", !locked)}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                {c.frontPath ? <img src={art(c.frontPath)!} alt="Card front artwork" /> : <span className="card-design__empty">Front design</span>}
+                {c.frontPath ? <img src={art(c.frontPath)!} alt="Card front artwork" /> : <Placeholder hint="Click to upload the front design" />}
               </div>
-              {!locked ? <UploadButton label={c.frontPath ? "Replace front image" : "Upload front image"} onUploaded={(p) => setC((x) => ({ ...x, frontPath: p }))} onError={setError} /> : null}
+              {!locked ? <UploadButton upload={frontUpload} label={c.frontPath ? "Replace front image" : "Upload front image"} /> : null}
             </div>
             <div>
               <div className="card-design__label">Card back, with the QR code</div>
-              <div className="card-design__card" ref={back} onPointerMove={onPointerMove} onPointerUp={onPointerUp}>
+              <div
+                className="card-design__card"
+                ref={back}
+                onPointerMove={onPointerMove}
+                onPointerUp={onPointerUp}
+                {...clickToUpload(backUpload, c.backPath ? "Click to replace the back design" : "Click to upload the back design", !locked)}
+              >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                {c.backPath ? <img src={art(c.backPath)!} alt="Card back artwork" /> : <span className="card-design__empty">Back design</span>}
+                {c.backPath ? <img src={art(c.backPath)!} alt="Card back artwork" /> : <Placeholder hint="Click to upload the back design" />}
                 <div
                   className={`card-design__qr${locked ? "" : " is-editable"}`}
                   style={{ left: c.qrX, top: c.qrY, width: c.qrWidth, height: c.qrWidth, background: c.qrFillColour }}
@@ -176,7 +226,7 @@ export function CardDesigner({
                   {!locked ? <span className="card-design__handle" data-mode="resize" onPointerDown={onPointerDown} aria-label="Resize QR code" /> : null}
                 </div>
               </div>
-              {!locked ? <UploadButton label={c.backPath ? "Replace back image" : "Upload back image"} onUploaded={(p) => setC((x) => ({ ...x, backPath: p }))} onError={setError} /> : null}
+              {!locked ? <UploadButton upload={backUpload} label={c.backPath ? "Replace back image" : "Upload back image"} /> : null}
               <p className="acc__muted" style={{ marginTop: 8 }}>
                 The QR code is generated automatically. Drag it into place and use the corner handle to resize it.
               </p>
@@ -207,15 +257,15 @@ export function CardDesigner({
         <div className="card-design__grid">
           <div>
             <div className="card-design__label">Classic card front</div>
-            <div className="card-design__card card-design__card--classic">
+            <div className="card-design__card card-design__card--classic" {...clickToUpload(logoUpload, logo ? "Click to change your logo" : "Click to upload your logo", !locked)}>
               <div className="card-design__logo">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                {logo ? <img src={imageUrl(logo, 480)!} alt="Logo" /> : <span className="card-design__empty">Your logo</span>}
+                {logo ? <img src={imageUrl(logo, 480)!} alt="Logo" /> : <Placeholder hint="Click to upload your logo" />}
               </div>
               <p className="card-design__name">{k.nameOnCard || defaults.name}</p>
               <p className="card-design__title">{k.jobTitleOnCard || defaults.jobTitle}</p>
             </div>
-            {!locked ? <UploadButton label={logo ? "Change logo" : "Upload logo"} onUploaded={(p) => setK((x) => ({ ...x, frontPath: p }))} onError={setError} /> : null}
+            {!locked ? <UploadButton upload={logoUpload} label={logo ? "Change logo" : "Upload logo"} /> : null}
           </div>
           <div className="acc-form">
             <div className="acc-field">
