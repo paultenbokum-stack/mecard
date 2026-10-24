@@ -209,7 +209,7 @@ export function BundleOffer({ u, showManageCards = true }: { u: Upsells; showMan
 }
 
 /** A classic card with its Front / Back toggle (the back is the standard MeCard design). */
-function ClassicCardPreview({ logo, name, jobTitle }: { logo: string | null; name: string; jobTitle: string }) {
+export function ClassicCardPreview({ logo, name, jobTitle }: { logo: string | null; name: string; jobTitle: string }) {
   const [side, setSide] = useState<"front" | "back">("front");
   const src = imageUrl(logo, 480);
   return (

@@ -15,11 +15,18 @@ import { accountState } from "@/lib/onboarding";
 import { requireUserId } from "@/lib/session";
 import { TeamPrompt } from "@/components/account/TeamPrompt";
 import { teamPromptCookie } from "@/lib/upsell-rules";
-import { BundleJourney, ProUpsell, UpgradeButton } from "@/components/account/Upsells";
+import { BundleJourney, UpgradeButton } from "@/components/account/Upsells";
 import { loadUpsells } from "@/lib/upsells";
+import { eq } from "drizzle-orm";
+import { db } from "@/db/client";
+import { profiles } from "@/db/schema";
+import { manageViewFor } from "@/lib/manage-view";
+import { SingleHome } from "./SingleHome";
 import { acceptInviteAction, archiveProfileAction } from "./actions";
 
-export const metadata: Metadata = { title: "Profiles" };
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: (await manageViewFor()).view === "single" ? "My MeCard Home" : "Profiles" };
+}
 
 type SP = { done?: string; activate?: string; q?: string; page?: string; show?: string };
 
@@ -31,6 +38,15 @@ export default async function ManageHome({ searchParams }: { searchParams: Promi
   if (!sp.activate && (await accountState(v.id)) === "first_time") redirect("/onboarding/");
   // Activating a card happens on My Cards now; old links (the unlinked-card page, emails) still land here.
   if (sp.activate) redirect(`/manage/cards/?activate=${encodeURIComponent(sp.activate)}#activate`);
+  // One profile of their own: WordPress's single "My MeCard Home" instead of the team dashboard.
+  const mv = await manageViewFor(v.id);
+  if (mv.view === "single" && mv.profileId) {
+    const [[profile], u] = await Promise.all([
+      db.select({ id: profiles.id, slug: profiles.slug, firstName: profiles.firstName, lastName: profiles.lastName, type: profiles.type }).from(profiles).where(eq(profiles.id, mv.profileId)),
+      loadUpsells(v),
+    ]);
+    return <SingleHome v={v} profile={profile} u={u} done={sp.done} />;
+  }
   const archived = sp.show === "archived";
   const page = Math.max(1, Number(sp.page) || 1);
 
@@ -42,7 +58,6 @@ export default async function ManageHome({ searchParams }: { searchParams: Promi
     archived || sp.q ? listProfiles(v, { archived: false, page: 1 }).then((r) => r.total) : Promise.resolve(-1),
   ]);
   const totalActive = activeCount >= 0 ? activeCount : list.total;
-  const single = !archived && !sp.q && list.total === 1 ? list.rows[0] : null;
   // The list as it is now (search, page), for the profile editor to come back to.
   const listQs = new URLSearchParams({ ...(sp.q ? { q: sp.q } : {}), ...(page > 1 ? { page: String(page) } : {}) }).toString();
   const editHref = (id: number) => `/manage/profile/${id}/${listQs ? `?back=${encodeURIComponent(`/manage/?${listQs}`)}` : ""}`;
@@ -88,40 +103,12 @@ export default async function ManageHome({ searchParams }: { searchParams: Promi
         </section>
       ) : null}
 
-      {single ? (
-        <section className="acc-panel">
-          <h2>Manage your profile</h2>
-          <div className="acc-item" style={{ border: 0, padding: 0, background: "none" }}>
-            <div className="acc-item__main">
-              <Avatar path={single.photoPath} />
-              <div className="acc-item__text">
-                <div className="acc-item__title">
-                  {`${single.firstName} ${single.lastName}`.trim() || single.slug}{" "}
-                  <span className={`acc-badge${isPro(single) ? " acc-badge--pro" : ""}`}>{isPro(single) ? "Pro" : "Standard"}</span>
-                </div>
-                <div className="acc-item__sub">{[single.jobTitle, single.companyName].filter(Boolean).join(" · ")}</div>
-              </div>
-            </div>
-          </div>
-          {!isPro(single) && u.eftPending ? <p className="acc__muted" style={{ marginTop: 12 }}>Your Pro upgrade is pending — we&rsquo;re just waiting for EFT confirmation.</p> : null}
-          <div className="acc-actions">
-            <a className="acc-btn" href={`/mecard-profile/${single.slug}/`} target="_blank" rel="noopener">
-              View profile <NewTab />
-            </a>
-            <Link className="acc-btn acc-btn--primary" href={`/manage/profile/${single.id}/`} scroll={false}>
-              Edit profile
-            </Link>
-          </div>
-        </section>
-      ) : null}
-
       <BundleJourney u={u} />
-      {u.eftPending && !single ? <div className="acc-panel acc-panel--notice">Your Pro upgrade is pending &mdash; we&rsquo;re just waiting for EFT confirmation.</div> : null}
-      <ProUpsell u={u} />
+      {u.eftPending ? <div className="acc-panel acc-panel--notice">Your Pro upgrade is pending &mdash; we&rsquo;re just waiting for EFT confirmation.</div> : null}
 
       <section className="acc-panel" id="profiles">
         <div className="acc-panel__head">
-          <h2>{archived ? "Archived profiles" : single ? "Profiles" : "Your profiles"}</h2>
+          <h2>{archived ? "Archived profiles" : "Your profiles"}</h2>
           <span className="acc__muted">
             {archived ? (
               <Link href="/manage/">Show active profiles</Link>

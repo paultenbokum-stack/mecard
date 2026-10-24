@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { imageUrl } from "@/lib/images/paths";
+import { manageViewFor } from "@/lib/manage-view";
 import { ConfirmButton } from "./ConfirmButton";
 
 // Small pieces shared by the /manage/ screens.
@@ -11,11 +12,32 @@ const TABS = [
   ["companies", "Companies", "/manage/companies/"],
 ] as const;
 
-export function Subnav({ active }: { active: (typeof TABS)[number][0] | "" }) {
+/**
+ * The /manage/ tabs. The single view (one profile of your own, manageViewFor)
+ * has WordPress's single subnav instead: Home, Edit Profile and My Cards.
+ */
+export async function Subnav({ active }: { active: (typeof TABS)[number][0] | "profile" | "" }) {
+  const { view, profileId } = await manageViewFor();
+  if (view === "single") {
+    const links = [
+      ["home", "Home", "/manage/"],
+      ["profile", "Edit Profile", `/manage/profile/${profileId}/`],
+      ["cards", "My Cards", "/manage/cards/"],
+    ] as const;
+    return (
+      <nav className="acc-subnav" aria-label="My MeCard">
+        {links.map(([key, label, href]) => (
+          <Link key={key} href={href} aria-current={active === key ? "page" : undefined}>
+            {label}
+          </Link>
+        ))}
+      </nav>
+    );
+  }
   return (
     <nav className="acc-subnav" aria-label="Manage MeCard">
       {TABS.map(([key, label, href]) => (
-        <Link key={key} href={href} aria-current={active === key ? "page" : undefined}>
+        <Link key={key} href={href} aria-current={active === key || (active === "profile" && key === "home") ? "page" : undefined}>
           {label}
         </Link>
       ))}

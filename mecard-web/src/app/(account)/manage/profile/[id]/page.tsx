@@ -11,7 +11,7 @@ export default async function EditProfilePage({ params, searchParams }: { params
   const data = await loadProfileEditor(id);
   return (
     <div className="acc__wrap acc__wrap--wide">
-      <Subnav active="home" />
+      <Subnav active="profile" />
       <p className="acc__eyebrow">Edit profile</p>
       <h1>
         {data.name} <ProfileBadge pro={data.pro} />

@@ -125,6 +125,7 @@ export async function listCards(v: Viewer, opts: { tab: CardTab; q?: string; pag
         label: cards.label,
         title: cards.title,
         nameOnCard: cards.nameOnCard,
+        jobTitleOnCard: cards.jobTitleOnCard,
         frontPath: cards.frontPath,
         autoDownloadVcard: cards.autoDownloadVcard,
         orderId: cards.orderId,
