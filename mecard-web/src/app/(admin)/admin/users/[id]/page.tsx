@@ -10,6 +10,8 @@ import { AdminHeader, type AdminSearchParams, Badge, Breadcrumbs, Card, Flash } 
 import { userDeleteGuard } from "@/lib/admin-guards";
 import { deleteUserAction, saveUserAction, sendResetAction, userDeleteCounts } from "@/lib/admin-user-actions";
 import { ENTITLEMENT_STATUS_LABEL, ENTITLEMENT_TYPE_LABEL } from "@/lib/entitlement-labels";
+import { imageUrl } from "@/lib/images/paths";
+import { listLibrary } from "@/lib/media-library";
 import { formatDate, ORDER_STATUS_LABEL, rands } from "@/lib/money";
 import { effectiveStatus, QUOTE_STATUS_LABEL } from "@/lib/quote-rules";
 import { requireAdmin } from "@/lib/session";
@@ -22,7 +24,7 @@ export default async function AdminUser({ params, searchParams }: { params: Prom
   const sp = await searchParams;
   const [u] = Number.isInteger(id) ? await db.select().from(users).where(eq(users.id, id)) : [];
   if (!u) notFound();
-  const [profs, comps, cardRows, orderRows, quoteRows, ents, counts] = await Promise.all([
+  const [profs, comps, cardRows, orderRows, quoteRows, ents, counts, images] = await Promise.all([
     db
       .select({ p: profiles, company: companies.name })
       .from(profiles)
@@ -44,6 +46,7 @@ export default async function AdminUser({ params, searchParams }: { params: Prom
       .where(eq(entitlements.ownerId, id))
       .groupBy(entitlements.type, entitlements.status),
     userDeleteCounts(id),
+    listLibrary(id),
   ]);
   const name = u.displayName || `${u.firstName} ${u.lastName}`.trim() || u.email;
   const guard = userDeleteGuard({ ...counts, isSelf: id === me });
@@ -121,6 +124,24 @@ export default async function AdminUser({ params, searchParams }: { params: Prom
                 None.
               </p>
             )}
+          </Card>
+          <Card title={`Images (${images.total})`}>
+            {images.rows.length ? (
+              <div className="adm-images">
+                {images.rows.map((m) => (
+                  <a key={m.id} className="adm-images__item" href={imageUrl(m.path) ?? "#"} target="_blank" rel="noopener" title={`${m.filename} · ${formatDate(m.createdAt)}`}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    {m.active ? <img src={imageUrl(m.path, 160)!} alt="" loading="lazy" /> : <span className="adm-muted">archived</span>}
+                    <span className="adm-small">{m.title || m.filename}</span>
+                  </a>
+                ))}
+              </div>
+            ) : (
+              <p className="adm-muted" style={{ margin: 0 }}>
+                None.
+              </p>
+            )}
+            {images.total > images.rows.length ? <p className="adm-small adm-muted">Newest {images.rows.length} shown. Archived images are restored when opened.</p> : null}
           </Card>
           <Card title={`Orders (${orderRows.length})`}>
             {orderRows.length ? (

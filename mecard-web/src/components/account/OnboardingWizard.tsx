@@ -1,9 +1,10 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useRef, useState, useSyncExternalStore, useTransition } from "react";
+import { useState, useSyncExternalStore, useTransition } from "react";
 import { onboardingStepAction, sendProfileLinkAction } from "@/app/(account)/sign-up/actions";
 import { imageUrl } from "@/lib/images/paths";
+import { ImageLibrary } from "./ImageLibrary";
 
 // js/me-onboarding.js: basics → contact → preview → install, saved step by
 // step, then on to the dashboard. The card and Pro offers are on /manage/.
@@ -99,7 +100,7 @@ export function OnboardingWizard({ initial, userEmail }: { initial: Fields & { i
                 <label>
                   Profile photo <span className="me-step__optional">optional</span>
                 </label>
-                <MediaPicker kind="photo" path={f.photoPath} onChange={(p) => set("photoPath", p)} onError={setError} />
+                <MediaPicker kind="photo" path={f.photoPath} onChange={(p) => set("photoPath", p)} />
               </div>
             </div>
           ) : null}
@@ -110,7 +111,7 @@ export function OnboardingWizard({ initial, userEmail }: { initial: Fields & { i
               <Field id="me-company-name" label="Company" value={f.companyName} onChange={(v) => set("companyName", v)} placeholder="e.g. Acme Corp" />
               <div className="me-step__field">
                 <label>Company logo</label>
-                <MediaPicker kind="logo" path={f.companyLogoPath} onChange={(p) => set("companyLogoPath", p)} onError={setError} />
+                <MediaPicker kind="logo" path={f.companyLogoPath} onChange={(p) => set("companyLogoPath", p)} />
               </div>
               <Field id="me-linkedin" label="LinkedIn URL" value={f.linkedin} onChange={(v) => set("linkedin", v)} placeholder="Optional" hint="You can add more social links later by editing your profile." />
             </div>
@@ -238,37 +239,20 @@ function Field({ id, label, value, onChange, type = "text", placeholder, hint }:
   );
 }
 
-function MediaPicker({ kind, path, onChange, onError }: { kind: "photo" | "logo"; path: string | null; onChange: (p: string) => void; onError: (e: string) => void }) {
-  const input = useRef<HTMLInputElement>(null);
-  const [busy, setBusy] = useState(false);
+/** Upload, or reuse an image from My images (the media picker every image field uses). */
+function MediaPicker({ kind, path, onChange }: { kind: "photo" | "logo"; path: string | null; onChange: (p: string) => void }) {
+  const [open, setOpen] = useState(false);
   const src = imageUrl(path, 320);
-  async function upload(file: File) {
-    setBusy(true);
-    onError("");
-    try {
-      const body = new FormData();
-      body.append("file", file);
-      const res = await fetch("/api/upload/", { method: "POST", body });
-      const json = (await res.json().catch(() => ({}))) as { path?: string; error?: string };
-      if (!res.ok || !json.path) throw new Error(json.error || "Upload failed. Please try again.");
-      onChange(json.path);
-    } catch (e) {
-      onError(e instanceof Error ? e.message : "Upload failed. Please try again.");
-    } finally {
-      setBusy(false);
-      if (input.current) input.current.value = "";
-    }
-  }
   return (
     <div className="me-media-picker" data-media-picker={kind}>
       <div className="me-media-picker__preview">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         {src ? <img className="me-media-picker__image" src={src} alt="" /> : <div className="me-media-picker__placeholder">{kind === "photo" ? "Photo" : "Logo"}</div>}
       </div>
-      <input ref={input} type="file" accept="image/jpeg,image/png,image/webp,image/gif" hidden onChange={(e) => e.target.files?.[0] && void upload(e.target.files[0])} />
-      <button className="me-btn me-btn--secondary me-btn--small" type="button" disabled={busy} onClick={() => input.current?.click()}>
-        {busy ? "Uploading…" : src ? `Change ${kind}` : `Choose ${kind}`}
+      <button className="me-btn me-btn--secondary me-btn--small" type="button" onClick={() => setOpen(true)}>
+        {src ? `Change ${kind}` : `Choose ${kind}`}
       </button>
+      {open ? <ImageLibrary slot={kind} title={kind === "photo" ? "Profile photo" : "Company logo"} onPick={onChange} onClose={() => setOpen(false)} /> : null}
     </div>
   );
 }

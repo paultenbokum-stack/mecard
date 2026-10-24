@@ -157,3 +157,9 @@
 .adm-dl dt { color: var(--muted); }
 .adm-dl dd { margin: 0; }
 .adm-blockers { margin: 0 0 10px; padding-left: 18px; color: #8a2020; font-size: 13px; }
+
+/* A user's images (media library) */
+.adm-images { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 8px; }
+.adm-images__item { display: grid; gap: 4px; justify-items: center; text-align: center; text-decoration: none; overflow: hidden; }
+.adm-images__item img, .adm-images__item > .adm-muted { width: 96px; height: 96px; object-fit: contain; border: 1px solid #e5e7eb; border-radius: 6px; background: #f7f8fa; display: grid; place-items: center; font-size: 12px; }
+.adm-images__item .adm-small { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
