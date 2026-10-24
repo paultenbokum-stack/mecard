@@ -12,3 +12,9 @@ test("manageView: none, several, or a company of your own is the team view", () 
   assert.equal(manageView({ ownProfiles: 1, ownsCompany: true }), "team");
   assert.equal(manageView({ ownProfiles: 0, ownsCompany: true }), "team");
 });
+
+test("manageView: a company that is only your own profile's branding keeps the single view", () => {
+  assert.equal(manageView({ ownProfiles: 1, ownsCompany: true, companyIsOwnBranding: true }), "single");
+  assert.equal(manageView({ ownProfiles: 2, ownsCompany: true, companyIsOwnBranding: true }), "team");
+  assert.equal(manageView({ ownProfiles: 1, ownsCompany: true, companyIsOwnBranding: false }), "team");
+});

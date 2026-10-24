@@ -18,11 +18,11 @@ const TABS = [
  * has WordPress's single subnav instead: Home, Edit Profile and My Cards.
  */
 export async function Subnav({ active }: { active: (typeof TABS)[number][0] | "profile" | "" }) {
-  const { view, profileId } = await manageViewFor();
+  const { view } = await manageViewFor();
   if (view === "single") {
     const links = [
       ["home", "Home", "/manage/"],
-      ["profile", "Edit Profile", `/manage/profile/${profileId}/`],
+      ["profile", "Edit Profile", "/manage/my-profile/"],
       ["cards", "My Cards", "/manage/cards/"],
     ] as const;
     return (

@@ -296,3 +296,15 @@
 .acc-single__head { margin-bottom: var(--space-2); }
 .acc-single__cards { list-style: none; margin: 0 0 var(--space-3); padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: var(--space-4); }
 .acc-single__cards li { display: grid; gap: var(--space-2); align-content: start; }
+
+/* The single view's profile wizard (/manage/my-profile/): steps and Back / Next. */
+.acc-steps { display: flex; flex-wrap: wrap; gap: var(--space-2); list-style: none; margin: 0 0 var(--space-6); padding: 0; counter-reset: none; }
+.acc-steps li { flex: 1 1 200px; }
+.acc-steps a { display: flex; align-items: center; gap: var(--space-2); padding: var(--space-3) var(--space-4); border: 1px solid var(--surface-muted); border-radius: var(--radius-md); background: var(--surface); color: var(--ink-muted); font-family: var(--font-display); font-weight: 600; text-decoration: none; }
+.acc-steps a:hover { box-shadow: var(--shadow-sm); }
+.acc-steps a:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+.acc-steps__num { display: inline-grid; place-items: center; width: 28px; height: 28px; border-radius: var(--radius-pill); background: var(--brand-tint); color: var(--brand); font-size: 14px; }
+.acc-steps .is-current a { border-color: var(--brand); color: var(--ink); }
+.acc-steps .is-current .acc-steps__num { background: var(--brand); color: var(--on-brand); }
+.acc-steps .is-done .acc-steps__num { background: var(--brand-tint); color: var(--brand); }
+.acc-wizard-nav { display: inline-flex; flex-wrap: wrap; gap: var(--space-2); }

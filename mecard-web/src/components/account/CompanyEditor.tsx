@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { saveCompanyAction } from "@/app/(account)/manage/editor-actions";
 import type { Company, ProfileView } from "@/lib/profile-view";
-import { Field, ImageField, LinksEditor, LivePreview, SaveBar, type LinkRow } from "./EditorParts";
+import { Field, ImageField, LinksEditor, LivePreview, SaveBar, WizardNav, type LinkRow, type WizardLinks } from "./EditorParts";
 
 // The company editor (edit-companies form, Me\Company_Editor and the company
 // half of the single editor), previewed on one of the company's profiles.
@@ -42,12 +42,15 @@ export function CompanyEditor({
   colours,
   icons,
   sampleLabel,
+  wizard,
 }: {
   sample: ProfileView & { company: Company };
   fonts: [string, string][];
   colours: readonly (readonly [keyof Fields, string])[];
   icons: { class: string; label: string }[];
   sampleLabel: string;
+  /** The single view's step buttons; moving on saves first. */
+  wizard?: WizardLinks;
 }) {
   const router = useRouter();
   const c0 = sample.company;
@@ -103,7 +106,7 @@ export function CompanyEditor({
     profileLinks: sample.profileLinks,
   };
 
-  const save = () =>
+  const save = (then?: () => void) =>
     startSave(async () => {
       const res = await saveCompanyAction(c0.id, { ...f, links: links.map(({ id, label, url, icon }) => ({ id, label, url, icon })) });
       if (!res.ok) {
@@ -114,7 +117,8 @@ export function CompanyEditor({
       setLinks(kept);
       setSaved({ fields: f, links: kept });
       setMessage({ ok: true, text: "Saved. Every profile in the company shows the change." });
-      router.refresh();
+      if (then) then();
+      else router.refresh();
     });
 
   return (
@@ -223,7 +227,13 @@ export function CompanyEditor({
           </section>
         ) : null}
 
-        <SaveBar dirty={dirty} saving={saving} message={message} onSave={save} />
+        <SaveBar
+          dirty={dirty}
+          saving={saving}
+          message={message}
+          onSave={() => save()}
+          extra={wizard ? <WizardNav links={wizard} busy={saving} onNext={(go) => (dirty ? save(go) : go())} /> : null}
+        />
       </div>
       <aside className="acc-editor__preview">
         <LivePreview view={view} pro label={sampleLabel} />

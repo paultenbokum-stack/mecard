@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { ProProfile } from "@/components/card/ProProfile";
 import { StandardProfile } from "@/components/card/StandardProfile";
@@ -159,16 +161,36 @@ export function LinksEditor({
 }
 
 /** The sticky save bar with the result of the last save. */
+export type WizardLinks = { back?: { href: string; label: string }; next: { href: string; label: string } };
+
+/** Back and Next in the single view's profile wizard. onNext saves unsaved changes first, then calls go. */
+export function WizardNav({ links, busy, onNext }: { links: WizardLinks; busy: boolean; onNext: (go: () => void) => void }) {
+  const router = useRouter();
+  return (
+    <span className="acc-wizard-nav">
+      {links.back ? (
+        <Link className="acc-btn" href={links.back.href}>
+          &larr; {links.back.label}
+        </Link>
+      ) : null}
+      <button type="button" className="acc-btn acc-btn--primary" disabled={busy} onClick={() => onNext(() => router.push(links.next.href))}>
+        {links.next.label}{" "}&rarr;
+      </button>
+    </span>
+  );
+}
+
+/** extra: the wizard's Back and Next, which then take the main button and Save steps back. */
 export function SaveBar({ dirty, saving, message, onSave, extra }: { dirty: boolean; saving: boolean; message: { ok: boolean; text: string } | null; onSave: () => void; extra?: React.ReactNode }) {
   return (
     <div className="acc-savebar">
       <span className="acc-savebar__status" role="status">
         {message ? <span className={message.ok ? "acc-ok" : "acc-error"}>{message.text}</span> : dirty ? "You have unsaved changes." : "All changes saved."}
       </span>
-      {extra}
-      <button type="button" className="acc-btn acc-btn--primary" onClick={onSave} disabled={saving || !dirty}>
+      <button type="button" className={`acc-btn${extra ? "" : " acc-btn--primary"}`} onClick={onSave} disabled={saving || !dirty}>
         {saving ? "Saving…" : "Save changes"}
       </button>
+      {extra}
     </div>
   );
 }

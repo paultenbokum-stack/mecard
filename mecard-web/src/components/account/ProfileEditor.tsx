@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { saveProfileAction } from "@/app/(account)/manage/editor-actions";
 import type { Link as ProfileLink, ProfileView } from "@/lib/profile-view";
-import { Field, ImageField, LinksEditor, LivePreview, SaveBar, type LinkRow } from "./EditorParts";
+import { Field, ImageField, LinksEditor, LivePreview, SaveBar, WizardNav, type LinkRow, type WizardLinks } from "./EditorParts";
 
 // The profile editor: every field the single-profile editor and the
 // edit-mecard-profile forms had, with the card rendered live beside it.
@@ -34,8 +34,23 @@ type Fields = {
 
 const toRows = (links: ProfileLink[]): LinkRow[] => links.map((l) => ({ key: `l${l.id}`, id: l.id, label: l.label, url: l.url }));
 
-/** pendingPayment: Pro is unlocked but not paid yet, so saving doesn't change the public card's template. */
-export function ProfileEditor({ initial, pro, pendingPayment, children }: { initial: ProfileView; pro: boolean; pendingPayment?: boolean; children?: React.ReactNode }) {
+/**
+ * pendingPayment: Pro is unlocked but not paid yet, so saving doesn't change the public card's template.
+ * wizard: the single view's step buttons; moving on saves first.
+ */
+export function ProfileEditor({
+  initial,
+  pro,
+  pendingPayment,
+  wizard,
+  children,
+}: {
+  initial: ProfileView;
+  pro: boolean;
+  pendingPayment?: boolean;
+  wizard?: WizardLinks;
+  children?: React.ReactNode;
+}) {
   const router = useRouter();
   const p0 = initial.profile;
   const start: Fields = {
@@ -82,7 +97,7 @@ export function ProfileEditor({ initial, pro, pendingPayment, children }: { init
     profileLinks: links.filter((l) => l.label.trim()).map((l, i) => ({ id: l.id ?? -(i + 1), label: l.label, url: l.url, icon: "" })),
   };
 
-  const save = () =>
+  const save = (then?: () => void) =>
     startSave(async () => {
       const res = await saveProfileAction(p0.id, { ...f, links: links.map(({ id, label, url }) => ({ id, label, url })) });
       if (!res.ok) {
@@ -97,7 +112,8 @@ export function ProfileEditor({ initial, pro, pendingPayment, children }: { init
         ok: true,
         text: res.becamePro ? "Saved. Your Pro upgrade was applied." : pendingPayment ? "Saved. Your Pro details go live once payment is received." : "Saved. Your card is up to date.",
       });
-      router.refresh();
+      if (then) then();
+      else router.refresh();
     });
 
   return (
@@ -192,7 +208,13 @@ export function ProfileEditor({ initial, pro, pendingPayment, children }: { init
           </div>
         </section>
 
-        <SaveBar dirty={dirty} saving={saving} message={message} onSave={save} />
+        <SaveBar
+          dirty={dirty}
+          saving={saving}
+          message={message}
+          onSave={() => save()}
+          extra={wizard ? <WizardNav links={wizard} busy={saving} onNext={(go) => (dirty ? save(go) : go())} /> : null}
+        />
       </div>
       <aside className="acc-editor__preview">
         <LivePreview view={view} pro={pro} />

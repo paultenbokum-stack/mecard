@@ -17,6 +17,13 @@ import { requireUserId } from "@/lib/session";
 
 // Saves from the profile and company editors.
 
+/** Where to go after an action from the single view's wizard (a /manage/ path), or the default. */
+function nextPath(form: FormData, fallback: string, done: string) {
+  const next = String(form.get("next") ?? "");
+  const path = next.startsWith("/manage/") && !next.includes("//") ? next : fallback;
+  return `${path}${path.includes("?") ? "&" : "?"}done=${done}`;
+}
+
 export type SaveResult = { ok: true; becamePro?: boolean } | { ok: false; error: string };
 
 export async function saveProfileAction(profileId: number, raw: Record<string, unknown>): Promise<SaveResult> {
@@ -40,7 +47,7 @@ export async function applyUpgradeAction(form: FormData) {
   for (const payer of new Set([v.id, p?.ownerId, p?.managerId].filter((x): x is number => !!x))) {
     if ((applied = await applyProUpgrade(profileId, payer))) break;
   }
-  redirect(`/manage/profile/${profileId}/?done=${applied ? "upgrade-applied" : "upgrade-none"}`);
+  redirect(nextPath(form, `/manage/profile/${profileId}/`, applied ? "upgrade-applied" : "upgrade-none"));
 }
 
 /**
@@ -61,7 +68,7 @@ export async function startProUpgradeAction(form: FormData) {
     // Its company details now wait for payment too (getPublicProfileView).
     await refreshProfilePages(profileId);
   }
-  redirect(`/manage/profile/${profileId}/?done=pro-pending`);
+  redirect(nextPath(form, `/manage/profile/${profileId}/`, "pro-pending"));
 }
 
 export async function setupCompanyAction(form: FormData) {
@@ -69,7 +76,7 @@ export async function setupCompanyAction(form: FormData) {
   const profileId = Number(form.get("profile_id"));
   if (!(await canEditProfile(v, profileId))) redirect("/manage/?done=denied");
   const companyId = await createCompanyForProfile(profileId, v.id);
-  redirect(`/manage/company/${companyId}/?done=company-created`);
+  redirect(nextPath(form, `/manage/company/${companyId}/`, "company-created"));
 }
 
 export async function saveCompanyAction(companyId: number, raw: Record<string, unknown>): Promise<SaveResult> {

@@ -26,7 +26,7 @@ export async function SingleHome({ v, profile, u, done }: { v: Viewer; profile: 
   ];
   const pro = isPro(profile);
   const proPending = pro ? undefined : pendingMap.get(profile.id);
-  const editHref = `/manage/profile/${profile.id}/`;
+  const editHref = "/manage/my-profile/";
 
   return (
     <div className="acc__wrap">
@@ -56,7 +56,7 @@ export async function SingleHome({ v, profile, u, done }: { v: Viewer; profile: 
           <a className="acc-btn" href={`/mecard-profile/${profile.slug}/`} target="_blank" rel="noopener">
             View profile <NewTab />
           </a>
-          <Link className="acc-btn acc-btn--primary" href={editHref} scroll={false}>
+          <Link className="acc-btn acc-btn--primary" href={editHref}>
             {u.journey ? "Continue profile setup" : "Edit profile"}
           </Link>
         </div>
