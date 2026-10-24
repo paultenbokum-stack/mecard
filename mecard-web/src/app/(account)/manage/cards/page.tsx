@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { CARD_TYPES, DoneNotice, Pager, Subnav, Thumb } from "@/components/account/Bits";
+import { CARD_TYPES, DoneNotice, Pager, Subnav, Thumb, NewTab } from "@/components/account/Bits";
 import { viewer } from "@/lib/access";
 import { CARD_TABS, cardProgress, DESIGNED_CARD_TYPES, isCardTab, type CardTab } from "@/lib/card-tabs";
 import { cardTabCounts, listCards, PAGE_SIZE } from "@/lib/manage";
@@ -125,8 +125,8 @@ export default async function CardsPage({ searchParams }: { searchParams: Promis
                       </>
                     ) : tab === "live" ? (
                       <>
-                        <a className="acc-btn acc-btn--small" href={`/t/${c.slug}/`}>
-                          Open
+                        <a className="acc-btn acc-btn--small" href={`/t/${c.slug}/`} target="_blank" rel="noopener">
+                          Open <NewTab />
                         </a>
                         {edit("Edit", "acc-btn--primary")}
                       </>

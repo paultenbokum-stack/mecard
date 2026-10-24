@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { ConfirmButton, DoneNotice } from "@/components/account/Bits";
+import { ConfirmButton, DoneNotice, NewTab } from "@/components/account/Bits";
 import { ProfileEditor } from "@/components/account/ProfileEditor";
 import { canEditProfile, canManageCompany, viewer } from "@/lib/access";
 import { availableProUpgrades, hasPendingUpgrade } from "@/lib/manage";
@@ -38,7 +38,7 @@ export function EditProfile({ data, done }: { data: Awaited<ReturnType<typeof lo
   return (
     <>
       <p className="acc__lead">
-        Changes show on your card as soon as you save. <a href={`/mecard-profile/${p.slug}/`}>View your live profile</a>
+        Changes show on your card as soon as you save. <a href={`/mecard-profile/${p.slug}/`} target="_blank" rel="noopener">View your live profile <NewTab /></a>
         {p.archived ? " (archived: it isn't public until you restore it under Profiles)" : ""}.
       </p>
       <DoneNotice done={done} />

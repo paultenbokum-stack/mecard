@@ -107,3 +107,13 @@ export function cardStage(c: { designSubmitted: boolean; printed: boolean; shipp
   if (c.designSubmitted) return ["In production", "wait"];
   return ["Awaiting design", "off"];
 }
+
+/** After a link that opens a public card or profile in a new tab. */
+export function NewTab() {
+  return (
+    <>
+      <i className="fa-solid fa-arrow-up-right-from-square acc-newtab" aria-hidden="true" />
+      <span className="screen-reader-text">(opens in a new tab)</span>
+    </>
+  );
+}

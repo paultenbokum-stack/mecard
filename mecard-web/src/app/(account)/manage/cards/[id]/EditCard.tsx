@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { CARD_TYPES, ConfirmButton } from "@/components/account/Bits";
+import { CARD_TYPES, ConfirmButton, NewTab } from "@/components/account/Bits";
 import { CardDesigner } from "@/components/account/CardDesigner";
 import { canEditProfile, canManageCard, viewer } from "@/lib/access";
 import { cardForDesign, QR_DEFAULTS } from "@/lib/card-design";
@@ -36,7 +36,7 @@ export function EditCard({ data }: { data: Awaited<ReturnType<typeof loadCardEdi
         {c.profileId ? (
           <>
             {" "}
-            · <a href={`/t/${c.slug}/`}>Open card</a>
+            · <a href={`/t/${c.slug}/`} target="_blank" rel="noopener">Open card <NewTab /></a>
           </>
         ) : null}
       </p>

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Avatar, ConfirmButton, DoneNotice, Pager, Subnav } from "@/components/account/Bits";
+import { Avatar, ConfirmButton, DoneNotice, Pager, Subnav, NewTab } from "@/components/account/Bits";
 import { viewer } from "@/lib/access";
 import {
   availableProUpgrades,
@@ -102,8 +102,8 @@ export default async function ManageHome({ searchParams }: { searchParams: Promi
           </div>
           {!isPro(single) && waitingForEft ? <p className="acc__muted" style={{ marginTop: 12 }}>Your Pro upgrade is pending — we&rsquo;re just waiting for EFT confirmation.</p> : null}
           <div className="acc-actions">
-            <a className="acc-btn" href={`/mecard-profile/${single.slug}/`}>
-              View profile
+            <a className="acc-btn" href={`/mecard-profile/${single.slug}/`} target="_blank" rel="noopener">
+              View profile <NewTab />
             </a>
             <Link className="acc-btn acc-btn--primary" href={`/manage/profile/${single.id}/`} scroll={false}>
               Edit profile
@@ -182,8 +182,8 @@ export default async function ManageHome({ searchParams }: { searchParams: Promi
                 <div className="acc-item__actions">
                   {!p.archived ? (
                     <>
-                      <a className="acc-btn acc-btn--small" href={`/mecard-profile/${p.slug}/`}>
-                        View
+                      <a className="acc-btn acc-btn--small" href={`/mecard-profile/${p.slug}/`} target="_blank" rel="noopener">
+                        View <NewTab />
                       </a>
                       <Link className="acc-btn acc-btn--small acc-btn--primary" href={`/manage/profile/${p.id}/`} scroll={false}>
                         Edit

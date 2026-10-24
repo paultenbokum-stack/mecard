@@ -230,3 +230,4 @@
   .acc-buy__img { width: 64px; height: 64px; }
   .acc-buy__form { grid-column: 1 / -1; }
 }
+.acc-newtab { font-size: 0.75em; margin-left: 4px; opacity: 0.75; }

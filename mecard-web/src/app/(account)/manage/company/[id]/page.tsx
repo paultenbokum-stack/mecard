@@ -4,7 +4,7 @@ import { and, asc, count, eq, ilike, or, sql } from "drizzle-orm";
 import { notFound, redirect } from "next/navigation";
 import { db } from "@/db/client";
 import { companies, profileLinks, profiles, users } from "@/db/schema";
-import { Avatar, ConfirmButton, DoneNotice, Pager, Subnav } from "@/components/account/Bits";
+import { Avatar, ConfirmButton, DoneNotice, Pager, Subnav, NewTab } from "@/components/account/Bits";
 import { CompanyEditor } from "@/components/account/CompanyEditor";
 import { canManageCompany, viewer } from "@/lib/access";
 import { COLOUR_FIELDS, FONT_CHOICES, ICON_CHOICES } from "@/lib/company-edit";
@@ -144,8 +144,8 @@ async function Team({ company, sp }: { company: Company; sp: SP }) {
                     </div>
                   </div>
                   <div className="acc-item__actions">
-                    <a className="acc-btn acc-btn--small" href={`/mecard-profile/${p.slug}/`}>
-                      View
+                    <a className="acc-btn acc-btn--small" href={`/mecard-profile/${p.slug}/`} target="_blank" rel="noopener">
+                      View <NewTab />
                     </a>
                     <Link className="acc-btn acc-btn--small acc-btn--primary" href={`/manage/profile/${p.id}/`}>
                       Edit
