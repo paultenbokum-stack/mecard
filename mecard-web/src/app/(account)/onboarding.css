@@ -3,17 +3,17 @@
 
 .me-onboarding,
 .me-auth-entry {
-  --me-blue: #1e73be;
-  --me-blue-dark: #175c98;
-  --me-green: #1d8f55;
+  --me-blue: var(--brand);
+  --me-blue-dark: var(--brand-strong);
+  --me-green: var(--connect-strong);
   --me-gold: #b97900;
-  --me-text: #1f2937;
-  --me-muted: #657284;
-  --me-border: #d8e1eb;
-  --me-panel: #ffffff;
-  --me-soft: #f5f8fb;
+  --me-text: var(--ink);
+  --me-muted: var(--ink-muted);
+  --me-border: var(--surface-muted);
+  --me-panel: var(--surface);
+  --me-soft: var(--surface-subtle);
   color: var(--me-text);
-  font-family: "Segoe UI", Arial, sans-serif;
+  font-family: var(--font-text);
 }
 
 .me-onboarding *,
@@ -198,7 +198,7 @@
   justify-content: center;
   min-height: 48px;
   padding: 0 18px;
-  border-radius: 999px;
+  border-radius: var(--radius-md);
   border: 1px solid transparent;
   font: inherit;
   font-weight: 700;
@@ -320,7 +320,7 @@
   height: 76px;
   border-radius: 18px;
   border: 1px solid var(--me-border);
-  background: linear-gradient(145deg, #ffffff 0%, #edf4fb 100%);
+  background: linear-gradient(145deg, #ffffff 0%, var(--brand-tint) 100%);
   overflow: hidden;
   flex-shrink: 0;
 }
@@ -488,7 +488,7 @@
 
 .me-install-shot__top {
   padding: 10px 14px;
-  background: #edf4fb;
+  background: var(--brand-tint);
   color: var(--me-muted);
   font-size: 13px;
   font-weight: 600;
@@ -590,7 +590,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: #1e73be;
+  color: var(--link);
   font-size: 28px;
   font-weight: 700;
 }
@@ -864,5 +864,11 @@ div.me-classic-card__surface.card-front.classic .classic-job-title {
 }
 
 /* The Astra page title above the sign-up pages (h1.entry-title on WordPress). */
-:where(.mecard-site) .me-page-title { font-family: var(--font-montserrat), Montserrat, sans-serif; font-size: 1.64706rem; font-weight: 400; line-height: 1.2; color: #3a3a3a; margin: 48px 0 40px; }
+:where(.mecard-site) .me-page-title { font-family: var(--font-montserrat), Montserrat, sans-serif; font-size: 1.64706rem; font-weight: 400; line-height: 1.2; color: var(--ink); margin: 48px 0 40px; }
 @media (max-width: 640px) { :where(.mecard-site) .me-page-title { text-align: center; margin: 32px 0 24px; } }
+
+/* ---------- MeCard design system ----------
+   The --me-* variables above now point at app/design-tokens.css. */
+.me-auth-entry__title, .me-step__title { font-family: var(--font-display); font-weight: 700; color: var(--ink); letter-spacing: -0.01em; }
+.me-auth-entry__eyebrow { font-family: var(--font-display); letter-spacing: 1.5px; color: var(--link); }
+.me-btn--primary:hover, .me-auth-form__submit:hover { background: var(--brand-strong); box-shadow: var(--shadow-cta); }

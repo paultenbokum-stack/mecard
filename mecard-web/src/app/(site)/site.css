@@ -407,3 +407,94 @@
 /* Contact form result messages. */
 .mc-wp .mc-form-ok{color: #155724; background: #d4edda; border: 1px solid #c3e6cb; border-radius: 0.25rem; padding: 0.75rem 1.25rem; margin-bottom: 1rem;}
 .mc-wp .mc-hp{position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden;}
+
+/* ── MeCard design system ─────────────────────────────────
+   Puts the extracted WordPress styles onto the design tokens (app/design-tokens.css).
+   Re-points Astra's global palette and the homepage's --mc-* variables, then restyles
+   headings, buttons and the homepage components. Later in the cascade than the
+   extracted rules above, at the same specificity, so these win. */
+
+.mc-wp {
+  --ast-global-color-0: var(--brand);
+  --ast-global-color-1: var(--brand-strong);
+  --ast-global-color-2: var(--ink);
+  --ast-global-color-3: var(--ink-muted);
+  --ast-global-color-4: var(--surface-subtle);
+  --ast-global-color-5: var(--surface);
+  --ast-global-color-6: var(--brand-tint);
+  --ast-global-color-7: var(--surface-muted);
+  --ast-global-color-8: var(--ink);
+  --ast-border-color: var(--surface-muted);
+  --wp--preset--color--vivid-green-cyan: var(--connect-strong);
+  --wp--preset--color--light-green-cyan: var(--connect);
+  --mc-blue: var(--brand);
+  --mc-blue-dk: var(--brand-strong);
+  --mc-blue-lt: var(--brand-tint);
+  --mc-dark: var(--ink);
+  --mc-gray-50: var(--surface-subtle);
+  --mc-gray-100: var(--surface-muted);
+  --mc-gray-400: var(--ink-subtle);
+  --mc-gray-600: var(--ink-muted);
+  --mc-gray-800: var(--ink-strong);
+  --mc-green: var(--connect-strong);
+  --mc-radius: var(--radius-md);
+  --mc-radius-lg: var(--radius-lg);
+  color: var(--ink-muted);
+  font-family: var(--font-text);
+}
+
+/* Type: Montserrat headings in ink; h6 is the eyebrow above section headings. */
+.mc-wp h1, .mc-wp h2, .mc-wp h3, .mc-wp h4, .mc-wp h6, .mc-wp .entry-content :where(h1, h2, h3, h4, h5, h6) { font-family: var(--font-display); color: var(--ink); }
+.mc-wp h2, .mc-wp .entry-content :where(h2) { letter-spacing: -0.01em; }
+.mc-wp h6.wp-block-heading { font-size: 0.75rem; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--link); margin-bottom: var(--space-3); }
+.mc-wp hr, .mc-wp .wp-block-separator { background-color: var(--surface-muted); border-color: var(--surface-muted); }
+.mc-wp ::selection { background-color: var(--brand); color: var(--on-brand); }
+
+/* Buttons: 12px corners, 600 weight, Signal Blue primary with a blue glow on hover. */
+.mc-wp :where(.wp-block-button__link), .mc-wp .wp-block-button .wp-block-button__link, .mc-wp button, .mc-wp input[type="submit"], .mc-wp .add-button-full a {
+  border-radius: var(--radius-md); font-weight: 600; line-height: 1.25; transition: all 0.2s ease;
+}
+.mc-wp .wp-block-button .wp-block-button__link:not(.has-background):hover, .mc-wp .wp-block-button .wp-block-button__link:not(.has-background):focus { transform: translateY(-1px); box-shadow: var(--shadow-cta); }
+.mc-wp .wp-block-button .wp-block-button__link.has-ast-global-color-4-background-color { border: 2px solid var(--surface-muted); }
+.mc-wp .wp-block-button .wp-block-button__link.has-ast-global-color-4-background-color:hover { border-color: var(--brand); color: var(--link) !important; background-color: var(--surface) !important; }
+/* WordPress's default button fill was charcoal (rgb 50 55 60); buttons without a colour class are Signal Blue. */
+.mc-wp.mc-wp :where(.wp-element-button, .wp-block-button__link) { background-color: var(--brand); color: var(--on-brand); }
+.mc-wp.mc-wp :where(.wp-element-button, .wp-block-button__link):where(:not(.has-background)):hover { background-color: var(--brand-strong); color: var(--on-brand); }
+.mc-wp .btn { border-radius: var(--radius-md); font-weight: 600; }
+.mc-wp .btn-primary, .mc-wp .btn-primary:disabled { background-color: var(--brand); border-color: var(--brand); color: var(--on-brand); }
+.mc-wp .btn-primary:hover, .mc-wp .btn-primary:focus { background-color: var(--brand-strong); border-color: var(--brand-strong); }
+.mc-wp .btn:focus, .mc-wp .btn-primary:focus, .mc-wp .form-control:focus { box-shadow: none; outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+.mc-wp .form-control { border-color: var(--ink-subtle); border-radius: var(--radius-xs); color: var(--ink); }
+.mc-wp a { color: var(--link); }
+.mc-wp a:hover, .mc-wp a:focus { color: var(--brand-strong); }
+
+/* Cards: hairline borders, blue-tinted lift on hover. */
+.mc-wp .jumbotron { background-color: var(--surface); border: 1px solid var(--surface-muted); border-radius: var(--radius-lg); text-align: center; transition: all 0.25s ease; }
+.mc-wp .jumbotron:hover { border-color: var(--brand); box-shadow: var(--shadow-md); transform: translateY(-4px); }
+.mc-wp .mc-step-num { background: var(--brand-tint); color: var(--link); font-family: var(--font-display); }
+.mc-wp .mc-step-title { color: var(--ink); }
+.mc-wp .mc-price-card { border-width: 1px; }
+.mc-wp .mc-price-card--featured { border-width: 2px; box-shadow: var(--shadow-featured); }
+.mc-wp .mc-price-card:hover { box-shadow: var(--shadow-card); }
+.mc-wp .mc-tier-name, .mc-wp .mc-price, .mc-wp .mc-card-name, .mc-wp .mc-card-price, .mc-wp .mc-cta-heading { font-family: var(--font-display); color: var(--ink); }
+.mc-wp .mc-tier-name--pro { color: var(--link); }
+.mc-wp .mc-badge-featured, .mc-wp .mc-badge-value { border-radius: var(--radius-pill); background: var(--brand); color: var(--on-brand); }
+.mc-wp .mc-card-product:hover { box-shadow: var(--shadow-sm); }
+/* Small print reads in ink-muted: ink-subtle is under 4.5:1 on white. */
+.mc-wp .mc-price-sub, .mc-wp .mc-price-period, .mc-wp .mc-card-desc, .mc-wp .mc-footnote, .mc-wp .mc-trust { color: var(--ink-muted); }
+
+/* CTA banner: the signal motif (a dot and rings) replaces the soft circle. */
+.mc-wp .mc-cta-banner { box-shadow: var(--shadow-banner); }
+.mc-wp .mc-cta-banner::before {
+  right: -90px; bottom: -90px; width: 300px; height: 300px;
+  background:
+    radial-gradient(circle, rgba(0, 102, 255, 0.28) 0 14px, transparent 15px),
+    repeating-radial-gradient(circle, transparent 0 38px, rgba(0, 102, 255, 0.22) 38px 40px);
+  -webkit-mask-image: radial-gradient(circle, #000 35%, transparent 72%);
+  mask-image: radial-gradient(circle, #000 35%, transparent 72%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mc-wp .jumbotron, .mc-wp .wp-block-button__link { transition: none; }
+  .mc-wp .jumbotron:hover, .mc-wp .wp-block-button__link:hover { transform: none; }
+}

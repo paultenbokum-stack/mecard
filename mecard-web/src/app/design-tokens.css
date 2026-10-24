@@ -1,0 +1,91 @@
+/* MeCard design system tokens — mirrors project/tokens.json in the MeCard Design System artifact.
+   Light is the default; Midnight values apply under [data-theme="dark"] (not switched on anywhere yet).
+   Change values in the design system first, then here. */
+
+:root,
+[data-theme="light"] {
+  color-scheme: light;
+  --surface: #ffffff;
+  --surface-subtle: #f7f8fa;
+  --surface-muted: #eef0f4;
+  --brand-tint: #e8f0ff;
+  --ink: #0f1729;
+  --ink-strong: #1e2536;
+  --ink-muted: #4a5163;
+  --ink-subtle: #8a919e;
+  --brand: #0066ff;
+  --brand-strong: #0050cc;
+  --on-brand: #ffffff;
+  --link: #0066ff;
+  --focus-ring: #0066ff;
+  --connect: #10b981;
+  --connect-strong: #047857;
+  --on-connect: #0f1729;
+  --danger: #c42f3a;
+  --share-whatsapp: #16a34a;
+  --share-whatsapp-tint: #f0fdf4;
+  --share-qr: #d97706;
+  --share-qr-tint: #fef3c7;
+  --share-link: #db2777;
+  --share-link-tint: #fce7f3;
+  --device: #1a1a1a;
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+  --surface: #0f1729;
+  --surface-subtle: #1e2536;
+  --surface-muted: #2b3448;
+  --brand-tint: #172a4d;
+  --ink: #f7f8fa;
+  --ink-strong: #eef0f4;
+  --ink-muted: #a3aab8;
+  --link: #5c9dff;
+  --focus-ring: #5c9dff;
+  --connect: #34d399;
+  --connect-strong: #34d399;
+  --danger: #ff8a8a;
+}
+
+:root {
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-7: 28px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-14: 56px;
+  --space-18: 72px;
+  --space-20: 80px;
+  --radius-xs: 4px;
+  --radius-md: 12px;
+  --radius-tile: 14px;
+  --radius-lg: 20px;
+  --radius-device: 40px;
+  --radius-pill: 999px;
+  --shadow-sm: 0 4px 16px rgba(0, 102, 255, 0.08);
+  --shadow-md: 0 8px 24px rgba(0, 102, 255, 0.08);
+  --shadow-featured: 0 8px 32px rgba(0, 102, 255, 0.12);
+  --shadow-card: 0 12px 32px rgba(0, 0, 0, 0.06);
+  --shadow-banner: 0 12px 40px rgba(0, 102, 255, 0.12);
+  --shadow-cta: 0 4px 16px rgba(0, 102, 255, 0.3);
+  --shadow-device: 0 32px 64px rgba(0, 0, 0, 0.2);
+}
+
+/* Font families. next/font sets --font-montserrat / --font-source-sans / --font-plex-mono on
+   .mecard-site (CardShell), so the stacks are declared there too, where those variables resolve. */
+:root,
+.mecard-site {
+  --font-display: var(--font-montserrat, Montserrat), "Helvetica Neue", Arial, sans-serif;
+  --font-text: var(--font-source-sans, "Source Sans 3"), "Source Sans Pro", system-ui, sans-serif;
+  --font-mono: var(--font-plex-mono, "IBM Plex Mono"), ui-monospace, Consolas, monospace;
+}
+
+/* Keyboard focus, everywhere the design system is used. */
+:where(.mc-wp, .acc, .mc-site-header, .mc-site-footer, .me-onboarding, .me-auth-entry) :focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}

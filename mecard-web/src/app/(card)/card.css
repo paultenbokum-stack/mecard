@@ -452,3 +452,23 @@ iframe#vcard-download { position: absolute; width: 0; height: 0; border: 0; over
 .mecard-share-upsell__link:hover, .mecard-share-upsell__link:focus { background: linear-gradient(135deg, #ffe0b2 0%, #ffcc80 100%); color: #e65100; text-decoration: none; }
 .mecard-share-upsell__icon { font-size: 18px; color: #ff9800; flex-shrink: 0; }
 .mecard-share-upsell__text { font-weight: 500; }
+
+/* ---------- MeCard design system: site header and footer ----------
+   The MeCard chrome (not the profile itself, which keeps the company's branding)
+   on the design tokens from app/design-tokens.css. */
+.mc-site-header, .mc-site-footer {
+  --ast-global-color-0: var(--brand);
+  --ast-global-color-1: var(--brand-strong);
+  --ast-global-color-3: var(--ink-muted);
+  font-family: var(--font-text);
+}
+.mc-site-header__bar { background: var(--surface); border-bottom-color: var(--surface-muted); }
+:where(.mecard-site) .mc-site-header__tagline { color: var(--ink-muted); }
+.mc-site-header__menu, .mc-site-header__menu a { border-color: var(--surface-muted); }
+.mc-site-header__menu a { font-weight: 600; }
+@media (min-width: 922px) {
+  .mc-site-header__menu a { color: var(--ink-strong); border-radius: var(--radius-md); line-height: 2.5; }
+  .mc-site-header__menu a:hover, .mc-site-header__menu a:focus { color: var(--link); background: var(--brand-tint); }
+}
+.mc-site-footer__menu { background: var(--surface-subtle); border-top-color: var(--surface-muted); }
+.mc-site-footer__copy { border-top-color: var(--surface-muted); color: var(--ink-muted); font-size: 0.875rem; }

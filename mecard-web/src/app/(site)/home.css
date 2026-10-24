@@ -1,0 +1,222 @@
+/* The homepage (components/site/HomePage.tsx), on the MeCard design system.
+   Component classes follow the Design System artifact's components/bundle.css,
+   scoped to .mc-home so they don't meet the extracted WordPress rules in site.css. */
+
+.mc-home {
+  background: var(--surface);
+  color: var(--ink-muted);
+  font-family: var(--font-text);
+  font-size: 16px;
+  line-height: 1.65;
+}
+.mc-home *, .mc-home *::before, .mc-home *::after { box-sizing: border-box; }
+.mc-home :focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+.mc-home h1, .mc-home h2, .mc-home h3 { font-family: var(--font-display); color: var(--ink); margin: 0; }
+.mc-home h2 { font-size: 2.35rem; line-height: 1.3; font-weight: 600; letter-spacing: -0.01em; }
+.mc-home p { margin: 0; }
+.mc-home a:not(.mc-btn):not(.mc-product) { color: var(--link); font-weight: 600; }
+.mc-home a:not(.mc-btn):not(.mc-product):hover { color: var(--brand-strong); text-decoration: underline; }
+
+/* Logged-in swaps: PageScripts sets data-auth once it knows. */
+.mc-home[data-auth="out"] .mc-when-in,
+.mc-home[data-auth="in"] .mc-when-out,
+.mc-home:not([data-auth]) .mc-when-in { display: none; }
+
+/* ── Layout ─────────────────────────────────────────────── */
+
+.mc-home__wrap { max-width: 1200px; margin: 0 auto; padding: 0 var(--space-5); }
+.mc-home__wrap--narrow { max-width: 780px; }
+.mc-home__section { padding: var(--space-18) 0; background: var(--surface); }
+.mc-home__section--tight { padding: var(--space-12) 0; }
+.mc-home__section--soft { background: var(--surface-subtle); }
+.mc-home__head { text-align: center; max-width: 640px; margin: 0 auto var(--space-10); }
+.mc-home__head h2 { margin-bottom: var(--space-3); }
+.mc-home__head p { font-size: 1.1rem; }
+
+/* ── Hero ───────────────────────────────────────────────── */
+
+.mc-home__hero { background: linear-gradient(160deg, var(--surface) 40%, var(--brand-tint) 100%); padding: var(--space-20) 0 var(--space-18); overflow: hidden; }
+.mc-home__hero-grid { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: var(--space-12); align-items: center; }
+.mc-home .mc-home__hero-title { font-size: clamp(2rem, 5vw, 3.2rem); line-height: 1.1; font-weight: 700; letter-spacing: -0.02em; margin-bottom: var(--space-5); }
+.mc-home .mc-home__hero-title-sub { display: block; margin-top: var(--space-3); font-size: 0.6em; line-height: 1.25; font-weight: 600; color: var(--ink-muted); }
+.mc-home__lead { font-size: 1.19rem; line-height: 1.6; max-width: 560px; }
+.mc-home .mc-home__lead + .mc-home__lead { margin-top: var(--space-3); }
+.mc-home__ctas { display: flex; flex-wrap: wrap; gap: var(--space-3); margin-top: var(--space-7); }
+.mc-home__trust { list-style: none; padding: 0; margin: var(--space-6) 0 0; display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-6); font-size: 0.95rem; color: var(--ink-strong); }
+.mc-home__trust li { display: flex; align-items: center; gap: var(--space-2); }
+
+.mc-home__tick { color: var(--connect-strong); }
+.mc-home__cross { color: var(--ink-subtle); opacity: 0.5; }
+
+/* The phone, the card laid over it and the "saved" moment. */
+.mc-home__device { position: relative; width: 300px; margin: 0 auto; padding: var(--space-6) 0 var(--space-10); }
+.mc-home__device .mc-phone { position: relative; width: 260px; z-index: 1; }
+.mc-home__device-signal { position: absolute; width: 520px; height: 520px; left: 50%; top: 50%; transform: translate(-50%, -50%); color: var(--brand); opacity: 0.35; pointer-events: none; }
+.mc-home__device-card { position: absolute; z-index: 0; width: 240px; height: auto; right: -130px; top: 70px; border-radius: 14px; transform: rotate(10deg); box-shadow: var(--shadow-device); }
+.mc-home__device-saved { position: absolute; z-index: 3; left: -64px; bottom: 120px; box-shadow: var(--shadow-md); padding: var(--space-2) var(--space-4); font-size: 0.85rem; }
+
+/* ── Components (from the design system) ────────────────── */
+
+.mc-home .mc-btn { display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2); font-family: var(--font-text); font-weight: 600; font-size: 1rem; line-height: 1.25; border-radius: var(--radius-md); padding: 14px var(--space-7); border: 2px solid transparent; transition: all 0.2s ease; cursor: pointer; text-decoration: none; }
+.mc-home .mc-btn-primary { background: var(--brand); color: var(--on-brand); border-color: var(--brand); }
+.mc-home .mc-btn-primary:hover { background: var(--brand-strong); border-color: var(--brand-strong); color: var(--on-brand); transform: translateY(-1px); box-shadow: var(--shadow-cta); }
+.mc-home .mc-btn-outline { background: var(--surface); color: var(--ink-strong); border-color: var(--surface-muted); }
+.mc-home .mc-btn-outline:hover { border-color: var(--brand); color: var(--link); }
+/* White on Signal Blue or Midnight bands, fixed so it stays legible in either theme. */
+.mc-home .mc-btn-white { background: var(--on-brand); color: var(--brand); border-color: var(--on-brand); }
+.mc-home .mc-btn-white:hover { color: var(--brand-strong); transform: translateY(-1px); box-shadow: var(--shadow-cta); }
+.mc-home .mc-btn-lg { padding: var(--space-4) 36px; font-size: 1.1rem; }
+
+.mc-home .mc-label { display: inline-block; font-family: var(--font-display); font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: var(--link); margin-bottom: var(--space-3); }
+
+.mc-home .mc-badge { display: inline-flex; align-items: center; gap: 6px; background: var(--brand); color: var(--on-brand); font-family: var(--font-text); font-size: 0.75rem; font-weight: 600; line-height: 1.5; padding: var(--space-1) var(--space-4); border-radius: var(--radius-pill); white-space: nowrap; }
+.mc-home .mc-badge--connect { background: var(--connect); color: var(--on-connect); }
+.mc-home .mc-badge__dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+
+/* Share tiles, as wide cards: NFC, WhatsApp, QR code, Link. */
+.mc-home__shares { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-4); }
+.mc-home .mc-share { display: flex; flex-direction: column; align-items: center; text-align: center; padding: var(--space-6) var(--space-4); background: var(--surface); border: 1px solid var(--surface-muted); border-radius: var(--radius-md); }
+.mc-home .mc-share__icon { width: 56px; height: 56px; border-radius: var(--radius-tile); display: flex; align-items: center; justify-content: center; margin-bottom: var(--space-3); font-size: 1.4rem; }
+.mc-home .mc-share--nfc .mc-share__icon { background: var(--brand-tint); color: var(--link); }
+.mc-home .mc-share--nfc .mc-share__icon i { transform: rotate(90deg); }
+.mc-home .mc-share--wa .mc-share__icon { background: var(--share-whatsapp-tint); color: var(--share-whatsapp); }
+.mc-home .mc-share--qr .mc-share__icon { background: var(--share-qr-tint); color: var(--share-qr); }
+.mc-home .mc-share--link .mc-share__icon { background: var(--share-link-tint); color: var(--share-link); }
+.mc-home .mc-share__label { font-family: var(--font-display); font-weight: 600; color: var(--ink); }
+.mc-home .mc-share__desc { font-size: 0.9rem; line-height: 1.5; margin-top: var(--space-1); }
+
+.mc-home__steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-6); }
+.mc-home .mc-step { background: var(--surface); border: 1px solid var(--surface-muted); border-radius: var(--radius-lg); padding: var(--space-7) var(--space-6); text-align: center; transition: all 0.25s ease; }
+.mc-home .mc-step:hover { border-color: var(--brand); box-shadow: var(--shadow-md); transform: translateY(-4px); }
+.mc-home .mc-step__num { width: 44px; height: 44px; border-radius: var(--radius-md); background: var(--brand-tint); color: var(--link); display: inline-flex; align-items: center; justify-content: center; font-family: var(--font-display); font-weight: 700; font-size: 1.1rem; margin-bottom: var(--space-4); }
+.mc-home .mc-step__title { font-size: 1.05rem; font-weight: 600; margin: 0 0 6px; }
+.mc-home .mc-step__desc { font-size: 0.95rem; line-height: 1.5; }
+
+.mc-home .mc-features { list-style: none; padding: 0; margin: var(--space-5) 0 0; }
+.mc-home .mc-features li { display: flex; align-items: baseline; gap: 10px; padding: 6px 0; font-size: 0.95rem; line-height: 1.5; color: var(--ink-strong); }
+.mc-home .mc-features li.is-off { color: var(--ink-muted); }
+.mc-home .mc-features i { flex-shrink: 0; width: 14px; }
+
+/* Paper vs MeCard. */
+.mc-home__compare { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-6); max-width: 900px; margin: 0 auto; }
+.mc-home__compare-col { border: 1px solid var(--surface-muted); border-radius: var(--radius-lg); padding: var(--space-7) var(--space-6); }
+.mc-home__compare-col--mecard { border: 2px solid var(--brand); box-shadow: var(--shadow-featured); }
+.mc-home__compare-title { font-size: 1.05rem; font-weight: 700; }
+.mc-home__compare-col--mecard .mc-home__compare-title { color: var(--link); }
+
+.mc-home__prices { display: grid; grid-template-columns: repeat(2, minmax(0, 400px)); justify-content: center; gap: var(--space-6); }
+.mc-home .mc-price-card { position: relative; display: flex; flex-direction: column; background: var(--surface); border: 1px solid var(--surface-muted); border-radius: var(--radius-lg); padding: 32px var(--space-7); transition: box-shadow 0.25s ease; }
+.mc-home .mc-price-card:hover { box-shadow: var(--shadow-card); }
+.mc-home .mc-price-card--featured { border: 2px solid var(--brand); box-shadow: var(--shadow-featured); }
+.mc-home .mc-price-card--featured > .mc-badge { position: absolute; top: -13px; left: 50%; transform: translateX(-50%); }
+.mc-home .mc-price-card__tier { font-size: 1.05rem; font-weight: 700; margin: 0 0 4px; }
+.mc-home .mc-price-card__tier--pro { color: var(--link); }
+.mc-home .mc-price-card__price { font-family: var(--font-display); font-size: 2.4rem; font-weight: 700; line-height: 1.1; color: var(--ink); }
+.mc-home .mc-price-card__period { font-family: var(--font-text); font-size: 0.9rem; font-weight: 400; color: var(--ink-muted); }
+.mc-home .mc-price-card__sub { font-size: 0.9rem; margin-top: 4px; }
+.mc-home .mc-price-card .mc-features { flex: 1; }
+.mc-home .mc-price-card .mc-btn { margin-top: var(--space-6); }
+
+.mc-home__products { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-6); }
+.mc-home .mc-product { position: relative; display: flex; flex-direction: column; align-items: center; background: var(--surface); border: 1px solid var(--surface-muted); border-radius: var(--radius-md); padding: var(--space-6) var(--space-4); text-align: center; text-decoration: none; transition: all 0.25s ease; }
+.mc-home .mc-product:hover { border-color: var(--brand); transform: translateY(-2px); box-shadow: var(--shadow-sm); }
+.mc-home .mc-product--best { border-color: var(--brand); }
+.mc-home .mc-product--best > .mc-badge { position: absolute; top: -11px; left: 50%; transform: translateX(-50%); font-size: 0.68rem; padding: 3px 12px; }
+.mc-home .mc-product img { height: 150px; width: auto; max-width: 100%; object-fit: contain; margin-bottom: var(--space-4); }
+.mc-home .mc-product__name { font-family: var(--font-display); font-weight: 600; color: var(--ink); }
+.mc-home .mc-product__price { font-family: var(--font-display); font-size: 1.4rem; font-weight: 700; color: var(--ink); }
+.mc-home .mc-product__desc { font-size: 0.9rem; color: var(--ink-muted); }
+
+.mc-home__extras { display: flex; align-items: center; justify-content: center; gap: var(--space-4); margin-top: var(--space-10); padding: var(--space-5) var(--space-6); background: var(--surface-subtle); border-radius: var(--radius-lg); }
+.mc-home__extras img { width: 64px; height: 64px; object-fit: contain; }
+.mc-home__extras p { max-width: 560px; }
+.mc-home__extras strong { color: var(--ink); }
+
+/* Teams: a Midnight band (data-theme="dark" swaps the tokens). */
+.mc-home__teams { color: var(--ink-muted); overflow: hidden; }
+.mc-home__teams-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-12); align-items: center; }
+.mc-home__teams h2 { margin-bottom: var(--space-3); }
+.mc-home__teams p { font-size: 1.1rem; }
+.mc-home__teams .mc-features li { color: var(--ink-strong); }
+.mc-home__teams .mc-btn { margin-top: var(--space-7); }
+.mc-home__teams-art { position: relative; }
+.mc-home__teams-art img { position: relative; width: 100%; height: auto; }
+.mc-home__teams-signal { position: absolute; width: 140%; height: auto; left: -20%; top: 50%; transform: translateY(-50%); color: var(--link); opacity: 0.25; }
+
+/* FAQ: native disclosure. */
+.mc-home__faq details { border-bottom: 1px solid var(--surface-muted); }
+.mc-home__faq summary { display: flex; justify-content: space-between; align-items: center; gap: var(--space-4); padding: var(--space-5) 0; cursor: pointer; list-style: none; font-family: var(--font-display); font-weight: 600; font-size: 1.1rem; color: var(--ink); }
+.mc-home__faq summary::-webkit-details-marker { display: none; }
+.mc-home__faq summary::after { content: "+"; flex-shrink: 0; width: 28px; height: 28px; border-radius: var(--radius-pill); background: var(--brand-tint); color: var(--brand-strong); display: flex; align-items: center; justify-content: center; font-size: 1.2rem; transition: transform 0.2s ease; }
+.mc-home__faq details[open] summary::after { transform: rotate(45deg); }
+.mc-home__faq details p { padding: 0 0 var(--space-5); max-width: 680px; }
+
+.mc-home .mc-cta { position: relative; overflow: hidden; display: flex; align-items: center; justify-content: space-between; gap: var(--space-6); background: linear-gradient(135deg, var(--surface) 0%, var(--brand-tint) 100%); border: 1px solid var(--surface-muted); border-radius: var(--radius-lg); padding: var(--space-14) var(--space-10); box-shadow: var(--shadow-banner); }
+.mc-home .mc-cta > * { position: relative; }
+.mc-home .mc-cta__signal { position: absolute; right: -60px; bottom: -60px; width: 260px; height: 260px; color: var(--brand); opacity: 0.25; pointer-events: none; }
+.mc-home .mc-cta__heading { font-size: clamp(1.5rem, 3vw, 2rem); line-height: 1.2; font-weight: 700; margin-bottom: var(--space-3); }
+.mc-home .mc-cta__text { max-width: 420px; }
+.mc-home .mc-cta__trust { font-size: 0.85rem; margin-top: var(--space-2); }
+.mc-home .mc-cta__actions { display: flex; flex-direction: column; align-items: flex-end; gap: var(--space-2); }
+
+.mc-home .mc-phone { background: var(--device); border-radius: var(--radius-device); padding: 12px; box-shadow: var(--shadow-device), inset 0 0 0 1px rgba(255, 255, 255, 0.1); }
+.mc-home .mc-phone__screen { border-radius: 28px; overflow: hidden; background: var(--surface); aspect-ratio: 9 / 17.5; position: relative; }
+
+/* The tapper view, drawn in the light theme whatever the page uses. */
+.mc-home .mc-contact { height: 100%; display: flex; flex-direction: column; align-items: center; text-align: center; padding-bottom: var(--space-4); }
+.mc-home .mc-contact__cover { position: relative; width: 100%; height: 26%; flex-shrink: 0; background: var(--ink); }
+.mc-home .mc-contact__cover img { width: 100%; height: 100%; object-fit: cover; }
+.mc-home .mc-contact__company-mark { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-family: var(--font-display); font-weight: 700; font-size: 1.6rem; letter-spacing: 0.04em; color: var(--on-brand); padding-bottom: var(--space-5); }
+.mc-home .mc-contact__avatar { width: 78px; height: 78px; border-radius: 50%; border: 3px solid var(--surface); margin-top: -39px; position: relative; object-fit: cover; }
+.mc-home .mc-contact__name { font-family: var(--font-display); font-weight: 700; font-size: 1.1rem; color: var(--ink); margin-top: var(--space-2); }
+.mc-home .mc-contact__role { font-size: 0.8rem; line-height: 1.4; padding: 0 var(--space-3); }
+.mc-home .mc-contact__url { font-family: var(--font-mono); font-size: 0.65rem; letter-spacing: 0.02em; margin-top: var(--space-1); }
+.mc-home .mc-contact__actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; width: 100%; padding: 0 var(--space-3); margin: var(--space-4) 0; }
+.mc-home .mc-contact__actions span { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: var(--space-2) 0; border-radius: var(--radius-md); background: var(--surface-subtle); font-size: 0.65rem; font-weight: 600; color: var(--ink-strong); }
+.mc-home .mc-contact__actions i { font-size: 0.95rem; color: var(--link); }
+.mc-home .mc-contact__detail { display: flex; align-items: center; gap: var(--space-3); width: calc(100% - var(--space-6)); padding-top: var(--space-3); border-top: 1px solid var(--surface-muted); text-align: left; font-size: 0.75rem; line-height: 1.3; color: var(--ink); }
+.mc-home .mc-contact__detail i { width: 30px; height: 30px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; border-radius: var(--radius-md); background: var(--brand-tint); color: var(--link); }
+.mc-home .mc-contact__detail small { display: block; font-size: 0.6rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-muted); }
+.mc-home .mc-contact__save { margin-top: auto; width: calc(100% - var(--space-6)); display: flex; align-items: center; justify-content: center; gap: var(--space-2); padding: 10px; border-radius: var(--radius-md); background: var(--brand); color: var(--on-brand); font-weight: 600; font-size: 0.85rem; }
+
+/* Scroll reveal, set by PageScripts. */
+.mc-home .mc-reveal { opacity: 0; transform: translateY(24px); transition: opacity 0.6s, transform 0.6s; }
+.mc-home .mc-reveal.is-visible { opacity: 1; transform: none; }
+
+/* ── Smaller screens ────────────────────────────────────── */
+
+@media (max-width: 921px) {
+  .mc-home__hero { padding: var(--space-12) 0; }
+  .mc-home__hero-grid, .mc-home__teams-grid { grid-template-columns: 1fr; }
+  .mc-home__hero-copy { text-align: center; }
+  .mc-home .mc-home__lead { margin: 0 auto; }
+  .mc-home__ctas, .mc-home__trust { justify-content: center; }
+  .mc-home__shares { grid-template-columns: repeat(2, 1fr); }
+  .mc-home__steps, .mc-home__products { grid-template-columns: 1fr; max-width: 420px; margin: 0 auto; }
+  .mc-home .mc-cta { flex-direction: column; text-align: center; }
+  .mc-home .mc-cta__text { margin: 0 auto; }
+  .mc-home .mc-cta__actions { align-items: center; }
+}
+@media (max-width: 767px) {
+  .mc-home__section { padding: var(--space-12) 0; }
+  .mc-home h2 { font-size: 1.75rem; }
+  .mc-home__compare, .mc-home__prices { grid-template-columns: 1fr; }
+  .mc-home__extras { flex-wrap: wrap; text-align: center; }
+  .mc-home .mc-cta { padding: var(--space-10) var(--space-6); }
+}
+@media (max-width: 480px) {
+  .mc-home__device { width: 230px; }
+  .mc-home__device .mc-phone { width: 210px; }
+  .mc-home__device-card { width: 160px; right: -60px; top: 50px; }
+  .mc-home__device-saved { left: -24px; bottom: 24px; }
+  .mc-home .mc-contact__detail { display: none; }
+  .mc-home__device-signal { width: 360px; height: 360px; }
+  .mc-home__shares { grid-template-columns: 1fr 1fr; gap: var(--space-3); }
+  .mc-home .mc-btn-lg { width: 100%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mc-home .mc-btn, .mc-home .mc-step, .mc-home .mc-product, .mc-home .mc-reveal, .mc-home__faq summary::after { transition: none; }
+  .mc-home .mc-btn:hover, .mc-home .mc-step:hover, .mc-home .mc-product:hover { transform: none; }
+  .mc-home .mc-reveal { opacity: 1; transform: none; }
+}
