@@ -156,6 +156,7 @@ export default async function AdminQuote({ params, searchParams }: { params: Pro
                     ["email", "Email", q.email, "email"],
                     ["phone", "Phone", q.phone, "tel"],
                     ["company", "Company", q.company, "text"],
+                    ["vat_number", "VAT number (optional)", q.vatNumber, "text"],
                   ] as const
                 ).map(([name, label, value, type]) => (
                   <div key={name} className="adm-field">
@@ -164,6 +165,28 @@ export default async function AdminQuote({ params, searchParams }: { params: Pro
                   </div>
                 ))}
               </div>
+            </Card>
+            <Card title="Billing address (optional)">
+              <div className="adm-form" style={{ gridTemplateColumns: "1fr" }}>
+                {(
+                  [
+                    ["address_1", "Address", q.address1],
+                    ["address_2", "Address line 2", q.address2],
+                    ["city", "City", q.city],
+                    ["province", "Province", q.province],
+                    ["postcode", "Postal code", q.postcode],
+                    ["country", "Country (2-letter code, e.g. ZA)", q.country],
+                  ] as const
+                ).map(([name, label, value]) => (
+                  <div key={name} className="adm-field">
+                    <label htmlFor={`q-${name}`}>{label}</label>
+                    <input id={`q-${name}`} name={name} type="text" defaultValue={value} className="adm-input" maxLength={name === "country" ? 2 : undefined} />
+                  </div>
+                ))}
+              </div>
+              <p className="adm-help" style={{ marginBottom: 0 }}>
+                Printed under the customer on the quote, the PDF and the email.
+              </p>
             </Card>
             <Card title="Status and expiry">
               <div className="adm-form" style={{ gridTemplateColumns: "1fr" }}>

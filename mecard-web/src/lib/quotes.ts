@@ -11,7 +11,7 @@ import { ORDER_NOTIFY_TO } from "@/lib/mail-settings";
 import { sendEmail } from "./email";
 import { INVOICE_SELLER } from "./invoice-settings";
 import { formatDate, rands } from "./money";
-import { ADDITIONAL_SHIPPING_PRODUCT, effectiveStatus, QUOTE_VALID_DAYS, quoteToken, quoteTotals } from "./quote-rules";
+import { ADDITIONAL_SHIPPING_PRODUCT, effectiveStatus, quoteBillingLines, QUOTE_VALID_DAYS, quoteToken, quoteTotals } from "./quote-rules";
 import { siteUrl } from "./site";
 
 export type Quote = typeof quotes.$inferSelect;
@@ -171,7 +171,7 @@ export async function renderQuotePdf(q: Quote): Promise<Uint8Array> {
   });
   y = 720 - Math.max(seller.length, details.length) * 14 - 24;
   text("QUOTE FOR", left, y, { font: bold, size: 9, color: MUTED });
-  const to = [q.name, q.company, q.email, q.phone].filter(Boolean);
+  const to = [q.name, q.company, ...quoteBillingLines(q), q.email, q.phone].filter(Boolean);
   to.forEach((l, i) => text(l, left, y - 16 - i * 13, { size: 9.5 }));
   y = y - 16 - to.length * 13 - 26;
 

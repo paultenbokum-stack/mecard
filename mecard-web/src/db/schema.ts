@@ -57,6 +57,8 @@ export const companies = pgTable(
     website: varchar("website", { length: 500 }).notNull().default(""),
     address: text("address").notNull().default(""),
     supportEmail: varchar("support_email", { length: 255 }).notNull().default(""),
+    // Optional; quotes for the company's owner pick it up.
+    vatNumber: varchar("vat_number", { length: 30 }).notNull().default(""),
     descriptionHtml: text("description_html").notNull().default(""),
     // Original upload path (/wp-content/uploads/…); served through the image route.
     logoPath: text("logo_path"),
@@ -432,6 +434,14 @@ export const quotes = pgTable(
     email: varchar("email", { length: 255 }).notNull(),
     phone: varchar("phone", { length: 50 }).notNull().default(""),
     company: varchar("company", { length: 255 }).notNull().default(""),
+    // Optional, printed on the quote: the customer's VAT number and billing address.
+    vatNumber: varchar("vat_number", { length: 30 }).notNull().default(""),
+    address1: varchar("address_1", { length: 255 }).notNull().default(""),
+    address2: varchar("address_2", { length: 255 }).notNull().default(""),
+    city: varchar("city", { length: 100 }).notNull().default(""),
+    province: varchar("province", { length: 100 }).notNull().default(""),
+    postcode: varchar("postcode", { length: 20 }).notNull().default(""),
+    country: varchar("country", { length: 2 }).notNull().default(""),
     message: text("message").notNull().default(""),
     items: jsonb("items").$type<QuoteLine[]>().notNull().default([]),
     subtotalCents: integer("subtotal_cents").notNull().default(0),

@@ -16,6 +16,7 @@ type Fields = Pick<
   | "website"
   | "address"
   | "supportEmail"
+  | "vatNumber"
   | "descriptionHtml"
   | "logoPath"
   | "headingFont"
@@ -56,6 +57,7 @@ export function CompanyEditor({
     website: c0.website,
     address: c0.address,
     supportEmail: c0.supportEmail,
+    vatNumber: c0.vatNumber,
     descriptionHtml: c0.descriptionHtml,
     logoPath: c0.logoPath,
     headingFont: c0.headingFont,
@@ -149,6 +151,9 @@ export function CompanyEditor({
                   <input id="ce-email" type="email" {...text("supportEmail")} />
                 </Field>
               </div>
+              <Field id="ce-vat" label="VAT number (optional)" hint="Only used on quotes and invoices; not shown on profiles.">
+                <input id="ce-vat" type="text" {...text("vatNumber", 30)} />
+              </Field>
               <Field id="ce-web" label="Website">
                 <input id="ce-web" type="url" inputMode="url" placeholder="https://" {...text("website", 500)} />
               </Field>

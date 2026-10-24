@@ -48,11 +48,13 @@ export async function saveCompanyAdminAction(form: FormData) {
   const ownerEmail = str(form, "owner");
   const owner = ownerEmail ? await userByEmail(ownerEmail) : null;
   if (ownerEmail && !owner) back(path, { error: `No account for ${ownerEmail}.` });
+  const vatNumber = str(form, "vat_number").slice(0, 30);
   const changes: string[] = [];
   if (name !== c.name) changes.push(`name ${c.name} → ${name}`);
+  if (vatNumber !== c.vatNumber) changes.push(`VAT number → ${vatNumber || "none"}`);
   if ((owner?.id ?? null) !== c.ownerId) changes.push(`owner → ${owner?.email ?? "none"}`);
   if (!changes.length) back(path, { saved: "Nothing changed." });
-  await db.update(companies).set({ name, ownerId: owner?.id ?? null, updatedAt: new Date() }).where(eq(companies.id, id));
+  await db.update(companies).set({ name, vatNumber, ownerId: owner?.id ?? null, updatedAt: new Date() }).where(eq(companies.id, id));
   await refreshCompanyPages(id);
   await logAdmin(me, "company", id, "edited", changes.join(", "));
   back(path, { saved: "Company saved." });

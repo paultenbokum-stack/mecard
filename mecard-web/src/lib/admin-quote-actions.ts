@@ -77,6 +77,13 @@ export async function saveQuoteAction(form: FormData) {
       email,
       phone: str(form, "phone").slice(0, 50),
       company: str(form, "company").slice(0, 255),
+      vatNumber: str(form, "vat_number").slice(0, 30),
+      address1: str(form, "address_1").slice(0, 255),
+      address2: str(form, "address_2").slice(0, 255),
+      city: str(form, "city").slice(0, 100),
+      province: str(form, "province").slice(0, 100),
+      postcode: str(form, "postcode").slice(0, 20),
+      country: str(form, "country").toUpperCase().slice(0, 2),
       note: str(form, "note").slice(0, 3000),
       items: lines,
       ...totals,
@@ -122,7 +129,7 @@ export async function createQuoteForUserAction(form: FormData) {
   const [[order], [company]] = await Promise.all([
     db.select().from(orders).where(eq(orders.userId, u.id)).orderBy(desc(orders.createdAt)).limit(1),
     db
-      .select({ id: companies.id, name: companies.name, phone: companies.phone })
+      .select({ id: companies.id, name: companies.name, phone: companies.phone, vatNumber: companies.vatNumber })
       .from(companies)
       .where(companyId ? eq(companies.id, companyId) : eq(companies.ownerId, u.id))
       .orderBy(companies.id)

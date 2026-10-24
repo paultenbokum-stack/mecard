@@ -153,6 +153,11 @@ export default async function AdminCompany({ params, searchParams }: { params: P
                 <input id="c-name" name="name" required defaultValue={c.name} className="adm-input" />
               </div>
               <div className="adm-field">
+                <label htmlFor="c-vat">VAT number (optional)</label>
+                <input id="c-vat" name="vat_number" maxLength={30} defaultValue={c.vatNumber} className="adm-input" />
+                <span className="adm-help">Quotes created for the owner pick it up.</span>
+              </div>
+              <div className="adm-field">
                 <label htmlFor="c-owner">Owner&apos;s email</label>
                 <input id="c-owner" name="owner" type="email" defaultValue={owner?.email ?? ""} className="adm-input" />
                 <span className="adm-help">The account that manages the company and its team. Blank for none.</span>

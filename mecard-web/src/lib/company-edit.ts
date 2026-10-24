@@ -39,6 +39,7 @@ export interface CompanyInput {
   website: string;
   address: string;
   supportEmail: string;
+  vatNumber: string;
   descriptionHtml: string;
   logoPath: string | null;
   headingFont: string;
@@ -83,6 +84,7 @@ export function cleanCompanyInput(raw: Record<string, unknown>): CompanyInput {
     website: cleanUrl(raw.website),
     address: cleanText(raw.address, 500),
     supportEmail: cleanEmail(raw.supportEmail),
+    vatNumber: cleanText(raw.vatNumber, 30),
     // HTML, cleaned when shown (RichText's allowlist, as wp_kses_post did).
     descriptionHtml: String(raw.descriptionHtml ?? "").slice(0, 20000),
     logoPath: logo,

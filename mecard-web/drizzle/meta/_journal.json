@@ -57,6 +57,13 @@
       "when": 1792836889541,
       "tag": "0007_media_library",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1792853420939,
+      "tag": "0008_quote_vat_address",
+      "breakpoints": true
     }
   ]
 }

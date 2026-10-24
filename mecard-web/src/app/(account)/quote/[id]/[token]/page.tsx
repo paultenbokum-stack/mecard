@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ConfirmButton } from "@/components/account/Bits";
 import { acceptQuoteAction, rejectQuoteAction } from "@/lib/quote-actions";
-import { effectiveStatus, QUOTE_STATUS_LABEL, verifyQuoteToken } from "@/lib/quote-rules";
+import { effectiveStatus, quoteBillingLines, QUOTE_STATUS_LABEL, verifyQuoteToken } from "@/lib/quote-rules";
 import { quoteById } from "@/lib/quotes";
 import { formatDate, rands } from "@/lib/money";
 
@@ -31,6 +31,15 @@ export default async function QuotePage({ params, searchParams }: Props) {
         {q.expiresAt && open ? ` · valid until ${formatDate(q.expiresAt)}` : ""} · for {q.name || q.email}
         {q.company ? `, ${q.company}` : ""}
       </p>
+      {quoteBillingLines(q).length ? (
+        <p className="acc__muted">
+          {quoteBillingLines(q).map((l) => (
+            <span key={l} style={{ display: "block" }}>
+              {l}
+            </span>
+          ))}
+        </p>
+      ) : null}
       <section className="acc-panel acc-panel--white">
         <table className="shop-table">
           <thead>
