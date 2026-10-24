@@ -1,6 +1,7 @@
 "use server";
 
 import { and, eq, inArray } from "drizzle-orm";
+import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { db } from "@/db/client";
 import { cards, orderItems, orderNotes, orders, products, profiles, quotes, users } from "@/db/schema";
@@ -11,7 +12,8 @@ import { addressFromForm, shippingOptions } from "@/lib/checkout-shipping";
 import { couponForLines } from "@/lib/coupons";
 import { rands } from "@/lib/money";
 import { setOrderStatus } from "@/lib/orders";
-import { requireUserId } from "@/lib/session";
+import { EMPTY_MINI_CART, miniCart, type MiniCart } from "@/lib/mini-cart";
+import { currentUserId, requireUserId } from "@/lib/session";
 
 export type ShopState = { error?: string } | null;
 
@@ -47,6 +49,15 @@ export async function removeLineAction(key: string) {
   const userId = await requireUserId("/basket/");
   await removeLine(userId, key);
   redirect("/basket/?removed=1");
+}
+
+/** Remove from the header's mini basket: stays on the page and returns the updated basket. */
+export async function miniCartRemoveAction(key: string): Promise<MiniCart> {
+  const userId = await currentUserId();
+  if (!userId) return EMPTY_MINI_CART;
+  await removeLine(userId, String(key));
+  revalidatePath("/basket/");
+  return miniCart(userId);
 }
 
 export async function applyCouponAction(form: FormData) {

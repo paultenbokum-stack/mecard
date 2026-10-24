@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { MiniCart } from "@/components/shop/MiniCart";
 
 // Astra header and footer as WordPress rendered them. Card pages always get
 // the logged-out menu (they are cached for everyone; pro profiles show no
@@ -17,12 +18,12 @@ const MENU = [
 ] as const;
 
 // The "logged-in" menu. My Account opens WooCommerce's account pages, as the
-// WordPress menu's My Account item did; Console is the /manage/ home.
+// WordPress menu's My Account item did; Console is the /manage/ home. The
+// basket is the cart icon beside the menu.
 const MENU_LOGGED_IN = [
   ["Console", "/manage/"],
   ["Gallery", "/gallery/"],
   ["Shop", "/shop/"],
-  ["Basket", "/basket/"],
   ["Contact Us", "/contact-us/"],
 ] as const;
 
@@ -114,6 +115,15 @@ export function SiteHeader({ loggedIn = false, detect = false, tagline = false }
             </Link>
             {tagline ? <p className="mc-site-header__tagline">The only business card you&apos;ll ever need</p> : null}
           </div>
+          <ul id="mc-site-menu" className="mc-site-header__menu mc-site-header__menu--desktop" style={{ display: "none" }}>
+            {menu.map(([label, href]) => (
+              <li key={href}>
+                <a href={href}>{label}</a>
+              </li>
+            ))}
+            {signedIn ? <AccountDropdown /> : null}
+          </ul>
+          {signedIn ? <MiniCart /> : null}
           <button type="button" className="mc-site-header__toggle" aria-expanded={open} aria-controls="mc-site-menu-mobile" aria-label="Main menu" onClick={() => setOpen((o) => !o)}>
             {open ? (
               <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true">
@@ -125,14 +135,6 @@ export function SiteHeader({ loggedIn = false, detect = false, tagline = false }
               </svg>
             )}
           </button>
-          <ul id="mc-site-menu" className="mc-site-header__menu mc-site-header__menu--desktop" style={{ display: "none" }}>
-            {menu.map(([label, href]) => (
-              <li key={href}>
-                <a href={href}>{label}</a>
-              </li>
-            ))}
-            {signedIn ? <AccountDropdown /> : null}
-          </ul>
         </div>
       </div>
       {open ? (
