@@ -18,6 +18,8 @@ export type EncodingCard = {
   firstName: string | null;
   lastName: string | null;
   jobTitle: string | null;
+  orderId: number | null;
+  companyName: string | null;
 };
 
 export const ENCODING_HEADINGS = ["URL", "Readonly", "Identity", "Notes", "Name", "Job Title", "Card Front", "Card Back"];
@@ -40,6 +42,12 @@ export function encodingRow(c: EncodingCard, cardUrl: (slug: string) => string):
 }
 
 export type EncodingFile = "encoding" | "print";
+
+/** The cards staff ticked (?id=1&id=2 or ?id=1,2): whole numbers only, no repeats. */
+export function selectedIds(values: string[]): number[] {
+  const ids = values.flatMap((v) => v.split(",")).map((v) => Number(v.trim()));
+  return [...new Set(ids.filter((n) => Number.isInteger(n) && n > 0))];
+}
 
 export const inFile = (file: EncodingFile, type: string) => (file === "encoding" ? ENCODE_TYPES : PRINT_TYPES).includes(type);
 

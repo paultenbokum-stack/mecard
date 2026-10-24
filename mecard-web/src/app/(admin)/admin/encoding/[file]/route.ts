@@ -1,4 +1,5 @@
-import { type EncodingFile, ENCODING_HEADINGS, artworkFilename, encodingRow, inFile, toCsv } from "@/lib/encoding";
+import { logAdmin } from "@/lib/admin-log";
+import { type EncodingFile, ENCODING_HEADINGS, artworkFilename, encodingRow, inFile, selectedIds, toCsv } from "@/lib/encoding";
 import { encodingCards, readArtwork } from "@/lib/encoding-data";
 import { requireAdmin } from "@/lib/session";
 import { siteUrl } from "@/lib/site";
@@ -8,12 +9,20 @@ const FILES: Record<string, EncodingFile | "images"> = { "encoding.csv": "encodi
 
 // encoding.csv and print.csv (the old "Encoding CSV" / "Print CSV" links), and
 // images.zip: the print batch's original artwork, named as the print CSV names it.
-export async function GET(_req: Request, { params }: { params: Promise<{ file: string }> }) {
-  await requireAdmin("/admin/encoding/");
-  const kind = FILES[(await params).file];
+// Only the cards ticked on the Encoding file page (?id=…) go in; each download
+// is noted in the cards' staff log. Stages aren't changed: Encoded and Packaged
+// are still ticked on Card processing, as with the WordPress export.
+export async function GET(req: Request, { params }: { params: Promise<{ file: string }> }) {
+  const me = await requireAdmin("/admin/encoding/");
+  const file = (await params).file;
+  const kind = FILES[file];
   if (!kind) return new Response("Not found", { status: 404 });
-  const list = await encodingCards();
+  const ids = new Set(selectedIds(new URL(req.url).searchParams.getAll("id")));
   const headers = { "Cache-Control": "private, no-store" };
+  if (!ids.size) return new Response("Tick the cards to put in the file first.", { status: 400, headers });
+  const list = (await encodingCards()).filter((c) => ids.has(c.id));
+  const inThis = list.filter((c) => (kind === "images" ? inFile("print", c.type) : inFile(kind, c.type)));
+  await Promise.all(inThis.map((c) => logAdmin(me, "card", c.id, "encoding file", `Downloaded ${file} (${inThis.length} cards)`)));
 
   if (kind !== "images") {
     const rows = list.filter((c) => inFile(kind, c.type)).map((c) => encodingRow(c, (slug) => siteUrl(`/t/${slug}/`)));

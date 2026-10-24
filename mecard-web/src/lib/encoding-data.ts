@@ -1,7 +1,7 @@
 import "server-only";
 import { and, asc, eq } from "drizzle-orm";
 import { db } from "@/db/client";
-import { cards, profiles } from "@/db/schema";
+import { cards, companies, profiles } from "@/db/schema";
 import { PROCESSING_CARDS } from "./admin-card-queries";
 import type { EncodingCard } from "./encoding";
 import { imageDeps } from "./images/config";
@@ -22,9 +22,12 @@ export function encodingCards(): Promise<EncodingCard[]> {
       firstName: profiles.firstName,
       lastName: profiles.lastName,
       jobTitle: profiles.jobTitle,
+      orderId: cards.orderId,
+      companyName: companies.name,
     })
     .from(cards)
     .leftJoin(profiles, eq(profiles.id, cards.profileId))
+    .leftJoin(companies, eq(companies.id, cards.companyId))
     .where(and(PROCESSING_CARDS, eq(cards.designReceived, true), eq(cards.packaged, false)))
     .orderBy(asc(cards.id));
 }

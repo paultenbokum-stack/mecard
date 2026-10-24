@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { inflateRawSync } from "node:zlib";
-import { artworkFilename, encodingRow, inFile, toCsv, type EncodingCard } from "./encoding";
+import { artworkFilename, encodingRow, inFile, selectedIds, toCsv, type EncodingCard } from "./encoding";
 import { zip } from "./zip";
 
 const card: EncodingCard = {
@@ -16,6 +16,8 @@ const card: EncodingCard = {
   firstName: "Chantel",
   lastName: "Cromer-Wilson",
   jobTitle: "Director, Brand",
+  orderId: 501,
+  companyName: "Acme",
 };
 const url = (slug: string) => `https://mecard.co.za/t/${slug}/`;
 
@@ -59,4 +61,11 @@ test("zip entries can be read back", () => {
   assert.deepEqual(method === 8 ? inflateRawSync(body) : body, data);
   assert.equal(z.readUInt32LE(z.length - 22), 0x06054b50);
   assert.equal(z.readUInt16LE(z.length - 22 + 10), 1);
+});
+
+test("selectedIds: ticked cards from the query string", () => {
+  assert.deepEqual(selectedIds(["3", "5"]), [3, 5]);
+  assert.deepEqual(selectedIds(["3,5", "5", " 7 "]), [3, 5, 7]);
+  assert.deepEqual(selectedIds(["", "x", "-1", "2.5", "0"]), []);
+  assert.deepEqual(selectedIds([]), []);
 });
