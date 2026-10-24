@@ -15,7 +15,7 @@ import { addToCartAction } from "@/lib/shop-actions";
 // under My Cards, ready to design before checkout.
 
 const CARD_PRODUCTS = SHOP_CATALOGUE.filter((c) => c.id !== PRODUCT.proUpgrade);
-const AFTER = "/manage/cards/?tab=new&done=card-added";
+const AFTER = "/manage/cards/?tab=design&done=card-added";
 
 export async function loadBuyCard(profileId?: string) {
   const v = await viewer(await requireUserId("/manage/cards/new/"));

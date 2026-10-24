@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { db } from "@/db/client";
 import { cards, companies, entitlements, orderItems, orders, profileInvites, profiles, users } from "@/db/schema";
 import { editableProfilesWhere, manageableCardsWhere, type Viewer } from "./access";
+import { CARD_TABS, DEAD_ORDER_STATUSES, DESIGNED_CARD_TYPES, type CardTab } from "./card-tabs";
 import { profilePaths } from "./public-profile";
 import { nextFreeSlug, slugify } from "./slug";
 
@@ -74,9 +75,34 @@ export async function profileChoices(v: Viewer) {
 
 export type CardRow = Awaited<ReturnType<typeof listCards>>["rows"][number];
 
-/** Live cards (linked to a profile) or new ones (not linked yet). */
-export async function listCards(v: Viewer, opts: { linked: boolean; q?: string; page?: number }) {
-  const conds: SQL[] = [manageableCardsWhere(v.id), eq(cards.archived, false), opts.linked ? sql`${cards.profileId} IS NOT NULL` : isNull(cards.profileId)];
+const list = (xs: string[]) => sql.join(xs.map((x) => sql`${x}`), sql`, `);
+
+/** cardTab() (card-tabs.ts) in SQL, for a query that left-joins the card's order. */
+const cardTabSql = sql<CardTab>`CASE
+  WHEN ${cards.archived} OR ${orders.status} IN (${list(DEAD_ORDER_STATUSES)}) THEN 'archived'
+  WHEN ${orders.id} IS NULL AND ${cards.cartItemKey} IS NOT NULL THEN 'design'
+  WHEN ${orders.status} <> 'completed' AND ${cards.type} IN (${list(DESIGNED_CARD_TYPES)}) AND NOT ${cards.designSubmitted} AND NOT ${cards.shipped} THEN 'design'
+  WHEN ${orders.status} <> 'completed' THEN 'progress'
+  WHEN ${cards.profileId} IS NOT NULL THEN 'live'
+  ELSE 'unassigned'
+END`;
+
+/** How many of the viewer's cards are on each My Cards tab. */
+export async function cardTabCounts(v: Viewer): Promise<Record<CardTab, number>> {
+  const rows = await db
+    .select({ tab: cardTabSql, n: count() })
+    .from(cards)
+    .leftJoin(orders, eq(orders.id, cards.orderId))
+    .where(manageableCardsWhere(v.id))
+    .groupBy(sql`1`);
+  const counts = Object.fromEntries(CARD_TABS.map(([k]) => [k, 0])) as Record<CardTab, number>;
+  for (const r of rows) counts[r.tab] = r.n;
+  return counts;
+}
+
+/** The viewer's cards on one My Cards tab (see card-tabs.ts). */
+export async function listCards(v: Viewer, opts: { tab: CardTab; q?: string; page?: number }) {
+  const conds: SQL[] = [manageableCardsWhere(v.id), sql`${cardTabSql} = ${opts.tab}`];
   const q = opts.q?.trim();
   if (q) {
     const like = `%${q.replace(/[%_\\]/g, "\\$&")}%`;
@@ -103,15 +129,20 @@ export async function listCards(v: Viewer, opts: { linked: boolean; q?: string; 
         profileId: cards.profileId,
         profileName: sql<string | null>`nullif(trim(${profiles.firstName} || ' ' || ${profiles.lastName}), '')`,
         companyName: companies.name,
+        encoded: cards.encoded,
+        packaged: cards.packaged,
+        orderStatus: orders.status,
+        inBasket: sql<boolean>`(${orders.id} IS NULL AND ${cards.cartItemKey} IS NOT NULL)`,
       })
       .from(cards)
       .leftJoin(profiles, eq(profiles.id, cards.profileId))
       .leftJoin(companies, eq(companies.id, cards.companyId))
+      .leftJoin(orders, eq(orders.id, cards.orderId))
       .where(where)
       .orderBy(desc(cards.createdAt), desc(cards.id))
       .limit(PAGE_SIZE)
       .offset((page - 1) * PAGE_SIZE),
-    db.select({ total: count() }).from(cards).leftJoin(profiles, eq(profiles.id, cards.profileId)).where(where),
+    db.select({ total: count() }).from(cards).leftJoin(profiles, eq(profiles.id, cards.profileId)).leftJoin(orders, eq(orders.id, cards.orderId)).where(where),
   ]);
   return { rows, total, page };
 }
