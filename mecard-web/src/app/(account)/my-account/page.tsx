@@ -6,11 +6,14 @@ import { LoginForm } from "@/components/account/AuthForms";
 import { LOST_PASSWORD, safeNext } from "@/lib/auth-paths";
 import { currentUserId } from "@/lib/session";
 import { googleAction } from "./actions";
+import { AccountDashboard } from "./AccountDashboard";
 
-export const metadata: Metadata = { title: "Login" };
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: (await currentUserId()) ? "My account" : "Login" };
+}
 
-// WooCommerce's /my-account/ login. Logged-in customers go straight to their
-// home (the shop phase brings back orders and account details here).
+// WooCommerce's /my-account/: the login form, or the account dashboard once
+// logged in. A login link with ?next= still goes straight on to that page.
 
 const ERRORS: Record<string, string> = {
   AccessDenied: "That Google account couldn't be used to sign in. Make sure its email address is verified.",
@@ -21,7 +24,9 @@ const ERRORS: Record<string, string> = {
 export default async function LoginPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   const sp = await searchParams;
   const next = safeNext(sp.next);
-  if (await currentUserId()) redirect(next);
+  const userId = await currentUserId();
+  if (userId && sp.next) redirect(next);
+  if (userId) return <AccountDashboard userId={userId} />;
   const error = sp.error ? (ERRORS[sp.error] ?? "Sign-in failed. Please try again.") : null;
 
   return (

@@ -4,7 +4,7 @@ import { and, asc, eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { db } from "@/db/client";
 import { orderItems, orderNotes, orders } from "@/db/schema";
-import { Subnav } from "@/components/account/Bits";
+import { AccountLayout } from "@/components/account/AccountNav";
 import { BankDetails, OrderDetails } from "@/components/shop/OrderDetails";
 import { hasInvoice } from "@/lib/invoice";
 import { formatDate, ORDER_STATUS_LABEL } from "@/lib/money";
@@ -27,8 +27,7 @@ export default async function ViewOrderPage({ params }: { params: Promise<{ id: 
   const shipment = tracking?.shipments.find((s) => s.status !== "cancelled");
 
   return (
-    <div className="acc__wrap">
-      <Subnav active="orders" />
+    <AccountLayout active="orders">
       <h1>Order #{order.id}</h1>
       <p className="acc__lead">
         Order #{order.id} was placed on {formatDate(order.createdAt)} and is currently <strong>{ORDER_STATUS_LABEL[order.status] ?? order.status}</strong>.
@@ -95,6 +94,6 @@ export default async function ViewOrderPage({ params }: { params: Promise<{ id: 
       ) : null}
       {order.paymentMethod === "bacs" && order.status === "on-hold" ? <BankDetails orderId={order.id} /> : null}
       <OrderDetails order={order} items={items} />
-    </div>
+    </AccountLayout>
   );
 }

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Subnav } from "@/components/account/Bits";
+import { AccountLayout } from "@/components/account/AccountNav";
 import { formatDate, rands } from "@/lib/money";
 import { effectiveStatus, QUOTE_STATUS_LABEL } from "@/lib/quote-rules";
 import { quotePath, quotesForUser } from "@/lib/quotes";
@@ -13,8 +13,7 @@ export default async function QuotesPage() {
   const userId = await requireUserId("/my-account/quotes/");
   const list = await quotesForUser(userId);
   return (
-    <div className="acc__wrap">
-      <Subnav active="orders" />
+    <AccountLayout active="quotes">
       <h1>Quotes</h1>
       {list.length ? (
         <section className="acc-panel acc-panel--white">
@@ -46,6 +45,6 @@ export default async function QuotesPage() {
           No quotes yet. <Link href="/request-quote/">Request a quote</Link>
         </div>
       )}
-    </div>
+    </AccountLayout>
   );
 }

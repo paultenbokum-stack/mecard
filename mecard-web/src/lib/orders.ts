@@ -1,6 +1,6 @@
 import "server-only";
 import { after } from "next/server";
-import { and, eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import { db } from "@/db/client";
 import { cards, orderNotes, orders } from "@/db/schema";
 import { bobgoAfterStatusChange, bobgoEnabled } from "@/lib/bobgo";
@@ -68,4 +68,11 @@ export async function setOrderStatus(
 export async function orderTotalCents(orderId: number) {
   const [o] = await db.select({ t: orders.totalCents }).from(orders).where(eq(orders.id, orderId));
   return o?.t ?? null;
+}
+
+/** A customer's orders, newest first (quote requests, the ywraq statuses, are listed under Quotes). */
+export async function customerOrders(userId: number, limit?: number) {
+  const rows = await db.select().from(orders).where(eq(orders.userId, userId)).orderBy(desc(orders.createdAt));
+  const list = rows.filter((o) => !o.status.startsWith("ywraq"));
+  return limit ? list.slice(0, limit) : list;
 }

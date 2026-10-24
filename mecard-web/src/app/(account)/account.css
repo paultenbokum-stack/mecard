@@ -149,3 +149,34 @@
 .acc-badge--live { color: var(--connect-strong); }
 /* Profile URLs, card IDs and codes: the design system's mono voice. */
 .acc-mono, .acc-item__sub code, .acc code { font-family: var(--font-mono); font-size: 0.9em; letter-spacing: 0.02em; }
+
+/* My Account (WooCommerce's woocommerce-MyAccount-navigation + content): side menu on desktop, a row of tabs on phones. */
+.acc-myaccount { display: grid; gap: var(--space-6); grid-template-columns: minmax(0, 1fr); padding-top: var(--space-7); }
+.acc-myaccount__nav ul { list-style: none; margin: 0; padding: 0; display: flex; gap: var(--space-2); overflow-x: auto; }
+:where(.mecard-site) .acc-myaccount__nav a { display: block; white-space: nowrap; padding: var(--space-2) var(--space-4); border: 1px solid var(--surface-muted); border-radius: var(--radius-md); background: var(--surface); color: var(--ink-strong); font-weight: 600; font-size: 15px; text-decoration: none; }
+:where(.mecard-site) .acc-myaccount__nav a:hover { border-color: var(--brand); color: var(--link); }
+:where(.mecard-site) .acc-myaccount__nav a[aria-current="page"] { background: var(--brand-tint); border-color: var(--brand); color: var(--link); }
+:where(.mecard-site) .acc-myaccount__content > h1:first-child { margin-top: 0; }
+@media (min-width: 922px) {
+  .acc-myaccount { grid-template-columns: 240px minmax(0, 1fr); gap: var(--space-10); align-items: start; }
+  .acc-myaccount__nav { position: sticky; top: var(--space-6); }
+  .acc-myaccount__nav ul { flex-direction: column; gap: var(--space-1); overflow: visible; }
+  :where(.mecard-site) .acc-myaccount__nav a { border-color: transparent; background: none; }
+  :where(.mecard-site) .acc-myaccount__nav a:hover { background: var(--surface-subtle); border-color: transparent; }
+  :where(.mecard-site) .acc-myaccount__nav a[aria-current="page"] { background: var(--brand-tint); border-color: transparent; }
+}
+.acc-myaccount__tiles { display: grid; gap: var(--space-3); grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); margin: var(--space-5) 0; }
+:where(.mecard-site) .acc-myaccount__tile { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-4) var(--space-5); border: 1px solid var(--surface-muted); border-radius: var(--radius-md); background: var(--surface); color: var(--ink); font-weight: 600; text-decoration: none; transition: border-color 0.2s ease, box-shadow 0.2s ease; }
+:where(.mecard-site) .acc-myaccount__tile:hover { border-color: var(--brand); box-shadow: var(--shadow-sm); color: var(--ink); }
+.acc-myaccount__tile i { color: var(--link); font-size: 1.2em; width: 1.4em; text-align: center; }
+.acc-fieldset { border: 1px solid var(--surface-muted); border-radius: var(--radius-md); padding: var(--space-4) var(--space-5) var(--space-5); margin: 0; display: grid; gap: var(--space-3); min-width: 0; }
+:where(.mecard-site) .acc-fieldset legend { padding: 0 var(--space-2); font-family: var(--font-display); font-weight: 600; color: var(--ink); font-size: 16px; }
+.acc-fieldset p { margin: 0; }
+/* The orders table stacks into labelled rows on phones, as WooCommerce's shop_table_responsive does. */
+@media (max-width: 640px) {
+  .shop-table--orders thead { display: none; }
+  .shop-table--orders tr { display: block; padding: var(--space-2) 0; border-bottom: 1px solid var(--surface-muted); }
+  .shop-table--orders td { display: flex; justify-content: space-between; gap: var(--space-3); border: 0; padding: var(--space-1) 0; text-align: right; }
+  .shop-table--orders td[data-title]::before { content: attr(data-title); font-weight: 600; color: var(--ink-strong); text-align: left; }
+  .shop-table--orders td.shop-table__actions { justify-content: flex-end; flex-wrap: wrap; padding-top: var(--space-2); }
+}

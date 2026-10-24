@@ -475,5 +475,16 @@ iframe#vcard-download { position: absolute; width: 0; height: 0; border: 0; over
   .mc-site-header__menu a { color: var(--ink-strong); border-radius: var(--radius-md); line-height: 2.5; }
   .mc-site-header__menu a:hover, .mc-site-header__menu a:focus { color: var(--link); background: var(--brand-tint); }
 }
+/* My Account: a dropdown on desktop; on phones its links follow a heading in the menu. */
+.mc-site-header__menu ul { list-style: none; margin: 0; padding: 0; }
+.mc-site-header__menu-heading { display: block; padding: 0 20px; line-height: 3; font-weight: 700; color: var(--ink); border-bottom: 1px solid var(--surface-muted); }
+.mc-site-header__account-mobile li a { padding-left: 36px; }
+.mc-site-header__account { position: relative; }
+:where(.mecard-site) .mc-site-header__account-toggle { display: flex; align-items: center; gap: 6px; padding: 0 1em; background: none; border: 0; border-radius: var(--radius-md); font: inherit; font-weight: 600; line-height: 2.5; color: var(--ink-strong); cursor: pointer; }
+:where(.mecard-site) .mc-site-header__account-toggle:hover, :where(.mecard-site) .mc-site-header__account-toggle:focus, :where(.mecard-site) .mc-site-header__account-toggle[aria-expanded="true"] { color: var(--link); background: var(--brand-tint); }
+.mc-site-header__chevron { transition: transform 0.2s ease; }
+[aria-expanded="true"] > .mc-site-header__chevron { transform: rotate(180deg); }
+.mc-site-header__submenu { position: absolute; right: 0; top: calc(100% + 6px); min-width: 230px; padding: 6px !important; background: var(--surface); border: 1px solid var(--surface-muted); border-radius: var(--radius-md); box-shadow: var(--shadow-md); z-index: 100; }
+.mc-site-header__menu .mc-site-header__submenu a { display: block; white-space: nowrap; line-height: 2.5; padding: 0 12px; }
 .mc-site-footer__menu { background: var(--surface-subtle); border-top-color: var(--surface-muted); }
 .mc-site-footer__copy { border-top-color: var(--surface-muted); color: var(--ink-muted); font-size: 0.875rem; }
