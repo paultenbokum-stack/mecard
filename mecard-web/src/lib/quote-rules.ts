@@ -40,3 +40,22 @@ export function verifyQuoteToken(quoteId: number, email: string, token: string):
   const b = Buffer.from(token);
   return a.length === b.length && timingSafeEqual(a, b);
 }
+
+/**
+ * A quote staff start from a customer's account: their name, email and phone,
+ * falling back to their latest order's billing details, and the company (the
+ * one asked for, else the order's billing company).
+ */
+export function quotePrefill(
+  user: { email: string; firstName: string; lastName: string; displayName: string; phone: string },
+  order?: { billingFirstName: string; billingLastName: string; billingEmail: string; billingPhone: string; billingCompany: string } | null,
+  company?: { name: string; phone: string } | null,
+) {
+  const name = `${user.firstName} ${user.lastName}`.trim() || user.displayName.trim() || `${order?.billingFirstName ?? ""} ${order?.billingLastName ?? ""}`.trim();
+  return {
+    name: name.slice(0, 200),
+    email: user.email || order?.billingEmail || "",
+    phone: (user.phone.trim() || order?.billingPhone.trim() || company?.phone.trim() || "").slice(0, 50),
+    company: (company?.name.trim() || order?.billingCompany.trim() || "").slice(0, 255),
+  };
+}

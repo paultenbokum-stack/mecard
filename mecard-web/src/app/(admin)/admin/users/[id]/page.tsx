@@ -8,6 +8,7 @@ import { AdminLogList } from "@/components/admin/AdminLogList";
 import { SubmitButton } from "@/components/admin/SubmitButton";
 import { AdminHeader, type AdminSearchParams, Badge, Breadcrumbs, Card, Flash } from "@/components/admin/ui";
 import { userDeleteGuard } from "@/lib/admin-guards";
+import { createQuoteForUserAction } from "@/lib/admin-quote-actions";
 import { deleteUserAction, saveUserAction, sendResetAction, userDeleteCounts } from "@/lib/admin-user-actions";
 import { ENTITLEMENT_STATUS_LABEL, ENTITLEMENT_TYPE_LABEL } from "@/lib/entitlement-labels";
 import { imageUrl } from "@/lib/images/paths";
@@ -55,7 +56,15 @@ export default async function AdminUser({ params, searchParams }: { params: Prom
   return (
     <>
       <Breadcrumbs items={[{ href: "/admin/", label: "Admin" }, { href: "/admin/users/", label: "Users" }, { label: name }]} />
-      <AdminHeader title={name}>{u.isAdmin ? <Badge status="processing">Staff</Badge> : <Badge status="sent">Customer</Badge>}</AdminHeader>
+      <AdminHeader title={name}>
+        <form action={createQuoteForUserAction}>
+          <input type="hidden" name="user_id" value={u.id} />
+          <button type="submit" className="adm-btn" title="A quote filled in from this account">
+            <i className="fas fa-file-invoice" aria-hidden="true" /> Create quote
+          </button>
+        </form>
+        {u.isAdmin ? <Badge status="processing">Staff</Badge> : <Badge status="sent">Customer</Badge>}
+      </AdminHeader>
       <Flash saved={sp.saved} error={sp.error} />
       <p className="adm-muted">
         Account #{u.id} · {u.email}

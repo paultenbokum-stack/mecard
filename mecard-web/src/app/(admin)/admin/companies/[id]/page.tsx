@@ -9,6 +9,7 @@ import { SubmitButton } from "@/components/admin/SubmitButton";
 import { AdminHeader, type AdminSearchParams, Badge, Breadcrumbs, Card, Flash } from "@/components/admin/ui";
 import { companyDeleteCounts, deleteCompanyAction, saveCompanyAdminAction } from "@/lib/admin-company-actions";
 import { companyDeleteGuard } from "@/lib/admin-guards";
+import { createQuoteForUserAction } from "@/lib/admin-quote-actions";
 import { formatDate, ORDER_STATUS_LABEL, rands } from "@/lib/money";
 
 export const metadata = { title: "Company" };
@@ -51,6 +52,15 @@ export default async function AdminCompany({ params, searchParams }: { params: P
         <Link href={`/manage/company/${c.id}/`} className="adm-btn">
           <i className="fas fa-pen" aria-hidden="true" /> Edit branding and links
         </Link>
+        {owner ? (
+          <form action={createQuoteForUserAction}>
+            <input type="hidden" name="user_id" value={owner.id} />
+            <input type="hidden" name="company_id" value={c.id} />
+            <button type="submit" className="adm-btn" title={`A quote for ${owner.email}, filled in from their account`}>
+              <i className="fas fa-file-invoice" aria-hidden="true" /> Create quote
+            </button>
+          </form>
+        ) : null}
       </AdminHeader>
       <Flash saved={sp.saved} error={sp.error} />
       <p className="adm-muted">

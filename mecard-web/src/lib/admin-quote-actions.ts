@@ -1,12 +1,13 @@
 "use server";
 
-import { eq, inArray } from "drizzle-orm";
+import { desc, eq, inArray } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { db } from "@/db/client";
-import { products, quotes, type QuoteLine } from "@/db/schema";
+import { companies, orders, products, quotes, users, type QuoteLine } from "@/db/schema";
+import { logAdmin } from "@/lib/admin-log";
 import { cleanEmail } from "@/lib/form-values";
 import { randsToCents } from "@/lib/money";
-import { QUOTE_STATUS_LABEL, QUOTE_VALID_DAYS, quoteTotals } from "@/lib/quote-rules";
+import { QUOTE_STATUS_LABEL, QUOTE_VALID_DAYS, quotePrefill, quoteTotals } from "@/lib/quote-rules";
 import { quoteById, sendQuoteEmails } from "@/lib/quotes";
 import { requireAdmin } from "@/lib/session";
 
@@ -104,6 +105,35 @@ export async function createQuoteAction(form: FormData) {
     .values({ status: "new", name: str(form, "name").slice(0, 200), email, company: str(form, "company").slice(0, 255), message: `Created by staff (user ${me}).` })
     .returning({ id: quotes.id });
   back(`/admin/quotes/${q.id}/`, { saved: "Quote created. Add its lines, then send it." });
+}
+
+/**
+ * A quote for a customer, started from their staff user or company page: filled
+ * in from their account (quotePrefill) and linked to it, so it's on their
+ * account's Quotes and accepting it fills their basket. Opens in the quote
+ * editor; nothing is emailed until staff send it.
+ */
+export async function createQuoteForUserAction(form: FormData) {
+  const me = await requireAdmin();
+  const userId = Number(form.get("user_id"));
+  const companyId = Number(form.get("company_id")) || 0;
+  const [u] = Number.isInteger(userId) && userId > 0 ? await db.select().from(users).where(eq(users.id, userId)).limit(1) : [];
+  if (!u) back("/admin/users/", { error: "That user no longer exists." });
+  const [[order], [company]] = await Promise.all([
+    db.select().from(orders).where(eq(orders.userId, u.id)).orderBy(desc(orders.createdAt)).limit(1),
+    db
+      .select({ id: companies.id, name: companies.name, phone: companies.phone })
+      .from(companies)
+      .where(companyId ? eq(companies.id, companyId) : eq(companies.ownerId, u.id))
+      .orderBy(companies.id)
+      .limit(1),
+  ]);
+  const [q] = await db
+    .insert(quotes)
+    .values({ status: "new", userId: u.id, ...quotePrefill(u, order, company), message: `Created by staff (user ${me}) from the customer's account.` })
+    .returning({ id: quotes.id });
+  await logAdmin(me, companyId ? "company" : "user", companyId || u.id, "quote created", `Quote #${q.id}`);
+  back(`/admin/quotes/${q.id}/`, { saved: "Quote created from the customer's account. Add its lines, then send it." });
 }
 
 export async function deleteQuoteAction(form: FormData) {
