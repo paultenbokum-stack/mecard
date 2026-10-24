@@ -9,7 +9,7 @@ import { cleanCompanyInput, saveCompany } from "@/lib/company-edit";
 import { cancelInvite, createInvite } from "@/lib/invites";
 import { addToCart } from "@/lib/cart";
 import { PRODUCT } from "@/lib/catalog";
-import { applyProUpgrade, pendingProUpgrades } from "@/lib/manage";
+import { applyProUpgrade, pendingProUpgrades, refreshProfilePages } from "@/lib/manage";
 import { cleanEmail } from "@/lib/form-values";
 import { canUseImage } from "@/lib/media-library";
 import { cleanProfileInput, createCompanyForProfile, saveProfile } from "@/lib/profile-edit";
@@ -58,6 +58,8 @@ export async function startProUpgradeAction(form: FormData) {
     const [product] = await db.select({ active: products.active }).from(products).where(eq(products.id, PRODUCT.proUpgrade)).limit(1);
     if (!product?.active) redirect(`/manage/profile/${profileId}/?done=upgrade-unavailable`);
     await addToCart(v.id, PRODUCT.proUpgrade, 1, profileId);
+    // Its company details now wait for payment too (getPublicProfileView).
+    await refreshProfilePages(profileId);
   }
   redirect(`/manage/profile/${profileId}/?done=pro-pending`);
 }

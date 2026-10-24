@@ -1,7 +1,8 @@
 import { imageDeps } from "@/lib/images/config";
 import { uploadKey } from "@/lib/images/paths";
 import { loadMaster, renderVariant } from "@/lib/images/pipeline";
-import { displayName, getProfileView } from "@/lib/public-profile";
+import { displayName } from "@/lib/public-profile";
+import { getPublicProfileView } from "@/lib/public-view";
 import { siteUrl } from "@/lib/site";
 import { buildVcard, vcardFileName } from "@/lib/vcard";
 
@@ -11,7 +12,7 @@ import { buildVcard, vcardFileName } from "@/lib/vcard";
 export async function GET(req: Request) {
   const url = new URL(req.url);
   const id = Number(url.searchParams.get("profile_id"));
-  const view = Number.isInteger(id) && id > 0 ? await getProfileView(id) : null;
+  const view = Number.isInteger(id) && id > 0 ? await getPublicProfileView(id) : null;
   if (!view || view.profile.archived) return new Response("Not found", { status: 404 });
 
   const vcard = buildVcard(view, {

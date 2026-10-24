@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import { notFound, permanentRedirect } from "next/navigation";
 import { CardPage } from "@/components/card/CardPage";
 import { cardMetadata } from "@/lib/card-metadata";
-import { displayName, getProfileBySlug, getProfileView, needsCanonicalRedirect } from "@/lib/public-profile";
+import { displayName, getProfileBySlug, needsCanonicalRedirect } from "@/lib/public-profile";
+import { getPublicProfileView } from "@/lib/public-view";
 import { siteUrl } from "@/lib/site";
 
 // /mecard-profile/<slug>/ — a profile's own page. Archived (trashed) profiles
@@ -19,7 +20,7 @@ type Props = { params: Promise<{ slug: string }> };
 async function load(slug: string) {
   const p = await getProfileBySlug(slug);
   if (!p || p.archived) return null;
-  return getProfileView(p.id);
+  return getPublicProfileView(p.id);
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {

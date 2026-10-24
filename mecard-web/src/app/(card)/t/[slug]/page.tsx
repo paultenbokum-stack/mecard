@@ -3,7 +3,8 @@ import { notFound, permanentRedirect } from "next/navigation";
 import { CardPage } from "@/components/card/CardPage";
 import { UnlinkedCard } from "@/components/card/UnlinkedCard";
 import { cardMetadata } from "@/lib/card-metadata";
-import { getCardBySlug, getProfileView, needsCanonicalRedirect } from "@/lib/public-profile";
+import { getCardBySlug, needsCanonicalRedirect } from "@/lib/public-profile";
+import { getPublicProfileView } from "@/lib/public-view";
 import { siteUrl } from "@/lib/site";
 
 // /t/<slug>/ — the URL printed on every card, NFC chip and QR code. It must
@@ -29,7 +30,7 @@ type Props = { params: Promise<{ slug: string }> };
 async function load(slug: string) {
   const card = await getCardBySlug(slug);
   if (!card || card.archived) return null;
-  const view = card.profileId ? await getProfileView(card.profileId) : null;
+  const view = card.profileId ? await getPublicProfileView(card.profileId) : null;
   if (view?.profile.archived) return null;
   return { card, view };
 }
