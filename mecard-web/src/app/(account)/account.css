@@ -216,3 +216,17 @@
   .acc-modal__head { padding: var(--space-3) var(--space-4); }
   .acc-modal__body { padding: var(--space-4); }
 }
+
+/* Buy a new card (My Cards): one row per card or tag, with its quantity (or Pro profile) and Add to basket. */
+.acc-buy { list-style: none; margin: var(--space-4) 0 0; padding: 0; display: grid; gap: var(--space-3); }
+.acc-buy__item { display: grid; grid-template-columns: 88px minmax(0, 1fr) auto; gap: var(--space-4); align-items: center; padding: var(--space-4); background: var(--surface); border: 1px solid var(--surface-muted); border-radius: var(--radius-md); }
+.acc-buy__img { width: 88px; height: 88px; object-fit: contain; border-radius: var(--radius-xs); background: var(--surface-subtle); }
+:where(.mecard-site) .acc .acc-buy__name { margin: 0 0 2px; font-size: 17px; }
+.acc-buy__blurb { margin: 0 0 4px; font-size: 14px; }
+.acc-buy__form { display: grid; gap: 6px; justify-items: stretch; min-width: 170px; }
+.acc-buy__label { font-size: 13px; font-weight: 600; color: var(--ink-strong); }
+@media (max-width: 640px) {
+  .acc-buy__item { grid-template-columns: 64px minmax(0, 1fr); }
+  .acc-buy__img { width: 64px; height: 64px; }
+  .acc-buy__form { grid-column: 1 / -1; }
+}

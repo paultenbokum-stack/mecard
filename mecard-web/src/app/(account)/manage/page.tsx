@@ -1,24 +1,20 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Avatar, ConfirmButton, DoneNotice, Pager, Subnav, Thumb, CARD_TYPES } from "@/components/account/Bits";
-import { canEditProfile, canManageCard, viewer } from "@/lib/access";
-import { LOGOUT } from "@/lib/auth-paths";
+import { Avatar, ConfirmButton, DoneNotice, Pager, Subnav } from "@/components/account/Bits";
+import { viewer } from "@/lib/access";
 import {
   availableProUpgrades,
-  cardForActivation,
   hasPendingUpgrade,
   invitesForUser,
   listCompanies,
   listProfiles,
-  maskEmail,
   PAGE_SIZE,
-  profileChoices,
 } from "@/lib/manage";
-import { normalizeSlug, isPro } from "@/lib/profile-format";
+import { isPro } from "@/lib/profile-format";
 import { redirect } from "next/navigation";
 import { accountState } from "@/lib/onboarding";
 import { requireUserId } from "@/lib/session";
-import { acceptInviteAction, archiveProfileAction, linkCardAction } from "./actions";
+import { acceptInviteAction, archiveProfileAction } from "./actions";
 
 export const metadata: Metadata = { title: "Profiles" };
 
@@ -30,6 +26,8 @@ export default async function ManageHome({ searchParams }: { searchParams: Promi
   const v = await viewer(await requireUserId(here));
   // A brand-new account (no profile, no cards) starts with onboarding.
   if (!sp.activate && (await accountState(v.id)) === "first_time") redirect("/onboarding/");
+  // Activating a card happens on My Cards now; old links (the unlinked-card page, emails) still land here.
+  if (sp.activate) redirect(`/manage/cards/?activate=${encodeURIComponent(sp.activate)}#activate`);
   const archived = sp.show === "archived";
   const page = Math.max(1, Number(sp.page) || 1);
 
@@ -61,8 +59,6 @@ export default async function ManageHome({ searchParams }: { searchParams: Promi
         </Link>
       </div>
       <DoneNotice done={sp.done} />
-
-      {sp.activate ? <Activate slug={sp.activate} userId={v.id} isAdmin={v.isAdmin} /> : null}
 
       {invites.length ? (
         <section className="acc-panel acc-panel--notice">
@@ -234,66 +230,5 @@ export default async function ManageHome({ searchParams }: { searchParams: Promi
         </div>
       </section>
     </div>
-  );
-}
-
-/** "Activate this card": the unlinked-card page sends people here with the card's slug. */
-async function Activate({ slug, userId, isAdmin }: { slug: string; userId: number; isAdmin: boolean }) {
-  const card = await cardForActivation(normalizeSlug(slug));
-  const v = { id: userId, isAdmin };
-  if (!card || card.archived)
-    return (
-      <section className="acc-panel acc-panel--error">
-        <h2>Card not found</h2>
-        <p style={{ marginBottom: 0 }}>We couldn&rsquo;t find a card at /t/{slug}/. Check the address on the card, or contact us for help.</p>
-      </section>
-    );
-  const type = CARD_TYPES[card.type] ?? "Card";
-  if (!(await canManageCard(v, card.id)))
-    return (
-      <section className="acc-panel acc-panel--notice">
-        <h2>Activate this {type.toLowerCase()}</h2>
-        <p>
-          This card is registered to {maskEmail(card.ownerEmail)}. <Link href={LOGOUT}>Log out</Link> and sign in with that account to link it to a profile.
-        </p>
-        <p className="acc__muted" style={{ marginBottom: 0 }}>
-          Bought it for someone else? Ask whoever placed the order to link it, or <Link href="/contact-us/">contact us</Link>.
-        </p>
-      </section>
-    );
-  const choices = await profileChoices(v);
-  const current = card.profileId && (await canEditProfile(v, card.profileId)) ? choices.find((p) => p.id === card.profileId) : null;
-  return (
-    <section className="acc-panel acc-panel--notice" id="activate">
-      <h2>{card.profileId ? `Change the profile on this ${type.toLowerCase()}` : `Activate this ${type.toLowerCase()}`}</h2>
-      <div className="acc-item" style={{ marginBottom: 12 }}>
-        <div className="acc-item__main">
-          <Thumb path={card.frontPath} />
-          <div className="acc-item__text">
-            <div className="acc-item__title">{card.label || type}</div>
-            <div className="acc-item__sub">
-              /t/{card.slug}/{current ? ` · now opens ${`${current.firstName} ${current.lastName}`.trim()}` : ""}
-            </div>
-          </div>
-        </div>
-      </div>
-      {choices.length ? (
-        <form action={linkCardAction} className="acc-inline-form">
-          <input type="hidden" name="card_id" value={card.id} />
-          <input type="hidden" name="back" value="/manage/cards/" />
-          <select name="profile_id" defaultValue={card.profileId ?? choices[0].id} aria-label="Profile to open when the card is tapped">
-            {choices.map((p) => (
-              <option key={p.id} value={p.id}>
-                {`${p.firstName} ${p.lastName}`.trim() || p.slug}
-                {p.companyName ? ` — ${p.companyName}` : ""}
-              </option>
-            ))}
-          </select>
-          <ConfirmButton className="acc-btn acc-btn--primary">{card.profileId ? "Change profile" : "Link card to profile"}</ConfirmButton>
-        </form>
-      ) : (
-        <p style={{ marginBottom: 0 }}>Create your profile first (below), then come back to this card&rsquo;s link to activate it.</p>
-      )}
-    </section>
   );
 }

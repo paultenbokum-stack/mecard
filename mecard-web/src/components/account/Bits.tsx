@@ -27,6 +27,7 @@ const DONE: Record<string, [string, "ok" | "error"]> = {
   "card-linked": ["The card is linked. Tapping it now opens the profile.", "ok"],
   "card-unlinked": ["The card is unlinked. It shows “not set up yet” until you link it again.", "ok"],
   "card-saved": ["Card settings saved.", "ok"],
+  "card-added": ["Added to your basket. Your new card is below: design it now or after checkout, and check out from the basket when you're ready.", "ok"],
   "profile-archived": ["Profile archived. Its page and cards stop working until you restore it.", "ok"],
   "profile-restored": ["Profile restored.", "ok"],
   "profile-created": ["Profile created. Fill in the details below.", "ok"],
