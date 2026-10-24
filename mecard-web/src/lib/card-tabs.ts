@@ -59,3 +59,29 @@ export function cardProgress(c: { orderStatus: string | null; designSubmitted: b
 }
 
 export const isCardTab = (v: unknown): v is CardTab => CARD_TABS.some(([k]) => k === v);
+
+export const cardTabLabel = (t: CardTab) => CARD_TABS.find(([k]) => k === t)![1];
+
+/**
+ * Back to My Cards from a card's editor: the tab it was opened from (?tab=),
+ * unless a save moved the card to another tab (a submitted design goes to In
+ * progress), which then opens with a "Moved to …" notice (?moved=).
+ */
+export function cardsListHref(from: CardTab | null | undefined, now: CardTab | null | undefined, extra: Record<string, string> = {}): string {
+  const tab = now ?? from;
+  const p = new URLSearchParams(tab ? { tab } : {});
+  if (from && now && from !== now) p.set("moved", now);
+  for (const [k, v] of Object.entries(extra)) p.set(k, v);
+  const qs = p.toString();
+  return `/manage/cards/${qs ? `?${qs}` : ""}`;
+}
+
+/** A /manage/ list URL a profile editor was opened from (?back=), so closing it returns there; anything else is /manage/. */
+export function manageBack(raw: unknown): string {
+  const s = typeof raw === "string" ? raw : "";
+  if (!s.startsWith("/manage/") || s.startsWith("/manage//")) return "/manage/";
+  const url = new URL(s, "http://x");
+  url.searchParams.delete("done");
+  url.searchParams.delete("moved");
+  return url.pathname + url.search;
+}

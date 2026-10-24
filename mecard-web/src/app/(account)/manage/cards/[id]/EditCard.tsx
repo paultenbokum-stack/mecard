@@ -4,13 +4,19 @@ import { CARD_TYPES, ConfirmButton, NewTab } from "@/components/account/Bits";
 import { CardDesigner } from "@/components/account/CardDesigner";
 import { canEditProfile, canManageCard, viewer } from "@/lib/access";
 import { cardForDesign, QR_DEFAULTS } from "@/lib/card-design";
-import { profileChoices } from "@/lib/manage";
+import { cardsListHref, isCardTab } from "@/lib/card-tabs";
+import { cardTabOf, profileChoices } from "@/lib/manage";
 import { requireUserId } from "@/lib/session";
 import { siteUrl } from "@/lib/site";
 import { cardSettingsAction, linkCardAction, unlinkCardAction } from "../../actions";
 
-/** One card or tag: which profile it opens, its settings and (cards) its design. The page and the My Cards modal both show it. */
-export async function loadCardEditor(id: string) {
+/**
+ * One card or tag: which profile it opens, its settings and (cards) its design.
+ * The page and the My Cards modal both show it. `tab` is the My Cards tab it was
+ * opened from (?tab=): closing goes back there, or to the card's new tab when a
+ * save moved it (cardsListHref).
+ */
+export async function loadCardEditor(id: string, tab?: string) {
   const cardId = Number(id);
   if (!Number.isInteger(cardId) || cardId <= 0) notFound();
   const v = await viewer(await requireUserId(`/manage/cards/${cardId}/`));
@@ -21,14 +27,14 @@ export async function loadCardEditor(id: string) {
   const current = data.card.profileId && (await canEditProfile(v, data.card.profileId)) ? (choices.find((p) => p.id === data.card.profileId) ?? null) : null;
   const type = CARD_TYPES[data.card.type] ?? "Card";
   const design = data.card.type === "contactcard" ? "custom" : data.card.type === "classiccard" ? "classic" : null;
-  return { ...data, choices, current, type, design } as const;
+  const from = isCardTab(tab) ? tab : null;
+  return { ...data, choices, current, type, design, from, back: cardsListHref(from, await cardTabOf(cardId)) } as const;
 }
 
-const BACK = "/manage/cards/";
 const nameOf = (p: { firstName: string; lastName: string; slug: string }) => `${p.firstName} ${p.lastName}`.trim() || p.slug;
 
 export function EditCard({ data }: { data: Awaited<ReturnType<typeof loadCardEditor>> }) {
-  const { card: c, defaults, choices, current, type, design } = data;
+  const { card: c, defaults, choices, current, type, design, from } = data;
   return (
     <>
       <p className="acc__lead">
@@ -49,7 +55,8 @@ export function EditCard({ data }: { data: Awaited<ReturnType<typeof loadCardEdi
         {choices.length ? (
           <form action={linkCardAction} className="acc-inline-form">
             <input type="hidden" name="card_id" value={c.id} />
-            <input type="hidden" name="back" value={BACK} />
+            <input type="hidden" name="back" value="/manage/cards/" />
+          <input type="hidden" name="from_tab" value={from ?? ""} />
             <select name="profile_id" defaultValue={c.profileId ?? choices[0].id} aria-label="Profile to open when the card is tapped">
               {choices.map((p) => (
                 <option key={p.id} value={p.id}>
@@ -68,7 +75,8 @@ export function EditCard({ data }: { data: Awaited<ReturnType<typeof loadCardEdi
         {c.profileId ? (
           <form action={unlinkCardAction} style={{ marginTop: 12 }}>
             <input type="hidden" name="card_id" value={c.id} />
-            <input type="hidden" name="back" value={BACK} />
+            <input type="hidden" name="back" value="/manage/cards/" />
+          <input type="hidden" name="from_tab" value={from ?? ""} />
             <ConfirmButton className="acc-btn acc-btn--small acc-btn--danger" confirm="Unlink this card? Tapping it will show “not set up yet” until you link it again.">
               Unlink
             </ConfirmButton>
@@ -80,7 +88,8 @@ export function EditCard({ data }: { data: Awaited<ReturnType<typeof loadCardEdi
         <h2>Card settings</h2>
         <form action={cardSettingsAction} className="acc-form">
           <input type="hidden" name="card_id" value={c.id} />
-          <input type="hidden" name="back" value={BACK} />
+          <input type="hidden" name="back" value="/manage/cards/" />
+          <input type="hidden" name="from_tab" value={from ?? ""} />
           <div className="acc-field">
             <label htmlFor={`label-${c.id}`}>Label</label>
             <input id={`label-${c.id}`} type="text" name="label" defaultValue={c.label} maxLength={255} placeholder="Only you see this" />

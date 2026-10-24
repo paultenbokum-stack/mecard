@@ -100,6 +100,12 @@ export async function cardTabCounts(v: Viewer): Promise<Record<CardTab, number>>
   return counts;
 }
 
+/** The My Cards tab one card is on now. */
+export async function cardTabOf(cardId: number): Promise<CardTab | null> {
+  const [row] = await db.select({ tab: cardTabSql }).from(cards).leftJoin(orders, eq(orders.id, cards.orderId)).where(eq(cards.id, cardId));
+  return row?.tab ?? null;
+}
+
 /** The viewer's cards on one My Cards tab (see card-tabs.ts). */
 export async function listCards(v: Viewer, opts: { tab: CardTab; q?: string; page?: number }) {
   const conds: SQL[] = [manageableCardsWhere(v.id), sql`${cardTabSql} = ${opts.tab}`];

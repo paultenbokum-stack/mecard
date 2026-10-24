@@ -147,7 +147,7 @@ async function Team({ company, sp }: { company: Company; sp: SP }) {
                     <a className="acc-btn acc-btn--small" href={`/mecard-profile/${p.slug}/`} target="_blank" rel="noopener">
                       View <NewTab />
                     </a>
-                    <Link className="acc-btn acc-btn--small acc-btn--primary" href={`/manage/profile/${p.id}/`}>
+                    <Link className="acc-btn acc-btn--small acc-btn--primary" href={`/manage/profile/${p.id}/?back=${encodeURIComponent(url(page))}`}>
                       Edit
                     </Link>
                     <form action={archiveProfileAction}>

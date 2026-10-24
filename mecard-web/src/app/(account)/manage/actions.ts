@@ -4,7 +4,8 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { canEditProfile, canManageCard, canManageCompany, viewer } from "@/lib/access";
 import { acceptInvite } from "@/lib/invites";
-import { createCompany, createProfile, linkCard, setProfileArchived, updateCardSettings } from "@/lib/manage";
+import { cardsListHref, isCardTab } from "@/lib/card-tabs";
+import { cardTabOf, createCompany, createProfile, linkCard, setProfileArchived, updateCardSettings } from "@/lib/manage";
 import { requireUserId } from "@/lib/session";
 
 // Form actions on /manage/. Each checks the user's rights again (the page
@@ -24,6 +25,12 @@ function back(form: FormData, done: string): never {
   redirect(url.pathname + url.search + (form.get("anchor") ? `#${form.get("anchor")}` : ""));
 }
 
+/** Back to My Cards on the tab the card is on now: the one it was opened from (from_tab), or its new one with a "Moved to" notice. */
+async function cardBack(form: FormData, cardId: number, done: string): Promise<never> {
+  const from = form.get("from_tab");
+  redirect(cardsListHref(isCardTab(from) ? from : null, await cardTabOf(cardId), { done }));
+}
+
 async function me() {
   return viewer(await requireUserId("/manage/"));
 }
@@ -34,7 +41,7 @@ export async function linkCardAction(form: FormData) {
   const profileId = id(form.get("profile_id"));
   if (!(await canManageCard(v, cardId)) || !(await canEditProfile(v, profileId))) back(form, "denied");
   await linkCard(cardId, profileId);
-  back(form, "card-linked");
+  await cardBack(form, cardId, "card-linked");
 }
 
 export async function unlinkCardAction(form: FormData) {
@@ -42,7 +49,7 @@ export async function unlinkCardAction(form: FormData) {
   const cardId = id(form.get("card_id"));
   if (!(await canManageCard(v, cardId))) back(form, "denied");
   await linkCard(cardId, null);
-  back(form, "card-unlinked");
+  await cardBack(form, cardId, "card-unlinked");
 }
 
 export async function cardSettingsAction(form: FormData) {
@@ -50,7 +57,7 @@ export async function cardSettingsAction(form: FormData) {
   const cardId = id(form.get("card_id"));
   if (!(await canManageCard(v, cardId))) back(form, "denied");
   await updateCardSettings(cardId, { label: String(form.get("label") ?? "").trim().slice(0, 255), autoDownloadVcard: form.get("auto_download") === "1" });
-  back(form, "card-saved");
+  await cardBack(form, cardId, "card-saved");
 }
 
 export async function archiveProfileAction(form: FormData) {

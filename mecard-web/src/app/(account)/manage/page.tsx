@@ -41,6 +41,9 @@ export default async function ManageHome({ searchParams }: { searchParams: Promi
   ]);
   const totalActive = activeCount >= 0 ? activeCount : list.total;
   const single = !archived && !sp.q && list.total === 1 ? list.rows[0] : null;
+  // The list as it is now (search, page), for the profile editor to come back to.
+  const listQs = new URLSearchParams({ ...(sp.q ? { q: sp.q } : {}), ...(page > 1 ? { page: String(page) } : {}) }).toString();
+  const editHref = (id: number) => `/manage/profile/${id}/${listQs ? `?back=${encodeURIComponent(`/manage/?${listQs}`)}` : ""}`;
   // A paid upgrade that's ready to use beats "waiting for EFT".
   const waitingForEft = pending && upgrades === 0;
   const backUrl = (extra: Record<string, string | number | undefined> = {}) => {
@@ -185,7 +188,7 @@ export default async function ManageHome({ searchParams }: { searchParams: Promi
                       <a className="acc-btn acc-btn--small" href={`/mecard-profile/${p.slug}/`} target="_blank" rel="noopener">
                         View <NewTab />
                       </a>
-                      <Link className="acc-btn acc-btn--small acc-btn--primary" href={`/manage/profile/${p.id}/`} scroll={false}>
+                      <Link className="acc-btn acc-btn--small acc-btn--primary" href={editHref(p.id)} scroll={false}>
                         Edit
                       </Link>
                     </>

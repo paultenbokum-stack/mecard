@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { cardProgress, cardTab, type CardTabInput } from "./card-tabs";
+import { cardProgress, cardsListHref, cardTab, manageBack, type CardTabInput } from "./card-tabs";
 
 const card = (o: Partial<CardTabInput>): CardTabInput => ({
   archived: false,
@@ -47,4 +47,26 @@ test("cardProgress names the stage", () => {
   assert.equal(cardProgress(base), "Artwork review");
   assert.equal(cardProgress({ ...base, designReceived: true, printed: true }), "Printed");
   assert.equal(cardProgress({ ...base, orderStatus: "shipped" }), "Shipped");
+});
+
+test("cardsListHref: back to the tab the card was opened from", () => {
+  assert.equal(cardsListHref("design", "design"), "/manage/cards/?tab=design");
+  assert.equal(cardsListHref("design", null), "/manage/cards/?tab=design");
+  assert.equal(cardsListHref(null, "live"), "/manage/cards/?tab=live");
+  assert.equal(cardsListHref(null, null), "/manage/cards/");
+  assert.equal(cardsListHref("live", "live", { done: "card-saved" }), "/manage/cards/?tab=live&done=card-saved");
+});
+
+test("cardsListHref: a save that moved the card opens its new tab with a notice", () => {
+  assert.equal(cardsListHref("design", "progress"), "/manage/cards/?tab=progress&moved=progress");
+  assert.equal(cardsListHref("unassigned", "live", { done: "card-linked" }), "/manage/cards/?tab=live&moved=live&done=card-linked");
+});
+
+test("manageBack keeps /manage/ list URLs only", () => {
+  assert.equal(manageBack("/manage/?show=archived&q=ann"), "/manage/?show=archived&q=ann");
+  assert.equal(manageBack("/manage/company/7/?tab=team&done=x"), "/manage/company/7/?tab=team");
+  assert.equal(manageBack("https://evil.example/manage/"), "/manage/");
+  assert.equal(manageBack("//evil.example/"), "/manage/");
+  assert.equal(manageBack("/manage//evil.example/"), "/manage/");
+  assert.equal(manageBack(undefined), "/manage/");
 });

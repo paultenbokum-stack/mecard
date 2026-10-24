@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { CARD_TYPES, DoneNotice, Pager, Subnav, Thumb, NewTab } from "@/components/account/Bits";
 import { viewer } from "@/lib/access";
-import { CARD_TABS, cardProgress, DESIGNED_CARD_TYPES, isCardTab, type CardTab } from "@/lib/card-tabs";
+import { CARD_TABS, cardProgress, cardTabLabel, DESIGNED_CARD_TYPES, isCardTab, type CardTab } from "@/lib/card-tabs";
 import { cardTabCounts, listCards, PAGE_SIZE } from "@/lib/manage";
 import { requireUserId } from "@/lib/session";
 import { Activate } from "./Activate";
@@ -25,7 +25,7 @@ const EMPTY: Record<CardTab, string> = {
   archived: "No archived cards.",
 };
 
-type SP = { tab?: string; q?: string; page?: string; done?: string; activate?: string };
+type SP = { tab?: string; q?: string; page?: string; done?: string; activate?: string; moved?: string };
 
 export default async function CardsPage({ searchParams }: { searchParams: Promise<SP> }) {
   const sp = await searchParams;
@@ -50,6 +50,11 @@ export default async function CardsPage({ searchParams }: { searchParams: Promis
       </div>
       <p className="acc__lead">Each card or tag opens the profile it is linked to when someone taps it or scans its QR code.</p>
       <DoneNotice done={sp.done} />
+      {sp.moved === tab ? (
+        <div className="acc-panel acc-panel--ok" role="status">
+          Moved to {cardTabLabel(tab)}.
+        </div>
+      ) : null}
 
       {sp.activate ? <Activate slug={sp.activate} userId={v.id} isAdmin={v.isAdmin} /> : null}
 
@@ -83,7 +88,7 @@ export default async function CardsPage({ searchParams }: { searchParams: Promis
               const type = CARD_TYPES[c.type] ?? "Card";
               const stage = tab === "design" ? (c.inBasket ? "In basket" : "Awaiting design") : tab === "progress" ? cardProgress(c) : null;
               const edit = (label: string, cls: string) => (
-                <Link className={`acc-btn acc-btn--small ${cls}`} href={`/manage/cards/${c.id}/`} scroll={false}>
+                <Link className={`acc-btn acc-btn--small ${cls}`} href={`/manage/cards/${c.id}/?tab=${tab}`} scroll={false}>
                   {label}
                 </Link>
               );
