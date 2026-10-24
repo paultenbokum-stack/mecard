@@ -46,31 +46,33 @@ export function SiteHeader({ loggedIn = false, detect = false, tagline = false }
   return (
     <header className="mc-site-header">
       <div className="mc-site-header__bar">
-        <div className="mc-site-header__brand">
-          <Link href="/" className="mc-site-header__logo" rel="home">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/images/mecard-logo.png" width={165} height={59} alt="MeCard" />
-          </Link>
-          {tagline ? <p className="mc-site-header__tagline">The only business card you&apos;ll ever need</p> : null}
+        <div className="mc-site-header__inner">
+          <div className="mc-site-header__brand">
+            <Link href="/" className="mc-site-header__logo" rel="home">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/images/mecard-logo.png" width={165} height={59} alt="MeCard" />
+            </Link>
+            {tagline ? <p className="mc-site-header__tagline">The only business card you&apos;ll ever need</p> : null}
+          </div>
+          <button type="button" className="mc-site-header__toggle" aria-expanded={open} aria-controls="mc-site-menu" aria-label="Main menu" onClick={() => setOpen((o) => !o)}>
+            {open ? (
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true">
+                <path d="M5.3 18.7a1 1 0 0 1 0-1.4L10.6 12 5.3 6.7a1 1 0 0 1 1.4-1.4L12 10.6l5.3-5.3a1 1 0 1 1 1.4 1.4L13.4 12l5.3 5.3a1 1 0 0 1-1.4 1.4L12 13.4l-5.3 5.3a1 1 0 0 1-1.4 0Z" />
+              </svg>
+            ) : (
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true">
+                <path d="M3 6h18v2H3zM3 11h18v2H3zM3 16h18v2H3z" />
+              </svg>
+            )}
+          </button>
+          <ul id="mc-site-menu" className="mc-site-header__menu mc-site-header__menu--desktop" style={{ display: "none" }}>
+            {menu.map(([label, href]) => (
+              <li key={href}>
+                <a href={href}>{label}</a>
+              </li>
+            ))}
+          </ul>
         </div>
-        <button type="button" className="mc-site-header__toggle" aria-expanded={open} aria-controls="mc-site-menu" aria-label="Main menu" onClick={() => setOpen((o) => !o)}>
-          {open ? (
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true">
-              <path d="M5.3 18.7a1 1 0 0 1 0-1.4L10.6 12 5.3 6.7a1 1 0 0 1 1.4-1.4L12 10.6l5.3-5.3a1 1 0 1 1 1.4 1.4L13.4 12l5.3 5.3a1 1 0 0 1-1.4 1.4L12 13.4l-5.3 5.3a1 1 0 0 1-1.4 0Z" />
-            </svg>
-          ) : (
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true">
-              <path d="M3 6h18v2H3zM3 11h18v2H3zM3 16h18v2H3z" />
-            </svg>
-          )}
-        </button>
-        <ul id="mc-site-menu" className="mc-site-header__menu mc-site-header__menu--desktop" style={{ display: "none" }}>
-          {menu.map(([label, href]) => (
-            <li key={href}>
-              <a href={href}>{label}</a>
-            </li>
-          ))}
-        </ul>
       </div>
       {open ? (
         <ul className="mc-site-header__menu">

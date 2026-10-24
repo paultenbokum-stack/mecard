@@ -166,7 +166,9 @@ button.close { padding: 0; background-color: transparent; border: 0; }
 
 /* Site header (Astra mobile header, logged-out menu) */
 .mc-site-header { margin: 10px 10px 0; position: relative; z-index: 99; }
-.mc-site-header__bar { display: flex; align-items: center; justify-content: space-between; min-height: 94px; padding: 0 20px; background: #fff; border-bottom: 1px solid #f2f5f7; }
+.mc-site-header__bar { background: #fff; border-bottom: 1px solid #f2f5f7; }
+/* Boxed to the page content width (1200px, like .mc-home__wrap and the WordPress container) so the logo and menu line up with the page below. */
+.mc-site-header__inner { display: flex; align-items: center; justify-content: space-between; min-height: 94px; max-width: 1200px; margin: 0 auto; padding: 0 20px; }
 .mc-site-header__logo { padding: 17px 0; }
 .mc-site-header__brand .mc-site-header__logo { display: block; padding-bottom: 0; }
 :where(.mecard-site) .mc-site-header__tagline { margin: 0 0 12px; font-size: 15px; line-height: 1.5; color: #4b4f58; }
@@ -180,7 +182,10 @@ button.close { padding: 0; background-color: transparent; border: 0; }
   .mc-site-header__menu { display: flex !important; border: 0; gap: 4px; }
   .mc-site-header__menu a { border: 0; padding: 0 1em; color: var(--ast-global-color-0); }
   .mc-site-header__menu a:hover, .mc-site-header__menu a:focus { color: var(--ast-global-color-1); }
-  .mc-site-header__bar { flex-wrap: nowrap; }
+  .mc-site-header__inner { flex-wrap: nowrap; }
+  /* Full width so the boxed content lines up with the page; the menu text ends on the content edge. */
+  .mc-site-header { margin-left: 0; margin-right: 0; }
+  .mc-site-header__menu { margin-right: -1em; }
 }
 
 /* Site footer */
