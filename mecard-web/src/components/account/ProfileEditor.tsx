@@ -97,7 +97,7 @@ export function ProfileEditor({ initial, pro, children }: { initial: ProfileView
     });
 
   return (
-    <div className="acc-editor">
+    <div className="acc-editor" data-dirty={dirty}>
       <div>
         <section className="acc-panel acc-panel--white">
           <h2>About you</h2>

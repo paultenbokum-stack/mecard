@@ -21,7 +21,7 @@ export default async function ShopPage({ searchParams }: { searchParams: Promise
 
   return (
     <div className="acc__wrap acc__wrap--wide">
-      <Subnav active="shop" />
+      <Subnav active="" />
       <h1>Shop</h1>
       {sp.error ? <div className="acc-panel acc-panel--error">That product isn&rsquo;t available any more.</div> : null}
       <div className="shop-grid">

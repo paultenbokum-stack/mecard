@@ -18,9 +18,9 @@ import { normalizeSlug, isPro } from "@/lib/profile-format";
 import { redirect } from "next/navigation";
 import { accountState } from "@/lib/onboarding";
 import { requireUserId } from "@/lib/session";
-import { acceptInviteAction, addProfileAction, archiveProfileAction, linkCardAction } from "./actions";
+import { acceptInviteAction, archiveProfileAction, linkCardAction } from "./actions";
 
-export const metadata: Metadata = { title: "Manage MeCard" };
+export const metadata: Metadata = { title: "Profiles" };
 
 type SP = { done?: string; activate?: string; q?: string; page?: string; show?: string };
 
@@ -54,8 +54,12 @@ export default async function ManageHome({ searchParams }: { searchParams: Promi
   return (
     <div className="acc__wrap">
       <Subnav active="home" />
-      <p className="acc__eyebrow">My MeCard Home</p>
-      <h1>Manage MeCard</h1>
+      <div className="acc-pagehead">
+        <h1>Profiles</h1>
+        <Link className="acc-btn acc-btn--primary" href="/manage/profile/new/" scroll={false}>
+          <i className="fa-solid fa-plus" aria-hidden="true" /> Add new profile
+        </Link>
+      </div>
       <DoneNotice done={sp.done} />
 
       {sp.activate ? <Activate slug={sp.activate} userId={v.id} isAdmin={v.isAdmin} /> : null}
@@ -105,7 +109,7 @@ export default async function ManageHome({ searchParams }: { searchParams: Promi
             <a className="acc-btn" href={`/mecard-profile/${single.slug}/`}>
               View profile
             </a>
-            <Link className="acc-btn acc-btn--primary" href={`/manage/profile/${single.id}/`}>
+            <Link className="acc-btn acc-btn--primary" href={`/manage/profile/${single.id}/`} scroll={false}>
               Edit profile
             </Link>
           </div>
@@ -185,7 +189,7 @@ export default async function ManageHome({ searchParams }: { searchParams: Promi
                       <a className="acc-btn acc-btn--small" href={`/mecard-profile/${p.slug}/`}>
                         View
                       </a>
-                      <Link className="acc-btn acc-btn--small acc-btn--primary" href={`/manage/profile/${p.id}/`}>
+                      <Link className="acc-btn acc-btn--small acc-btn--primary" href={`/manage/profile/${p.id}/`} scroll={false}>
                         Edit
                       </Link>
                     </>
@@ -208,53 +212,10 @@ export default async function ManageHome({ searchParams }: { searchParams: Promi
             ))}
           </ul>
         ) : (
-          <div className="acc-empty">{sp.q ? "No profiles match your search." : archived ? "No archived profiles." : "You don't have a profile yet. Create one below."}</div>
+          <div className="acc-empty">{sp.q ? "No profiles match your search." : archived ? "No archived profiles." : "You don't have a profile yet. Use Add new profile to create one."}</div>
         )}
         <Pager page={list.page} total={list.total} size={PAGE_SIZE} href={(n) => backUrl({ page: n > 1 ? n : undefined }) + "#profiles"} />
 
-        {!archived ? (
-          <details className="acc-details" style={{ marginTop: 16 }} open={list.total === 0 && !sp.q}>
-            <summary className="acc-btn">+ Add a profile</summary>
-            <form action={addProfileAction} className="acc-form" style={{ marginTop: 14 }}>
-              <input type="hidden" name="back" value="/manage/" />
-              <div className="acc-grid">
-                <div className="acc-field">
-                  <label htmlFor="np-first">First name</label>
-                  <input id="np-first" name="first_name" type="text" required maxLength={100} />
-                </div>
-                <div className="acc-field">
-                  <label htmlFor="np-last">Last name</label>
-                  <input id="np-last" name="last_name" type="text" maxLength={100} />
-                </div>
-                <div className="acc-field">
-                  <label htmlFor="np-job">Job title</label>
-                  <input id="np-job" name="job_title" type="text" maxLength={200} />
-                </div>
-                <div className="acc-field">
-                  <label htmlFor="np-email">Email address</label>
-                  <input id="np-email" name="email" type="email" maxLength={255} />
-                </div>
-              </div>
-              {companies.length ? (
-                <div className="acc-field">
-                  <label htmlFor="np-company">Company</label>
-                  <select id="np-company" name="company_id" defaultValue="">
-                    <option value="">None — a profile for myself</option>
-                    {companies.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.name}
-                      </option>
-                    ))}
-                  </select>
-                  <span className="acc-field__hint">Company profiles are Pro and use the company&rsquo;s branding. Invite the person from the company&rsquo;s Team tab so they can take it over.</span>
-                </div>
-              ) : null}
-              <div>
-                <ConfirmButton className="acc-btn acc-btn--primary">Create profile</ConfirmButton>
-              </div>
-            </form>
-          </details>
-        ) : null}
       </section>
 
       <section className="acc-panel">
@@ -267,8 +228,8 @@ export default async function ManageHome({ searchParams }: { searchParams: Promi
           <Link className="acc-btn" href="/manage/companies/">
             {companies.length ? `Companies (${companies.length})` : "Create a team"}
           </Link>
-          <Link className="acc-btn" href="/shop/">
-            Order cards
+          <Link className="acc-btn" href="/manage/cards/new/">
+            Buy a new card
           </Link>
         </div>
       </section>

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { MiniCart } from "@/components/shop/MiniCart";
 
@@ -87,10 +88,11 @@ function AccountDropdown() {
   );
 }
 
-/** `detect`: cached pages ask the browser's session which menu to show. `tagline`: the site description under the logo (site pages). */
+/** `detect`: ask the browser's session which menu to show, on every page (cached pages, and account pages after logging in or out, where the layout isn't re-rendered). `tagline`: the site description under the logo (site pages). */
 export function SiteHeader({ loggedIn = false, detect = false, tagline = false }: { loggedIn?: boolean; detect?: boolean; tagline?: boolean }) {
   const [open, setOpen] = useState(false);
   const [signedIn, setSignedIn] = useState(loggedIn);
+  const pathname = usePathname();
   useEffect(() => {
     if (!detect) return;
     let live = true;
@@ -101,7 +103,7 @@ export function SiteHeader({ loggedIn = false, detect = false, tagline = false }
     return () => {
       live = false;
     };
-  }, [detect]);
+  }, [detect, pathname]);
   const menu = signedIn ? MENU_LOGGED_IN : MENU;
   return (
     <header className="mc-site-header">

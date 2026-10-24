@@ -12,7 +12,7 @@ export default async function AccountLayout({ children }: { children: React.Reac
   const loggedIn = !!(await currentUserId());
   return (
     <CardShell>
-      <SiteHeader loggedIn={loggedIn} />
+      <SiteHeader loggedIn={loggedIn} detect />
       <main id="content" className="acc">
         {children}
       </main>

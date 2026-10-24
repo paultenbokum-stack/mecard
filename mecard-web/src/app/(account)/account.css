@@ -113,7 +113,7 @@
 .acc-editor__preview { position: relative; }
 @media (min-width: 960px) { .acc-editor__preview { position: sticky; top: 16px; } }
 .acc-phone { border: 10px solid var(--device); border-radius: 34px; overflow: hidden; background: var(--surface); box-shadow: var(--shadow-device); }
-.acc-phone__screen { height: 680px; overflow-y: auto; overflow-x: hidden; }
+.acc-phone__screen { height: 680px; overflow-y: auto; overflow-x: hidden; transform: translateZ(0); } /* the transform keeps the card's fixed save bar inside the preview */
 .acc-phone__screen .mc-card-container { padding: 0; }
 .acc-phone__label { text-align: center; font-size: 12.5px; color: var(--ink-muted); margin-top: 10px; }
 .acc-preview-inert { pointer-events: none; }
@@ -189,4 +189,30 @@
   .shop-table.shop-table--basket td[data-title] { display: flex; justify-content: space-between; align-items: center; gap: var(--space-3); text-align: right; }
   .shop-table.shop-table--basket td[data-title]::before { content: attr(data-title); font-weight: 600; color: var(--ink-strong); text-align: left; }
   .shop-table.shop-table--basket td.shop-table__remove { position: absolute; top: var(--space-3); right: 0; }
+}
+
+/* Page heading with its main action (Profiles → Add new profile, My Cards → Buy a new card). */
+.acc-pagehead { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-3) var(--space-4); margin: var(--space-7) 0 var(--space-2); }
+:where(.mecard-site) .acc .acc-pagehead h1 { margin: 0; }
+.acc-pagehead .acc-btn i { margin-right: 6px; }
+
+/* /manage/ modals (profile and card editors, buying a card): centred on desktop, full screen on phones. */
+.acc-modal { position: fixed; inset: 0; z-index: 1000; display: flex; align-items: center; justify-content: center; padding: var(--space-6); }
+.acc-modal__backdrop { position: absolute; inset: 0; background: rgba(15, 23, 41, 0.5); animation: acc-modal-fade 0.2s ease; }
+.acc-modal__panel { position: relative; display: flex; flex-direction: column; width: min(720px, 100%); max-height: calc(100vh - 2 * var(--space-6)); background: var(--surface-subtle); border-radius: var(--radius-lg); box-shadow: var(--shadow-device); overflow: hidden; animation: acc-modal-in 0.2s ease; }
+.acc-modal__panel--wide { width: min(1180px, 100%); }
+.acc-modal__head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); padding: var(--space-4) var(--space-6); background: var(--surface); border-bottom: 1px solid var(--surface-muted); }
+:where(.mecard-site) .acc-modal__head h2 { margin: 0; font-size: 20px; }
+:where(.mecard-site) .acc-modal__close { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; padding: 0; background: none; border: 0; border-radius: var(--radius-md); color: var(--ink-muted); font-size: 18px; cursor: pointer; }
+:where(.mecard-site) .acc-modal__close:hover, :where(.mecard-site) .acc-modal__close:focus { background: var(--surface-subtle); color: var(--ink); }
+.acc-modal__body { overflow-y: auto; padding: var(--space-5) var(--space-6) var(--space-6); }
+.acc-modal__body > .acc__lead:first-child { margin-top: 0; }
+@keyframes acc-modal-in { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+@keyframes acc-modal-fade { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .acc-modal__panel, .acc-modal__backdrop { animation: none; } }
+@media (max-width: 640px) {
+  .acc-modal { padding: 0; }
+  .acc-modal__panel { width: 100%; height: 100%; max-height: none; border-radius: 0; }
+  .acc-modal__head { padding: var(--space-3) var(--space-4); }
+  .acc-modal__body { padding: var(--space-4); }
 }

@@ -4,12 +4,11 @@ import { ConfirmButton } from "./ConfirmButton";
 
 // Small pieces shared by the /manage/ screens.
 
+// Orders live under My Account; new cards are bought from My Cards.
 const TABS = [
-  ["home", "Home", "/manage/"],
+  ["home", "Profiles", "/manage/"],
   ["cards", "My Cards", "/manage/cards/"],
   ["companies", "Companies", "/manage/companies/"],
-  ["orders", "Orders", "/my-account/orders/"],
-  ["shop", "Shop", "/shop/"],
 ] as const;
 
 export function Subnav({ active }: { active: (typeof TABS)[number][0] | "" }) {
