@@ -59,7 +59,7 @@ export default async function BasketPage({ searchParams }: { searchParams: Promi
         <div className="shop-checkout">
           <section className="acc-panel acc-panel--white">
             <form action={updateBasketAction}>
-              <table className="shop-table">
+              <table className="shop-table shop-table--basket">
                 <thead>
                   <tr>
                     <th colSpan={2}>Product</th>
@@ -74,24 +74,28 @@ export default async function BasketPage({ searchParams }: { searchParams: Promi
                     const img = imageUrl(l.product.imagePath, 160);
                     return (
                       <tr key={l.key}>
-                        <td style={{ width: 64 }}>
+                        <td className="shop-table__thumb" style={{ width: 64 }}>
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           {img ? <img className="shop-thumb" src={img} alt="" /> : null}
                         </td>
-                        <td>
+                        <td className="shop-table__product">
                           <Link href={`/product/${l.product.slug}/`}>{l.product.name}</Link>
                           {l.profileId ? <div className="acc__muted">For {names.get(l.profileId) || "your profile"}</div> : null}
                         </td>
-                        <td className="shop-num">{rands(l.product.priceCents)}</td>
-                        <td>
+                        <td className="shop-num" data-title="Price">
+                          {rands(l.product.priceCents)}
+                        </td>
+                        <td data-title="Quantity">
                           {l.profileId ? (
                             <>1<input type="hidden" name={`qty_${l.key}`} value="1" /></>
                           ) : (
                             <input className="shop-qty" type="number" name={`qty_${l.key}`} min={0} max={500} defaultValue={l.qty} aria-label={`Quantity of ${l.product.name}`} />
                           )}
                         </td>
-                        <td className="shop-num">{rands(l.lineCents)}</td>
-                        <td>
+                        <td className="shop-num" data-title="Subtotal">
+                          {rands(l.lineCents)}
+                        </td>
+                        <td className="shop-table__remove">
                           <button type="submit" formAction={removeLineAction.bind(null, l.key)} className="acc-btn acc-btn--small acc-btn--danger" aria-label={`Remove ${l.product.name}`}>
                             ✕
                           </button>

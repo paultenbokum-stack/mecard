@@ -174,9 +174,19 @@
 .acc-fieldset p { margin: 0; }
 /* The orders table stacks into labelled rows on phones, as WooCommerce's shop_table_responsive does. */
 @media (max-width: 640px) {
-  .shop-table--orders thead { display: none; }
-  .shop-table--orders tr { display: block; padding: var(--space-2) 0; border-bottom: 1px solid var(--surface-muted); }
-  .shop-table--orders td { display: flex; justify-content: space-between; gap: var(--space-3); border: 0; padding: var(--space-1) 0; text-align: right; }
-  .shop-table--orders td[data-title]::before { content: attr(data-title); font-weight: 600; color: var(--ink-strong); text-align: left; }
-  .shop-table--orders td.shop-table__actions { justify-content: flex-end; flex-wrap: wrap; padding-top: var(--space-2); }
+  .shop-table.shop-table--orders thead { display: none; }
+  .shop-table.shop-table--orders tr { display: block; padding: var(--space-2) 0; border-bottom: 1px solid var(--surface-muted); }
+  .shop-table.shop-table--orders td { display: flex; justify-content: space-between; gap: var(--space-3); border: 0; padding: var(--space-1) 0; text-align: right; }
+  .shop-table.shop-table--orders td[data-title]::before { content: attr(data-title); font-weight: 600; color: var(--ink-strong); text-align: left; }
+  .shop-table.shop-table--orders td.shop-table__actions { justify-content: flex-end; flex-wrap: wrap; padding-top: var(--space-2); }
+}
+/* The basket table: on phones each line becomes a card (image and name, then labelled price, quantity and subtotal), with remove top right. */
+@media (max-width: 640px) {
+  .shop-table.shop-table--basket thead { display: none; }
+  .shop-table.shop-table--basket tr { position: relative; display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: var(--space-1) var(--space-3); padding: var(--space-3) 40px var(--space-3) 0; border-bottom: 1px solid var(--surface-muted); }
+  .shop-table.shop-table--basket td { border: 0; padding: 0; }
+  .shop-table.shop-table--basket td.shop-table__thumb { grid-row: span 4; width: auto !important; }
+  .shop-table.shop-table--basket td[data-title] { display: flex; justify-content: space-between; align-items: center; gap: var(--space-3); text-align: right; }
+  .shop-table.shop-table--basket td[data-title]::before { content: attr(data-title); font-weight: 600; color: var(--ink-strong); text-align: left; }
+  .shop-table.shop-table--basket td.shop-table__remove { position: absolute; top: var(--space-3); right: 0; }
 }
