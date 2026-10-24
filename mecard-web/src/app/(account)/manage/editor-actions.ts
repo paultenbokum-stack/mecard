@@ -3,11 +3,13 @@
 import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { db } from "@/db/client";
-import { companies, profiles } from "@/db/schema";
+import { companies, products, profiles } from "@/db/schema";
 import { canEditProfile, canManageCompany, viewer } from "@/lib/access";
 import { cleanCompanyInput, saveCompany } from "@/lib/company-edit";
 import { cancelInvite, createInvite } from "@/lib/invites";
-import { applyProUpgrade } from "@/lib/manage";
+import { addToCart } from "@/lib/cart";
+import { PRODUCT } from "@/lib/catalog";
+import { applyProUpgrade, pendingProUpgrades } from "@/lib/manage";
 import { cleanEmail } from "@/lib/form-values";
 import { canUseImage } from "@/lib/media-library";
 import { cleanProfileInput, createCompanyForProfile, saveProfile } from "@/lib/profile-edit";
@@ -39,6 +41,25 @@ export async function applyUpgradeAction(form: FormData) {
     if ((applied = await applyProUpgrade(profileId, payer))) break;
   }
   redirect(`/manage/profile/${profileId}/?done=${applied ? "upgrade-applied" : "upgrade-none"}`);
+}
+
+/**
+ * Upgrade to Pro without paying first: the upgrade goes in the basket for this
+ * profile and the editor opens in Pro straight away. The public card stays
+ * standard until the order is paid (PayFast, or EFT marked paid by staff).
+ */
+export async function startProUpgradeAction(form: FormData) {
+  const v = await viewer(await requireUserId());
+  const profileId = Number(form.get("profile_id"));
+  if (!(await canEditProfile(v, profileId))) redirect("/manage/?done=denied");
+  const [p] = await db.select({ type: profiles.type }).from(profiles).where(eq(profiles.id, profileId)).limit(1);
+  if (p && p.type !== "standard") redirect(`/manage/profile/${profileId}/?done=already-pro`);
+  if (!(await pendingProUpgrades([profileId])).has(profileId)) {
+    const [product] = await db.select({ active: products.active }).from(products).where(eq(products.id, PRODUCT.proUpgrade)).limit(1);
+    if (!product?.active) redirect(`/manage/profile/${profileId}/?done=upgrade-unavailable`);
+    await addToCart(v.id, PRODUCT.proUpgrade, 1, profileId);
+  }
+  redirect(`/manage/profile/${profileId}/?done=pro-pending`);
 }
 
 export async function setupCompanyAction(form: FormData) {

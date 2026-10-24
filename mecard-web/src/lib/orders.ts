@@ -2,9 +2,10 @@ import "server-only";
 import { after } from "next/server";
 import { and, desc, eq } from "drizzle-orm";
 import { db } from "@/db/client";
-import { cards, orderNotes, orders } from "@/db/schema";
+import { cards, orderItems, orderNotes, orders } from "@/db/schema";
 import { bobgoAfterStatusChange, bobgoEnabled } from "@/lib/bobgo";
 import { cancelOrderEntitlements, processPaidOrder } from "@/lib/entitlements";
+import { refreshProfilePages } from "@/lib/manage";
 import { ORDER_STATUS_LABEL, PAID_STATUSES as PAID } from "@/lib/money";
 import { sendOrderStatusEmails } from "@/lib/order-emails";
 
@@ -60,6 +61,11 @@ export async function setOrderStatus(
     return o.status;
   });
   if (prev === null) return false;
+  // A Pro upgrade or bundle for a profile went live (or was taken back): refresh its public pages now.
+  if ((PAID.includes(next) && !PAID.includes(prev)) || next === "cancelled" || next === "refunded") {
+    const items = await db.select({ meta: orderItems.meta }).from(orderItems).where(eq(orderItems.orderId, orderId));
+    for (const id of new Set(items.map((i) => Number(i.meta.profileId)).filter((n) => n > 0))) await refreshProfilePages(id);
+  }
   if (opts.emails !== false) await sendOrderStatusEmails(orderId, prev, next);
   if (bobgoEnabled()) after(() => bobgoAfterStatusChange(orderId, next, { by: opts.by, prev }));
   return true;

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { removeBundleAction } from "@/app/(account)/manage/actions";
+import { startProUpgradeAction } from "@/app/(account)/manage/editor-actions";
 import { PRODUCT } from "@/lib/catalog";
 import { imageUrl } from "@/lib/images/paths";
 import { addToCartAction } from "@/lib/shop-actions";
@@ -26,14 +27,27 @@ function trackUpsell(context: string, profileId?: number | null) {
   }
 }
 
-const upgradeHref = (profileId: number) => `/product/profile-upgrade/?profile_id=${profileId}`;
+/**
+ * Starts the upgrade without checkout first: Pro editing unlocks at once and the
+ * upgrade waits in the basket to be paid (startProUpgradeAction).
+ */
+function StartUpgrade({ profileId, context, className, children }: { profileId: number; context: string; className: string; children: React.ReactNode }) {
+  return (
+    <form action={startProUpgradeAction} onSubmit={() => trackUpsell(context, profileId)}>
+      <input type="hidden" name="profile_id" value={profileId} />
+      <button type="submit" className={className}>
+        {children}
+      </button>
+    </form>
+  );
+}
 
 /** The compact "Upgrade" on each free profile in the list. */
 export function UpgradeButton({ profileId }: { profileId: number }) {
   return (
-    <Link className="acc-btn acc-btn--small acc-btn--cta" href={upgradeHref(profileId)} onClick={() => trackUpsell("manage_profile_row", profileId)}>
+    <StartUpgrade profileId={profileId} context="manage_profile_row" className="acc-btn acc-btn--small acc-btn--cta">
       Upgrade
-    </Link>
+    </StartUpgrade>
   );
 }
 
@@ -77,9 +91,9 @@ export function ProUpsell({ u }: { u: Upsells }) {
                 ))}
               </select>
             ) : null}
-            <Link className="acc-btn acc-btn--primary" href={upgradeHref(profileId)} onClick={() => trackUpsell("manage_panel", profileId)}>
+            <StartUpgrade profileId={profileId} context="manage_panel" className="acc-btn acc-btn--primary">
               Design Pro Profile
-            </Link>
+            </StartUpgrade>
           </div>
         </>
       )}

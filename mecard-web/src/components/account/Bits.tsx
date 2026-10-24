@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { imageUrl } from "@/lib/images/paths";
+import type { ProPending } from "@/lib/manage";
 import { manageViewFor } from "@/lib/manage-view";
 import { ConfirmButton } from "./ConfirmButton";
 
@@ -66,9 +67,44 @@ const DONE: Record<string, [string, "ok" | "error"]> = {
   "company-saved": ["Company saved.", "ok"],
   "invite-cancelled": ["Invite withdrawn.", "ok"],
   "upgrade-applied": ["Your Pro upgrade is applied. Your profile is now Pro.", "ok"],
+  "pro-pending": ["Pro is unlocked for this profile. Set it up below and pay when you're ready.", "ok"],
+  "already-pro": ["This profile is already Pro.", "ok"],
+  "upgrade-unavailable": ["The Pro upgrade can't be ordered right now. Please try again later.", "error"],
   "upgrade-none": ["There is no unused Pro upgrade on your account.", "error"],
   denied: ["You don't have permission to do that.", "error"],
 };
+
+const PENDING_VIA: Record<ProPending["via"], string> = {
+  basket: "The upgrade is in your basket.",
+  payfast: "Your order is waiting for payment.",
+  eft: "We're waiting for your EFT payment to clear.",
+};
+
+/** The "Pro pending payment" badge on a profile in a list. */
+export function ProPendingBadge() {
+  return <span className="acc-badge acc-badge--wait">Pro pending payment</span>;
+}
+
+/** Pro is unlocked in the editor, but the public card stays standard until the upgrade is paid. */
+export function ProPendingNote({ pending, editing }: { pending: ProPending; editing?: boolean }) {
+  return (
+    <div className="acc-panel acc-panel--notice acc-pending" role="status">
+      <p style={{ marginTop: 0 }}>
+        {editing ? <strong>Pro pending payment.</strong> : <ProPendingBadge />} {PENDING_VIA[pending.via]} {editing ? "You can set up your Pro profile now." : "Pro editing is already unlocked."} Your public card shows the standard version
+        until payment is received, then switches to Pro automatically.
+      </p>
+      {pending.payHref ? (
+        <Link className="acc-btn acc-btn--small acc-btn--cta" href={pending.payHref}>
+          Pay now
+        </Link>
+      ) : (
+        <p className="acc__muted" style={{ marginBottom: 0 }}>
+          The person who ordered the upgrade pays for it.
+        </p>
+      )}
+    </div>
+  );
+}
 
 export function DoneNotice({ done }: { done?: string }) {
   const m = done ? DONE[done] : undefined;

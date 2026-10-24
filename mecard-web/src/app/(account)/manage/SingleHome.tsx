@@ -1,9 +1,9 @@
 import Link from "next/link";
-import { CARD_TYPES, DoneNotice, NewTab, Subnav, Thumb } from "@/components/account/Bits";
+import { CARD_TYPES, DoneNotice, NewTab, ProPendingNote, Subnav, Thumb } from "@/components/account/Bits";
 import { BundleJourney, BundleOffer, CardOffer, ClassicCardPreview, ProUpsell } from "@/components/account/Upsells";
 import type { Viewer } from "@/lib/access";
 import { cardProgress } from "@/lib/card-tabs";
-import { listCards } from "@/lib/manage";
+import { listCards, pendingProUpgrades } from "@/lib/manage";
 import { isPro } from "@/lib/profile-format";
 import type { Upsells } from "@/lib/upsells";
 
@@ -15,13 +15,17 @@ import type { Upsells } from "@/lib/upsells";
 type Profile = { id: number; slug: string; firstName: string; lastName: string; type: string };
 
 export async function SingleHome({ v, profile, u, done }: { v: Viewer; profile: Profile; u: Upsells; done?: string }) {
-  const [basket, progress, live] = await Promise.all((["design", "progress", "live"] as const).map((tab) => listCards(v, { tab })));
+  const [[basket, progress, live], pendingMap] = await Promise.all([
+    Promise.all((["design", "progress", "live"] as const).map((tab) => listCards(v, { tab }))),
+    pendingProUpgrades([profile.id], v.id),
+  ]);
   const current = [
     ...basket.rows.slice(0, 3).map((c) => ({ c, stage: c.inBasket ? "In basket" : "Awaiting design" })),
     ...progress.rows.slice(0, 3).map((c) => ({ c, stage: cardProgress(c) })),
     ...live.rows.slice(0, 3).map((c) => ({ c, stage: "Live" })),
   ];
   const pro = isPro(profile);
+  const proPending = pro ? undefined : pendingMap.get(profile.id);
   const editHref = `/manage/profile/${profile.id}/`;
 
   return (
@@ -30,14 +34,24 @@ export async function SingleHome({ v, profile, u, done }: { v: Viewer; profile: 
       <header className="acc-single__head">
         <p className="acc__eyebrow">My MeCard Home</p>
         <h1>Manage MeCard</h1>
-        <p className="acc__lead">{pro ? "Your Pro profile is live and ready whenever you need it." : "Your free profile is live and ready whenever you need it."}</p>
+        <p className="acc__lead">
+          {pro
+            ? "Your Pro profile is live and ready whenever you need it."
+            : proPending
+              ? "Your profile is live. Your Pro upgrade goes live as soon as it is paid."
+              : "Your free profile is live and ready whenever you need it."}
+        </p>
       </header>
       <DoneNotice done={done} />
 
       <section className="acc-panel">
         <h2>Manage your profile</h2>
         <p>Open your live profile or jump straight into the inline editor.</p>
-        {!pro && u.eftPending ? <p className="acc-panel acc-panel--notice">Your Pro upgrade is pending &mdash; we&rsquo;re just waiting for EFT confirmation.</p> : null}
+        {proPending ? (
+          <ProPendingNote pending={proPending} />
+        ) : !pro && u.eftPending ? (
+          <p className="acc-panel acc-panel--notice">Your Pro upgrade is pending &mdash; we&rsquo;re just waiting for EFT confirmation.</p>
+        ) : null}
         <div className="acc-actions">
           <a className="acc-btn" href={`/mecard-profile/${profile.slug}/`} target="_blank" rel="noopener">
             View profile <NewTab />

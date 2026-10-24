@@ -2,7 +2,7 @@ import "server-only";
 import { and, asc, count, desc, eq, ilike, inArray, isNull, ne, or, sql, type SQL } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { db } from "@/db/client";
-import { cards, companies, entitlements, orderItems, orders, profileInvites, profiles, users } from "@/db/schema";
+import { cards, carts, companies, entitlements, orderItems, orders, profileInvites, profiles, users } from "@/db/schema";
 import { editableProfilesWhere, manageableCardsWhere, type Viewer } from "./access";
 import { CARD_TABS, DEAD_ORDER_STATUSES, DESIGNED_CARD_TYPES, type CardTab } from "./card-tabs";
 import { profilePaths } from "./public-profile";
@@ -204,20 +204,80 @@ export const UPGRADE_PRODUCT_IDS = [41811, 2044, 11160];
  * user_has_pending_upgrade(): an upgrade row not yet used up, or an on-hold /
  * pending order with an upgrade product (EFT payments not cleared yet).
  */
-export async function hasPendingUpgrade(userId: number): Promise<boolean> {
+export async function hasPendingUpgrade(userId: number, opts: { unassignedOnly?: boolean } = {}): Promise<boolean> {
+  // unassignedOnly: leave out upgrades ordered for a particular profile (pendingProUpgrades covers those).
   const [row] = await db
     .select({ id: entitlements.id })
     .from(entitlements)
-    .where(and(eq(entitlements.ownerId, userId), eq(entitlements.type, "pro_upgrade"), inArray(entitlements.status, ["in_cart", "paid_unassigned", "paid_assigned"])))
+    .where(
+      and(
+        eq(entitlements.ownerId, userId),
+        eq(entitlements.type, "pro_upgrade"),
+        inArray(entitlements.status, ["in_cart", "paid_unassigned", "paid_assigned"]),
+        opts.unassignedOnly ? isNull(entitlements.assignedProfileId) : undefined,
+      ),
+    )
     .limit(1);
   if (row) return true;
   const [order] = await db
     .select({ id: orders.id })
     .from(orders)
     .innerJoin(orderItems, eq(orderItems.orderId, orders.id))
-    .where(and(eq(orders.userId, userId), inArray(orders.status, ["on-hold", "pending"]), inArray(orderItems.productId, UPGRADE_PRODUCT_IDS)))
+    .where(
+      and(
+        eq(orders.userId, userId),
+        inArray(orders.status, ["on-hold", "pending"]),
+        inArray(orderItems.productId, UPGRADE_PRODUCT_IDS),
+        opts.unassignedOnly ? sql`coalesce(${orderItems.meta}->>'profileId', '') IN ('', '0')` : undefined,
+      ),
+    )
     .limit(1);
   return !!order;
+}
+
+/** A Pro upgrade for a profile that is ordered but not paid yet; payHref is null when someone else pays. */
+export type ProPending = { via: "basket" | "eft" | "payfast"; payHref: string | null };
+
+/**
+ * Profiles whose Pro upgrade (on its own or in a bundle) is in the basket or on
+ * an unpaid order. Pro editing is unlocked for them while the public card stays
+ * standard; paying makes them Pro (processPaidOrder). viewerId decides who gets
+ * a Pay now link: the person whose basket or order it is.
+ */
+export async function pendingProUpgrades(profileIds: number[], viewerId?: number): Promise<Map<number, ProPending>> {
+  const out = new Map<number, ProPending>();
+  if (!profileIds.length) return out;
+  const rows = await db
+    .select({ profileId: entitlements.assignedProfileId, ownerId: entitlements.ownerId, key: entitlements.cartItemKey })
+    .from(entitlements)
+    .where(and(eq(entitlements.type, "pro_upgrade"), eq(entitlements.status, "in_cart"), inArray(entitlements.assignedProfileId, profileIds)))
+    .orderBy(desc(entitlements.id));
+  const keys = [...new Set(rows.map((r) => r.key).filter((k): k is string => !!k))];
+  if (!keys.length) return out;
+  const [unpaid, baskets] = await Promise.all([
+    db
+      .select({ id: orders.id, status: orders.status, userId: orders.userId, key: sql<string>`${orderItems.meta}->>'cartItemKey'` })
+      .from(orders)
+      .innerJoin(orderItems, eq(orderItems.orderId, orders.id))
+      .where(and(inArray(orders.status, ["on-hold", "pending"]), inArray(sql`${orderItems.meta}->>'cartItemKey'`, keys)))
+      .orderBy(desc(orders.id)),
+    db
+      .select({ userId: carts.userId, key: sql<string>`l->>'key'` })
+      .from(carts)
+      .innerJoin(sql`jsonb_array_elements(${carts.items}) AS l`, sql`true`)
+      .where(and(inArray(carts.userId, [...new Set(rows.map((r) => r.ownerId))]), inArray(sql`l->>'key'`, keys))),
+  ]);
+  for (const r of rows) {
+    if (!r.profileId || !r.key || out.has(r.profileId)) continue;
+    const mine = viewerId === undefined || viewerId === r.ownerId;
+    const order = unpaid.find((o) => o.key === r.key && o.userId === r.ownerId);
+    if (order) {
+      out.set(r.profileId, order.status === "on-hold" ? { via: "eft", payHref: mine ? `/checkout/order-received/${order.id}/` : null } : { via: "payfast", payHref: mine ? `/checkout/pay/${order.id}/` : null });
+    } else if (baskets.some((b) => b.key === r.key && b.userId === r.ownerId)) {
+      out.set(r.profileId, { via: "basket", payHref: mine ? "/checkout/" : null });
+    }
+  }
+  return out;
 }
 
 /**

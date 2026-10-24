@@ -34,7 +34,8 @@ type Fields = {
 
 const toRows = (links: ProfileLink[]): LinkRow[] => links.map((l) => ({ key: `l${l.id}`, id: l.id, label: l.label, url: l.url }));
 
-export function ProfileEditor({ initial, pro, children }: { initial: ProfileView; pro: boolean; children?: React.ReactNode }) {
+/** pendingPayment: Pro is unlocked but not paid yet, so saving doesn't change the public card's template. */
+export function ProfileEditor({ initial, pro, pendingPayment, children }: { initial: ProfileView; pro: boolean; pendingPayment?: boolean; children?: React.ReactNode }) {
   const router = useRouter();
   const p0 = initial.profile;
   const start: Fields = {
@@ -92,7 +93,10 @@ export function ProfileEditor({ initial, pro, children }: { initial: ProfileView
       const kept = links.filter((l) => l.label.trim() && l.url.trim());
       setLinks(kept);
       setSaved({ fields: f, links: kept });
-      setMessage({ ok: true, text: res.becamePro ? "Saved. Your Pro upgrade was applied." : "Saved. Your card is up to date." });
+      setMessage({
+        ok: true,
+        text: res.becamePro ? "Saved. Your Pro upgrade was applied." : pendingPayment ? "Saved. Your Pro details go live once payment is received." : "Saved. Your card is up to date.",
+      });
       router.refresh();
     });
 

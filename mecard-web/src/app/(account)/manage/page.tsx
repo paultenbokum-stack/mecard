@@ -1,12 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Avatar, ConfirmButton, DoneNotice, Pager, Subnav, NewTab } from "@/components/account/Bits";
+import { Avatar, ConfirmButton, DoneNotice, Pager, ProPendingBadge, Subnav, NewTab } from "@/components/account/Bits";
 import { viewer } from "@/lib/access";
 import {
   invitesForUser,
   listCompanies,
+  hasPendingUpgrade,
   listProfiles,
   PAGE_SIZE,
+  pendingProUpgrades,
 } from "@/lib/manage";
 import { isPro } from "@/lib/profile-format";
 import { cookies } from "next/headers";
@@ -58,6 +60,12 @@ export default async function ManageHome({ searchParams }: { searchParams: Promi
     archived || sp.q ? listProfiles(v, { archived: false, page: 1 }).then((r) => r.total) : Promise.resolve(-1),
   ]);
   const totalActive = activeCount >= 0 ? activeCount : list.total;
+  // Upgrades ordered for a profile but not paid yet: Pro is unlocked in the editor, the card stays standard.
+  // An upgrade ordered for no particular profile (an EFT bundle) hides the per-profile Upgrade, as before.
+  const [proPending, unassignedPending] = await Promise.all([
+    pendingProUpgrades(list.rows.filter((p) => !isPro(p)).map((p) => p.id), v.id),
+    hasPendingUpgrade(v.id, { unassignedOnly: true }),
+  ]);
   // The list as it is now (search, page), for the profile editor to come back to.
   const listQs = new URLSearchParams({ ...(sp.q ? { q: sp.q } : {}), ...(page > 1 ? { page: String(page) } : {}) }).toString();
   const editHref = (id: number) => `/manage/profile/${id}/${listQs ? `?back=${encodeURIComponent(`/manage/?${listQs}`)}` : ""}`;
@@ -104,7 +112,7 @@ export default async function ManageHome({ searchParams }: { searchParams: Promi
       ) : null}
 
       <BundleJourney u={u} />
-      {u.eftPending ? <div className="acc-panel acc-panel--notice">Your Pro upgrade is pending &mdash; we&rsquo;re just waiting for EFT confirmation.</div> : null}
+      {u.eftPending && !proPending.size ? <div className="acc-panel acc-panel--notice">Your Pro upgrade is pending &mdash; we&rsquo;re just waiting for EFT confirmation.</div> : null}
 
       <section className="acc-panel" id="profiles">
         <div className="acc-panel__head">
@@ -139,7 +147,7 @@ export default async function ManageHome({ searchParams }: { searchParams: Promi
                   <Avatar path={p.photoPath} />
                   <div className="acc-item__text">
                     <div className="acc-item__title">
-                      {`${p.firstName} ${p.lastName}`.trim() || p.slug} <span className={`acc-badge${isPro(p) ? " acc-badge--pro" : ""}`}>{isPro(p) ? "Pro" : "Standard"}</span>{" "}
+                      {`${p.firstName} ${p.lastName}`.trim() || p.slug} {proPending.has(p.id) ? <ProPendingBadge /> : <span className={`acc-badge${isPro(p) ? " acc-badge--pro" : ""}`}>{isPro(p) ? "Pro" : "Standard"}</span>}{" "}
                       {p.ownerId === v.id && p.managerId && p.managerId !== v.id ? <span className="acc-badge">Shared with you</span> : null}
                     </div>
                     <div className="acc-item__sub">{[p.jobTitle, p.companyName].filter(Boolean).join(" · ") || " "}</div>
@@ -154,7 +162,13 @@ export default async function ManageHome({ searchParams }: { searchParams: Promi
                       <Link className="acc-btn acc-btn--small acc-btn--primary" href={editHref(p.id)} scroll={false}>
                         Edit
                       </Link>
-                      {u.proUpsell && !isPro(p) && !u.upgradesReady ? <UpgradeButton profileId={p.id} /> : null}
+                      {proPending.get(p.id)?.payHref ? (
+                        <Link className="acc-btn acc-btn--small acc-btn--cta" href={proPending.get(p.id)!.payHref!}>
+                          Pay now
+                        </Link>
+                      ) : !isPro(p) && !proPending.has(p.id) && !u.journey && !u.upgradesReady && !unassignedPending ? (
+                        <UpgradeButton profileId={p.id} />
+                      ) : null}
                     </>
                   ) : null}
                   <form action={archiveProfileAction}>

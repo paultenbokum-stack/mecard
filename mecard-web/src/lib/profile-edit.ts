@@ -3,12 +3,14 @@ import { and, eq, notInArray } from "drizzle-orm";
 import { db } from "@/db/client";
 import { companies, profileLinks, profiles } from "@/db/schema";
 import { cleanEmail, cleanPhone, cleanSocial, cleanText, cleanUrl } from "./form-values";
-import { applyProUpgrade, createCompany, refreshProfilePages } from "./manage";
+import { applyProUpgrade, createCompany, pendingProUpgrades, refreshProfilePages } from "./manage";
 import { isPro } from "./profile-format";
 
 // Saving the profile editor (Me\Single_Editor\Module::ajax_save and the
 // edit-mecard-profile-ajax form). Standard profiles keep to what the standard
 // template shows: no direct line and no "My Links" buttons (those are Pro).
+// A profile whose Pro upgrade is ordered but not paid yet saves them too, so
+// they are there when payment makes it Pro; its public card stays standard.
 
 export const SOCIAL_NETWORKS = ["facebook", "instagram", "linkedin", "youtube", "twitter", "tiktok"] as const;
 export const MAX_LINKS = 20;
@@ -65,6 +67,7 @@ export async function saveProfile(profileId: number, input: ProfileInput): Promi
   const [current] = await db.select().from(profiles).where(eq(profiles.id, profileId)).limit(1);
   if (!current) throw new Error(`Profile ${profileId} not found`);
   const pro = isPro(current);
+  const proFields = pro || (await pendingProUpgrades([profileId])).has(profileId);
 
   await db.transaction(async (tx) => {
     await tx
@@ -76,7 +79,7 @@ export async function saveProfile(profileId: number, input: ProfileInput): Promi
         email: input.email,
         mobile: input.mobile,
         whatsapp: input.whatsapp,
-        ...(pro ? { workPhone: input.workPhone } : {}),
+        ...(proFields ? { workPhone: input.workPhone } : {}),
         // The typed company name only shows when there is no company record.
         ...(current.companyId ? {} : { companyName: input.companyName }),
         socials: input.socials,
@@ -86,7 +89,7 @@ export async function saveProfile(profileId: number, input: ProfileInput): Promi
       })
       .where(eq(profiles.id, profileId));
 
-    if (pro) await replaceLinks(tx, { profileId }, input.links);
+    if (proFields) await replaceLinks(tx, { profileId }, input.links);
   });
 
   // Saving spends a paid, unused Pro upgrade, as on WordPress (maybe_assign_on_profile_save).

@@ -14,7 +14,7 @@ export default async function EditProfilePage({ params, searchParams }: { params
       <Subnav active="profile" />
       <p className="acc__eyebrow">Edit profile</p>
       <h1>
-        {data.name} <ProfileBadge pro={data.pro} />
+        {data.name} <ProfileBadge pro={data.pro} pending={!!data.proPending} />
       </h1>
       <EditProfile data={data} done={sp.done} />
     </div>

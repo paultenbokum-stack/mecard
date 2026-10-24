@@ -1,13 +1,13 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { ConfirmButton, DoneNotice, NewTab } from "@/components/account/Bits";
+import { ConfirmButton, DoneNotice, NewTab, ProPendingBadge, ProPendingNote } from "@/components/account/Bits";
 import { ProfileEditor } from "@/components/account/ProfileEditor";
 import { canEditProfile, canManageCompany, viewer } from "@/lib/access";
-import { availableProUpgrades, hasPendingUpgrade } from "@/lib/manage";
+import { availableProUpgrades, hasPendingUpgrade, pendingProUpgrades } from "@/lib/manage";
 import { isPro } from "@/lib/profile-format";
 import { displayName, getProfileView } from "@/lib/public-profile";
 import { requireUserId } from "@/lib/session";
-import { applyUpgradeAction, setupCompanyAction } from "../../editor-actions";
+import { applyUpgradeAction, setupCompanyAction, startProUpgradeAction } from "../../editor-actions";
 
 /** The profile editor and what is loaded for it; the page and the /manage/ modal both show it. */
 export async function loadProfileEditor(id: string) {
@@ -20,20 +20,24 @@ export async function loadProfileEditor(id: string) {
   const p = view.profile;
   const pro = isPro(p);
   const payers = [...new Set([v.id, p.ownerId, p.managerId].filter((x): x is number => !!x))];
-  const [upgrades, pending, manageCompany] = await Promise.all([
+  const [upgrades, pending, proPending, manageCompany] = await Promise.all([
     pro ? 0 : Promise.all(payers.map(availableProUpgrades)).then((n) => n.reduce((a, b) => a + b, 0)),
-    pro ? false : hasPendingUpgrade(p.ownerId ?? v.id),
+    pro ? false : hasPendingUpgrade(p.ownerId ?? v.id, { unassignedOnly: true }),
+    pro ? undefined : pendingProUpgrades([p.id], v.id).then((m) => m.get(p.id)),
     view.company ? canManageCompany(v, view.company.id) : Promise.resolve(false),
   ]);
-  return { view, pro, upgrades, pending, manageCompany, name: displayName(p) };
+  return { view, pro, upgrades, pending, proPending, manageCompany, name: displayName(p) };
 }
 
-export function ProfileBadge({ pro }: { pro: boolean }) {
+export function ProfileBadge({ pro, pending }: { pro: boolean; pending?: boolean }) {
+  if (!pro && pending) return <ProPendingBadge />;
   return <span className={`acc-badge${pro ? " acc-badge--pro" : ""}`}>{pro ? "Pro" : "Standard"}</span>;
 }
 
 export function EditProfile({ data, done }: { data: Awaited<ReturnType<typeof loadProfileEditor>>; done?: string }) {
-  const { view, pro, upgrades, pending, manageCompany } = data;
+  const { view, pro, upgrades, pending, proPending, manageCompany } = data;
+  // Ordered but not paid: Pro is unlocked here, the public card stays standard.
+  const proEditing = pro || !!proPending;
   const p = view.profile;
   return (
     <>
@@ -43,8 +47,10 @@ export function EditProfile({ data, done }: { data: Awaited<ReturnType<typeof lo
       </p>
       <DoneNotice done={done} />
 
-      <ProfileEditor key={p.id} initial={view} pro={pro}>
-        {pro ? (
+      {proPending ? <ProPendingNote pending={proPending} editing /> : null}
+
+      <ProfileEditor key={p.id} initial={view} pro={proEditing} pendingPayment={!!proPending}>
+        {proEditing ? (
           <section className="acc-panel">
             <h2>Company</h2>
             {view.company ? (
@@ -97,9 +103,13 @@ export function EditProfile({ data, done }: { data: Awaited<ReturnType<typeof lo
             ) : (
               <>
                 <p className="acc-item__title">R199 once off</p>
-                <Link className="acc-btn acc-btn--cta" href={`/product/profile-upgrade/?profile_id=${p.id}`}>
-                  Upgrade to Pro
-                </Link>
+                <form action={startProUpgradeAction}>
+                  <input type="hidden" name="profile_id" value={p.id} />
+                  <ConfirmButton className="acc-btn acc-btn--cta">Upgrade to Pro</ConfirmButton>
+                </form>
+                <p className="acc__muted" style={{ marginBottom: 0 }}>
+                  Set up your Pro profile straight away and pay when you&rsquo;re ready. Your public card switches to Pro once payment is received.
+                </p>
               </>
             )}
           </section>
