@@ -3,12 +3,13 @@
 import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { db } from "@/db/client";
-import { profiles } from "@/db/schema";
+import { companies, profiles } from "@/db/schema";
 import { canEditProfile, canManageCompany, viewer } from "@/lib/access";
 import { cleanCompanyInput, saveCompany } from "@/lib/company-edit";
 import { cancelInvite, createInvite } from "@/lib/invites";
 import { applyProUpgrade } from "@/lib/manage";
 import { cleanEmail } from "@/lib/form-values";
+import { canUseImage } from "@/lib/media-library";
 import { cleanProfileInput, createCompanyForProfile, saveProfile } from "@/lib/profile-edit";
 import { requireUserId } from "@/lib/session";
 
@@ -21,6 +22,8 @@ export async function saveProfileAction(profileId: number, raw: Record<string, u
   if (!(await canEditProfile(v, profileId))) return { ok: false, error: "You don't have permission to edit this profile." };
   const input = cleanProfileInput(raw ?? {});
   if (!input.firstName && !input.lastName) return { ok: false, error: "Enter a name for the profile." };
+  const [now] = await db.select({ photo: profiles.photoPath }).from(profiles).where(eq(profiles.id, profileId)).limit(1);
+  if (!(await canUseImage(v, input.photoPath, now?.photo, "photo"))) return { ok: false, error: "You can only use images from your own library. Choose the image again from My images." };
   const { becamePro } = await saveProfile(profileId, input);
   return { ok: true, becamePro };
 }
@@ -51,6 +54,8 @@ export async function saveCompanyAction(companyId: number, raw: Record<string, u
   if (!(await canManageCompany(v, companyId))) return { ok: false, error: "You don't have permission to edit this company." };
   const input = cleanCompanyInput(raw ?? {});
   if (!input.name) return { ok: false, error: "Enter the company name." };
+  const [now] = await db.select({ logo: companies.logoPath }).from(companies).where(eq(companies.id, companyId)).limit(1);
+  if (!(await canUseImage(v, input.logoPath, now?.logo, "logo"))) return { ok: false, error: "You can only use images from your own library. Choose the image again from My images." };
   await saveCompany(companyId, input);
   return { ok: true };
 }

@@ -5,9 +5,11 @@ import { redirect } from "next/navigation";
 import { signIn } from "@/auth";
 import { db } from "@/db/client";
 import { events, profiles, users } from "@/db/schema";
+import { viewer } from "@/lib/access";
 import { onNewUser } from "@/lib/accounts";
 import { cleanEmail, cleanPhone, cleanText } from "@/lib/form-values";
 import { freeUsername, saveOnboardingStep, sendProfileLink } from "@/lib/onboarding";
+import { canUseImage } from "@/lib/media-library";
 import { hashPassword } from "@/lib/password";
 import { MIN_PASSWORD } from "@/lib/password-reset";
 import { requireUserId } from "@/lib/session";
@@ -59,6 +61,9 @@ export async function emailSignupAction(_: SignupState, form: FormData): Promise
 
 export async function onboardingStepAction(profileId: number, step: string, data: Record<string, unknown>) {
   const userId = await requireUserId("/onboarding/");
+  if (data?.photoPath && !(await canUseImage(await viewer(userId), String(data.photoPath), null, "photo"))) {
+    return { ok: false as const, error: "Upload your photo again, please." };
+  }
   try {
     return { ok: true as const, ...(await saveOnboardingStep(userId, profileId, step, data ?? {})) };
   } catch {

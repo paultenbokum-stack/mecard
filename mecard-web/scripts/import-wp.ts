@@ -642,6 +642,10 @@ async function main() {
     await db.execute(sql.raw(`SELECT setval(pg_get_serial_sequence('${t}', 'id'), COALESCE((SELECT max(id) FROM ${t}), 0) + 1, false)`));
   }
 
+  // Each account's images (the media picker and My images).
+  const { importMedia } = await import("./import-media");
+  await importMedia(wp);
+
   await wp.end();
   console.log("Done.");
   process.exit(0);

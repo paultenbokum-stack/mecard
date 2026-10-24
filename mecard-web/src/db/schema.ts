@@ -463,3 +463,36 @@ export const adminLog = pgTable(
   },
   (t) => [index("admin_log_entity").on(t.entity, t.entityId, t.createdAt)],
 );
+
+// An account's images: what the media picker and My images show (WordPress's
+// media library, which customers saw filtered to their own uploads). The file is
+// in the image store under `path`; a `media` row means its WebP master is in the
+// active bucket, no row means the original is still only in the archive bucket.
+// Where each image is used is read from the records themselves (mediaUsage()),
+// so it can't drift.
+export const mediaLibrary = pgTable(
+  "media_library",
+  {
+    id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
+    ownerId: integer("owner_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    // Shared with the company's admins (uploaded from, or used by, the company).
+    companyId: integer("company_id").references(() => companies.id, { onDelete: "set null" }),
+    // "/wp-content/uploads/2024/03/logo.png", as stored on profiles, companies and cards.
+    path: text("path").notNull(),
+    filename: varchar("filename", { length: 255 }).notNull().default(""),
+    title: varchar("title", { length: 255 }).notNull().default(""),
+    mimeType: varchar("mime_type", { length: 100 }).notNull().default(""),
+    width: integer("width"),
+    height: integer("height"),
+    bytes: integer("bytes"),
+    wpAttachmentId: integer("wp_attachment_id"),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    uniqueIndex("media_library_owner_path").on(t.ownerId, t.path),
+    index("media_library_owner_time").on(t.ownerId, t.createdAt),
+    index("media_library_company").on(t.companyId),
+  ],
+);

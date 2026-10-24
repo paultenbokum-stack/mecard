@@ -50,6 +50,13 @@
       "when": 1792700182486,
       "tag": "0006_admin_log",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1792836889541,
+      "tag": "0007_media_library",
+      "breakpoints": true
     }
   ]
 }

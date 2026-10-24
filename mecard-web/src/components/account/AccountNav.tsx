@@ -9,6 +9,7 @@ export const ACCOUNT_LINKS = [
   ["console", "My profiles and cards", "/manage/"],
   ["orders", "Orders", "/my-account/orders/"],
   ["quotes", "Quotes", "/my-account/quotes/"],
+  ["images", "My images", "/my-account/images/"],
   ["edit-account", "Account details", "/my-account/edit-account/"],
   ["help", "Get help", "/contact-us/"],
   ["logout", "Log out", LOGOUT],

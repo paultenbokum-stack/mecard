@@ -140,7 +140,7 @@ export function CompanyEditor({
               <Field id="ce-name" label="Company name">
                 <input id="ce-name" type="text" required {...text("name")} />
               </Field>
-              <ImageField label="Logo" logo path={f.logoPath} onChange={(path) => set("logoPath", path)} hint="Shown at the top of every Pro profile. A PNG with a transparent background works best." />
+              <ImageField label="Logo" logo companyId={c0.id} path={f.logoPath} onChange={(path) => set("logoPath", path)} hint="Shown at the top of every Pro profile. A PNG with a transparent background works best." />
               <div className="acc-grid">
                 <Field id="ce-phone" label="Office number">
                   <input id="ce-phone" type="tel" {...text("phone", 100)} />

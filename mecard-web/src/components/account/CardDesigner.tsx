@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { saveDesignAction } from "@/app/(account)/manage/card-actions";
 import { imageUrl } from "@/lib/images/paths";
+import { ImageLibrary } from "./ImageLibrary";
 
 // The card design screens from the plugin (custom card editor with the
 // draggable, resizable QR code; classic card details), on a card drawn at its
@@ -12,43 +13,11 @@ import { imageUrl } from "@/lib/images/paths";
 type Custom = { frontPath: string | null; backPath: string | null; qrX: number; qrY: number; qrWidth: number; qrCodeColour: string; qrFillColour: string };
 type Classic = { frontPath: string | null; nameOnCard: string; jobTitleOnCard: string };
 
-async function uploadArtwork(file: File): Promise<string> {
-  const body = new FormData();
-  body.append("file", file);
-  body.append("kind", "artwork");
-  const res = await fetch("/api/upload/", { method: "POST", body });
-  const json = (await res.json().catch(() => ({}))) as { path?: string; error?: string };
-  if (!res.ok || !json.path) throw new Error(json.error || "Upload failed. Please try again.");
-  return json.path;
-}
-
-/** One upload slot (logo, front or back): a hidden file picker that both its button and the card preview open. */
-function useUpload(onUploaded: (p: string) => void, onError: (e: string) => void) {
-  const input = useRef<HTMLInputElement>(null);
-  const [busy, setBusy] = useState(false);
-  const picker = (
-    <input
-      ref={input}
-      type="file"
-      accept="image/png,image/jpeg"
-      hidden
-      onChange={async (e) => {
-        const f = e.target.files?.[0];
-        if (!f) return;
-        setBusy(true);
-        onError("");
-        try {
-          onUploaded(await uploadArtwork(f));
-        } catch (err) {
-          onError(err instanceof Error ? err.message : "Upload failed.");
-        } finally {
-          setBusy(false);
-          e.target.value = "";
-        }
-      }}
-    />
-  );
-  return { picker, busy, open: () => input.current?.click() };
+/** One image slot (logo, front or back): its button and the card preview open the media picker (upload, or reuse from My images). */
+function useUpload(title: string, onUploaded: (p: string) => void) {
+  const [open, setOpen] = useState(false);
+  const picker = open ? <ImageLibrary slot="artwork" title={title} onPick={onUploaded} onClose={() => setOpen(false)} /> : null;
+  return { picker, busy: false, open: () => setOpen(true) };
 }
 
 type Upload = ReturnType<typeof useUpload>;
@@ -134,9 +103,9 @@ export function CardDesigner({
   const [busy, start] = useTransition();
   const qr = useQr(cardUrl, c.qrCodeColour, c.qrFillColour);
   const back = useRef<HTMLDivElement>(null);
-  const frontUpload = useUpload((p) => setC((x) => ({ ...x, frontPath: p })), setError);
-  const backUpload = useUpload((p) => setC((x) => ({ ...x, backPath: p })), setError);
-  const logoUpload = useUpload((p) => setK((x) => ({ ...x, frontPath: p })), setError);
+  const frontUpload = useUpload("Card front design", (p) => setC((x) => ({ ...x, frontPath: p })));
+  const backUpload = useUpload("Card back design", (p) => setC((x) => ({ ...x, backPath: p })));
+  const logoUpload = useUpload("Logo on the card", (p) => setK((x) => ({ ...x, frontPath: p })));
   const drag = useRef<{ mode: "move" | "resize"; x: number; y: number; start: Custom } | null>(null);
 
   // The QR box moves; its corner handle (data-mode="resize") resizes it.

@@ -1,12 +1,13 @@
 "use client";
 
-import { useId, useRef, useState } from "react";
+import { useState } from "react";
 import { ProProfile } from "@/components/card/ProProfile";
 import { StandardProfile } from "@/components/card/StandardProfile";
 import { VcardBar } from "@/components/card/VcardBar";
 import { designCss } from "@/lib/branding";
 import { imageUrl } from "@/lib/images/paths";
 import { displayName, type ProfileView } from "@/lib/profile-view";
+import { ImageLibrary } from "./ImageLibrary";
 
 // Pieces shared by the profile and company editors.
 
@@ -38,69 +39,42 @@ export function LivePreview({ view, pro, label }: { view: ProfileView; pro: bool
   );
 }
 
-/** Upload a photo or logo; the new path is kept in the form until saved. */
+/** A photo or logo, chosen in the media picker (upload or reuse from My images); the path is kept in the form until saved. */
 export function ImageField({
   label,
   path,
   onChange,
   logo = false,
   hint,
+  companyId,
 }: {
   label: string;
   path: string | null;
   onChange: (path: string) => void;
   logo?: boolean;
   hint?: string;
+  /** Uploads are shared with this company's admins. */
+  companyId?: number;
 }) {
-  const id = useId();
-  const input = useRef<HTMLInputElement>(null);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
+  const [open, setOpen] = useState(false);
   const src = imageUrl(path, logo ? 480 : 320);
-
-  async function upload(file: File) {
-    setBusy(true);
-    setError("");
-    try {
-      const body = new FormData();
-      body.append("file", file);
-      const res = await fetch("/api/upload/", { method: "POST", body });
-      const json = (await res.json().catch(() => ({}))) as { path?: string; error?: string };
-      if (!res.ok || !json.path) throw new Error(json.error || "Upload failed. Please try again.");
-      onChange(json.path);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Upload failed. Please try again.");
-    } finally {
-      setBusy(false);
-      if (input.current) input.current.value = "";
-    }
-  }
 
   return (
     <div className="acc-field">
       <span className="acc-field__label">{label}</span>
       <div className={`acc-photo${logo ? " acc-photo--logo" : ""}`}>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        {src ? <img src={src} alt="" /> : <span className="acc-avatar" style={logo ? { width: 120, height: 60, borderRadius: 8 } : { width: 88, height: 88 }} />}
+        <button type="button" className="acc-photo__pick" onClick={() => setOpen(true)} aria-label={src ? `Change ${label.toLowerCase()}` : `Choose ${label.toLowerCase()}`}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          {src ? <img src={src} alt="" /> : <span className="acc-avatar" style={logo ? { width: 120, height: 60, borderRadius: 8 } : { width: 88, height: 88 }} />}
+        </button>
         <div>
-          <input
-            ref={input}
-            id={id}
-            type="file"
-            accept="image/jpeg,image/png,image/webp,image/gif"
-            hidden
-            onChange={(e) => {
-              const f = e.target.files?.[0];
-              if (f) void upload(f);
-            }}
-          />
-          <button type="button" className="acc-btn acc-btn--small" onClick={() => input.current?.click()} disabled={busy}>
-            {busy ? "Uploading…" : src ? "Change" : "Upload"}
+          <button type="button" className="acc-btn acc-btn--small" onClick={() => setOpen(true)}>
+            {src ? "Change" : "Choose image"}
           </button>
           {hint ? <div className="acc-field__hint" style={{ marginTop: 6 }}>{hint}</div> : null}
-          {error ? <p className="acc-error" style={{ marginTop: 6 }}>{error}</p> : null}
         </div>
       </div>
+      {open ? <ImageLibrary slot={logo ? "logo" : "photo"} title={label} companyId={companyId} onPick={onChange} onClose={() => setOpen(false)} /> : null}
     </div>
   );
 }
