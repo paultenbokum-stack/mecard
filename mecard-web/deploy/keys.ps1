@@ -3,9 +3,10 @@
 #   .\deploy\keys.ps1                 this laptop: .env.local (sandbox PayFast and Bob Go offered)
 #   .\deploy\keys.ps1 -Cloud          Google Cloud: Secret Manager, for the deployed app
 #   .\deploy\keys.ps1 -Update PAYFAST_PASSPHRASE,BOBGO_API_KEY    ask again for these even though set
+#   .\deploy\keys.ps1 -Cloud -Test    the test deploy: PayFast and Bob Go SANDBOX keys, saved as TEST_<name>
 # Safe to re-run: keys already set are left alone. AUTH_SECRET and CRON_SECRET are generated.
 # Values never appear on screen, in files in git, or on a command line.
-param([switch]$Cloud, [string[]]$Update = @(), [string]$Project, [switch]$NoCheck)
+param([switch]$Cloud, [string[]]$Update = @(), [string]$Project, [switch]$NoCheck, [switch]$Test)
 . "$PSScriptRoot\_common.ps1"
 $EnvFile = Join-Path $AppDir '.env.local'
 
@@ -82,22 +83,22 @@ if ($Cloud) {
   $Project = Get-Project $Project
   if (-not (Test-Gcloud services list --enabled "--project=$Project" '--filter=config.name=secretmanager.googleapis.com' '--format=value(config.name)')) { throw "Secret Manager isn't on in $Project yet: run .\deploy\1-setup-project.ps1 first." }
   $cloudHas = @{}
-  foreach ($k in $Keys) { if (-not $k.Plain) { $cloudHas[$k.Name] = Test-Gcloud secrets describe $k.Name "--project=$Project" } }
-  Write-Step "Keys in Secret Manager ($Project)"
+  foreach ($k in $Keys) { if (-not $k.Plain) { $cloudHas[$k.Name] = Test-Gcloud secrets describe (Get-SecretName $k.Name $Test) "--project=$Project" } }
+  Write-Step "Keys in Secret Manager ($Project)$(if ($Test) { ': test deploy, sandbox PayFast and Bob Go' })"
 } else {
   Write-Step "Keys in $EnvFile"
 }
 
 $values = @{}
 foreach ($k in $Keys) { $values[$k.Name] = $local[$k.Name] }
-$sandbox = -not $Cloud
+$sandbox = (-not $Cloud) -or $Test
 
 foreach ($k in $Keys) {
   $n = $k.Name
   if ($Cloud -and $k.Plain) { continue }   # the site key goes in with the deploy (4-deploy.ps1 reads .env.local)
   $isSet = if ($Cloud) { $cloudHas[$n] } else { [bool]$local[$n] }
   $status = if ($isSet) { if ($k.Plain -and -not $Cloud) { "(set: $($local[$n]))" } else { '(set)' } } else { 'missing' }
-  Write-Host ("{0,-32} {1}" -f $n, $status) -ForegroundColor $(if ($isSet) { 'Gray' } else { 'Yellow' })
+  Write-Host ("{0,-32} {1}" -f (Get-SecretName $n ($Cloud -and $Test)), $status) -ForegroundColor $(if ($isSet) { 'Gray' } else { 'Yellow' })
   if ($isSet -and ($Update -notcontains $n)) { continue }
 
   $value = $null
@@ -106,7 +107,10 @@ foreach ($k in $Keys) {
     Write-Host '  generated'
   } else {
     Write-Host "  $($k.Help)" -ForegroundColor DarkGray
-    if ($Cloud -and $k.Shared -and $local[$n] -and ((Read-Host "  Use the value from .env.local? (Y/n)") -ne 'n')) { $value = $local[$n] }
+    # The laptop's sandbox PayFast and Bob Go keys suit the test deploy too.
+    $reusable = $k.Shared -or ($Test -and $SandboxSecretNames -contains $n)
+    if ($Test -and $SandboxSecretNames -contains $n) { Write-Host '  SANDBOX key for the test deploy (sandbox.payfast.co.za / api.sandbox.bobgo.co.za), not the live one' -ForegroundColor Yellow }
+    if ($Cloud -and $reusable -and $local[$n] -and ((Read-Host "  Use the value from .env.local? (Y/n)") -ne 'n')) { $value = $local[$n] }
     elseif ($k.Plain) { $value = (Read-Host "  $n (blank = skip)").Trim() }
     else { $value = (Read-Hidden "  $n (blank = skip)").Trim() }
   }
@@ -115,7 +119,7 @@ foreach ($k in $Keys) {
 
   Test-Key $n $values $sandbox
 
-  if ($Cloud) { Set-Secret $n $value; Write-Host '  saved to Secret Manager' -ForegroundColor Green }
+  if ($Cloud) { Set-Secret (Get-SecretName $n $Test) $value; Write-Host "  saved to Secret Manager as $(Get-SecretName $n $Test)" -ForegroundColor Green }
   else { Write-EnvValue $n $value; Write-Host '  saved to .env.local' -ForegroundColor Green }
   $value = $null
 }
@@ -132,5 +136,5 @@ if (-not $Cloud) {
   foreach ($role in 'roles/secretmanager.secretAccessor', 'roles/cloudsql.client') {
     Invoke-Gcloud projects add-iam-policy-binding $Project "--member=$sa" "--role=$role" --condition=None --quiet --format=none
   }
-  Write-Host "`nDone. Next: .\deploy\4-deploy.ps1" -ForegroundColor Green
+  Write-Host "`nDone. Next: .\deploy\4-deploy.ps1$(if ($Test) { ' -Test' })" -ForegroundColor Green
 }

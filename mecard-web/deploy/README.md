@@ -25,6 +25,9 @@ Project, billing account, site address and the Xneelo connection are in `deploy/
 (the existing "Mecard" project, Taggable billing). The scripts always use that project, never
 gcloud's current default; `-Project` overrides. Step 1 links billing only after you type LINK.
 
+For a test run before cutover (real data, emails to you, sandboxes, noindex, on the run.app
+address), see [TEST-DEPLOY.md](TEST-DEPLOY.md): `.\deploy	est-deploy.ps1 -EmailTo <you>`.
+
 The uploads and the go-live day have their own runbooks: [IMAGES.md](IMAGES.md) (with
 `pull-uploads.ps1`, `npm run images:plan`, `9-images.ps1`, `npm run images:warm`) and
 [CUTOVER.md](CUTOVER.md) (the Xneelo DNS records, TTL, rollback).

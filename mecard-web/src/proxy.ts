@@ -1,7 +1,14 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { legacyLoginRedirect } from "@/lib/auth-paths";
 
+// A test deploy (SITE_NOINDEX=1, on its *.run.app address) asks search engines to stay away.
 export function proxy(req: NextRequest) {
+  const res = route(req);
+  if (process.env.SITE_NOINDEX === "1") res.headers.set("X-Robots-Tag", "noindex, nofollow");
+  return res;
+}
+
+function route(req: NextRequest) {
   const { pathname, searchParams, origin } = req.nextUrl;
 
   // WooCommerce's PayFast notify URL, still on orders paid during the switch-over.

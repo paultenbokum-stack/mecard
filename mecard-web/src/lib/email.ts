@@ -1,5 +1,6 @@
 import "server-only";
 import { Resend } from "resend";
+import { routeEmail } from "./email-test-mode";
 import { MAIL_FROM } from "./mail-settings";
 
 // Same seam as GuestWave: Cloud Run blocks SMTP, so mail goes via Resend's API.
@@ -33,7 +34,14 @@ async function sendToMailpit(base: string, msg: Parameters<typeof sendEmail>[0])
   if (!res.ok) throw new Error(`Mailpit returned ${res.status}`);
 }
 
-export async function sendEmail(msg: { to: string; subject: string; text: string; replyTo?: string; attachments?: Attachment[] }) {
+export async function sendEmail(original: { to: string; subject: string; text: string; replyTo?: string; attachments?: Attachment[] }) {
+  // Test deploys (real customers' data): log only, or send everything to one address.
+  const route = routeEmail(original, { EMAIL_MODE: process.env.EMAIL_MODE, EMAIL_REDIRECT_TO: process.env.EMAIL_REDIRECT_TO });
+  const msg = route.msg;
+  if (route.action === "log") {
+    console.log(`[email:test] not sent: to=${msg.to} subject=${JSON.stringify(msg.subject)}`);
+    return { ok: true as const };
+  }
   if (!resend && process.env.MAILPIT_URL) {
     try {
       await sendToMailpit(process.env.MAILPIT_URL, msg);

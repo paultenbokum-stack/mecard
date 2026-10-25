@@ -57,6 +57,17 @@ function Set-Secret([string]$Name, [string]$Value) {
 
 function Get-ConnectionName([string]$Project) { return "${Project}:${Region}:${Instance}" }
 
+# The test deploy (before cutover) uses sandbox payment and courier keys, kept in secrets of
+# their own (TEST_<name>) so the live ones are never touched.
+$SandboxSecretNames = @('PAYFAST_MERCHANT_ID', 'PAYFAST_MERCHANT_KEY', 'PAYFAST_PASSPHRASE', 'BOBGO_API_KEY')
+function Get-SecretName([string]$Name, [bool]$Test) { if ($Test -and $SandboxSecretNames -contains $Name) { return "TEST_$Name" } return $Name }
+
+# The service's *.run.app address, known before its first deploy (Cloud Run's deterministic URL).
+function Get-RunUrl([string]$Project) {
+  $number = "$(gcloud projects describe $Project --format='value(projectNumber)')".Trim()
+  return "https://$Service-$number.$Region.run.app"
+}
+
 # Image buckets (names are global, so they carry the project id):
 # media = WebP masters made on first request; archive = every original upload.
 function Get-MediaBucket([string]$Project) { return "$Project-media" }
