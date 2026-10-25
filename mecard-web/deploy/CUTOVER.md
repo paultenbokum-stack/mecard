@@ -50,7 +50,7 @@ about mecard.co.za's own mail changes.
    abandoned basket cards. Check the counts it prints.
 8. Images delta: IMAGES.md step 6, then the last check in step 7.
 8b. If the test deploy (TEST-DEPLOY.md) is still in place: `.\deploy\keys.ps1 -Cloud` for the
-    live PayFast and Bob Go keys, then `.\deploy-deploy.ps1` **without** `-Test`. That drops the
+    live PayFast and Bob Go keys, then `.\deploy\4-deploy.ps1` **without** `-Test`. That drops the
     email redirect, sandboxes and noindex and builds for https://mecard.co.za.
 9. In konsoleH change the two A records (`mecard.co.za`, `www.mecard.co.za`) to the load
    balancer IP from step 3. Leave `mail.mecard.co.za`, MX and TXT alone.
