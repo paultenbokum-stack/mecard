@@ -5,6 +5,10 @@ import { viewer } from "@/lib/access";
 import { imageUrl } from "@/lib/images/paths";
 import { listCompanies } from "@/lib/manage";
 import { requireUserId } from "@/lib/session";
+import { cookies } from "next/headers";
+import { TeamWelcome } from "@/components/account/TeamWelcome";
+import { teamProgress } from "@/lib/team-progress";
+import { teamWelcomeCookie } from "@/lib/upsell-rules";
 import { addCompanyAction } from "../actions";
 
 export const metadata: Metadata = { title: "Companies" };
@@ -13,7 +17,8 @@ export const metadata: Metadata = { title: "Companies" };
 export default async function CompaniesPage({ searchParams }: { searchParams: Promise<{ done?: string }> }) {
   const sp = await searchParams;
   const v = await viewer(await requireUserId("/manage/companies/"));
-  const companies = await listCompanies(v);
+  const welcome = (await cookies()).has(teamWelcomeCookie(v.id));
+  const [companies, progress] = await Promise.all([listCompanies(v), welcome ? teamProgress(v.id) : null]);
 
   return (
     <div className="acc__wrap">
@@ -22,6 +27,7 @@ export default async function CompaniesPage({ searchParams }: { searchParams: Pr
       <h1>Companies</h1>
       <p className="acc__lead">A company holds the branding, contact details and buttons shared by every Pro profile in it, and the team of people who use them.</p>
       <DoneNotice done={sp.done} />
+      {progress ? <TeamWelcome userId={v.id} progress={progress} /> : null}
 
       <section className="acc-panel">
         {companies.length ? (

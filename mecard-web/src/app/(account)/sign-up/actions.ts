@@ -4,7 +4,7 @@ import { eq, sql } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { signIn } from "@/auth";
 import { db } from "@/db/client";
-import { events, profiles, users } from "@/db/schema";
+import { profiles, users } from "@/db/schema";
 import { viewer } from "@/lib/access";
 import { onNewUser } from "@/lib/accounts";
 import { cleanEmail, cleanPhone, cleanText } from "@/lib/form-values";
@@ -13,6 +13,7 @@ import { canUseImage } from "@/lib/media-library";
 import { hashPassword } from "@/lib/password";
 import { MIN_PASSWORD } from "@/lib/password-reset";
 import { requireUserId } from "@/lib/session";
+import { signupFor, signupLanding } from "@/lib/signup-choice";
 
 export type SignupState = { errors?: string[]; values?: Record<string, string> } | null;
 
@@ -53,9 +54,9 @@ export async function emailSignupAction(_: SignupState, form: FormData): Promise
       phone: values.mobile,
     })
     .returning({ id: users.id });
-  await onNewUser(user.id);
-  await db.insert(events).values({ name: "signup_completed", userId: user.id, source: "email" });
-  await signIn("credentials", { username: values.email, password, redirectTo: "/onboarding/" });
+  const forWhom = signupFor(form.get("for"));
+  await onNewUser(user.id, { source: "email", signupFor: forWhom });
+  await signIn("credentials", { username: values.email, password, redirectTo: signupLanding(forWhom) });
   return null;
 }
 

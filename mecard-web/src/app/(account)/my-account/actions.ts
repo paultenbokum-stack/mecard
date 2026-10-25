@@ -3,6 +3,7 @@
 import { and, eq, ne, sql } from "drizzle-orm";
 import { AuthError } from "next-auth";
 import { revalidatePath } from "next/cache";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { signIn, signOut } from "@/auth";
 import { db } from "@/db/client";
@@ -12,6 +13,7 @@ import { LOGIN, safeNext } from "@/lib/auth-paths";
 import { hashPassword, verifyPassword } from "@/lib/password";
 import { requestPasswordReset, resetPassword } from "@/lib/password-reset";
 import { requireUserId } from "@/lib/session";
+import { SIGNUP_FOR_COOKIE, signupFor } from "@/lib/signup-choice";
 
 export type FormState = { error?: string; ok?: string; username?: string } | null;
 
@@ -29,6 +31,9 @@ export async function loginAction(_: FormState, form: FormData): Promise<FormSta
 }
 
 export async function googleAction(form: FormData) {
+  // Sign up "For my team": remembered through Google's round trip for the new account (auth.ts).
+  const forWhom = signupFor(form.get("for"));
+  if (forWhom) (await cookies()).set(SIGNUP_FOR_COOKIE, forWhom, { path: "/", maxAge: 30 * 60, sameSite: "lax", httpOnly: true });
   await signIn("google", { redirectTo: safeNext(form.get("next")) });
 }
 

@@ -2,8 +2,9 @@
 
 import { useActionState, useState } from "react";
 import { emailSignupAction } from "@/app/(account)/sign-up/actions";
+import type { SignupFor } from "@/lib/signup-choice";
 
-export function EmailSignupForm() {
+export function EmailSignupForm({ forWhom }: { forWhom: SignupFor }) {
   const [state, action, pending] = useActionState(emailSignupAction, null);
   const [started] = useState(() => Date.now());
   const v = state?.values ?? {};
@@ -41,8 +42,9 @@ export function EmailSignupForm() {
         </label>
         <input type="text" name="website" defaultValue="" autoComplete="off" tabIndex={-1} aria-hidden="true" style={{ position: "absolute", left: -9999, width: 1, height: 1, opacity: 0 }} />
         <input type="hidden" name="started" value={started} />
+        <input type="hidden" name="for" value={forWhom} />
         <button className="me-auth-form__submit" type="submit" disabled={pending}>
-          {pending ? "Creating your profile…" : "Create my free profile"}
+          {forWhom === "teams" ? (pending ? "Creating your account…" : "Create my team account") : pending ? "Creating your profile…" : "Create my free profile"}
         </button>
       </form>
     </>

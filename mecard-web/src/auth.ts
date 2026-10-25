@@ -1,11 +1,13 @@
 import { eq, sql } from "drizzle-orm";
 import NextAuth from "next-auth";
+import { cookies } from "next/headers";
 import Credentials from "next-auth/providers/credentials";
 import Google from "next-auth/providers/google";
 import { db } from "@/db/client";
 import { users } from "@/db/schema";
 import { hashPassword, needsRehash, verifyPassword } from "@/lib/password";
 import { onNewUser, userByLogin } from "@/lib/accounts";
+import { SIGNUP_FOR_COOKIE, signupFor } from "@/lib/signup-choice";
 
 // Google is optional (replaces Nextend Social Login): only wired when both env
 // vars are set; the login page shows the button only then.
@@ -63,7 +65,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             displayName: user?.name ?? email,
           })
           .returning({ id: users.id });
-        await onNewUser(created.id);
+        // The sign-up page's "Just me" / "For my team", carried through Google in a cookie.
+        const jar = await cookies();
+        await onNewUser(created.id, { source: "google", signupFor: signupFor(jar.get(SIGNUP_FOR_COOKIE)?.value) });
+        jar.delete(SIGNUP_FOR_COOKIE);
       }
       return true;
     },

@@ -29,7 +29,7 @@ const nextConfig: NextConfig = {
       to("/order-the-classic-mecard/", "/cards/"),
       to("/get-mecard/", "/cards/"),
       to("/get-started/", "/sign-up/"),
-      to("/get-started-teams/", "/sign-up/"),
+      to("/get-started-teams/", "/sign-up/?for=teams"),
       to("/teams/", "/for-teams/"),
       to("/contact/", "/contact-us/"),
       to("/communication-preferences/", "/"),

@@ -100,7 +100,10 @@ async function breakdowns(r: StatsRange) {
     rows<Count>(sql`
       select name as label, count(distinct coalesce(user_id::text, session_id, id::text))::int as n
         from events where name in ('signup_completed', 'profile_step1_saved', 'profile_step2_saved', 'look_confirmed', 'onboarding_completed') and ${inRange}
-       group by 1`),
+       group by 1
+      union all
+      select 'signup_teams', count(distinct coalesce(user_id::text, session_id, id::text))::int
+        from events where name = 'signup_completed' and meta->>'for' = 'teams' and ${inRange}`),
     rows<{ label: string; qty: number; revenue: number }>(sql`
       select i.name as label, sum(i.quantity)::int as qty, sum(i.quantity * i.unit_price_cents)::int as revenue
         from order_items i join orders o on o.id = i.order_id
@@ -115,6 +118,8 @@ async function breakdowns(r: StatsRange) {
   ]);
   const STEPS: [string, string][] = [
     ["signup_completed", "Signed up"],
+    // "For my team" on the sign-up page; they skip the profile steps below.
+    ["signup_teams", "of which for a team"],
     ["profile_step1_saved", "Profile details"],
     ["profile_step2_saved", "Contact details"],
     ["look_confirmed", "Look chosen"],
