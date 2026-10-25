@@ -5,6 +5,8 @@
 **Where this will run:** Paul's Taggable Claude account, through Claude Code (see section 8)
 **Cutover target:** this weekend (24–25 Oct 2026), with Phase 0 and Phase 1 included
 
+**Build status (25 Oct 2026, branch `claude/project-thread-9dgjcl`):** Phase 0 (3a) and the Phase 1 minimum are built and tested locally, not yet deployed. 0.4 was already in place: the sign-up page's "Just me / For my team" choice is `signup_completed.meta.for`. `/api/mcp/` implements MCP's Streamable HTTP JSON-RPC directly (stateless, JSON responses) rather than through `@modelcontextprotocol/sdk`, so no new dependency. To go live: `5-migrate-import.ps1 -MigrateOnly`, then `10-insights.ps1`, then `4-deploy.ps1`.
+
 ---
 
 ## 1. Goal

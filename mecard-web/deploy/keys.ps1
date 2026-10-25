@@ -15,6 +15,7 @@ $EnvFile = Join-Path $AppDir '.env.local'
 $Keys = @(
   @{ Name = 'AUTH_SECRET'; Generate = $true; Help = 'signs logins (generated)' }
   @{ Name = 'CRON_SECRET'; Generate = $true; Help = 'lets the scheduler run the hourly job (generated)' }
+  @{ Name = 'INSIGHTS_MCP_TOKEN'; Generate = $true; Help = 'bearer token for the read-only insights MCP endpoint, /api/mcp/ (generated)' }
   @{ Name = 'AUTH_GOOGLE_ID'; Shared = $true; Help = 'Google sign-in client ID: console.cloud.google.com > APIs & Services > Credentials (OAuth client, Web). Redirect URIs: https://mecard.co.za/api/auth/callback/google and http://localhost:3000/api/auth/callback/google' }
   @{ Name = 'AUTH_GOOGLE_SECRET'; Shared = $true; Help = 'Google sign-in client secret (same OAuth client)' }
   @{ Name = 'RESEND_API_KEY'; Shared = $true; Help = 'Resend API key (resend.com > API Keys). taggable.co.za must be verified in Resend while mail goes from Taggable. Locally, leave blank to see emails in Mailpit instead' }

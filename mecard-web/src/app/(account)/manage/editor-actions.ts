@@ -3,7 +3,7 @@
 import { eq, sql } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { db } from "@/db/client";
-import { companies, products, profileLinks, profiles } from "@/db/schema";
+import { companies, events, products, profileLinks, profiles } from "@/db/schema";
 import { canEditProfile, canManageCompany, viewer } from "@/lib/access";
 import { cleanCompanyInput, saveCompany } from "@/lib/company-edit";
 import { cancelInvite, createInvite } from "@/lib/invites";
@@ -14,6 +14,7 @@ import { cleanEmail, cleanText, cleanUrl } from "@/lib/form-values";
 import { canUseImage } from "@/lib/media-library";
 import { cleanProfileInput, createCompanyForProfile, saveProfile } from "@/lib/profile-edit";
 import { requireUserId } from "@/lib/session";
+import { sanitizeKey } from "@/lib/tracking";
 
 // Saves from the profile and company editors.
 
@@ -61,6 +62,11 @@ export async function startProUpgradeAction(form: FormData) {
   if (!(await canEditProfile(v, profileId))) redirect("/manage/?done=denied");
   const [p] = await db.select({ type: profiles.type }).from(profiles).where(eq(profiles.id, profileId)).limit(1);
   if (p && p.type !== "standard") redirect(`/manage/profile/${profileId}/?done=already-pro`);
+  // Forms without a browser-side click event (the editors) name their placement here (conversion plan 0.5).
+  const placement = sanitizeKey(form.get("placement"), 40);
+  if (placement) {
+    await db.insert(events).values({ name: "pro_upsell_clicked", userId: v.id, profileId, source: "editor", meta: { context: placement, placement, trigger: "page_load" } });
+  }
   if (!(await pendingProUpgrades([profileId])).has(profileId)) {
     const [product] = await db.select({ active: products.active }).from(products).where(eq(products.id, PRODUCT.proUpgrade)).limit(1);
     if (!product?.active) redirect(`/manage/profile/${profileId}/?done=upgrade-unavailable`);

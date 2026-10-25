@@ -40,8 +40,8 @@ export async function loadBuyCard(profileId?: string) {
 export function BuyCard({ items, choices, preselect, upsells }: Awaited<ReturnType<typeof loadBuyCard>>) {
   return (
     <>
-      <BundleOffer u={upsells} showManageCards={false} />
-      <CardOffer u={upsells} />
+      <BundleOffer u={upsells} showManageCards={false} placement="buy_card" />
+      <CardOffer u={upsells} placement="buy_card" />
       <h2>All cards and tags</h2>
       <p className="acc__lead" style={{ marginTop: 0 }}>
         Choose a card or tag. It goes in your basket and shows under My Cards straight away, so you can design it before you check out.

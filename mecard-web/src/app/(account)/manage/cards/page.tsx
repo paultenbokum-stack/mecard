@@ -205,8 +205,8 @@ export default async function CardsPage({ searchParams }: { searchParams: Promis
 
       {upsells.bundleOffer || upsells.cardOffer ? (
         <div className="acc-upsell__offers">
-          <BundleOffer u={upsells} showManageCards={false} />
-          <CardOffer u={upsells} />
+          <BundleOffer u={upsells} showManageCards={false} placement="manage_cards" />
+          <CardOffer u={upsells} placement="manage_cards" />
         </div>
       ) : null}
     </div>

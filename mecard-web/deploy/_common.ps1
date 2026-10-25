@@ -13,7 +13,9 @@ $AppDir   = Split-Path $PSScriptRoot -Parent
 # Every secret the app reads. DATABASE_URL is made by 2-database.ps1, AUTH_SECRET and CRON_SECRET are generated.
 $SecretNames = @(
   'DATABASE_URL', 'AUTH_SECRET', 'AUTH_GOOGLE_ID', 'AUTH_GOOGLE_SECRET', 'RESEND_API_KEY',
-  'PAYFAST_MERCHANT_ID', 'PAYFAST_MERCHANT_KEY', 'PAYFAST_PASSPHRASE', 'BOBGO_API_KEY', 'CRON_SECRET'
+  'PAYFAST_MERCHANT_ID', 'PAYFAST_MERCHANT_KEY', 'PAYFAST_PASSPHRASE', 'BOBGO_API_KEY', 'CRON_SECRET',
+  # The read-only insights MCP endpoint (/api/mcp/): made by 10-insights.ps1 and keys.ps1. Optional.
+  'INSIGHTS_DATABASE_URL', 'INSIGHTS_MCP_TOKEN'
 )
 
 # The project to work on: -Project, else the MeCard project from config.ps1.

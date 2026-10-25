@@ -11,6 +11,7 @@ import {
   uniqueIndex,
   varchar,
 } from "drizzle-orm/pg-core";
+import type { Acquisition } from "@/lib/acquisition";
 
 // IDs are kept from WordPress on import (users = wp_users.ID, companies, profiles,
 // cards, links and orders = their post ID) so old links, order numbers and the
@@ -47,6 +48,10 @@ export const users = pgTable(
     // WooCommerce's saved billing and shipping addresses (My Account > Addresses), filled in at checkout.
     billingAddress: jsonb("billing_address").$type<SavedAddress>(),
     shippingAddress: jsonb("shipping_address").$type<SavedAddress>(),
+    // The mecard_sid browser session that signed up, linking earlier anonymous events (conversion plan 0.1).
+    firstSessionId: varchar("first_session_id", { length: 64 }),
+    // First-touch source from the mecard_ft cookie at signup: utm_*, referrer domain, landing path, ref_profile_id (0.2).
+    acquisition: jsonb("acquisition").$type<Acquisition>(),
     createdAt: createdAt(),
   },
   (t) => [
@@ -379,7 +384,13 @@ export const events = pgTable(
     meta: jsonb("meta").$type<Record<string, unknown>>(),
     createdAt: createdAt(),
   },
-  (t) => [index("events_profile_time").on(t.profileId, t.createdAt), index("events_name_time").on(t.name, t.createdAt)],
+  (t) => [
+    index("events_profile_time").on(t.profileId, t.createdAt),
+    index("events_name_time").on(t.name, t.createdAt),
+    // Per-user funnels (insights.signups, user_journeys).
+    index("events_user_name").on(t.userId, t.name),
+    index("events_session").on(t.sessionId),
+  ],
 );
 
 // Every image the app serves. Rows are created by the image migration and by

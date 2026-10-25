@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { ConfirmButton, DoneNotice, ProPendingNote, Subnav } from "@/components/account/Bits";
 import { CompanyEditor } from "@/components/account/CompanyEditor";
 import { ProfileEditor } from "@/components/account/ProfileEditor";
+import { UpsellSeen } from "@/components/account/Upsells";
 import { COLOUR_FIELDS, FONT_CHOICES, ICON_CHOICES } from "@/lib/company-edit";
 import { manageViewFor } from "@/lib/manage-view";
 import { requireUserId } from "@/lib/session";
@@ -106,9 +107,11 @@ function LookAndFeel({ data, proEditing }: { data: Awaited<ReturnType<typeof loa
           ) : (
             <>
               <p className="acc-item__title">R199 once off</p>
+              <UpsellSeen offer="pro" placement="look_and_feel" trigger="step_locked" profileId={p.id} />
               <form action={startProUpgradeAction}>
                 <input type="hidden" name="profile_id" value={p.id} />
                 <input type="hidden" name="next" value={next} />
+                <input type="hidden" name="placement" value="look_and_feel" />
                 <ConfirmButton className="acc-btn acc-btn--primary">Upgrade to Pro</ConfirmButton>
               </form>
               <p className="acc__muted" style={{ marginBottom: 0 }}>

@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { removeBundleAction } from "@/app/(account)/manage/actions";
 import { startProUpgradeAction } from "@/app/(account)/manage/editor-actions";
+import { beacon } from "@/lib/beacon";
 import { PRODUCT } from "@/lib/catalog";
 import { imageUrl } from "@/lib/images/paths";
 import { addToCartAction } from "@/lib/shop-actions";
@@ -16,15 +17,20 @@ import type { Upsells } from "@/lib/upsells";
 
 const IMG = "/images/upsell";
 
-/** pro_upsell_clicked in the event store (as the share panel's upsell). */
+/** pro_upsell_clicked in the event store (as the share panel's upsell), with where it was shown (conversion plan 0.5). */
 function trackUpsell(context: string, profileId?: number | null) {
-  const body = JSON.stringify({ event_name: "pro_upsell_clicked", profile_id: profileId ?? null, meta: { context }, referrer: document.referrer || null });
-  try {
-    if (navigator.sendBeacon) navigator.sendBeacon("/api/track/", new Blob([body], { type: "application/json" }));
-    else void fetch("/api/track/", { method: "POST", body, headers: { "Content-Type": "application/json" }, keepalive: true });
-  } catch {
-    // Tracking never blocks the upgrade.
-  }
+  beacon("pro_upsell_clicked", { profile_id: profileId, meta: { context, placement: context, trigger: "page_load" } });
+}
+
+/**
+ * upsell_viewed once when an offer is shown (0.5): `offer` is what is offered
+ * (pro, bundle, card), `placement` where, `trigger` what made it show.
+ */
+export function UpsellSeen({ offer, placement, trigger = "page_load", profileId }: { offer: string; placement: string; trigger?: string; profileId?: number | null }) {
+  useEffect(() => {
+    beacon("upsell_viewed", { profile_id: profileId, meta: { offer, placement, trigger } });
+  }, [offer, placement, trigger, profileId]);
+  return null;
 }
 
 /**
@@ -45,18 +51,22 @@ function StartUpgrade({ profileId, context, className, children }: { profileId: 
 /** The compact "Upgrade" on each free profile in the list. */
 export function UpgradeButton({ profileId }: { profileId: number }) {
   return (
-    <StartUpgrade profileId={profileId} context="manage_profile_row" className="acc-btn acc-btn--small acc-btn--cta">
-      Upgrade
-    </StartUpgrade>
+    <>
+      <UpsellSeen offer="pro" placement="manage_profile_row" profileId={profileId} />
+      <StartUpgrade profileId={profileId} context="manage_profile_row" className="acc-btn acc-btn--small acc-btn--cta">
+        Upgrade
+      </StartUpgrade>
+    </>
   );
 }
 
 /** "Upgrade to Pro / Supercharge your profile", with the standard → Pro comparison. */
-export function ProUpsell({ u }: { u: Upsells }) {
+export function ProUpsell({ u, placement = "manage_home" }: { u: Upsells; placement?: string }) {
   const [profileId, setProfileId] = useState(u.freeProfiles[0]?.id ?? 0);
   if (!u.proUpsell || !profileId) return null;
   return (
     <section className="acc-panel acc-upsell">
+      <UpsellSeen offer="pro" placement={placement} profileId={profileId} />
       <p className="acc-upsell__kicker">Upgrade to Pro</p>
       <h2>Supercharge your profile</h2>
       <div className="acc-upsell__compare">
@@ -91,7 +101,7 @@ export function ProUpsell({ u }: { u: Upsells }) {
                 ))}
               </select>
             ) : null}
-            <StartUpgrade profileId={profileId} context="manage_panel" className="acc-btn acc-btn--primary">
+            <StartUpgrade profileId={profileId} context={placement} className="acc-btn acc-btn--primary">
               Design Pro Profile
             </StartUpgrade>
           </div>
@@ -170,7 +180,7 @@ function AddForm({ productId, profileId, next, label }: { productId: number; pro
 }
 
 /** The Classic / Custom bundle offer (card, phone tag and the Pro upgrade). */
-export function BundleOffer({ u, showManageCards = true }: { u: Upsells; showManageCards?: boolean }) {
+export function BundleOffer({ u, showManageCards = true, placement = "manage_home" }: { u: Upsells; showManageCards?: boolean; placement?: string }) {
   const [kind, setKind] = useState<"classic" | "custom">("classic");
   if (!u.bundleOffer) return null;
   const profileId = u.freeProfiles[0]?.id ?? null;
@@ -178,6 +188,7 @@ export function BundleOffer({ u, showManageCards = true }: { u: Upsells; showMan
   if (price === null) return null;
   return (
     <section className="acc-panel acc-upsell acc-upsell--offer">
+      <UpsellSeen offer="bundle" placement={placement} profileId={profileId} />
       <p className="acc-upsell__kicker">{kind === "classic" ? "Classic Bundle Offer" : "Custom Bundle Offer"}</p>
       <div className="acc-upsell__heading">
         <h2>{kind === "classic" ? "Get your Classic MeCard bundle" : "Order a Custom MeCard bundle"}</h2>
@@ -247,7 +258,7 @@ export function ClassicCardPreview({ logo, name, jobTitle }: { logo: string | nu
 }
 
 /** "Order a card": a Classic card from the profile's details, or a Custom card. */
-export function CardOffer({ u }: { u: Upsells }) {
+export function CardOffer({ u, placement = "manage_home" }: { u: Upsells; placement?: string }) {
   const [kind, setKind] = useState<"classic" | "custom">("classic");
   if (!u.cardOffer) return null;
   const price = kind === "classic" ? u.prices.classicCard : u.prices.customCard;
@@ -255,6 +266,7 @@ export function CardOffer({ u }: { u: Upsells }) {
   const next = "/manage/cards/?tab=design&done=card-added";
   return (
     <section className="acc-panel acc-upsell acc-upsell--offer">
+      <UpsellSeen offer="card" placement={placement} />
       <p className="acc-upsell__kicker">{kind === "classic" ? "Order a card" : "Custom card"}</p>
       <div className="acc-upsell__heading">
         <h2>{kind === "classic" ? "Classic card" : "Order a Custom card"}</h2>
