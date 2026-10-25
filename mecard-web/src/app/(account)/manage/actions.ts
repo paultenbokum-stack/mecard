@@ -12,6 +12,9 @@ import { getCart, removeLine } from "@/lib/cart";
 import { isBundle } from "@/lib/catalog";
 import { manageViewFor, setAccountMode } from "@/lib/manage-view";
 import { requireUserId } from "@/lib/session";
+import { eq } from "drizzle-orm";
+import { db } from "@/db/client";
+import { profiles, users } from "@/db/schema";
 import { teamWelcomeCookie } from "@/lib/upsell-rules";
 
 // Form actions on /manage/. Each checks the user's rights again (the page
@@ -140,4 +143,20 @@ export async function backToIndividualAction() {
   (await cookies()).delete(teamWelcomeCookie(userId));
   revalidatePath("/", "layout");
   redirect("/manage/");
+}
+
+/** "Add myself" on an empty Profiles tab: a profile of their own, from the account's name, email and phone. */
+export async function addMyselfAction() {
+  const v = await me();
+  const [u] = await db.select().from(users).where(eq(users.id, v.id)).limit(1);
+  const [first, ...rest] = (u?.displayName || "").split(" ");
+  const profileId = await createProfile(v, {
+    firstName: u?.firstName || first || "My",
+    lastName: u?.lastName || rest.join(" "),
+    email: u?.email ?? "",
+    companyId: null,
+  });
+  if (u?.phone) await db.update(profiles).set({ mobile: u.phone }).where(eq(profiles.id, profileId));
+  revalidatePath("/manage", "layout");
+  redirect(`/manage/profile/${profileId}/?done=profile-created`);
 }

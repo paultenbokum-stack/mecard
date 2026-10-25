@@ -26,7 +26,8 @@ import { db } from "@/db/client";
 import { profiles } from "@/db/schema";
 import { manageViewFor } from "@/lib/manage-view";
 import { SingleHome } from "./SingleHome";
-import { archiveProfileAction, backToIndividualAction } from "./actions";
+import { addMyselfAction, archiveProfileAction, backToIndividualAction } from "./actions";
+import { TeamEmpty } from "@/components/account/TeamEmpty";
 import { InvitesPanel } from "./InvitesPanel";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -173,8 +174,31 @@ export default async function ManageHome({ searchParams }: { searchParams: Promi
               </li>
             ))}
           </ul>
+        ) : !sp.q && !archived ? (
+          <TeamEmpty
+            active="profiles"
+            title="Add your people"
+            actions={
+              <>
+                <Link className="acc-btn acc-btn--primary" href="/manage/profile/new/" scroll={false}>
+                  Add a profile
+                </Link>
+                <form action={addMyselfAction}>
+                  <ConfirmButton className="acc-btn">Add myself</ConfirmButton>
+                </form>
+                {!companies.length ? (
+                  <Link className="acc-btn" href="/manage/companies/">
+                    Set up your company first
+                  </Link>
+                ) : null}
+              </>
+            }
+          >
+            A profile is one person&rsquo;s digital business card, with their name, contact details and links at their own web address. Add one for each person, linked to
+            your company so it picks up the branding.
+          </TeamEmpty>
         ) : (
-          <div className="acc-empty">{sp.q ? "No profiles match your search." : archived ? "No archived profiles." : "You don't have a profile yet. Use Add new profile to create one."}</div>
+          <div className="acc-empty">{sp.q ? "No profiles match your search." : "No archived profiles."}</div>
         )}
         <Pager page={list.page} total={list.total} size={PAGE_SIZE} href={(n) => backUrl({ page: n > 1 ? n : undefined }) + "#profiles"} />
 

@@ -346,3 +346,18 @@
 .acc-teamwelcome__sub { display: block; font-size: 13.5px; color: var(--ink-muted); }
 
 .acc-individual-switch { text-align: center; margin-top: var(--space-4); font-size: 14px; }
+
+/* Empty Companies, Profiles and My Cards: how they relate */
+.acc-teamempty { text-align: center; padding: var(--space-4) var(--space-2); }
+.acc-teamempty h2 { margin: var(--space-4) 0 var(--space-2); }
+.acc-teamempty p { max-width: 560px; margin: 0 auto; color: var(--ink-muted); }
+.acc-teamempty__actions { justify-content: center; margin-top: var(--space-4); }
+.acc-teamempty__map { list-style: none; margin: 0; padding: 0; display: flex; justify-content: center; align-items: stretch; gap: 6px; }
+.acc-teamempty__map li { display: flex; align-items: center; gap: 6px; }
+.acc-teamempty__arrow { color: var(--ink-subtle); font-size: 13px; }
+.acc-teamempty__part { display: grid; justify-items: center; gap: 2px; min-width: 92px; padding: 10px 8px; border: 1px solid var(--surface-muted); border-radius: var(--radius-md); background: var(--surface); color: var(--ink-muted); font-size: 12.5px; }
+.acc-teamempty__part i { font-size: 18px; color: var(--ink-subtle); }
+.acc-teamempty__part strong { font-family: var(--font-display); font-size: 14px; color: var(--ink); }
+.acc-teamempty__map li.is-active .acc-teamempty__part { border-color: var(--brand); background: var(--brand-tint); }
+.acc-teamempty__map li.is-active .acc-teamempty__part i { color: var(--brand); }
+@media (max-width: 420px) { .acc-teamempty__part { min-width: 0; padding: 8px 6px; } .acc-teamempty__part > span { display: none; } }

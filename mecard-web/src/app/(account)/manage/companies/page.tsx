@@ -6,6 +6,7 @@ import { imageUrl } from "@/lib/images/paths";
 import { listCompanies } from "@/lib/manage";
 import { requireUserId } from "@/lib/session";
 import { cookies } from "next/headers";
+import { TeamEmpty } from "@/components/account/TeamEmpty";
 import { TeamWelcome } from "@/components/account/TeamWelcome";
 import { teamProgress } from "@/lib/team-progress";
 import { teamWelcomeCookie } from "@/lib/upsell-rules";
@@ -57,28 +58,35 @@ export default async function CompaniesPage({ searchParams }: { searchParams: Pr
             })}
           </ul>
         ) : (
-          <div className="acc-teamstart">
-            <h2>Set up your team</h2>
-            <p>A company turns your profiles into a team:</p>
-            <ul>
-              <li>Shared company branding: logo, colours, contact details and buttons on every Pro profile</li>
-              <li>Manage your team&rsquo;s profiles and cards in one place, and invite people to take over their own</li>
-              <li>Bulk cards for the whole team, with a quote first if you need one</li>
-            </ul>
-            <p className="acc__muted">
-              Ordering for a larger team? <Link href="/request-quote/">Request a quote for bulk cards</Link>.
-            </p>
-          </div>
+          <TeamEmpty
+            active="company"
+            title="Set up your company"
+            actions={
+              <form action={addCompanyAction} className="acc-inline-form">
+                <input type="hidden" name="back" value="/manage/companies/" />
+                <input type="text" name="name" required maxLength={255} placeholder="Company name" aria-label="Company name" />
+                <ConfirmButton className="acc-btn acc-btn--primary">Create your company</ConfirmButton>
+              </form>
+            }
+          >
+            A company holds your branding: logo, colours, fonts and the office number and website. Every Pro profile in it uses that look, so the whole team stays on-brand.
+          </TeamEmpty>
         )}
 
-        <details className="acc-details" style={{ marginTop: 16 }} open={!companies.length}>
-          <summary className="acc-btn">{companies.length ? "+ Add a company" : "Create a team"}</summary>
-          <form action={addCompanyAction} className="acc-inline-form">
-            <input type="hidden" name="back" value="/manage/companies/" />
-            <input type="text" name="name" required maxLength={255} placeholder="Company name" aria-label="Company name" />
-            <ConfirmButton className="acc-btn acc-btn--primary">Create company</ConfirmButton>
-          </form>
-        </details>
+        {companies.length ? (
+          <details className="acc-details" style={{ marginTop: 16 }}>
+            <summary className="acc-btn">+ Add a company</summary>
+            <form action={addCompanyAction} className="acc-inline-form">
+              <input type="hidden" name="back" value="/manage/companies/" />
+              <input type="text" name="name" required maxLength={255} placeholder="Company name" aria-label="Company name" />
+              <ConfirmButton className="acc-btn acc-btn--primary">Create company</ConfirmButton>
+            </form>
+          </details>
+        ) : (
+          <p className="acc__muted" style={{ textAlign: "center", marginBottom: 0 }}>
+            Ordering for a larger team? <Link href="/request-quote/">Request a quote for bulk cards</Link>.
+          </p>
+        )}
       </section>
     </div>
   );

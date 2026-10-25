@@ -8,6 +8,9 @@ import { requireUserId } from "@/lib/session";
 import { BundleOffer, CardOffer } from "@/components/account/Upsells";
 import { loadUpsells } from "@/lib/upsells";
 import { Activate } from "./Activate";
+import { TeamEmpty } from "@/components/account/TeamEmpty";
+import { manageViewFor } from "@/lib/manage-view";
+import { listProfiles } from "@/lib/manage";
 
 export const metadata: Metadata = { title: "My Cards" };
 
@@ -33,12 +36,43 @@ export default async function CardsPage({ searchParams }: { searchParams: Promis
   const sp = await searchParams;
   const v = await viewer(await requireUserId(`/manage/cards/${sp.activate ? `?activate=${encodeURIComponent(sp.activate)}` : ""}`));
   const page = Math.max(1, Number(sp.page) || 1);
-  const [counts, upsells] = await Promise.all([cardTabCounts(v), loadUpsells(v)]);
+  const [counts, upsells, mv] = await Promise.all([cardTabCounts(v), loadUpsells(v), manageViewFor(v.id)]);
+  const total = Object.values(counts).reduce((a, b) => a + b, 0);
+  // A team with no cards at all: how cards relate to profiles, instead of five empty tabs.
+  if (mv.view === "team" && !total && !sp.q && !sp.activate) {
+    const hasProfiles = (await listProfiles(v, { archived: false, page: 1 })).total > 0;
+    return (
+      <div className="acc__wrap">
+        <Subnav active="cards" />
+        <h1>My Cards</h1>
+        <DoneNotice done={sp.done} />
+        <section className="acc-panel">
+          <TeamEmpty
+            active="cards"
+            title="Order cards for your team"
+            actions={
+              <>
+                <Link className={`acc-btn${hasProfiles ? " acc-btn--primary" : ""}`} href="/manage/cards/new/" scroll={false}>
+                  Buy cards
+                </Link>
+                {!hasProfiles ? (
+                  <Link className="acc-btn acc-btn--primary" href="/manage/">
+                    Add profiles first
+                  </Link>
+                ) : null}
+              </>
+            }
+          >
+            A card is the physical NFC and QR card people tap or scan. Each card opens one profile, so when someone leaves you reassign the card instead of reprinting.
+          </TeamEmpty>
+        </section>
+      </div>
+    );
+  }
   // ?tab=new was the old "Not linked yet" list.
   const asked = sp.tab === "new" ? "unassigned" : sp.tab;
   const tab: CardTab = isCardTab(asked) ? asked : counts.live ? "live" : counts.design ? "design" : counts.progress ? "progress" : counts.unassigned ? "unassigned" : "live";
   const list = await listCards(v, { tab, q: sp.q, page });
-  const total = Object.values(counts).reduce((a, b) => a + b, 0);
   const tabUrl = (t: CardTab, extra: Record<string, string> = {}) => `/manage/cards/?${new URLSearchParams({ tab: t, ...extra })}`;
 
   return (
