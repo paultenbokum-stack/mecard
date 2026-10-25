@@ -6,6 +6,7 @@ import FA_ICONS from "./fa-icons.json";
 import { cleanColour, cleanEmail, cleanPhone, cleanText, cleanUrl } from "./form-values";
 import { refreshCompanyPages } from "./manage";
 import { replaceLinks } from "./profile-edit";
+import { sanitizeRichHtml } from "./rich-text";
 
 // Saving the company editor (Me\Company_Editor, the edit-companies form and
 // save_company_data() in the single editor): details, logo, branding, custom
@@ -85,8 +86,8 @@ export function cleanCompanyInput(raw: Record<string, unknown>): CompanyInput {
     address: cleanText(raw.address, 500),
     supportEmail: cleanEmail(raw.supportEmail),
     vatNumber: cleanText(raw.vatNumber, 30),
-    // HTML, cleaned when shown (RichText's allowlist, as wp_kses_post did).
-    descriptionHtml: String(raw.descriptionHtml ?? "").slice(0, 20000),
+    // HTML from the rich text editor, cleaned to the allowlist as wp_kses_post did.
+    descriptionHtml: sanitizeRichHtml(String(raw.descriptionHtml ?? "").slice(0, 20000)),
     logoPath: logo,
     headingFont: font(raw.headingFont),
     bodyFont: font(raw.bodyFont),

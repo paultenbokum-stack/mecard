@@ -5,6 +5,8 @@ import { useEffect, useMemo, useState, useTransition } from "react";
 import { saveCompanyAction } from "@/app/(account)/manage/editor-actions";
 import type { Company, ProfileView } from "@/lib/profile-view";
 import { Field, ImageField, LinksEditor, LivePreview, SaveBar, WizardNav, type LinkRow, type WizardLinks } from "./EditorParts";
+import { RichTextEditor } from "./RichTextEditor";
+import { autop } from "@/lib/rich-text";
 
 // The company editor (edit-companies form, Me\Company_Editor and the company
 // half of the single editor), previewed on one of the company's profiles.
@@ -61,7 +63,8 @@ export function CompanyEditor({
     address: c0.address,
     supportEmail: c0.supportEmail,
     vatNumber: c0.vatNumber,
-    descriptionHtml: c0.descriptionHtml,
+    // Older descriptions keep paragraphs as blank lines; the editor needs the <p> tags.
+    descriptionHtml: autop(c0.descriptionHtml),
     logoPath: c0.logoPath,
     headingFont: c0.headingFont,
     bodyFont: c0.bodyFont,
@@ -164,8 +167,8 @@ export function CompanyEditor({
               <Field id="ce-address" label="Address" hint="Shown with a Directions button that opens Google Maps.">
                 <input id="ce-address" type="text" {...text("address", 500)} />
               </Field>
-              <Field id="ce-desc" label="About the company" hint="Basic HTML is allowed: paragraphs, bold, italics, lists and links.">
-                <textarea id="ce-desc" rows={6} {...text("descriptionHtml", 20000)} />
+              <Field id="ce-desc" label="About the company" hint="Use the toolbar for headings, bold, italics, lists and links. HTML shows the code.">
+                <RichTextEditor id="ce-desc" label="About the company" value={f.descriptionHtml} onChange={(html) => set("descriptionHtml", html)} />
               </Field>
             </div>
           </section>
