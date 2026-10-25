@@ -24,7 +24,8 @@ import { db } from "@/db/client";
 import { profiles } from "@/db/schema";
 import { manageViewFor } from "@/lib/manage-view";
 import { SingleHome } from "./SingleHome";
-import { acceptInviteAction, archiveProfileAction } from "./actions";
+import { archiveProfileAction } from "./actions";
+import { InvitesPanel } from "./InvitesPanel";
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: (await manageViewFor()).view === "single" ? "My MeCard Home" : "Profiles" };
@@ -43,11 +44,12 @@ export default async function ManageHome({ searchParams }: { searchParams: Promi
   // One profile of their own: WordPress's single "My MeCard Home" instead of the team dashboard.
   const mv = await manageViewFor(v.id);
   if (mv.view === "single" && mv.profileId) {
-    const [[profile], u] = await Promise.all([
+    const [[profile], u, invites] = await Promise.all([
       db.select({ id: profiles.id, slug: profiles.slug, firstName: profiles.firstName, lastName: profiles.lastName, type: profiles.type }).from(profiles).where(eq(profiles.id, mv.profileId)),
       loadUpsells(v),
+      invitesForUser(v.id),
     ]);
-    return <SingleHome v={v} profile={profile} u={u} done={sp.done} />;
+    return <SingleHome v={v} profile={profile} u={u} done={sp.done} invites={invites} />;
   }
   const archived = sp.show === "archived";
   const page = Math.max(1, Number(sp.page) || 1);
@@ -86,30 +88,7 @@ export default async function ManageHome({ searchParams }: { searchParams: Promi
       </div>
       <DoneNotice done={sp.done} />
 
-      {invites.length ? (
-        <section className="acc-panel acc-panel--notice">
-          <h2>Profiles waiting for you</h2>
-          <p>You have been invited to take over {invites.length === 1 ? "this profile" : "these profiles"}:</p>
-          <ul className="acc-list">
-            {invites.map((i) => (
-              <li className="acc-item" key={i.id}>
-                <div className="acc-item__main">
-                  <div className="acc-item__text">
-                    <div className="acc-item__title">{`${i.firstName} ${i.lastName}`.trim() || "Profile"}</div>
-                    <div className="acc-item__sub">
-                      {[i.companyName, i.inviterName ? `invited by ${i.inviterName}` : ""].filter(Boolean).join(" · ")}
-                    </div>
-                  </div>
-                </div>
-                <form action={acceptInviteAction} className="acc-item__actions">
-                  <input type="hidden" name="invite_id" value={i.id} />
-                  <ConfirmButton className="acc-btn acc-btn--small acc-btn--primary">Accept</ConfirmButton>
-                </form>
-              </li>
-            ))}
-          </ul>
-        </section>
-      ) : null}
+      <InvitesPanel invites={invites} />
 
       <BundleJourney u={u} />
       {u.eftPending && !proPending.size ? <div className="acc-panel acc-panel--notice">Your Pro upgrade is pending &mdash; we&rsquo;re just waiting for EFT confirmation.</div> : null}

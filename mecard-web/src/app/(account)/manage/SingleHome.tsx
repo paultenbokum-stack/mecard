@@ -3,9 +3,10 @@ import { CARD_TYPES, DoneNotice, NewTab, ProPendingNote, Subnav, Thumb } from "@
 import { BundleJourney, BundleOffer, CardOffer, ClassicCardPreview, ProUpsell } from "@/components/account/Upsells";
 import type { Viewer } from "@/lib/access";
 import { cardProgress } from "@/lib/card-tabs";
-import { listCards, pendingProUpgrades } from "@/lib/manage";
+import { listCards, pendingProUpgrades, type invitesForUser } from "@/lib/manage";
 import { isPro } from "@/lib/profile-format";
 import type { Upsells } from "@/lib/upsells";
+import { InvitesPanel } from "./InvitesPanel";
 
 // The single view of /manage/ (one profile of your own, manageViewFor):
 // WordPress's "My MeCard Home" (class-me-single-manage.php) in its wording and
@@ -14,7 +15,7 @@ import type { Upsells } from "@/lib/upsells";
 
 type Profile = { id: number; slug: string; firstName: string; lastName: string; type: string };
 
-export async function SingleHome({ v, profile, u, done }: { v: Viewer; profile: Profile; u: Upsells; done?: string }) {
+export async function SingleHome({ v, profile, u, done, invites }: { v: Viewer; profile: Profile; u: Upsells; done?: string; invites: Awaited<ReturnType<typeof invitesForUser>> }) {
   const [[basket, progress, live], pendingMap] = await Promise.all([
     Promise.all((["design", "progress", "live"] as const).map((tab) => listCards(v, { tab }))),
     pendingProUpgrades([profile.id], v.id),
@@ -43,6 +44,7 @@ export async function SingleHome({ v, profile, u, done }: { v: Viewer; profile: 
         </p>
       </header>
       <DoneNotice done={done} />
+      <InvitesPanel invites={invites} />
 
       <section className="acc-panel">
         <h2>Manage your profile</h2>
