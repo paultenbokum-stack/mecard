@@ -157,7 +157,7 @@ export default async function ManageHome({ searchParams }: { searchParams: Promi
                       <a href={`/mecard-profile/${p.slug}/`} target="_blank" rel="noopener" title="View profile">
                         {`${p.firstName} ${p.lastName}`.trim() || p.slug} <NewTab />
                       </a>{" "}
-                      {proPending.has(p.id) ? <ProPendingBadge /> : <span className={`acc-badge${isPro(p) ? " acc-badge--pro" : ""}`}>{isPro(p) ? "Professional" : "Standard"}</span>}{" "}
+                      {proPending.has(p.id) ? <ProPendingBadge /> : <span className={`acc-badge${isPro(p) ? " acc-badge--pro" : ""}`}>{isPro(p) ? "Pro" : "Standard"}</span>}{" "}
                       {p.ownerId === v.id && p.managerId && p.managerId !== v.id ? <span className="acc-badge">Shared with you</span> : null}
                     </div>
                     {/* The linked company, as on WordPress's profile card (email and mobile left off to keep rows compact). */}
