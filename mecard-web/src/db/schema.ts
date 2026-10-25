@@ -37,6 +37,8 @@ export const users = pgTable(
     isAdmin: boolean("is_admin").notNull().default(false),
     // WooCommerce wc_last_active; used to decide which data is "active".
     lastActiveAt: timestamp("last_active_at", { withTimezone: true }),
+    // individual | teams (manage-view-rules); null for accounts from before, decided by what they have.
+    accountMode: varchar("account_mode", { length: 20 }),
     createdAt: createdAt(),
   },
   (t) => [

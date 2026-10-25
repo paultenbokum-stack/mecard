@@ -29,9 +29,12 @@ export async function accountState(userId: number | null): Promise<"anonymous" |
     if ((STEPS as readonly string[]).includes(stage)) return "onboarding";
     return "existing";
   }
-  // Team admins and card buyers without a profile of their own aren't first-timers.
-  const [card] = await db.select({ id: cards.id }).from(cards).where(eq(cards.ownerId, userId)).limit(1);
-  return card ? "existing" : "first_time";
+  // Team admins (a team sign-up starts with no profile) and card buyers without a profile of their own aren't first-timers.
+  const [[card], [u]] = await Promise.all([
+    db.select({ id: cards.id }).from(cards).where(eq(cards.ownerId, userId)).limit(1),
+    db.select({ mode: users.accountMode }).from(users).where(eq(users.id, userId)).limit(1),
+  ]);
+  return card || u?.mode === "teams" ? "existing" : "first_time";
 }
 
 function ownedProfiles(userId: number) {
