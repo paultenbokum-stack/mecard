@@ -164,7 +164,9 @@ export async function listCompanies(v: Viewer) {
       name: companies.name,
       logoPath: companies.logoPath,
       website: companies.website,
-      profiles: sql<number>`(SELECT count(*)::int FROM ${profiles} WHERE ${profiles.companyId} = ${companies.id} AND NOT ${profiles.archived})`,
+      // Written out: in a single-table select Drizzle renders ${companies.id} as a bare "id",
+      // which inside the subquery means profiles.id.
+      profiles: sql<number>`(select count(*)::int from profiles p where p.company_id = "companies"."id" and not p.archived)`,
     })
     .from(companies)
     .where(eq(companies.ownerId, v.id))

@@ -255,6 +255,8 @@ body.mecard-share-open { overflow: hidden; }
 #mecard-qr-canvas canvas, #mecard-qr-canvas img { max-width: 256px; width: 100%; height: auto; display: block; margin: 0 auto; }
 .mecard-share-panel .iti { width: 100%; }
 .mecard-share-panel .iti__flag-container { z-index: 2; }
+/* The country list opens in <body> (dropdownContainer), so it must sit above the panel's 10008. */
+.iti.iti--container { z-index: 10010; }
 .mecard-share-panel .is-guided-target { box-shadow: 0 0 0 3px rgba(30, 115, 190, 0.2); border-radius: 12px; animation: mecardGuidedPulse 1.2s ease 2; }
 @keyframes mecardGuidedPulse {
   0% { box-shadow: 0 0 0 0 rgba(30, 115, 190, 0.2); }

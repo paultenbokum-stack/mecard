@@ -570,10 +570,8 @@ function loadIntlTelInput() {
   return intlTelLoading;
 }
 
+// From the time zone only: most browsers in South Africa report en-US, which would pick the US.
 function countryHint() {
-  const lang = navigator.languages?.[0] || navigator.language || "";
-  const m = lang.match(/-([A-Za-z]{2})$/);
-  if (m) return m[1].toLowerCase();
   const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || "";
   return ({ "Africa/Johannesburg": "za", "Europe/London": "gb", "America/New_York": "us", "Australia/Sydney": "au", "Pacific/Auckland": "nz" } as Record<string, string>)[tz] ?? "";
 }
