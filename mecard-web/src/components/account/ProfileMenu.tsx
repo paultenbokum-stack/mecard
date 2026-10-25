@@ -72,7 +72,14 @@ export function ProfileMenu({ profile, editHref, back, ownerEmail, invite, cards
       <Link className="acc-btn acc-btn--small acc-btn--primary" href={editHref} scroll={false}>
         Edit
       </Link>
-      <button type="button" className="acc-btn acc-btn--small acc-btn--primary acc-split__toggle" aria-haspopup="menu" aria-expanded={open} aria-label={`More actions for ${profile.name}`} onClick={() => setOpen((o) => !o)}>
+      <button
+        type="button"
+        className="acc-btn acc-btn--small acc-btn--primary acc-split__toggle"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-label={`More actions for ${profile.name}`}
+        onClick={() => setOpen((o) => !o)}
+      >
         <i className="fa-solid fa-caret-down" aria-hidden="true" />
       </button>
       {open ? (
@@ -134,7 +141,14 @@ export function ProfileMenu({ profile, editHref, back, ownerEmail, invite, cards
               ) : null}
               <form action={inviteAction} className="acc-inline-form">
                 {hidden}
-                <input type="email" name="email" required defaultValue={invite?.email ?? (ownerEmail ? "" : profile.email)} placeholder="Their email address" aria-label="Email address to invite" />
+                <input
+                  type="email"
+                  name="email"
+                  required
+                  defaultValue={invite?.email ?? (ownerEmail ? "" : profile.email)}
+                  placeholder="Their email address"
+                  aria-label="Email address to invite"
+                />
                 <ConfirmButton className="acc-btn acc-btn--small acc-btn--primary">{invite ? "Send again" : "Send invite"}</ConfirmButton>
               </form>
             </>
@@ -171,7 +185,11 @@ export function ProfileMenu({ profile, editHref, back, ownerEmail, invite, cards
 /** The QR code of the profile's address as a PNG, like WordPress's QR modal download. */
 export async function downloadProfileQr(profile: { slug: string; name: string }) {
   const QR = await import("qrcode");
-  const href = await QR.toDataURL(new URL(`/mecard-profile/${profile.slug}/`, window.location.origin).href, { width: 1000, margin: 2, errorCorrectionLevel: "H" });
+  const href = await QR.toDataURL(new URL(`/mecard-profile/${profile.slug}/`, window.location.origin).href, {
+    width: 1000,
+    margin: 2,
+    errorCorrectionLevel: "H",
+  });
   const a = document.createElement("a");
   a.href = href;
   a.download = `${profile.name || profile.slug} QR code.png`;
@@ -179,7 +197,17 @@ export async function downloadProfileQr(profile: { slug: string; name: string })
 }
 
 /** Assign a card/tag: one of the user's cards that opens no profile yet. */
-export function AssignCard({ profile, back, cards, titleId }: { profile: { id: number; name: string }; back: string; cards: { id: number; label: string }[]; titleId: string }) {
+export function AssignCard({
+  profile,
+  back,
+  cards,
+  titleId,
+}: {
+  profile: { id: number; name: string };
+  back: string;
+  cards: { id: number; label: string }[];
+  titleId: string;
+}) {
   return (
     <>
       <h2 id={titleId}>Assign a card/tag</h2>
@@ -216,58 +244,45 @@ export function AssignCard({ profile, back, cards, titleId }: { profile: { id: n
 const TAG_IMAGES: Record<string, string> = { keyring: "/images/manage/keyring.png", phonetag: "/images/manage/phonetag.png" };
 
 /**
- * Under each profile, as on WordPress (the profile-tags view): its cards and
- * tags (a card's front, or the key ring or phone tag picture), each opening
- * the card to edit or remove, and Assign a card/tag.
+ * A profile's cards and tags as small tiles on its row (WordPress's
+ * profile-tags view): a card's front, or the key ring or phone tag picture,
+ * each opening a small dialog to edit or remove it. Assigning is in the
+ * row's menu.
  */
 export function LinkedCards({
   profile,
   back,
   linked,
-  cards,
 }: {
   profile: { id: number; name: string };
   back: string;
   linked: { id: number; type: string; label: string; typeLabel: string; front: string | null; frontLarge: string | null; backLarge: string | null }[];
-  cards: { id: number; label: string }[];
 }) {
-  const [assigning, setAssigning] = useState(false);
   const [viewing, setViewing] = useState<(typeof linked)[number] | null>(null);
-  const dialog = useRef<HTMLDialogElement>(null);
   const cardDialog = useRef<HTMLDialogElement>(null);
-  useEffect(() => {
-    if (assigning) dialog.current?.showModal();
-  }, [assigning]);
   useEffect(() => {
     if (viewing) cardDialog.current?.showModal();
   }, [viewing]);
+  if (!linked.length) return null;
   return (
     <div className="acc-profile-tags">
-      <div className="acc-profile-tags__head">
-        <h3>Linked Cards and Tags</h3>
-        <button type="button" className="acc-btn acc-btn--small" onClick={() => setAssigning(true)}>
-          <i className="fa-solid fa-plus" aria-hidden="true" /> Assign a card/tag
-        </button>
-      </div>
-      {linked.length ? (
-        <ul className="acc-profile-tags__list">
-          {linked.map((c) => (
-            <li key={c.id}>
-              <button type="button" onClick={() => setViewing(c)} title={c.label} aria-label={`${c.label}: view, edit or remove`}>
-                {TAG_IMAGES[c.type] ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={TAG_IMAGES[c.type]} alt="" />
-                ) : c.front ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img className="acc-profile-tags__card" src={c.front} alt="" loading="lazy" />
-                ) : (
-                  <i className="fa-solid fa-address-card" aria-hidden="true" />
-                )}
-              </button>
-            </li>
-          ))}
-        </ul>
-      ) : null}
+      <ul className="acc-profile-tags__list" aria-label={`Cards and tags linked to ${profile.name}`}>
+        {linked.map((c) => (
+          <li key={c.id}>
+            <button type="button" onClick={() => setViewing(c)} title={c.label} aria-label={`${c.label}: view, edit or remove`}>
+              {TAG_IMAGES[c.type] ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={TAG_IMAGES[c.type]} alt="" />
+              ) : c.front ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img className="acc-profile-tags__card" src={c.front} alt="" loading="lazy" />
+              ) : (
+                <i className="fa-solid fa-address-card" aria-hidden="true" />
+              )}
+            </button>
+          </li>
+        ))}
+      </ul>
       {viewing ? (
         <dialog ref={cardDialog} className="acc-dialog" onClose={() => setViewing(null)} aria-labelledby={`lcv-${viewing.id}-title`}>
           <form method="dialog" className="acc-dialog__close">
@@ -289,7 +304,10 @@ export function LinkedCards({
               <input type="hidden" name="card_id" value={viewing.id} />
               <input type="hidden" name="back" value={back} />
               <input type="hidden" name="from" value="profiles" />
-              <ConfirmButton className="acc-btn acc-btn--danger" confirm={`Remove this ${viewing.typeLabel.toLowerCase()} from ${profile.name}? It shows "not set up yet" until you assign it again.`}>
+              <ConfirmButton
+                className="acc-btn acc-btn--danger"
+                confirm={`Remove this ${viewing.typeLabel.toLowerCase()} from ${profile.name}? It shows "not set up yet" until you assign it again.`}
+              >
                 Remove {viewing.typeLabel}
               </ConfirmButton>
             </form>
@@ -299,16 +317,6 @@ export function LinkedCards({
           </div>
         </dialog>
       ) : null}
-      {assigning ? (
-        <dialog ref={dialog} className="acc-dialog" onClose={() => setAssigning(false)} aria-labelledby={`lc-${profile.id}-title`}>
-          <form method="dialog" className="acc-dialog__close">
-            <button type="submit" className="acc-btn acc-btn--small" aria-label="Close">
-              <i className="fa-solid fa-xmark" aria-hidden="true" />
-            </button>
-          </form>
-          <AssignCard profile={profile} back={back} cards={cards} titleId={`lc-${profile.id}-title`} />
-        </dialog>
-      ) : null}
     </div>
   );
 }
@@ -316,7 +324,13 @@ export function LinkedCards({
 /** The QR icon on the profile card (WordPress's open-qr-modal): downloads the profile's QR code. */
 export function QrIcon({ profile }: { profile: { slug: string; name: string } }) {
   return (
-    <button type="button" className="acc-qr-icon" title={`Generate QR code for ${profile.name}`} aria-label={`Download the QR code for ${profile.name}`} onClick={() => void downloadProfileQr(profile)}>
+    <button
+      type="button"
+      className="acc-qr-icon"
+      title={`Generate QR code for ${profile.name}`}
+      aria-label={`Download the QR code for ${profile.name}`}
+      onClick={() => void downloadProfileQr(profile)}
+    >
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src="/images/manage/qr.png" alt="" />
     </button>

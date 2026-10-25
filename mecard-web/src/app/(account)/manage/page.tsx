@@ -166,6 +166,21 @@ export default async function ManageHome({ searchParams }: { searchParams: Promi
                     <div className="acc-item__sub">{p.companyId && p.companyRecord ? p.companyRecord : <i>No linked company</i>}</div>
                   </div>
                 </div>
+                {!p.archived ? (
+                  <LinkedCards
+                    profile={{ id: p.id, name: `${p.firstName} ${p.lastName}`.trim() || p.slug }}
+                    back={backUrl()}
+                    linked={(linkedCards.get(p.id) ?? []).map((c) => ({
+                      id: c.id,
+                      type: c.type,
+                      label: `${CARD_TYPES[c.type] ?? "Card"}: ${c.label || c.slug}`,
+                      typeLabel: CARD_TYPES[c.type] ?? "Card",
+                      front: imageUrl(c.frontPath, 160),
+                      frontLarge: imageUrl(c.frontPath, 640),
+                      backLarge: imageUrl(c.backPath, 640),
+                    }))}
+                  />
+                ) : null}
                 <div className="acc-item__actions">
                   {!p.archived ? (
                     <>
@@ -196,22 +211,6 @@ export default async function ManageHome({ searchParams }: { searchParams: Promi
                     </form>
                   )}
                 </div>
-                {!p.archived ? (
-                  <LinkedCards
-                    profile={{ id: p.id, name: `${p.firstName} ${p.lastName}`.trim() || p.slug }}
-                    back={backUrl()}
-                    linked={(linkedCards.get(p.id) ?? []).map((c) => ({
-                      id: c.id,
-                      type: c.type,
-                      label: `${CARD_TYPES[c.type] ?? "Card"}: ${c.label || c.slug}`,
-                      typeLabel: CARD_TYPES[c.type] ?? "Card",
-                      front: imageUrl(c.frontPath, 160),
-                      frontLarge: imageUrl(c.frontPath, 640),
-                      backLarge: imageUrl(c.backPath, 640),
-                    }))}
-                    cards={freeCards}
-                  />
-                ) : null}
               </li>
             ))}
           </ul>

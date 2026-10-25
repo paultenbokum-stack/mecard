@@ -398,3 +398,8 @@
 .acc-profile-tags__list button:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
 .acc-card-sides { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin: 12px 0; }
 .acc-card-sides img { width: 100%; height: auto; border-radius: 8px; border: 1px solid var(--surface-muted); }
+/* Linked cards inline on the row, beside the details */
+.acc-profile-tags { flex: 0 1 auto; padding-top: 0; border-top: 0; }
+.acc-profile-tags__list { margin: 0; gap: 6px; }
+.acc-profile-tags__list button { width: 54px; height: 34px; border-radius: 6px; }
+.acc-profile-tags__list i { font-size: 18px; }
