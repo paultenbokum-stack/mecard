@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { addProfileLinkAction, cancelInviteAction, inviteAction } from "@/app/(account)/manage/editor-actions";
-import { archiveProfileAction, linkCardAction } from "@/app/(account)/manage/actions";
+import { archiveProfileAction, linkCardAction, unlinkCardAction } from "@/app/(account)/manage/actions";
 import { ConfirmButton } from "./ConfirmButton";
 
 // A profile's actions on the Profiles list: WordPress's team console split
@@ -228,14 +228,19 @@ export function LinkedCards({
 }: {
   profile: { id: number; name: string };
   back: string;
-  linked: { id: number; type: string; label: string; front: string | null }[];
+  linked: { id: number; type: string; label: string; typeLabel: string; front: string | null; frontLarge: string | null; backLarge: string | null }[];
   cards: { id: number; label: string }[];
 }) {
   const [assigning, setAssigning] = useState(false);
+  const [viewing, setViewing] = useState<(typeof linked)[number] | null>(null);
   const dialog = useRef<HTMLDialogElement>(null);
+  const cardDialog = useRef<HTMLDialogElement>(null);
   useEffect(() => {
     if (assigning) dialog.current?.showModal();
   }, [assigning]);
+  useEffect(() => {
+    if (viewing) cardDialog.current?.showModal();
+  }, [viewing]);
   return (
     <div className="acc-profile-tags">
       <div className="acc-profile-tags__head">
@@ -248,7 +253,7 @@ export function LinkedCards({
         <ul className="acc-profile-tags__list">
           {linked.map((c) => (
             <li key={c.id}>
-              <Link href={`/manage/cards/${c.id}/`} scroll={false} title={`${c.label}: edit or remove`} aria-label={`${c.label}: edit or remove`}>
+              <button type="button" onClick={() => setViewing(c)} title={c.label} aria-label={`${c.label}: view, edit or remove`}>
                 {TAG_IMAGES[c.type] ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={TAG_IMAGES[c.type]} alt="" />
@@ -258,10 +263,41 @@ export function LinkedCards({
                 ) : (
                   <i className="fa-solid fa-address-card" aria-hidden="true" />
                 )}
-              </Link>
+              </button>
             </li>
           ))}
         </ul>
+      ) : null}
+      {viewing ? (
+        <dialog ref={cardDialog} className="acc-dialog" onClose={() => setViewing(null)} aria-labelledby={`lcv-${viewing.id}-title`}>
+          <form method="dialog" className="acc-dialog__close">
+            <button type="submit" className="acc-btn acc-btn--small" aria-label="Close">
+              <i className="fa-solid fa-xmark" aria-hidden="true" />
+            </button>
+          </form>
+          <h2 id={`lcv-${viewing.id}-title`}>{viewing.label}</h2>
+          {viewing.frontLarge || viewing.backLarge ? (
+            <div className="acc-card-sides">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              {viewing.frontLarge ? <img src={viewing.frontLarge} alt="Front of the card" /> : null}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              {viewing.backLarge ? <img src={viewing.backLarge} alt="Back of the card" /> : null}
+            </div>
+          ) : null}
+          <div className="acc-actions">
+            <form action={unlinkCardAction}>
+              <input type="hidden" name="card_id" value={viewing.id} />
+              <input type="hidden" name="back" value={back} />
+              <input type="hidden" name="from" value="profiles" />
+              <ConfirmButton className="acc-btn acc-btn--danger" confirm={`Remove this ${viewing.typeLabel.toLowerCase()} from ${profile.name}? It shows "not set up yet" until you assign it again.`}>
+                Remove {viewing.typeLabel}
+              </ConfirmButton>
+            </form>
+            <Link className="acc-btn acc-btn--primary" href={`/manage/cards/${viewing.id}/`} scroll={false}>
+              Edit {viewing.typeLabel}
+            </Link>
+          </div>
+        </dialog>
       ) : null}
       {assigning ? (
         <dialog ref={dialog} className="acc-dialog" onClose={() => setAssigning(false)} aria-labelledby={`lc-${profile.id}-title`}>

@@ -134,10 +134,21 @@ export default async function CardsPage({ searchParams }: { searchParams: Promis
                     <Thumb path={c.frontPath} />
                     <div className="acc-item__text">
                       <div className="acc-item__title">
-                        {c.label || c.profileName || c.nameOnCard || type} {stage ? <span className={`acc-badge acc-badge--${tab === "design" ? "off" : "wait"}`}>{stage}</span> : null}
+                        {/* As on WordPress, the label (or the person's name) opens the card. */}
+                        <Link href={`/manage/cards/${c.id}/?tab=${tab}`} scroll={false}>
+                          {c.label || c.profileName || c.nameOnCard || type}
+                        </Link>{" "}
+                        {stage ? <span className={`acc-badge acc-badge--${tab === "design" ? "off" : "wait"}`}>{stage}</span> : null}
                       </div>
                       <div className="acc-item__sub">
-                        {[type, c.profileName ? `opens ${c.profileName}` : "not linked to a profile", c.companyName, c.orderId ? `order #${c.orderId}` : "", `/t/${c.slug}/`].filter(Boolean).join(" · ")}
+                        {[type, c.profileName ? `opens ${c.profileName}` : "not linked to a profile", c.companyName].filter(Boolean).join(" · ")}
+                        {c.orderId ? (
+                          <>
+                            {" · "}
+                            <Link href={`/my-account/view-order/${c.orderId}/`}>order #{c.orderId}</Link>
+                          </>
+                        ) : null}
+                        {` · /t/${c.slug}/`}
                       </div>
                     </div>
                   </div>

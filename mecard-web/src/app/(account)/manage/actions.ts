@@ -60,6 +60,8 @@ export async function unlinkCardAction(form: FormData) {
   const cardId = id(form.get("card_id"));
   if (!(await canManageCard(v, cardId))) back(form, "denied");
   await linkCard(cardId, null);
+  // "Remove …" in a linked card's dialog on the Profiles list.
+  if (form.get("from") === "profiles") back(form, "card-unlinked");
   await cardBack(form, cardId, "card-unlinked");
 }
 

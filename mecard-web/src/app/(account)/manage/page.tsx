@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Avatar, CARD_TYPES, ConfirmButton, DoneNotice, Pager, ProPendingBadge, Subnav } from "@/components/account/Bits";
+import { Avatar, CARD_TYPES, ConfirmButton, DoneNotice, NewTab, Pager, ProPendingBadge, Subnav } from "@/components/account/Bits";
 import { LinkedCards, ProfileMenu, QrIcon } from "@/components/account/ProfileMenu";
 import { imageUrl } from "@/lib/images/paths";
 import { invitesForProfiles } from "@/lib/invites";
@@ -83,7 +83,7 @@ export default async function ManageHome({ searchParams }: { searchParams: Promi
     archived ? Promise.resolve({ rows: [] }) : listCards(v, { tab: "unassigned", page: 1 }),
     list.rows.length
       ? db
-          .select({ id: cards.id, slug: cards.slug, type: cards.type, label: cards.label, frontPath: cards.frontPath, profileId: cards.profileId })
+          .select({ id: cards.id, slug: cards.slug, type: cards.type, label: cards.label, frontPath: cards.frontPath, backPath: cards.backPath, profileId: cards.profileId })
           .from(cards)
           .where(and(inArray(cards.profileId, list.rows.map((p) => p.id)), eq(cards.archived, false)))
           .orderBy(asc(cards.id))
@@ -115,6 +115,10 @@ export default async function ManageHome({ searchParams }: { searchParams: Promi
           <i className="fa-solid fa-plus" aria-hidden="true" /> Add new profile
         </Link>
       </div>
+      <p className="acc__lead">
+        A profile is where all your personal information is stored. You can link your profile to a company, and all the company info will display on your
+        downloadable contact card. When you assign a profile to a tag (a card, phone tag or keyring) tapping on that tag will launch your downloadable contact card.
+      </p>
       <DoneNotice done={sp.done} />
 
       <section className="acc-panel" id="profiles">
@@ -128,7 +132,7 @@ export default async function ManageHome({ searchParams }: { searchParams: Promi
             )}
           </span>
         </div>
-        {totalActive > 8 || sp.q ? (
+        {totalActive > 0 || sp.q ? (
           <form className="acc-toolbar" action="/manage/">
             {archived ? <input type="hidden" name="show" value="archived" /> : null}
             <input type="search" name="q" defaultValue={sp.q ?? ""} placeholder="Search by name, email, job title or company" aria-label="Search profiles" />
@@ -150,7 +154,10 @@ export default async function ManageHome({ searchParams }: { searchParams: Promi
                   <Avatar path={p.photoPath} />
                   <div className="acc-item__text">
                     <div className="acc-item__title">
-                      {`${p.firstName} ${p.lastName}`.trim() || p.slug} {proPending.has(p.id) ? <ProPendingBadge /> : <span className={`acc-badge${isPro(p) ? " acc-badge--pro" : ""}`}>{isPro(p) ? "Pro" : "Standard"}</span>}{" "}
+                      <a href={`/mecard-profile/${p.slug}/`} target="_blank" rel="noopener" title="View profile">
+                        {`${p.firstName} ${p.lastName}`.trim() || p.slug} <NewTab />
+                      </a>{" "}
+                      {proPending.has(p.id) ? <ProPendingBadge /> : <span className={`acc-badge${isPro(p) ? " acc-badge--pro" : ""}`}>{isPro(p) ? "Professional" : "Standard"}</span>}{" "}
                       {p.ownerId === v.id && p.managerId && p.managerId !== v.id ? <span className="acc-badge">Shared with you</span> : null}
                     </div>
                     {/* WordPress's profile card: email, mobile and the linked company. */}
@@ -197,7 +204,10 @@ export default async function ManageHome({ searchParams }: { searchParams: Promi
                       id: c.id,
                       type: c.type,
                       label: `${CARD_TYPES[c.type] ?? "Card"}: ${c.label || c.slug}`,
+                      typeLabel: CARD_TYPES[c.type] ?? "Card",
                       front: imageUrl(c.frontPath, 160),
+                      frontLarge: imageUrl(c.frontPath, 640),
+                      backLarge: imageUrl(c.backPath, 640),
                     }))}
                     cards={freeCards}
                   />
