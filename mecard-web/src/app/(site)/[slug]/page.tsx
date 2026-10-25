@@ -4,7 +4,8 @@ import { WpPage, wpPageMetadata } from "@/components/site/WpPage";
 import { PAGES } from "../pages";
 
 // /how-it-works/, /for-teams/, /cards/, /free/, /gallery/, /contact-us/.
-export const dynamicParams = false;
+// No `dynamicParams = false`: after a revalidation Next rebuilds these at runtime, and with it
+// the rebuilt pages came back as 404. Unknown slugs still get notFound() below.
 export const generateStaticParams = () => Object.keys(PAGES).map((slug) => ({ slug }));
 
 type Props = { params: Promise<{ slug: string }> };

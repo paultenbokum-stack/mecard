@@ -137,7 +137,7 @@ export async function switchToTeamsAction() {
   const userId = await requireUserId("/manage/");
   await setAccountMode(userId, "teams");
   (await cookies()).set(teamWelcomeCookie(userId), "1", { path: "/", maxAge: 60 * 60 * 24 * 365, sameSite: "lax" });
-  revalidatePath("/", "layout");
+  revalidateAccountViews();
   redirect("/manage/");
 }
 
@@ -147,8 +147,15 @@ export async function backToIndividualAction() {
   if (!(await manageViewFor(userId)).canGoIndividual) redirect("/manage/");
   await setAccountMode(userId, "individual");
   (await cookies()).delete(teamWelcomeCookie(userId));
-  revalidatePath("/", "layout");
+  revalidateAccountViews();
   redirect("/manage/");
+}
+
+// The console and My Account show the view (their menus offer the switch). Not the whole site:
+// revalidating "/" also threw away the prerendered public pages.
+function revalidateAccountViews() {
+  revalidatePath("/manage", "layout");
+  revalidatePath("/my-account", "layout");
 }
 
 /** "Add myself" on an empty Profiles tab: a profile of their own, from the account's name, email and phone. */
