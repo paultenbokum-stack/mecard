@@ -25,7 +25,9 @@ async function main() {
   const [exists] = await sql`select 1 from pg_roles where rolname = ${ROLE}`;
   // Passwords can't be bound parameters in CREATE / ALTER ROLE; quote it as a literal.
   const pw = `'${password.replace(/'/g, "''")}'`;
-  if (exists) await sql.unsafe(`ALTER ROLE ${ROLE} WITH LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT PASSWORD ${pw}`);
+  // On Postgres 16 (Cloud SQL) a CREATEROLE user may not name SUPERUSER at all in ALTER ROLE, not even
+  // NOSUPERUSER ("permission denied to alter role"); the other attributes were set by CREATE.
+  if (exists) await sql.unsafe(`ALTER ROLE ${ROLE} WITH LOGIN PASSWORD ${pw}`);
   else await sql.unsafe(`CREATE ROLE ${ROLE} WITH LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT PASSWORD ${pw}`);
 
   await sql.unsafe(`ALTER ROLE ${ROLE} SET default_transaction_read_only = on`);
