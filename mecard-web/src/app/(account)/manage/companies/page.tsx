@@ -15,7 +15,7 @@ import { addCompanyAction } from "../actions";
 export const metadata: Metadata = { title: "Companies" };
 
 // The team console's Companies tab (company-management-v2 and the add-company form).
-export default async function CompaniesPage({ searchParams }: { searchParams: Promise<{ done?: string }> }) {
+export default async function CompaniesPage({ searchParams }: { searchParams: Promise<{ done?: string; add?: string }> }) {
   const sp = await searchParams;
   const v = await viewer(await requireUserId("/manage/companies/"));
   const welcome = (await cookies()).has(teamWelcomeCookie(v.id));
@@ -25,10 +25,16 @@ export default async function CompaniesPage({ searchParams }: { searchParams: Pr
     <div className="acc__wrap">
       <Subnav active="companies" />
       <p className="acc__eyebrow">For teams</p>
-      <h1>Companies</h1>
+      <div className="acc-pagehead">
+        <h1>Companies</h1>
+        {companies.length ? (
+          <Link className="acc-btn acc-btn--primary" href="/manage/companies/?add=1#add-company">
+            <i className="fa-solid fa-plus" aria-hidden="true" /> Add new company
+          </Link>
+        ) : null}
+      </div>
       <p className="acc__lead">A company holds the branding, contact details and buttons shared by every Pro profile in it, and the team of people who use them.</p>
       <DoneNotice done={sp.done} />
-      {progress ? <TeamWelcome userId={v.id} progress={progress} /> : null}
 
       <section className="acc-panel">
         {companies.length ? (
@@ -74,7 +80,7 @@ export default async function CompaniesPage({ searchParams }: { searchParams: Pr
         )}
 
         {companies.length ? (
-          <details className="acc-details" style={{ marginTop: 16 }}>
+          <details className="acc-details" id="add-company" style={{ marginTop: 16 }} open={!!sp.add}>
             <summary className="acc-btn">+ Add a company</summary>
             <form action={addCompanyAction} className="acc-inline-form">
               <input type="hidden" name="back" value="/manage/companies/" />
@@ -88,6 +94,8 @@ export default async function CompaniesPage({ searchParams }: { searchParams: Pr
           </p>
         )}
       </section>
+
+      {progress ? <TeamWelcome userId={v.id} progress={progress} /> : null}
     </div>
   );
 }

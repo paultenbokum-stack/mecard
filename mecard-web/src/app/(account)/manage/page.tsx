@@ -93,12 +93,6 @@ export default async function ManageHome({ searchParams }: { searchParams: Promi
         </Link>
       </div>
       <DoneNotice done={sp.done} />
-      {progress ? <TeamWelcome userId={v.id} progress={progress} /> : null}
-
-      <InvitesPanel invites={invites} />
-
-      <BundleJourney u={u} />
-      {u.eftPending && !proPending.size ? <div className="acc-panel acc-panel--notice">Your Pro upgrade is pending &mdash; we&rsquo;re just waiting for EFT confirmation.</div> : null}
 
       <section className="acc-panel" id="profiles">
         <div className="acc-panel__head">
@@ -203,6 +197,13 @@ export default async function ManageHome({ searchParams }: { searchParams: Promi
         <Pager page={list.page} total={list.total} size={PAGE_SIZE} href={(n) => backUrl({ page: n > 1 ? n : undefined }) + "#profiles"} />
 
       </section>
+
+      {progress ? <TeamWelcome userId={v.id} progress={progress} /> : null}
+
+      <InvitesPanel invites={invites} />
+
+      <BundleJourney u={u} />
+      {u.eftPending && !proPending.size ? <div className="acc-panel acc-panel--notice">Your Pro upgrade is pending &mdash; we&rsquo;re just waiting for EFT confirmation.</div> : null}
 
       {totalActive >= 2 && !companies.length && !archived && !welcome && !jar.has(teamPromptCookie(v.id)) ? <TeamPrompt userId={v.id} /> : null}
 
