@@ -46,16 +46,26 @@ export interface Design {
   downloadText: string;
 }
 
+/** The card's colours when a company leaves a field blank (the WordPress template's defaults). */
+export const DEFAULT_COLOURS = {
+  headingColour: "#000000",
+  bodyColour: "#333333",
+  accentColour: "#d3d3d3",
+  buttonTextColour: "#000000",
+  downloadColour: "#30b030",
+  downloadTextColour: "#000000",
+} as const;
+
 export function companyDesign(c: Company): Design {
   return {
     headingFont: fontToStack(c.headingFont),
-    headingColor: c.headingColour || "#000000",
+    headingColor: c.headingColour || DEFAULT_COLOURS.headingColour,
     bodyFont: fontToStack(c.bodyFont),
-    bodyColor: c.bodyColour || "#333333",
-    accent: c.accentColour || "#d3d3d3",
-    buttonText: c.buttonTextColour || "#000000",
-    download: c.downloadColour || "#30b030",
-    downloadText: c.downloadTextColour || "#000000",
+    bodyColor: c.bodyColour || DEFAULT_COLOURS.bodyColour,
+    accent: c.accentColour || DEFAULT_COLOURS.accentColour,
+    buttonText: c.buttonTextColour || DEFAULT_COLOURS.buttonTextColour,
+    download: c.downloadColour || DEFAULT_COLOURS.downloadColour,
+    downloadText: c.downloadTextColour || DEFAULT_COLOURS.downloadTextColour,
   };
 }
 

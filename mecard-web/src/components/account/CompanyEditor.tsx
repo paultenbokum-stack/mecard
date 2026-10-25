@@ -6,6 +6,7 @@ import { saveCompanyAction } from "@/app/(account)/manage/editor-actions";
 import type { Company, ProfileView } from "@/lib/profile-view";
 import { Field, ImageField, LinksEditor, LivePreview, SaveBar, WizardNav, type LinkRow, type WizardLinks } from "./EditorParts";
 import { RichTextEditor } from "./RichTextEditor";
+import { DEFAULT_COLOURS } from "@/lib/branding";
 import { autop } from "@/lib/rich-text";
 
 // The company editor (edit-companies form, Me\Company_Editor and the company
@@ -198,15 +199,29 @@ export function CompanyEditor({
                 </Field>
               </div>
               <div className="acc-grid">
-                {colours.map(([key, label]) => (
-                  <div className="acc-field" key={key}>
-                    <label htmlFor={`ce-${key}`}>{label}</label>
-                    <div className="acc-colour">
-                      <input type="color" aria-label={`${label} picker`} value={(f[key] as string) || "#000000"} onChange={(e) => set(key, e.target.value as never)} />
-                      <input id={`ce-${key}`} type="text" placeholder="Default" {...text(key, 7)} />
+                {colours.map(([key, label]) => {
+                  const value = (f[key] as string) ?? "";
+                  // A blank field uses the card's default colour: the swatch shows that colour, so picking another (black too) is a change.
+                  const fallback = DEFAULT_COLOURS[key as keyof typeof DEFAULT_COLOURS] ?? "#000000";
+                  return (
+                    <div className="acc-field" key={key}>
+                      <label htmlFor={`ce-${key}`}>{label}</label>
+                      <div className="acc-colour">
+                        <input type="color" aria-label={`${label} picker`} value={value || fallback} onChange={(e) => set(key, e.target.value as never)} />
+                        <input id={`ce-${key}`} type="text" placeholder={`Default (${fallback})`} {...text(key, 7)} />
+                      </div>
+                      <span className="acc-field__hint">
+                        {value ? (
+                          <button type="button" className="acc-link" onClick={() => set(key, "" as never)}>
+                            Reset to default
+                          </button>
+                        ) : (
+                          "Using the default colour"
+                        )}
+                      </span>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
               <Field id="ce-css" label="Custom CSS" hint="For fine-tuning. It only applies inside your profiles, never to the rest of the page.">
                 <textarea id="ce-css" className="acc-code" spellCheck={false} {...text("customCss", 20000)} />
