@@ -23,7 +23,7 @@ cutover. Run everything in PowerShell from `mecard-web`.
 5. Images pulled and checked: [IMAGES.md](IMAGES.md) steps 1 to 3, then the stage folder from
    step 4's first command (`npm run images:plan -- … --stage C:\mecard-cutover\stage-1`).
 6. To hand: PayFast **sandbox** merchant ID, key and passphrase (sandbox.payfast.co.za), a Bob Go
-   **sandbox** key, the Resend key, the Google sign-in client ID and secret, and the reCAPTCHA keys.
+   **sandbox** key, the Resend key, and the Google sign-in client ID and secret.
    Values already in `.env.local` are offered for reuse.
 
 ## Deploy (one command)
@@ -40,7 +40,7 @@ It runs, skipping whatever already exists:
 4. Migrations (all of them, including 0008 and 0009), then the WordPress import after you type
    IMPORT. It wipes and refills the cloud database, so it can be re-run with a newer export.
 5. Uploads the staged images (leave out `-ImagesStage` to skip).
-6. Builds and deploys in test mode, then prints the site address and the two settings below.
+6. Builds and deploys in test mode, then prints the site address and the setting below.
 
 Without the import: add `-SkipImport`. Redeploy after a code change:
 `.\deploy\4-deploy.ps1 -Test` (it remembers your email address).
@@ -49,21 +49,20 @@ Without the import: add `-SkipImport`. Redeploy after a code change:
 
 7. Google sign-in: console.cloud.google.com > APIs & Services > Credentials > the OAuth client >
    Authorized redirect URIs: add the `…run.app/api/auth/callback/google` address the deploy printed.
-8. reCAPTCHA admin (google.com/recaptcha/admin) > the site > Domains: add the `…run.app` host it printed.
-9. Warm the images: `npm run images:warm -- --url https://mecard-…run.app` (IMAGES.md step 5).
+8. Warm the images: `npm run images:warm -- --url https://mecard-…run.app` (IMAGES.md step 5).
 
 ## Click through
 
-10. Public: a card page `/t/<slug>/` and `/mecard-profile/<slug>/` (photos, logo, Save contact,
+9. Public: a card page `/t/<slug>/` and `/mecard-profile/<slug>/` (photos, logo, Save contact,
     vCard download), the home page, shop and contact form (its email arrives at your address).
-11. Log in as yourself (staff): `/admin/` orders, cards, stats.
-12. Log in as a customer (use Lost password: the reset email comes to you, with their address
+10. Log in as yourself (staff): `/admin/` orders, cards, stats.
+11. Log in as a customer (use Lost password: the reset email comes to you, with their address
     in the subject): My MeCard Home or the team dashboard, edit a profile, a company, My Cards.
-13. Sign up a new account, both "Just me" and "For my team", with throwaway addresses.
-14. Order: add a card, check out with PayFast **sandbox** (sandbox card details from PayFast),
+12. Sign up a new account, both "Just me" and "For my team", with throwaway addresses.
+13. Order: add a card, check out with PayFast **sandbox** (sandbox card details from PayFast),
     check the order, its emails (to you) and the Bob Go sandbox rates at checkout.
-15. Request a quote; open it from the email.
-16. Logs if anything misbehaves: Cloud Run > mecard > Logs.
+14. Request a quote; open it from the email.
+15. Logs if anything misbehaves: Cloud Run > mecard > Logs.
 
 ## Afterwards
 

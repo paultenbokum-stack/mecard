@@ -22,8 +22,6 @@ $Keys = @(
   @{ Name = 'PAYFAST_MERCHANT_KEY'; Help = 'PayFast merchant key (same page)' }
   @{ Name = 'PAYFAST_PASSPHRASE'; Help = 'PayFast passphrase: must match Settings > Security in that PayFast account' }
   @{ Name = 'BOBGO_API_KEY'; Help = 'Bob Go API key (Bob Go > Settings > API; sandbox key from api.sandbox.bobgo.co.za for the laptop)' }
-  @{ Name = 'RECAPTCHA_SECRET_KEY'; Shared = $true; Help = 'reCAPTCHA v2 secret for mecard.co.za and localhost (google.com/recaptcha/admin). A new key: the old one is in git' }
-  @{ Name = 'NEXT_PUBLIC_RECAPTCHA_SITE_KEY'; Shared = $true; Plain = $true; Help = 'reCAPTCHA v2 site key (not secret; same reCAPTCHA entry)' }
 )
 
 function Read-Env {
@@ -69,10 +67,6 @@ function Test-Key([string]$Name, [hashtable]$All, [bool]$Sandbox) {
         try { Invoke-WebRequest "$base/orders?limit=1" -Headers @{ Authorization = "Bearer $v" } -UseBasicParsing | Out-Null; Write-Host '  Bob Go: key accepted' -ForegroundColor DarkGreen }
         catch { $code = [int]$_.Exception.Response.StatusCode; if ($code -in 401, 403) { Write-Warning "Bob Go refused the key ($code)." } else { Write-Host "  Bob Go: key accepted (HTTP $code)" -ForegroundColor DarkGreen } }
       }
-      'RECAPTCHA_SECRET_KEY' {
-        $r = Invoke-RestMethod 'https://www.google.com/recaptcha/api/siteverify' -Method Post -Body @{ secret = $v; response = 'check' }
-        if (@($r.'error-codes') -contains 'invalid-input-secret') { Write-Warning 'Google says that reCAPTCHA secret is not valid.' } else { Write-Host '  reCAPTCHA: secret accepted' -ForegroundColor DarkGreen }
-      }
     }
   } catch { Write-Warning "Couldn't confirm $Name with the service: $($_.Exception.Message)" }
 }
@@ -95,7 +89,7 @@ $sandbox = (-not $Cloud) -or $Test
 
 foreach ($k in $Keys) {
   $n = $k.Name
-  if ($Cloud -and $k.Plain) { continue }   # the site key goes in with the deploy (4-deploy.ps1 reads .env.local)
+  if ($Cloud -and $k.Plain) { continue }   # plain (non-secret) settings go in with the deploy, not Secret Manager
   $isSet = if ($Cloud) { $cloudHas[$n] } else { [bool]$local[$n] }
   $status = if ($isSet) { if ($k.Plain -and -not $Cloud) { "(set: $($local[$n]))" } else { '(set)' } } else { 'missing' }
   Write-Host ("{0,-32} {1}" -f (Get-SecretName $n ($Cloud -and $Test)), $status) -ForegroundColor $(if ($isSet) { 'Gray' } else { 'Yellow' })

@@ -1,15 +1,13 @@
 # Step 4: build the Docker image, push it to Artifact Registry and deploy it to Cloud Run.
 # Builds mecard-web as it is checked out, so commit first. The image tag defaults to the commit.
-# The reCAPTCHA site key is only needed once: it is saved on the Cloud Run service and read
-# back from there on later deploys (pass it again only to change it).
 #
 # -Test: the test deploy before cutover (TEST-DEPLOY.md). On the service's *.run.app address, with
 # every email sent to -EmailTo instead of the customer, PayFast and Bob Go sandboxes (TEST_ secrets),
 # and noindex on every page. A later deploy without -Test (cutover) replaces all of that.
-# Usage: .\deploy\4-deploy.ps1 [-Test [-EmailTo you@example.com]] [-RecaptchaSiteKey <site key>] [-Project <id>] [-Tag v1] [-Url https://mecard.co.za]
+# Usage: .\deploy\4-deploy.ps1 [-Test [-EmailTo you@example.com]] [-Project <id>] [-Tag v1] [-Url https://mecard.co.za]
 param(
   [string]$Project,
-  [string]$RecaptchaSiteKey,
+  [string]$RecaptchaSiteKey,   # ignored: the app has no reCAPTCHA (honeypot); kept so older commands still run
   [string]$Tag,
   [string]$Url,
   [switch]$Test,
@@ -26,22 +24,15 @@ try {
   if (-not $Tag) { $Tag = "$(git rev-parse --short HEAD)".Trim() }
   $image = "$Region-docker.pkg.dev/$Project/$Repo/web:$Tag"
 
-  if (-not $RecaptchaSiteKey) {
+  if ($Test -and -not $EmailTo) {
+    # A later test deploy keeps the address the last one used.
     $ErrorActionPreference = 'Continue'
     $json = gcloud run services describe $Service "--project=$Project" "--region=$Region" --format=json 2>$null
     $ErrorActionPreference = 'Stop'
     if ($json) {
       $vars = ($json | Out-String | ConvertFrom-Json).spec.template.spec.containers[0].env
-      $RecaptchaSiteKey = ($vars | Where-Object { $_.name -eq 'NEXT_PUBLIC_RECAPTCHA_SITE_KEY' } | Select-Object -First 1).value
-      if ($Test -and -not $EmailTo) { $EmailTo = ($vars | Where-Object { $_.name -eq 'EMAIL_REDIRECT_TO' } | Select-Object -First 1).value }
+      $EmailTo = ($vars | Where-Object { $_.name -eq 'EMAIL_REDIRECT_TO' } | Select-Object -First 1).value
     }
-    if (-not $RecaptchaSiteKey) {
-      # First deploy: the key keys.ps1 saved in .env.local.
-      $line = Get-Content (Join-Path $AppDir '.env.local') -ErrorAction SilentlyContinue | Where-Object { $_ -match '^NEXT_PUBLIC_RECAPTCHA_SITE_KEY=(.+)$' } | Select-Object -First 1
-      if ($line -match '=(.+)$') { $RecaptchaSiteKey = $Matches[1].Trim() }
-    }
-    if (-not $RecaptchaSiteKey) { throw 'No reCAPTCHA site key: run .\deploy\keys.ps1 (it asks for it), or pass -RecaptchaSiteKey <site key>.' }
-    Write-Host 'Using the saved reCAPTCHA site key.'
   }
 
   if ($Test) {
@@ -64,7 +55,7 @@ try {
   $ErrorActionPreference = 'Stop'
 
   Write-Step "Building $image"
-  docker build -t $image --build-arg "NEXT_PUBLIC_APP_URL=$SiteUrl" --build-arg NEXT_PUBLIC_AUTH_GOOGLE=1 --build-arg "NEXT_PUBLIC_RECAPTCHA_SITE_KEY=$RecaptchaSiteKey" .
+  docker build -t $image --build-arg "NEXT_PUBLIC_APP_URL=$SiteUrl" --build-arg NEXT_PUBLIC_AUTH_GOOGLE=1 .
   if ($LASTEXITCODE -ne 0) { throw 'docker build failed' }
 
   Write-Step 'Pushing'
@@ -86,7 +77,6 @@ try {
     "AUTH_URL: `"$SiteUrl`""
     'AUTH_TRUST_HOST: "true"'
     "NEXT_PUBLIC_APP_URL: `"$SiteUrl`""
-    "NEXT_PUBLIC_RECAPTCHA_SITE_KEY: `"$RecaptchaSiteKey`""
     "MEDIA_BUCKET: `"$(Get-MediaBucket $Project)`""
     "ARCHIVE_BUCKET: `"$(Get-ArchiveBucket $Project)`""
   )
@@ -111,7 +101,6 @@ try {
     Write-Host "`nTest site: $SiteUrl" -ForegroundColor Green
     Write-Host 'Add these once, if not done yet (TEST-DEPLOY.md):'
     Write-Host "  Google sign-in, Authorized redirect URI:  $SiteUrl/api/auth/callback/google"
-    Write-Host "  reCAPTCHA admin, Domains:                 $(([Uri]$SiteUrl).Host)"
     Write-Host "  PayFast sandbox notify URL is sent with each payment ($SiteUrl/api/payfast/itn/); nothing to set."
   } else {
     Write-Host 'Do not place real orders until the live switch-over (guide Step 7).'
