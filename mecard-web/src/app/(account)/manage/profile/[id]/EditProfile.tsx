@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { ConfirmButton, DoneNotice, NewTab, ProPendingBadge, ProPendingNote } from "@/components/account/Bits";
 import { ProfileEditor } from "@/components/account/ProfileEditor";
+import { UpsellSeen } from "@/components/account/Upsells";
 import { canEditProfile, canManageCompany, viewer } from "@/lib/access";
 import { availableProUpgrades, hasPendingUpgrade, pendingProUpgrades } from "@/lib/manage";
 import { isPro } from "@/lib/profile-format";
@@ -103,8 +104,10 @@ export function EditProfile({ data, done }: { data: Awaited<ReturnType<typeof lo
             ) : (
               <>
                 <p className="acc-item__title">R199 once off</p>
+                <UpsellSeen offer="pro" placement="profile_editor" profileId={p.id} />
                 <form action={startProUpgradeAction}>
                   <input type="hidden" name="profile_id" value={p.id} />
+                  <input type="hidden" name="placement" value="profile_editor" />
                   <ConfirmButton className="acc-btn acc-btn--cta">Upgrade to Pro</ConfirmButton>
                 </form>
                 <p className="acc__muted" style={{ marginBottom: 0 }}>

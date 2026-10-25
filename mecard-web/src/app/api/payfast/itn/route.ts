@@ -1,3 +1,4 @@
+import { paymentCancelledItn, paymentFailedItn } from "@/lib/checkout-events";
 import { orderTotalCents, setOrderStatus } from "@/lib/orders";
 import { verifyItn } from "@/lib/payfast";
 
@@ -23,6 +24,9 @@ export async function POST(req: Request) {
     await setOrderStatus(orderId, "processing", { paidAt: new Date(), payfastPaymentId: data.pf_payment_id }, { note: `PayFast payment complete (payment ID ${data.pf_payment_id}).` });
   } else if (data.payment_status === "CANCELLED") {
     await setOrderStatus(orderId, "cancelled", {}, { note: "Payment cancelled at PayFast." });
+    await paymentCancelledItn(orderId).catch(() => undefined);
+  } else if (data.payment_status !== "PENDING") {
+    await paymentFailedItn(orderId, String(data.payment_status ?? "")).catch(() => undefined);
   }
   return new Response("OK");
 }

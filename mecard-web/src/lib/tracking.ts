@@ -14,8 +14,11 @@ export const ALLOWED_EVENTS = new Set([
   "a2hs_prompted", "a2hs_accepted", "a2hs_dismissed", "onboarding_completed",
   // PWA
   "pwa_launched", "pwa_signin_prompted", "pwa_signin_completed", "pwa_anonymous_view_chosen",
-  // Monetisation
-  "purchase", "pro_upsell_clicked", "additional_profile_added", "team_company_created", "team_member_added",
+  // Conversion plan Phase 0: marketing page views { path }, onboarding step views { step }
+  "page_viewed", "onboarding_step_viewed",
+  // Monetisation. upsell_viewed / pro_upsell_clicked carry { offer, placement, trigger };
+  // checkout_started, payment_cancelled and payment_failed are written on the server.
+  "upsell_viewed", "purchase", "pro_upsell_clicked", "additional_profile_added", "team_company_created", "team_member_added",
   "team_invite_sent", "team_invite_accepted",
   // Viral surfaces
   "recipient_ad_clicked", "post_save_cta_viewed", "post_save_cta_clicked", "post_save_cta_dismissed",
@@ -54,6 +57,7 @@ export function eventRow({ body, sessionCookie, userId, ip, userAgent, country }
   if (!ALLOWED_EVENTS.has(name)) return null;
   const sessionId = String(sessionCookie || body.session_id || "").slice(0, 64);
   const referrer = typeof body.referrer === "string" && /^https?:\/\//i.test(body.referrer) ? body.referrer.slice(0, 2048) : null;
+  // Any meta is kept, including meta.exp, the experiment tag every event may carry (conversion plan 0.9).
   const meta = body.meta && typeof body.meta === "object" ? (body.meta as Record<string, unknown>) : null;
   return {
     name,

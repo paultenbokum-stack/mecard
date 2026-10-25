@@ -1,7 +1,9 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, useSyncExternalStore, useTransition } from "react";
+import { useEffect, useState, useSyncExternalStore, useTransition } from "react";
+import { UpsellSeen } from "@/components/account/Upsells";
+import { beacon } from "@/lib/beacon";
 import { onboardingStepAction, sendProfileLinkAction } from "@/app/(account)/sign-up/actions";
 import { imageUrl } from "@/lib/images/paths";
 import { ImageLibrary } from "./ImageLibrary";
@@ -76,6 +78,11 @@ export function OnboardingWizard({ initial, userEmail }: { initial: Fields & { i
     });
 
   const back = () => setStep(ORDER[Math.max(0, ORDER.indexOf(step) - 1)]);
+
+  // Reached a step, saved or not (conversion plan 0.8).
+  useEffect(() => {
+    beacon("onboarding_step_viewed", { profile_id: initial.id, source: "onboarding", meta: { step } });
+  }, [step, initial.id]);
   const profileUrl = `/mecard-profile/${initial.slug}/`;
   const current = GROUP[step];
   const done = current === "install" ? ["signup", "profile"] : ["signup"];
@@ -225,6 +232,7 @@ export function OnboardingWizard({ initial, userEmail }: { initial: Fields & { i
         </ol>
         <div className="me-progress__extra">Then: Add Cards and configure more features</div>
         <div className="me-progress-upsell">
+          <UpsellSeen offer="pro_and_bundle" placement="onboarding_progress" profileId={initial.id} />
           <div className="me-progress-upsell__section">
             <p className="me-progress-upsell__heading">Profile enhancements</p>
             <ul className="me-progress-upsell__list">

@@ -1,5 +1,6 @@
 "use client";
 
+import { encodeAcquisition, FIRST_TOUCH_COOKIE, FIRST_TOUCH_DAYS, parseAcquisition, withReferral } from "@/lib/acquisition";
 import { classifyContactLink } from "@/lib/contact-action";
 import { useEffect } from "react";
 
@@ -181,7 +182,7 @@ export function CardBehaviour({ config }: { config: CardConfig }) {
       body.prepend(box);
       cleanups.push(() => box.remove());
     }
-    on("click", "#mecard-share-upsell a", () => track("pro_upsell_clicked", { meta: { surface: "share_panel" } }));
+    on("click", "#mecard-share-upsell a", () => track("pro_upsell_clicked", { meta: { surface: "share_panel", placement: "share_panel", trigger: "share_panel_open" } }));
     on("click", "div.vcard-button", () => push("download-contact", { file_type: "vcard", file_url: null }));
     on("click", 'button[data-action="whatsapp-number"]', () => push("whatsapp_share"));
     on("click", 'button[data-action="copy-link"]', () => push("copy_link"));
@@ -257,8 +258,20 @@ export function CardBehaviour({ config }: { config: CardConfig }) {
         io.observe(strip);
         cleanups.push(() => io.disconnect());
       }
-      on("click", "#mecard-watermark-strip", () => track("recipient_ad_clicked", { meta: { surface: "profile_strip" } }));
-      on("click", ".mecard-post-save-cta-inline__btn, .mecard-post-save-cta__btn", () => track("post_save_cta_clicked"));
+      // A signup after a viral click is credited to this profile (conversion plan 0.3).
+      const markReferral = () => {
+        if (!config.profileId) return;
+        const value = encodeAcquisition(withReferral(parseAcquisition(getCookie(FIRST_TOUCH_COOKIE)), config.profileId));
+        document.cookie = `${FIRST_TOUCH_COOKIE}=${value};max-age=${FIRST_TOUCH_DAYS * 86400};path=/;samesite=lax`;
+      };
+      on("click", "#mecard-watermark-strip", () => {
+        markReferral();
+        track("recipient_ad_clicked", { meta: { surface: "profile_strip" } });
+      });
+      on("click", ".mecard-post-save-cta-inline__btn, .mecard-post-save-cta__btn", () => {
+        markReferral();
+        track("post_save_cta_clicked");
+      });
       on("click", "#mecard-post-save-cta-close", () => {
         const cta = document.getElementById("mecard-post-save-cta");
         if (cta) {
@@ -304,6 +317,9 @@ export function CardBehaviour({ config }: { config: CardConfig }) {
         fab.innerHTML = '<i class="fas fa-times" aria-hidden="true"></i>';
         scrim?.classList.add("is-visible");
         push("share_menu_view", { control: "mecard-share-fab", aria_controls: "mecard-share-panel" });
+        if (document.getElementById("mecard-share-upsell") && once("upsell_viewed")) {
+          track("upsell_viewed", { meta: { offer: "pro", placement: "share_panel", trigger: "share_panel_open" } });
+        }
         void makeQr();
         void initWhatsapp();
         const a2hs = document.getElementById("mecard-a2hs-card");
