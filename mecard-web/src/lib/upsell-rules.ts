@@ -29,3 +29,6 @@ export const offerPrice = (cents: number) => rands(cents).replace(/\.00$/, "");
 
 /** The cookie that remembers this user dismissed "Managing a team? Set up a company". */
 export const teamPromptCookie = (userId: number) => `mecard_team_prompt_${userId}`;
+
+/** Set by Switch to teams and a team sign-up: the "You're now managing a team" strip shows until it's dismissed. */
+export const teamWelcomeCookie = (userId: number) => `mecard_team_welcome_${userId}`;

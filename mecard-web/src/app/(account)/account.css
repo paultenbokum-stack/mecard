@@ -153,16 +153,18 @@
 /* My Account (WooCommerce's woocommerce-MyAccount-navigation + content): side menu on desktop, a row of tabs on phones. */
 .acc-myaccount { display: grid; gap: var(--space-6); grid-template-columns: minmax(0, 1fr); padding-top: var(--space-7); }
 .acc-myaccount__nav ul { list-style: none; margin: 0; padding: 0; display: flex; gap: var(--space-2); overflow-x: auto; }
-:where(.mecard-site) .acc-myaccount__nav a { display: block; white-space: nowrap; padding: var(--space-2) var(--space-4); border: 1px solid var(--surface-muted); border-radius: var(--radius-md); background: var(--surface); color: var(--ink-strong); font-weight: 600; font-size: 15px; text-decoration: none; }
-:where(.mecard-site) .acc-myaccount__nav a:hover { border-color: var(--brand); color: var(--link); }
+:where(.mecard-site) .acc-myaccount__nav a, .acc-myaccount__navbtn { display: block; white-space: nowrap; padding: var(--space-2) var(--space-4); border: 1px solid var(--surface-muted); border-radius: var(--radius-md); background: var(--surface); color: var(--ink-strong); font-weight: 600; font-size: 15px; text-decoration: none; }
+:where(.mecard-site) .acc-myaccount__nav a:hover, .acc-myaccount__navbtn:hover { border-color: var(--brand); color: var(--link); }
+.acc-myaccount__navbtn { width: 100%; text-align: left; font-family: inherit; cursor: pointer; }
+.acc-myaccount__navbtn:focus-visible { outline: 2px solid var(--focus-ring); }
 :where(.mecard-site) .acc-myaccount__nav a[aria-current="page"] { background: var(--brand-tint); border-color: var(--brand); color: var(--link); }
 :where(.mecard-site) .acc-myaccount__content > h1:first-child { margin-top: 0; }
 @media (min-width: 922px) {
   .acc-myaccount { grid-template-columns: 240px minmax(0, 1fr); gap: var(--space-10); align-items: start; }
   .acc-myaccount__nav { position: sticky; top: var(--space-6); }
   .acc-myaccount__nav ul { flex-direction: column; gap: var(--space-1); overflow: visible; }
-  :where(.mecard-site) .acc-myaccount__nav a { border-color: transparent; background: none; }
-  :where(.mecard-site) .acc-myaccount__nav a:hover { background: var(--surface-subtle); border-color: transparent; }
+  :where(.mecard-site) .acc-myaccount__nav a, .acc-myaccount__navbtn { border-color: transparent; background: none; }
+  :where(.mecard-site) .acc-myaccount__nav a:hover, .acc-myaccount__navbtn:hover { background: var(--surface-subtle); border-color: transparent; }
   :where(.mecard-site) .acc-myaccount__nav a[aria-current="page"] { background: var(--brand-tint); border-color: transparent; }
 }
 .acc-myaccount__tiles { display: grid; gap: var(--space-3); grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); margin: var(--space-5) 0; }
@@ -331,3 +333,16 @@
 .acc-rte__area a { color: var(--brand); text-decoration: underline; }
 :where(.mecard-site) .acc .acc-rte textarea.acc-code { border: 0; border-radius: 0; min-height: 160px; }
 :where(.mecard-site) .acc .acc-rte textarea.acc-code:focus { outline: none; }
+
+/* Team welcome strip (Switch to teams, team sign-up) */
+.acc-teamwelcome__head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); }
+.acc-teamwelcome__head h2 { margin: 0; }
+.acc-teamwelcome__steps { list-style: none; margin: 12px 0 0; padding: 0; display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+.acc-teamwelcome__steps li { display: flex; gap: 10px; align-items: flex-start; padding: 12px; border: 1px solid var(--surface-muted); border-radius: var(--radius-md); }
+.acc-teamwelcome__steps li.is-next { border-color: var(--brand); }
+.acc-teamwelcome__tick { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: var(--radius-pill); background: var(--surface-muted); color: var(--ink-muted); font-size: 13px; font-weight: 700; }
+.acc-teamwelcome__steps li.is-done .acc-teamwelcome__tick { background: var(--connect); color: var(--surface); }
+.acc-teamwelcome__steps li.is-next .acc-teamwelcome__tick { background: var(--brand); color: var(--surface); }
+.acc-teamwelcome__sub { display: block; font-size: 13.5px; color: var(--ink-muted); }
+
+.acc-individual-switch { text-align: center; margin-top: var(--space-4); font-size: 14px; }

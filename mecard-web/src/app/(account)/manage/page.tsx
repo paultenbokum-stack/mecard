@@ -16,7 +16,9 @@ import { redirect } from "next/navigation";
 import { accountState } from "@/lib/onboarding";
 import { requireUserId } from "@/lib/session";
 import { TeamPrompt } from "@/components/account/TeamPrompt";
-import { teamPromptCookie } from "@/lib/upsell-rules";
+import { teamPromptCookie, teamWelcomeCookie } from "@/lib/upsell-rules";
+import { teamProgress } from "@/lib/team-progress";
+import { TeamWelcome } from "@/components/account/TeamWelcome";
 import { BundleJourney, UpgradeButton } from "@/components/account/Upsells";
 import { loadUpsells } from "@/lib/upsells";
 import { eq } from "drizzle-orm";
@@ -24,7 +26,7 @@ import { db } from "@/db/client";
 import { profiles } from "@/db/schema";
 import { manageViewFor } from "@/lib/manage-view";
 import { SingleHome } from "./SingleHome";
-import { archiveProfileAction } from "./actions";
+import { archiveProfileAction, backToIndividualAction } from "./actions";
 import { InvitesPanel } from "./InvitesPanel";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -54,12 +56,15 @@ export default async function ManageHome({ searchParams }: { searchParams: Promi
   const archived = sp.show === "archived";
   const page = Math.max(1, Number(sp.page) || 1);
 
-  const [list, companies, invites, u, activeCount] = await Promise.all([
+  const jar = await cookies();
+  const welcome = jar.has(teamWelcomeCookie(v.id));
+  const [list, companies, invites, u, activeCount, progress] = await Promise.all([
     listProfiles(v, { archived, q: sp.q, page }),
     listCompanies(v),
     invitesForUser(v.id),
     loadUpsells(v),
     archived || sp.q ? listProfiles(v, { archived: false, page: 1 }).then((r) => r.total) : Promise.resolve(-1),
+    welcome ? teamProgress(v.id) : null,
   ]);
   const totalActive = activeCount >= 0 ? activeCount : list.total;
   // Upgrades ordered for a profile but not paid yet: Pro is unlocked in the editor, the card stays standard.
@@ -87,6 +92,7 @@ export default async function ManageHome({ searchParams }: { searchParams: Promi
         </Link>
       </div>
       <DoneNotice done={sp.done} />
+      {progress ? <TeamWelcome userId={v.id} progress={progress} /> : null}
 
       <InvitesPanel invites={invites} />
 
@@ -174,7 +180,16 @@ export default async function ManageHome({ searchParams }: { searchParams: Promi
 
       </section>
 
-      {totalActive >= 2 && !companies.length && !archived && !(await cookies()).has(teamPromptCookie(v.id)) ? <TeamPrompt userId={v.id} /> : null}
+      {totalActive >= 2 && !companies.length && !archived && !welcome && !jar.has(teamPromptCookie(v.id)) ? <TeamPrompt userId={v.id} /> : null}
+
+      {mv.canGoIndividual ? (
+        <form action={backToIndividualAction} className="acc__muted acc-individual-switch">
+          Just managing your own card?{" "}
+          <button type="submit" className="acc-link">
+            Back to individual view
+          </button>
+        </form>
+      ) : null}
     </div>
   );
 }

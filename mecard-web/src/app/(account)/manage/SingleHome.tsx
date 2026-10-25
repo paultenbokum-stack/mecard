@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CARD_TYPES, DoneNotice, NewTab, ProPendingNote, Subnav, Thumb } from "@/components/account/Bits";
+import { CARD_TYPES, ConfirmButton, DoneNotice, NewTab, ProPendingNote, Subnav, Thumb } from "@/components/account/Bits";
 import { BundleJourney, BundleOffer, CardOffer, ClassicCardPreview, ProUpsell } from "@/components/account/Upsells";
 import type { Viewer } from "@/lib/access";
 import { cardProgress } from "@/lib/card-tabs";
@@ -7,6 +7,7 @@ import { listCards, pendingProUpgrades, type invitesForUser } from "@/lib/manage
 import { isPro } from "@/lib/profile-format";
 import type { Upsells } from "@/lib/upsells";
 import { InvitesPanel } from "./InvitesPanel";
+import { switchToTeamsAction } from "./actions";
 
 // The single view of /manage/ (one profile of your own, manageViewFor):
 // WordPress's "My MeCard Home" (class-me-single-manage.php) in its wording and
@@ -112,16 +113,11 @@ export async function SingleHome({ v, profile, u, done, invites }: { v: Viewer; 
         <p className="acc-upsell__kicker">For teams</p>
         <h2>Managing cards for a team?</h2>
         <p>Set up company branding, assign profiles to colleagues, and manage everything centrally from the team dashboard.</p>
-        <div className="acc-actions">
-          <Link className="acc-btn" href="/manage/profile/new/" scroll={false}>
-            Add another profile
-          </Link>
-          <Link className="acc-btn" href="/manage/companies/">
-            Create a team
-          </Link>
-        </div>
+        <form action={switchToTeamsAction} className="acc-actions">
+          <ConfirmButton className="acc-btn">Switch to teams</ConfirmButton>
+        </form>
         <p className="acc__muted" style={{ marginBottom: 0 }}>
-          With a second profile or a company, this page becomes your team dashboard.
+          Your profile comes with you: it&rsquo;s the first one on your team dashboard, next to My Cards and Companies.
         </p>
       </section>
     </div>

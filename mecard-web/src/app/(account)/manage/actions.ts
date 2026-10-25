@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { canEditProfile, canManageCard, canManageCompany, viewer } from "@/lib/access";
@@ -9,7 +10,9 @@ import { cardsListHref, isCardTab } from "@/lib/card-tabs";
 import { cardTabOf, createCompany, createProfile, linkCard, setProfileArchived, updateCardSettings } from "@/lib/manage";
 import { getCart, removeLine } from "@/lib/cart";
 import { isBundle } from "@/lib/catalog";
+import { manageViewFor, setAccountMode } from "@/lib/manage-view";
 import { requireUserId } from "@/lib/session";
+import { teamWelcomeCookie } from "@/lib/upsell-rules";
 
 // Form actions on /manage/. Each checks the user's rights again (the page
 // only shows what they may do) and comes back to /manage/ with a message.
@@ -118,4 +121,23 @@ export async function removeBundleAction(form: FormData) {
   const line = (await getCart(userId)).items.find((l) => l.key === key && isBundle(l.productId));
   if (line) await removeLine(userId, key);
   redirect("/manage/?done=bundle-removed");
+}
+
+/** Switch to teams: the team dashboard (Profiles, My Cards, Companies) with the welcome strip. */
+export async function switchToTeamsAction() {
+  const userId = await requireUserId("/manage/");
+  await setAccountMode(userId, "teams");
+  (await cookies()).set(teamWelcomeCookie(userId), "1", { path: "/", maxAge: 60 * 60 * 24 * 365, sameSite: "lax" });
+  revalidatePath("/", "layout");
+  redirect("/manage/");
+}
+
+/** Back to individual view: only offered while the account has one profile and no company others use (canGoIndividual). */
+export async function backToIndividualAction() {
+  const userId = await requireUserId("/manage/");
+  if (!(await manageViewFor(userId)).canGoIndividual) redirect("/manage/");
+  await setAccountMode(userId, "individual");
+  (await cookies()).delete(teamWelcomeCookie(userId));
+  revalidatePath("/", "layout");
+  redirect("/manage/");
 }
