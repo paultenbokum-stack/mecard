@@ -160,9 +160,7 @@ export default async function ManageHome({ searchParams }: { searchParams: Promi
                       {proPending.has(p.id) ? <ProPendingBadge /> : <span className={`acc-badge${isPro(p) ? " acc-badge--pro" : ""}`}>{isPro(p) ? "Professional" : "Standard"}</span>}{" "}
                       {p.ownerId === v.id && p.managerId && p.managerId !== v.id ? <span className="acc-badge">Shared with you</span> : null}
                     </div>
-                    {/* WordPress's profile card: email, mobile and the linked company. */}
-                    <div className="acc-item__sub">{p.email}</div>
-                    <div className="acc-item__sub">{p.mobile}</div>
+                    {/* The linked company, as on WordPress's profile card (email and mobile left off to keep rows compact). */}
                     <div className="acc-item__sub">{p.companyId && p.companyRecord ? p.companyRecord : <i>No linked company</i>}</div>
                   </div>
                 </div>
