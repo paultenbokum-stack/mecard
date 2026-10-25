@@ -2,16 +2,17 @@
 
 import Link from "next/link";
 import { useActionState, useEffect, useRef, useState } from "react";
+import { PROVINCES, splitAddress } from "@/lib/address-split";
 import { placeOrderAction } from "@/lib/shop-actions";
 
 // WooCommerce's checkout: billing details, delivery options (live Bob Go
 // rates once the address is complete) and PayFast or direct bank transfer.
 
-const PROVINCES = ["Eastern Cape", "Free State", "Gauteng", "KwaZulu-Natal", "Limpopo", "Mpumalanga", "Northern Cape", "North West", "Western Cape"];
 const ADDRESS_FIELDS = ["billing_company", "billing_address_1", "billing_address_2", "billing_suburb", "billing_city", "billing_state", "billing_postcode"];
 
 type Method = { id: string; label: string; price: string; note?: string };
 type Defaults = { firstName: string; lastName: string; email: string; phone: string };
+type ProfileCompany = { name: string; address: string };
 
 export function CheckoutForm({
   defaults,
@@ -19,6 +20,7 @@ export function CheckoutForm({
   summary,
   liveRates,
   ships,
+  profileCompanies,
 }: {
   defaults: Defaults;
   methods: Method[];
@@ -26,6 +28,8 @@ export function CheckoutForm({
   liveRates: boolean;
   /** False when the basket holds only Pro upgrades: no address needed. */
   ships: boolean;
+  /** The company on the user's own profiles, offered while Company name is blank. */
+  profileCompanies: ProfileCompany[];
 }) {
   const [state, action, pending] = useActionState(placeOrderAction, null);
   const [options, setOptions] = useState<Method[]>(methods);
@@ -37,6 +41,7 @@ export function CheckoutForm({
   const last = useRef("");
   const picked = useRef(false);
   const requestNo = useRef(0);
+  const [companyBlank, setCompanyBlank] = useState(true);
 
   // Re-quote when the address changes (debounced), like WooCommerce's update_checkout.
   const requote = (force = false) => {
@@ -84,6 +89,28 @@ export function CheckoutForm({
     </div>
   );
 
+  // Company name from the profile; its address goes into the address fields that are still empty.
+  const copyCompany = (c: ProfileCompany) => {
+    const el = form.current?.elements;
+    if (!el) return;
+    const put = (name: string, value: string, always = false) => {
+      const input = el.namedItem(name) as HTMLInputElement | HTMLSelectElement | null;
+      if (input && value && (always || !input.value.trim())) input.value = value;
+    };
+    put("billing_company", c.name, true);
+    setCompanyBlank(false);
+    if (ships && c.address) {
+      const a = splitAddress(c.address);
+      put("billing_address_1", a.address1);
+      put("billing_address_2", a.address2);
+      put("billing_suburb", a.suburb);
+      put("billing_city", a.city);
+      put("billing_state", a.state);
+      put("billing_postcode", a.postcode);
+      requote();
+    }
+  };
+
   return (
     <form ref={form} action={action} className="shop-checkout" onChange={() => requote()} onBlur={() => requote()}>
       <section className="acc-panel acc-panel--white">
@@ -98,7 +125,24 @@ export function CheckoutForm({
             {field("billing_first_name", "First name", { defaultValue: defaults.firstName, autoComplete: "given-name" })}
             {field("billing_last_name", "Last name", { defaultValue: defaults.lastName, autoComplete: "family-name" })}
           </div>
-          {field("billing_company", "Company name", { required: false, autoComplete: "organization" })}
+          <div className="acc-field">
+            <label htmlFor="billing_company">
+              Company name <span className="acc__muted">(optional)</span>
+            </label>
+            <input id="billing_company" name="billing_company" type="text" autoComplete="organization" onChange={(e) => setCompanyBlank(!e.target.value.trim())} />
+            {companyBlank && profileCompanies.length ? (
+              <span className="acc-field__hint">
+                {profileCompanies.map((c, i) => (
+                  <span key={c.name}>
+                    {i ? " · " : null}
+                    <button type="button" className="acc-link" onClick={() => copyCompany(c)}>
+                      Copy “{c.name}” from my profile
+                    </button>
+                  </span>
+                ))}
+              </span>
+            ) : null}
+          </div>
           {ships ? (
             <>
               <div className="acc-field">

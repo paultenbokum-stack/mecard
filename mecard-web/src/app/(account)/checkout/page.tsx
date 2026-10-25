@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { eq } from "drizzle-orm";
+import { and, eq, or } from "drizzle-orm";
 import { db } from "@/db/client";
-import { users } from "@/db/schema";
+import { companies, profiles, users } from "@/db/schema";
 import { Subnav } from "@/components/account/Bits";
 import { CheckoutForm } from "@/components/shop/CheckoutForm";
 import { cartView } from "@/lib/cart";
@@ -28,7 +28,25 @@ export default async function CheckoutPage() {
       </div>
     );
   }
-  const [u] = await db.select().from(users).where(eq(users.id, userId));
+  const [[u], companyRows] = await Promise.all([
+    db.select().from(users).where(eq(users.id, userId)),
+    // "Copy from my profile": the company on the user's own profiles (its record, or the name typed on a standard profile).
+    db
+      .select({ name: profiles.companyName, companyName: companies.name, address: companies.address })
+      .from(profiles)
+      .leftJoin(companies, eq(companies.id, profiles.companyId))
+      .where(and(or(eq(profiles.ownerId, userId), eq(profiles.managerId, userId)), eq(profiles.archived, false)))
+      .orderBy(profiles.id)
+      .limit(20),
+  ]);
+  // One per company name, the one with an address if there is one.
+  const byName = new Map<string, { name: string; address: string }>();
+  for (const r of companyRows) {
+    const c = { name: (r.companyName || r.name).trim(), address: (r.address ?? "").trim() };
+    const key = c.name.toLowerCase();
+    if (c.name && (!byName.has(key) || (!byName.get(key)!.address && c.address))) byName.set(key, c);
+  }
+  const profileCompanies = [...byName.values()].slice(0, 3);
   const lines = cart.lines.map((l) => ({ productId: l.productId, lineCents: l.lineCents }));
   const coupon = cart.couponCode ? await couponForLines(cart.couponCode, lines, userId) : null;
   const discount = Math.min(cart.subtotalCents, (coupon?.ok ? coupon.discountCents : 0) + cart.quoteDiscountCents);
@@ -84,6 +102,7 @@ export default async function CheckoutPage() {
         summary={summary}
         liveRates={shipping.live}
         ships={needsShipping(cart.lines)}
+        profileCompanies={profileCompanies}
       />
     </div>
   );
