@@ -126,7 +126,7 @@ export function CompanyEditor({
     });
 
   return (
-    <div className="acc-editor">
+    <div className="acc-editor" data-dirty={dirty}>
       <div>
         <nav className="acc-tabs" aria-label="Company settings">
           {TABS.map(([key, label]) => (

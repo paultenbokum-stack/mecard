@@ -106,12 +106,14 @@ export async function addProfileAction(form: FormData) {
   redirect(`/manage/profile/${profileId}/?done=profile-created`);
 }
 
-export async function addCompanyAction(form: FormData) {
+/** Companies' create form (CreateCompanyForm): the new company's id, for its editor to open in the modal. */
+export async function createCompanyAction(rawName: string): Promise<{ ok: true; id: number } | { ok: false; error: string }> {
   const v = await me();
-  const name = String(form.get("name") ?? "").trim().slice(0, 255);
-  if (!name) back(form, "company-invalid");
-  const companyId = await createCompany(v, name);
-  redirect(`/manage/company/${companyId}/?done=company-created`);
+  const name = String(rawName ?? "").trim().slice(0, 255);
+  if (!name) return { ok: false, error: "Enter the company name." };
+  const id = await createCompany(v, name);
+  revalidatePath("/manage", "layout");
+  return { ok: true, id };
 }
 
 export async function acceptInviteAction(form: FormData) {

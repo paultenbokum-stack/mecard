@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ConfirmButton, DoneNotice, Subnav } from "@/components/account/Bits";
+import { DoneNotice, Subnav } from "@/components/account/Bits";
 import { viewer } from "@/lib/access";
 import { imageUrl } from "@/lib/images/paths";
 import { listCompanies } from "@/lib/manage";
@@ -10,7 +10,7 @@ import { TeamEmpty } from "@/components/account/TeamEmpty";
 import { TeamWelcome } from "@/components/account/TeamWelcome";
 import { teamProgress } from "@/lib/team-progress";
 import { teamWelcomeCookie } from "@/lib/upsell-rules";
-import { addCompanyAction } from "../actions";
+import { CreateCompanyForm } from "@/components/account/CreateCompanyForm";
 
 export const metadata: Metadata = { title: "Companies" };
 
@@ -52,7 +52,7 @@ export default async function CompaniesPage({ searchParams }: { searchParams: Pr
                     </div>
                   </div>
                   <div className="acc-item__actions">
-                    <Link className="acc-btn acc-btn--small acc-btn--primary" href={`/manage/company/${c.id}/`}>
+                    <Link className="acc-btn acc-btn--small acc-btn--primary" href={`/manage/company/${c.id}/`} scroll={false}>
                       Edit company
                     </Link>
                   </div>
@@ -65,11 +65,7 @@ export default async function CompaniesPage({ searchParams }: { searchParams: Pr
             active="company"
             title="Set up your company"
             actions={
-              <form action={addCompanyAction} className="acc-inline-form">
-                <input type="hidden" name="back" value="/manage/companies/" />
-                <input type="text" name="name" required maxLength={255} placeholder="Company name" aria-label="Company name" />
-                <ConfirmButton className="acc-btn acc-btn--primary">Create your company</ConfirmButton>
-              </form>
+              <CreateCompanyForm label="Create your company" />
             }
           >
             A company holds your branding: logo, colours, fonts and the office number and website. Every Pro profile in it uses that look, so the whole team stays on-brand.
@@ -79,11 +75,7 @@ export default async function CompaniesPage({ searchParams }: { searchParams: Pr
         {companies.length ? (
           <details className="acc-details" id="add-company" style={{ marginTop: 16 }} open={!!sp.add}>
             <summary className="acc-btn">+ Add a company</summary>
-            <form action={addCompanyAction} className="acc-inline-form">
-              <input type="hidden" name="back" value="/manage/companies/" />
-              <input type="text" name="name" required maxLength={255} placeholder="Company name" aria-label="Company name" />
-              <ConfirmButton className="acc-btn acc-btn--primary">Create company</ConfirmButton>
-            </form>
+            <CreateCompanyForm label="Create company" />
           </details>
         ) : (
           <p className="acc__muted" style={{ textAlign: "center", marginBottom: 0 }}>
