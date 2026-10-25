@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { canEditProfile, canManageCard, canManageCompany, viewer } from "@/lib/access";
@@ -90,6 +91,8 @@ export async function addProfileAction(form: FormData) {
   const companyId = id(form.get("company_id")) || null;
   if (companyId && !(await canManageCompany(v, companyId))) back(form, "denied");
   const profileId = await createProfile(v, { ...parsed.data, companyId });
+  // A second profile turns the single view into the team view: the list behind the editor and the subnav re-render.
+  revalidatePath("/manage", "layout");
   redirect(`/manage/profile/${profileId}/?done=profile-created`);
 }
 
@@ -104,6 +107,7 @@ export async function addCompanyAction(form: FormData) {
 export async function acceptInviteAction(form: FormData) {
   const v = await me();
   const res = await acceptInvite(id(form.get("invite_id")), v.id, { requireEmailMatch: true });
+  if (res.ok) revalidatePath("/manage", "layout");
   back(form, res.ok ? "invite-accepted" : "invite-failed");
 }
 
