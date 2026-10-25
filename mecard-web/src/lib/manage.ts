@@ -22,11 +22,13 @@ const profileCols = {
   lastName: profiles.lastName,
   jobTitle: profiles.jobTitle,
   email: profiles.email,
+  mobile: profiles.mobile,
   type: profiles.type,
   archived: profiles.archived,
   photoPath: profiles.photoPath,
   companyId: profiles.companyId,
   companyName: sql<string>`coalesce(${companies.name}, ${profiles.companyName})`,
+  companyRecord: companies.name,
   ownerId: profiles.ownerId,
   managerId: profiles.managerId,
 };

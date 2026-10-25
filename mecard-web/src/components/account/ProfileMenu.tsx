@@ -55,15 +55,9 @@ export function ProfileMenu({ profile, editHref, back, ownerEmail, invite, cards
     setPanel(p);
   };
 
-  // The QR code of the profile's address as a PNG, like WordPress's QR modal download.
-  const downloadQr = async () => {
+  const downloadQr = () => {
     setOpen(false);
-    const QR = await import("qrcode");
-    const href = await QR.toDataURL(new URL(url, window.location.origin).href, { width: 1000, margin: 2, errorCorrectionLevel: "H" });
-    const a = document.createElement("a");
-    a.href = href;
-    a.download = `${profile.name || profile.slug} QR code.png`;
-    a.click();
+    void downloadProfileQr(profile);
   };
 
   const hidden = (
@@ -146,36 +140,7 @@ export function ProfileMenu({ profile, editHref, back, ownerEmail, invite, cards
             </>
           ) : null}
 
-          {panel === "card" ? (
-            <>
-              <h2 id={`pm-${profile.id}-title`}>Assign a card/tag</h2>
-              {cards.length ? (
-                <>
-                  <p className="acc__muted">Choose a card or tag to open {profile.name}&rsquo;s profile.</p>
-                  <form action={linkCardAction} className="acc-inline-form">
-                    {hidden}
-                    <input type="hidden" name="from" value="profiles" />
-                    <select name="card_id" required aria-label="Card or tag" defaultValue="">
-                      <option value="" disabled>
-                        Select a card or tag
-                      </option>
-                      {cards.map((c) => (
-                        <option key={c.id} value={c.id}>
-                          {c.label}
-                        </option>
-                      ))}
-                    </select>
-                    <ConfirmButton className="acc-btn acc-btn--small acc-btn--primary">Assign</ConfirmButton>
-                  </form>
-                </>
-              ) : (
-                <p className="acc__muted">
-                  You have no cards or tags waiting for a profile. <Link href="/manage/cards/new/">Buy a new card</Link>, or move a card to this profile from{" "}
-                  <Link href="/manage/cards/">My Cards</Link>.
-                </p>
-              )}
-            </>
-          ) : null}
+          {panel === "card" ? <AssignCard profile={profile} back={back} cards={cards} titleId={`pm-${profile.id}-title`} /> : null}
 
           {panel === "link" ? (
             <>
@@ -200,5 +165,124 @@ export function ProfileMenu({ profile, editHref, back, ownerEmail, invite, cards
         </dialog>
       ) : null}
     </div>
+  );
+}
+
+/** The QR code of the profile's address as a PNG, like WordPress's QR modal download. */
+export async function downloadProfileQr(profile: { slug: string; name: string }) {
+  const QR = await import("qrcode");
+  const href = await QR.toDataURL(new URL(`/mecard-profile/${profile.slug}/`, window.location.origin).href, { width: 1000, margin: 2, errorCorrectionLevel: "H" });
+  const a = document.createElement("a");
+  a.href = href;
+  a.download = `${profile.name || profile.slug} QR code.png`;
+  a.click();
+}
+
+/** Assign a card/tag: one of the user's cards that opens no profile yet. */
+export function AssignCard({ profile, back, cards, titleId }: { profile: { id: number; name: string }; back: string; cards: { id: number; label: string }[]; titleId: string }) {
+  return (
+    <>
+      <h2 id={titleId}>Assign a card/tag</h2>
+      {cards.length ? (
+        <>
+          <p className="acc__muted">Choose a card or tag to open {profile.name}&rsquo;s profile.</p>
+          <form action={linkCardAction} className="acc-inline-form">
+            <input type="hidden" name="profile_id" value={profile.id} />
+            <input type="hidden" name="back" value={back} />
+            <input type="hidden" name="from" value="profiles" />
+            <select name="card_id" required aria-label="Card or tag" defaultValue="">
+              <option value="" disabled>
+                Select a card or tag
+              </option>
+              {cards.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.label}
+                </option>
+              ))}
+            </select>
+            <ConfirmButton className="acc-btn acc-btn--small acc-btn--primary">Assign</ConfirmButton>
+          </form>
+        </>
+      ) : (
+        <p className="acc__muted">
+          You have no cards or tags waiting for a profile. <Link href="/manage/cards/new/">Buy a new card</Link>, or move a card to this profile from{" "}
+          <Link href="/manage/cards/">My Cards</Link>.
+        </p>
+      )}
+    </>
+  );
+}
+
+const TAG_IMAGES: Record<string, string> = { keyring: "/images/manage/keyring.png", phonetag: "/images/manage/phonetag.png" };
+
+/**
+ * Under each profile, as on WordPress (the profile-tags view): its cards and
+ * tags (a card's front, or the key ring or phone tag picture), each opening
+ * the card to edit or remove, and Assign a card/tag.
+ */
+export function LinkedCards({
+  profile,
+  back,
+  linked,
+  cards,
+}: {
+  profile: { id: number; name: string };
+  back: string;
+  linked: { id: number; type: string; label: string; front: string | null }[];
+  cards: { id: number; label: string }[];
+}) {
+  const [assigning, setAssigning] = useState(false);
+  const dialog = useRef<HTMLDialogElement>(null);
+  useEffect(() => {
+    if (assigning) dialog.current?.showModal();
+  }, [assigning]);
+  return (
+    <div className="acc-profile-tags">
+      <div className="acc-profile-tags__head">
+        <h3>Linked Cards and Tags</h3>
+        <button type="button" className="acc-btn acc-btn--small" onClick={() => setAssigning(true)}>
+          <i className="fa-solid fa-plus" aria-hidden="true" /> Assign a card/tag
+        </button>
+      </div>
+      {linked.length ? (
+        <ul className="acc-profile-tags__list">
+          {linked.map((c) => (
+            <li key={c.id}>
+              <Link href={`/manage/cards/${c.id}/`} scroll={false} title={`${c.label}: edit or remove`} aria-label={`${c.label}: edit or remove`}>
+                {TAG_IMAGES[c.type] ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={TAG_IMAGES[c.type]} alt="" />
+                ) : c.front ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img className="acc-profile-tags__card" src={c.front} alt="" loading="lazy" />
+                ) : (
+                  <i className="fa-solid fa-address-card" aria-hidden="true" />
+                )}
+              </Link>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+      {assigning ? (
+        <dialog ref={dialog} className="acc-dialog" onClose={() => setAssigning(false)} aria-labelledby={`lc-${profile.id}-title`}>
+          <form method="dialog" className="acc-dialog__close">
+            <button type="submit" className="acc-btn acc-btn--small" aria-label="Close">
+              <i className="fa-solid fa-xmark" aria-hidden="true" />
+            </button>
+          </form>
+          <AssignCard profile={profile} back={back} cards={cards} titleId={`lc-${profile.id}-title`} />
+        </dialog>
+      ) : null}
+    </div>
+  );
+}
+
+/** The QR icon on the profile card (WordPress's open-qr-modal): downloads the profile's QR code. */
+export function QrIcon({ profile }: { profile: { slug: string; name: string } }) {
+  return (
+    <button type="button" className="acc-qr-icon" title={`Generate QR code for ${profile.name}`} aria-label={`Download the QR code for ${profile.name}`} onClick={() => void downloadProfileQr(profile)}>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src="/images/manage/qr.png" alt="" />
+    </button>
   );
 }

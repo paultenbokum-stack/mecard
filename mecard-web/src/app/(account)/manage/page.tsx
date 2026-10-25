@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Avatar, CARD_TYPES, ConfirmButton, DoneNotice, Pager, ProPendingBadge, Subnav } from "@/components/account/Bits";
-import { ProfileMenu } from "@/components/account/ProfileMenu";
+import { LinkedCards, ProfileMenu, QrIcon } from "@/components/account/ProfileMenu";
+import { imageUrl } from "@/lib/images/paths";
 import { invitesForProfiles } from "@/lib/invites";
 import { viewer } from "@/lib/access";
 import {
@@ -24,9 +25,9 @@ import { teamProgress } from "@/lib/team-progress";
 import { TeamWelcome } from "@/components/account/TeamWelcome";
 import { BundleJourney, UpgradeButton } from "@/components/account/Upsells";
 import { loadUpsells } from "@/lib/upsells";
-import { eq, inArray } from "drizzle-orm";
+import { and, asc, eq, inArray } from "drizzle-orm";
 import { db } from "@/db/client";
-import { profiles, users } from "@/db/schema";
+import { cards, profiles, users } from "@/db/schema";
 import { manageViewFor } from "@/lib/manage-view";
 import { SingleHome } from "./SingleHome";
 import { addMyselfAction, archiveProfileAction, backToIndividualAction } from "./actions";
@@ -74,13 +75,21 @@ export default async function ManageHome({ searchParams }: { searchParams: Promi
   // Upgrades ordered for a profile but not paid yet: Pro is unlocked in the editor, the card stays standard.
   // An upgrade ordered for no particular profile (an EFT bundle) hides the per-profile Upgrade, as before.
   const ownerIds = [...new Set(list.rows.map((p) => p.ownerId).filter((o): o is number => !!o && o !== v.id))];
-  const [proPending, unassignedPending, inviteRows, ownerRows, unlinked] = await Promise.all([
+  const [proPending, unassignedPending, inviteRows, ownerRows, unlinked, linkedRows] = await Promise.all([
     pendingProUpgrades(list.rows.filter((p) => !isPro(p)).map((p) => p.id), v.id),
     hasPendingUpgrade(v.id, { unassignedOnly: true }),
     invitesForProfiles(list.rows.map((p) => p.id)),
     ownerIds.length ? db.select({ id: users.id, email: users.email }).from(users).where(inArray(users.id, ownerIds)) : Promise.resolve([]),
     archived ? Promise.resolve({ rows: [] }) : listCards(v, { tab: "unassigned", page: 1 }),
+    list.rows.length
+      ? db
+          .select({ id: cards.id, slug: cards.slug, type: cards.type, label: cards.label, frontPath: cards.frontPath, profileId: cards.profileId })
+          .from(cards)
+          .where(and(inArray(cards.profileId, list.rows.map((p) => p.id)), eq(cards.archived, false)))
+          .orderBy(asc(cards.id))
+      : Promise.resolve([]),
   ]);
+  const linkedCards = Map.groupBy(linkedRows, (c) => c.profileId!);
   // For each profile's menu (WordPress's dropdown): who owns it, its open invite, and cards to assign.
   const owners = new Map(ownerRows.map((o) => [o.id, o.email]));
   const openInvite = (profileId: number) => {
@@ -144,7 +153,10 @@ export default async function ManageHome({ searchParams }: { searchParams: Promi
                       {`${p.firstName} ${p.lastName}`.trim() || p.slug} {proPending.has(p.id) ? <ProPendingBadge /> : <span className={`acc-badge${isPro(p) ? " acc-badge--pro" : ""}`}>{isPro(p) ? "Pro" : "Standard"}</span>}{" "}
                       {p.ownerId === v.id && p.managerId && p.managerId !== v.id ? <span className="acc-badge">Shared with you</span> : null}
                     </div>
-                    <div className="acc-item__sub">{[p.jobTitle, p.companyName].filter(Boolean).join(" · ") || " "}</div>
+                    {/* WordPress's profile card: email, mobile and the linked company. */}
+                    <div className="acc-item__sub">{p.email}</div>
+                    <div className="acc-item__sub">{p.mobile}</div>
+                    <div className="acc-item__sub">{p.companyId && p.companyRecord ? p.companyRecord : <i>No linked company</i>}</div>
                   </div>
                 </div>
                 <div className="acc-item__actions">
@@ -165,6 +177,7 @@ export default async function ManageHome({ searchParams }: { searchParams: Promi
                         invite={openInvite(p.id)}
                         cards={freeCards}
                       />
+                      <QrIcon profile={{ slug: p.slug, name: `${p.firstName} ${p.lastName}`.trim() || p.slug }} />
                     </>
                   ) : (
                     <form action={archiveProfileAction}>
@@ -176,6 +189,19 @@ export default async function ManageHome({ searchParams }: { searchParams: Promi
                     </form>
                   )}
                 </div>
+                {!p.archived ? (
+                  <LinkedCards
+                    profile={{ id: p.id, name: `${p.firstName} ${p.lastName}`.trim() || p.slug }}
+                    back={backUrl()}
+                    linked={(linkedCards.get(p.id) ?? []).map((c) => ({
+                      id: c.id,
+                      type: c.type,
+                      label: `${CARD_TYPES[c.type] ?? "Card"}: ${c.label || c.slug}`,
+                      front: imageUrl(c.frontPath, 160),
+                    }))}
+                    cards={freeCards}
+                  />
+                ) : null}
               </li>
             ))}
           </ul>
