@@ -16,3 +16,9 @@ All UI follows the MeCard design system.
 - Card pages (`/t/...`) keep each company's own branding. Only the MeCard header and footer use the tokens there.
 - The dark theme exists (`[data-theme="dark"]`) but isn't switched on. Test both themes when adding colours.
 - When a token changes, update it in the Design System artifact first, then here.
+
+## Conversion plan (after cutover)
+
+Measurement, experiments and the weekly UX review are planned in `docs/conversion-plan.md`, with the
+Insights dashboard mockup in `docs/insights-mockup.html`. Build sessions follow its sections 3 and 4.
+Cutover with feature parity comes first; don't start the plan until Paul says so.
