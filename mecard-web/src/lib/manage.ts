@@ -21,6 +21,7 @@ const profileCols = {
   firstName: profiles.firstName,
   lastName: profiles.lastName,
   jobTitle: profiles.jobTitle,
+  email: profiles.email,
   type: profiles.type,
   archived: profiles.archived,
   photoPath: profiles.photoPath,

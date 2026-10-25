@@ -1,16 +1,16 @@
 "use server";
 
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { db } from "@/db/client";
-import { companies, products, profiles } from "@/db/schema";
+import { companies, products, profileLinks, profiles } from "@/db/schema";
 import { canEditProfile, canManageCompany, viewer } from "@/lib/access";
 import { cleanCompanyInput, saveCompany } from "@/lib/company-edit";
 import { cancelInvite, createInvite } from "@/lib/invites";
 import { addToCart } from "@/lib/cart";
 import { PRODUCT } from "@/lib/catalog";
 import { applyProUpgrade, pendingProUpgrades, refreshProfilePages } from "@/lib/manage";
-import { cleanEmail } from "@/lib/form-values";
+import { cleanEmail, cleanText, cleanUrl } from "@/lib/form-values";
 import { canUseImage } from "@/lib/media-library";
 import { cleanProfileInput, createCompanyForProfile, saveProfile } from "@/lib/profile-edit";
 import { requireUserId } from "@/lib/session";
@@ -90,24 +90,46 @@ export async function saveCompanyAction(companyId: number, raw: Record<string, u
   return { ok: true };
 }
 
+/** Back to the Profiles list (the page the form was on), with a ?done= message, at the profile's row. */
+function listBack(form: FormData, done: string, profileId: number): never {
+  const raw = String(form.get("back") ?? "/manage/");
+  const url = new URL(raw.startsWith("/manage/") ? raw : "/manage/", "http://x");
+  url.searchParams.set("done", done);
+  redirect(`${url.pathname}${url.search}#p${profileId}`);
+}
+
+/** "Invite others to edit" (WordPress's CRED invite form) from a profile's menu on the Profiles list. */
 export async function inviteAction(form: FormData) {
   const v = await viewer(await requireUserId());
   const profileId = Number(form.get("profile_id"));
-  const companyId = Number(form.get("company_id"));
-  const back = `/manage/company/${companyId}/?tab=team`;
-  if (!(await canEditProfile(v, profileId)) || !(await canManageCompany(v, companyId))) redirect(`${back}&done=denied`);
+  if (!(await canEditProfile(v, profileId))) listBack(form, "denied", profileId);
   const email = cleanEmail(form.get("email"));
-  if (!email) redirect(`${back}&done=invite-invalid#p${profileId}`);
+  if (!email) listBack(form, "invite-invalid", profileId);
   await createInvite(profileId, email, v.id);
-  redirect(`${back}&done=invite-sent#p${profileId}`);
+  listBack(form, "invite-sent", profileId);
 }
 
 export async function cancelInviteAction(form: FormData) {
   const v = await viewer(await requireUserId());
   const profileId = Number(form.get("profile_id"));
-  const companyId = Number(form.get("company_id"));
-  const back = `/manage/company/${companyId}/?tab=team`;
-  if (!(await canEditProfile(v, profileId))) redirect(`${back}&done=denied`);
+  if (!(await canEditProfile(v, profileId))) listBack(form, "denied", profileId);
   await cancelInvite(Number(form.get("invite_id")), profileId);
-  redirect(`${back}&done=invite-cancelled#p${profileId}`);
+  listBack(form, "invite-cancelled", profileId);
+}
+
+/** "Add a website link" (WordPress's add-more-link form): one more button on the profile, after its others. */
+export async function addProfileLinkAction(form: FormData) {
+  const v = await viewer(await requireUserId());
+  const profileId = Number(form.get("profile_id"));
+  if (!(await canEditProfile(v, profileId))) listBack(form, "denied", profileId);
+  const label = cleanText(form.get("label"), 255);
+  const url = cleanUrl(form.get("url"));
+  if (!label || !url) listBack(form, "link-invalid", profileId);
+  const [last] = await db
+    .select({ n: sql<number>`coalesce(max(${profileLinks.sortOrder}), 0)::int` })
+    .from(profileLinks)
+    .where(eq(profileLinks.profileId, profileId));
+  await db.insert(profileLinks).values({ profileId, label, url, sortOrder: (last?.n ?? 0) + 1 });
+  await refreshProfilePages(profileId);
+  listBack(form, "link-added", profileId);
 }

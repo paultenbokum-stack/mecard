@@ -52,9 +52,6 @@ export default async function CompaniesPage({ searchParams }: { searchParams: Pr
                     </div>
                   </div>
                   <div className="acc-item__actions">
-                    <Link className="acc-btn acc-btn--small" href={`/manage/company/${c.id}/?tab=team`}>
-                      Team
-                    </Link>
                     <Link className="acc-btn acc-btn--small acc-btn--primary" href={`/manage/company/${c.id}/`}>
                       Edit company
                     </Link>

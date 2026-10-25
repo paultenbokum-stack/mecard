@@ -361,3 +361,20 @@
 .acc-teamempty__map li.is-active .acc-teamempty__part { border-color: var(--brand); background: var(--brand-tint); }
 .acc-teamempty__map li.is-active .acc-teamempty__part i { color: var(--brand); }
 @media (max-width: 420px) { .acc-teamempty__part { min-width: 0; padding: 8px 6px; } .acc-teamempty__part > span { display: none; } }
+
+/* A profile's Edit split button and menu on the Profiles list (WordPress's dropdown) */
+.acc-split { position: relative; display: inline-flex; }
+.acc-split > .acc-btn:first-child { border-top-right-radius: 0; border-bottom-right-radius: 0; }
+.acc-split__toggle { border-top-left-radius: 0; border-bottom-left-radius: 0; border-left: 1px solid rgba(255, 255, 255, 0.35); padding-left: 10px; padding-right: 10px; }
+.acc-menu { position: absolute; right: 0; top: calc(100% + 4px); z-index: 20; min-width: 220px; display: grid; padding: 6px; border: 1px solid var(--surface-muted); border-radius: var(--radius-md); background: var(--surface); box-shadow: var(--shadow-md); text-align: left; }
+.acc-menu > a, .acc-menu > button, .acc-menu form button { display: block; width: 100%; padding: 8px 12px; border: 0; border-radius: 8px; background: none; color: var(--ink); font: inherit; font-size: 14.5px; text-align: left; text-decoration: none; cursor: pointer; white-space: nowrap; }
+.acc-menu > a:hover, .acc-menu > button:hover, .acc-menu form button:hover { background: var(--surface-subtle); color: var(--ink); text-decoration: none; }
+.acc-menu > a:focus-visible, .acc-menu > button:focus-visible, .acc-menu form button:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: -2px; }
+.acc-menu .acc-menu__danger { color: var(--danger); }
+.acc-menu hr { margin: 6px 0; border: 0; border-top: 1px solid var(--surface-muted); }
+.acc-menu i { font-size: 12px; color: var(--ink-muted); }
+.acc-dialog { width: min(520px, calc(100vw - 32px)); padding: var(--space-6); border: 0; border-radius: var(--radius-lg); box-shadow: var(--shadow-md); color: var(--ink); }
+.acc-dialog::backdrop { background: rgba(15, 23, 42, 0.45); }
+.acc-dialog h2 { margin: 0 40px 8px 0; }
+.acc-dialog__close { position: absolute; top: 12px; right: 12px; }
+.acc-dialog .acc-inline-form { margin-top: 12px; }

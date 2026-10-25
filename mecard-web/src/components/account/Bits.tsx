@@ -66,6 +66,8 @@ const DONE: Record<string, [string, "ok" | "error"]> = {
   "invite-invalid": ["Enter a valid email address to send the invite to.", "error"],
   "company-saved": ["Company saved.", "ok"],
   "invite-cancelled": ["Invite withdrawn.", "ok"],
+  "link-added": ["Link added to the profile.", "ok"],
+  "link-invalid": ["Enter a label and a web address for the link.", "error"],
   "upgrade-applied": ["Your Pro upgrade is applied. Your profile is now Pro.", "ok"],
   "pro-pending": ["Pro is unlocked for this profile. Set it up below and pay when you're ready.", "ok"],
   "already-pro": ["This profile is already Pro.", "ok"],

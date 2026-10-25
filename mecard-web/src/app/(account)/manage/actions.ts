@@ -50,6 +50,8 @@ export async function linkCardAction(form: FormData) {
   const profileId = id(form.get("profile_id"));
   if (!(await canManageCard(v, cardId)) || !(await canEditProfile(v, profileId))) back(form, "denied");
   await linkCard(cardId, profileId);
+  // "Assign a card/tag" in a profile's menu on the Profiles list.
+  if (form.get("from") === "profiles") back(form, "card-linked");
   await cardBack(form, cardId, "card-linked");
 }
 

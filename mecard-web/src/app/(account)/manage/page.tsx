@@ -1,9 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Avatar, ConfirmButton, DoneNotice, Pager, ProPendingBadge, Subnav, NewTab } from "@/components/account/Bits";
+import { Avatar, CARD_TYPES, ConfirmButton, DoneNotice, Pager, ProPendingBadge, Subnav } from "@/components/account/Bits";
+import { ProfileMenu } from "@/components/account/ProfileMenu";
+import { invitesForProfiles } from "@/lib/invites";
 import { viewer } from "@/lib/access";
 import {
   invitesForUser,
+  listCards,
   listCompanies,
   hasPendingUpgrade,
   listProfiles,
@@ -21,9 +24,9 @@ import { teamProgress } from "@/lib/team-progress";
 import { TeamWelcome } from "@/components/account/TeamWelcome";
 import { BundleJourney, UpgradeButton } from "@/components/account/Upsells";
 import { loadUpsells } from "@/lib/upsells";
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import { db } from "@/db/client";
-import { profiles } from "@/db/schema";
+import { profiles, users } from "@/db/schema";
 import { manageViewFor } from "@/lib/manage-view";
 import { SingleHome } from "./SingleHome";
 import { addMyselfAction, archiveProfileAction, backToIndividualAction } from "./actions";
@@ -70,10 +73,21 @@ export default async function ManageHome({ searchParams }: { searchParams: Promi
   const totalActive = activeCount >= 0 ? activeCount : list.total;
   // Upgrades ordered for a profile but not paid yet: Pro is unlocked in the editor, the card stays standard.
   // An upgrade ordered for no particular profile (an EFT bundle) hides the per-profile Upgrade, as before.
-  const [proPending, unassignedPending] = await Promise.all([
+  const ownerIds = [...new Set(list.rows.map((p) => p.ownerId).filter((o): o is number => !!o && o !== v.id))];
+  const [proPending, unassignedPending, inviteRows, ownerRows, unlinked] = await Promise.all([
     pendingProUpgrades(list.rows.filter((p) => !isPro(p)).map((p) => p.id), v.id),
     hasPendingUpgrade(v.id, { unassignedOnly: true }),
+    invitesForProfiles(list.rows.map((p) => p.id)),
+    ownerIds.length ? db.select({ id: users.id, email: users.email }).from(users).where(inArray(users.id, ownerIds)) : Promise.resolve([]),
+    archived ? Promise.resolve({ rows: [] }) : listCards(v, { tab: "unassigned", page: 1 }),
   ]);
+  // For each profile's menu (WordPress's dropdown): who owns it, its open invite, and cards to assign.
+  const owners = new Map(ownerRows.map((o) => [o.id, o.email]));
+  const openInvite = (profileId: number) => {
+    const i = inviteRows.find((r) => r.profileId === profileId && r.status === "pending");
+    return i ? { id: i.id, email: i.email, sent: i.createdAt.toLocaleDateString("en-ZA") } : null;
+  };
+  const freeCards = unlinked.rows.map((c) => ({ id: c.id, label: `${c.label || CARD_TYPES[c.type] || "Card"} (/t/${c.slug}/)` }));
   // The list as it is now (search, page), for the profile editor to come back to.
   const listQs = new URLSearchParams({ ...(sp.q ? { q: sp.q } : {}), ...(page > 1 ? { page: String(page) } : {}) }).toString();
   const editHref = (id: number) => `/manage/profile/${id}/${listQs ? `?back=${encodeURIComponent(`/manage/?${listQs}`)}` : ""}`;
@@ -122,7 +136,7 @@ export default async function ManageHome({ searchParams }: { searchParams: Promi
         {list.rows.length ? (
           <ul className="acc-list">
             {list.rows.map((p) => (
-              <li className="acc-item" key={p.id}>
+              <li className="acc-item" key={p.id} id={`p${p.id}`}>
                 <div className="acc-item__main">
                   <Avatar path={p.photoPath} />
                   <div className="acc-item__text">
@@ -136,12 +150,6 @@ export default async function ManageHome({ searchParams }: { searchParams: Promi
                 <div className="acc-item__actions">
                   {!p.archived ? (
                     <>
-                      <a className="acc-btn acc-btn--small" href={`/mecard-profile/${p.slug}/`} target="_blank" rel="noopener">
-                        View <NewTab />
-                      </a>
-                      <Link className="acc-btn acc-btn--small acc-btn--primary" href={editHref(p.id)} scroll={false}>
-                        Edit
-                      </Link>
                       {proPending.get(p.id)?.payHref ? (
                         <Link className="acc-btn acc-btn--small acc-btn--cta" href={proPending.get(p.id)!.payHref!}>
                           Pay now
@@ -149,21 +157,24 @@ export default async function ManageHome({ searchParams }: { searchParams: Promi
                       ) : !isPro(p) && !proPending.has(p.id) && !u.journey && !u.upgradesReady && !unassignedPending ? (
                         <UpgradeButton profileId={p.id} />
                       ) : null}
+                      <ProfileMenu
+                        profile={{ id: p.id, slug: p.slug, name: `${p.firstName} ${p.lastName}`.trim() || p.slug, email: p.email }}
+                        editHref={editHref(p.id)}
+                        back={backUrl()}
+                        ownerEmail={p.ownerId === v.id ? "you" : p.ownerId ? (owners.get(p.ownerId) ?? null) : null}
+                        invite={openInvite(p.id)}
+                        cards={freeCards}
+                      />
                     </>
-                  ) : null}
-                  <form action={archiveProfileAction}>
-                    <input type="hidden" name="profile_id" value={p.id} />
-                    <input type="hidden" name="archive" value={p.archived ? "0" : "1"} />
-                    <input type="hidden" name="back" value={backUrl()} />
-                    <input type="hidden" name="anchor" value="profiles" />
-                    {p.archived ? (
+                  ) : (
+                    <form action={archiveProfileAction}>
+                      <input type="hidden" name="profile_id" value={p.id} />
+                      <input type="hidden" name="archive" value="0" />
+                      <input type="hidden" name="back" value={backUrl()} />
+                      <input type="hidden" name="anchor" value="profiles" />
                       <ConfirmButton>Restore</ConfirmButton>
-                    ) : (
-                      <ConfirmButton className="acc-btn acc-btn--small acc-btn--danger" confirm="Archive this profile? Its page and any cards linked to it stop working until you restore it.">
-                        Archive
-                      </ConfirmButton>
-                    )}
-                  </form>
+                    </form>
+                  )}
                 </div>
               </li>
             ))}
