@@ -5,6 +5,7 @@ import { eq } from "drizzle-orm";
 import { PDFDocument, type PDFFont, type PDFPage, rgb, StandardFonts } from "pdf-lib";
 import { db } from "@/db/client";
 import { orderItems, orders } from "@/db/schema";
+import { billingLinesOf, formatAddress } from "@/lib/addresses";
 import { INVOICE_SELLER, INVOICE_STATUSES, invoiceNumber, VAT_RATE } from "@/lib/invoice-settings";
 import { formatDate, PAYMENT_LABEL, rands } from "@/lib/money";
 
@@ -109,13 +110,7 @@ export async function renderInvoice(orderId: number): Promise<Uint8Array | null>
   y = 720 - Math.max(seller.length, details.length) * 14 - 24;
   text(page, "BILL TO", left, y, { font: bold, size: 9, color: MUTED });
   const billTo = [
-    `${o.billingFirstName} ${o.billingLastName}`.trim(),
-    o.billingCompany,
-    o.address1,
-    o.address2,
-    o.suburb,
-    o.city,
-    `${o.province} ${o.postcode}`.trim(),
+    ...formatAddress({ firstName: o.billingFirstName, lastName: o.billingLastName, company: o.billingCompany, ...billingLinesOf(o) }),
     o.billingEmail,
     o.billingPhone,
   ].filter(Boolean);

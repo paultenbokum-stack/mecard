@@ -2,6 +2,7 @@ import "server-only";
 import { eq } from "drizzle-orm";
 import { db } from "@/db/client";
 import { orderItems, orderNotes, orders } from "@/db/schema";
+import { deliveryOf } from "@/lib/addresses";
 import {
   type BobgoRate,
   type DeliveryAddress,
@@ -75,14 +76,16 @@ type OrderRow = typeof orders.$inferSelect;
 
 async function loadOrder(o: OrderRow): Promise<OrderForBobgo> {
   const items = await db.select().from(orderItems).where(eq(orderItems.orderId, o.id));
+  // The courier goes to the delivery recipient ("Ship to a different address?"), contactable on the billing email and phone.
+  const to = deliveryOf(o);
   return {
     id: o.id,
-    firstName: o.billingFirstName,
-    lastName: o.billingLastName,
+    firstName: to.firstName,
+    lastName: to.lastName,
     email: o.billingEmail,
     phone: o.billingPhone,
     address: {
-      company: o.billingCompany,
+      company: to.company,
       street: [o.address1, o.address2].filter(Boolean).join(", "),
       suburb: o.suburb,
       city: o.city,

@@ -9,6 +9,7 @@ import { signIn, signOut } from "@/auth";
 import { db } from "@/db/client";
 import { users } from "@/db/schema";
 import { parseAccountDetails } from "@/lib/account-details";
+import { addressFromFields } from "@/lib/addresses";
 import { LOGIN, safeNext } from "@/lib/auth-paths";
 import { hashPassword, verifyPassword } from "@/lib/password";
 import { requestPasswordReset, resetPassword } from "@/lib/password-reset";
@@ -54,6 +55,31 @@ export async function resetPasswordAction(_: FormState, form: FormData): Promise
   const res = await resetPassword(String(form.get("token") ?? ""), password);
   if (!res.ok) return { error: res.error };
   redirect(`${LOGIN}?reset=1`);
+}
+
+/** My Account → Addresses → Edit (WooCommerce's edit-address/billing and /shipping). */
+export async function saveAddressAction(_: FormState, form: FormData): Promise<FormState> {
+  const kind = form.get("kind") === "shipping" ? "shipping" : "billing";
+  const userId = await requireUserId(`/my-account/edit-address/${kind}/`);
+  const a = addressFromFields((k) => String(form.get(k) ?? ""), kind);
+  const required: [string, string][] = [
+    [a.firstName, "First name"],
+    [a.lastName, "Last name"],
+    [a.address1, "Street address"],
+    [a.suburb, "Suburb"],
+    [a.city, "Town / City"],
+    [a.province, "Province"],
+    [a.postcode, "Postcode / ZIP"],
+    ...(kind === "billing" ? ([[a.phone, "Phone"]] as [string, string][]) : []),
+  ];
+  const missing = required.filter(([v]) => !v).map(([, label]) => `${label} is a required field.`);
+  if (missing.length) return { error: missing.join(" ") };
+  await db
+    .update(users)
+    .set(kind === "billing" ? { billingAddress: a } : { shippingAddress: a })
+    .where(eq(users.id, userId));
+  revalidatePath("/my-account/edit-address/", "layout");
+  redirect("/my-account/edit-address/?saved=1");
 }
 
 /** My Account → Account details. The current password is needed to change it; Google-only accounts set their first one. */

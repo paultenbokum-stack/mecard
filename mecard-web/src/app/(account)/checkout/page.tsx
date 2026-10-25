@@ -5,6 +5,7 @@ import { db } from "@/db/client";
 import { companies, profiles, users } from "@/db/schema";
 import { Subnav } from "@/components/account/Bits";
 import { CheckoutForm } from "@/components/shop/CheckoutForm";
+import { EMPTY_ADDRESS, hasLines, sameLines } from "@/lib/addresses";
 import { cartView } from "@/lib/cart";
 import { needsShipping, shippingOptions } from "@/lib/checkout-shipping";
 import { couponForLines } from "@/lib/coupons";
@@ -12,6 +13,16 @@ import { rands } from "@/lib/money";
 import { requireUserId } from "@/lib/session";
 
 export const metadata: Metadata = { title: { absolute: "Checkout - MeCard" } };
+
+/** The saved billing address (or the account's name and phone), and the saved shipping address when it differs. */
+function checkoutDefaults(u: typeof users.$inferSelect | undefined) {
+  const saved = u?.billingAddress;
+  const billing = { ...EMPTY_ADDRESS, ...saved, firstName: saved?.firstName || u?.firstName || "", lastName: saved?.lastName || u?.lastName || "", phone: saved?.phone || u?.phone || "" };
+  const shipping = hasLines(u?.shippingAddress) ? { ...EMPTY_ADDRESS, ...u!.shippingAddress } : null;
+  const shipElsewhere =
+    !!shipping && hasLines(saved) && (!sameLines(shipping, billing) || `${shipping.firstName} ${shipping.lastName}`.trim().toLowerCase() !== `${billing.firstName} ${billing.lastName}`.trim().toLowerCase());
+  return { email: u?.email ?? "", billing, shipping, shipElsewhere };
+}
 
 export default async function CheckoutPage() {
   const userId = await requireUserId("/checkout/");
@@ -97,7 +108,7 @@ export default async function CheckoutPage() {
       <h1>Checkout</h1>
       {coupon && !coupon.ok ? <div className="acc-panel acc-panel--error">{coupon.error} Please remove the coupon in your basket to continue.</div> : null}
       <CheckoutForm
-        defaults={{ firstName: u?.firstName ?? "", lastName: u?.lastName ?? "", email: u?.email ?? "", phone: u?.phone ?? "" }}
+        defaults={checkoutDefaults(u)}
         methods={shipping.options.map((o) => ({ id: o.id, label: o.label, price: o.cents ? rands(o.cents) : "Free", note: o.note }))}
         summary={summary}
         liveRates={shipping.live}

@@ -2,6 +2,7 @@ import "server-only";
 import { eq } from "drizzle-orm";
 import { db } from "@/db/client";
 import { orderItems, orders } from "@/db/schema";
+import { billingLinesOf, deliveryOf, formatAddress, shipsElsewhere } from "@/lib/addresses";
 import { ORDER_NOTIFY_TO } from "@/lib/mail-settings";
 import { sendEmail } from "@/lib/email";
 import { invoiceFilename, renderInvoice } from "@/lib/invoice";
@@ -39,17 +40,12 @@ export function orderSummary(o: Order, items: Item[]): string {
     `Total: ${rands(o.totalCents)}`,
   ];
   const address = [
-    `${o.billingFirstName} ${o.billingLastName}`.trim(),
-    o.billingCompany,
-    o.address1,
-    o.address2,
-    o.suburb,
-    o.city,
-    `${o.province} ${o.postcode}`.trim(),
+    ...formatAddress({ firstName: o.billingFirstName, lastName: o.billingLastName, company: o.billingCompany, ...billingLinesOf(o) }),
     o.billingPhone,
     o.billingEmail,
   ].filter(Boolean);
-  return [`Order #${o.id}`, "", ...lines, "", ...totals, "", "Billing address:", ...address.map((l) => `  ${l}`)].join("\n");
+  const delivery = shipsElsewhere(o) ? ["", "Shipping address:", ...formatAddress(deliveryOf(o)).map((l) => `  ${l}`)] : [];
+  return [`Order #${o.id}`, "", ...lines, "", ...totals, "", "Billing address:", ...address.map((l) => `  ${l}`), ...delivery].join("\n");
 }
 
 const courierLine = (o: Order) =>

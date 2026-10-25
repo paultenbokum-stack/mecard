@@ -1,4 +1,5 @@
 import type { orderItems, orders } from "@/db/schema";
+import { billingLinesOf, deliveryOf, formatAddress, shipsElsewhere } from "@/lib/addresses";
 import { BANK_ACCOUNT } from "@/lib/invoice-settings";
 import { PAYMENT_LABEL, rands } from "@/lib/money";
 
@@ -44,15 +45,8 @@ export function BankDetails({ orderId }: { orderId: number }) {
 }
 
 export function OrderDetails({ order, items }: { order: Order; items: Item[] }) {
-  const address = [
-    `${order.billingFirstName} ${order.billingLastName}`.trim(),
-    order.billingCompany,
-    order.address1,
-    order.address2,
-    order.suburb,
-    order.city,
-    `${order.province} ${order.postcode}`.trim(),
-  ].filter(Boolean);
+  const address = formatAddress({ firstName: order.billingFirstName, lastName: order.billingLastName, company: order.billingCompany, ...billingLinesOf(order) });
+  const delivery = shipsElsewhere(order) ? formatAddress(deliveryOf(order)) : null;
   return (
     <section className="acc-panel acc-panel--white">
       <h2>Order details</h2>
@@ -119,6 +113,19 @@ export function OrderDetails({ order, items }: { order: Order; items: Item[] }) 
         <br />
         {order.billingEmail}
       </address>
+      {delivery ? (
+        <>
+          <h3>Shipping address</h3>
+          <address className="shop-address">
+            {delivery.map((l) => (
+              <span key={l}>
+                {l}
+                <br />
+              </span>
+            ))}
+          </address>
+        </>
+      ) : null}
     </section>
   );
 }

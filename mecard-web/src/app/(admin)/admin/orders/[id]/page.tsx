@@ -17,6 +17,7 @@ import {
   setOrderStatusAction,
   updateOrderAddressAction,
 } from "@/lib/admin-actions";
+import { billingLinesOf, deliveryOf, formatAddress, shipsElsewhere } from "@/lib/addresses";
 import { cardProgress } from "@/lib/admin-cards";
 import { bobgoEnabled } from "@/lib/bobgo";
 import { hasInvoice } from "@/lib/invoice";
@@ -190,18 +191,24 @@ export default async function AdminOrder({ params, searchParams }: { params: Pro
           <div className="adm-grid--2">
             <Card title="Billing and delivery">
               <address className="adm-small" style={{ fontStyle: "normal", marginBottom: 8 }}>
-                {[`${o.billingFirstName} ${o.billingLastName}`.trim(), o.billingCompany, o.address1, o.address2, o.suburb, o.city, `${o.province} ${o.postcode}`.trim()]
-                  .filter(Boolean)
-                  .map((l, n) => (
+                {formatAddress({ firstName: o.billingFirstName, lastName: o.billingLastName, company: o.billingCompany, ...billingLinesOf(o) }).map((l, n) => (
+                  <div key={n}>{l}</div>
+                ))}
+              </address>
+              {shipsElsewhere(o) ? (
+                <address className="adm-small" style={{ fontStyle: "normal", marginBottom: 8 }}>
+                  <strong>Ship to</strong>
+                  {formatAddress(deliveryOf(o)).map((l, n) => (
                     <div key={n}>{l}</div>
                   ))}
-              </address>
+                </address>
+              ) : null}
               <div className="adm-small">
                 {o.billingEmail ? <div>{o.billingEmail}</div> : null}
                 {o.billingPhone ? <div>{o.billingPhone}</div> : null}
               </div>
               <details style={{ marginTop: 12 }}>
-                <summary className="adm-small">Edit billing details</summary>
+                <summary className="adm-small">{shipsElsewhere(o) ? "Edit customer details and the delivery address" : "Edit billing details"}</summary>
                 <form action={updateOrderAddressAction} className="adm-form" style={{ marginTop: 8 }}>
                   <input type="hidden" name="order_id" value={o.id} />
                   {BILLING_FIELDS.map(([name, label, col, half]) => (

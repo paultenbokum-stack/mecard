@@ -18,6 +18,11 @@ import {
 // Toolset relationships become plain foreign keys: every MeCard relationship is
 // one-to-many, so no join tables are needed.
 
+/** Street lines of a South African address (province as its full name, e.g. "Gauteng"). */
+export type OrderAddressLines = { address1: string; address2: string; suburb: string; city: string; province: string; postcode: string };
+/** A saved address: WooCommerce's billing_* / shipping_* user meta. */
+export type SavedAddress = OrderAddressLines & { firstName: string; lastName: string; company: string; phone: string };
+
 const createdAt = () => timestamp("created_at", { withTimezone: true }).notNull().defaultNow();
 const updatedAt = () => timestamp("updated_at", { withTimezone: true }).notNull().defaultNow();
 
@@ -39,6 +44,9 @@ export const users = pgTable(
     lastActiveAt: timestamp("last_active_at", { withTimezone: true }),
     // individual | teams (manage-view-rules); null for accounts from before, decided by what they have.
     accountMode: varchar("account_mode", { length: 20 }),
+    // WooCommerce's saved billing and shipping addresses (My Account > Addresses), filled in at checkout.
+    billingAddress: jsonb("billing_address").$type<SavedAddress>(),
+    shippingAddress: jsonb("shipping_address").$type<SavedAddress>(),
     createdAt: createdAt(),
   },
   (t) => [
@@ -251,6 +259,12 @@ export const orders = pgTable(
     province: varchar("province", { length: 100 }).notNull().default(""),
     postcode: varchar("postcode", { length: 20 }).notNull().default(""),
     country: varchar("country", { length: 2 }).notNull().default("ZA"),
+    // address1…postcode above are where it is delivered. With "Ship to a different address?" the
+    // recipient's name goes here and the billing address in billingAddress (empty: the same).
+    shippingFirstName: varchar("shipping_first_name", { length: 100 }).notNull().default(""),
+    shippingLastName: varchar("shipping_last_name", { length: 100 }).notNull().default(""),
+    shippingCompany: varchar("shipping_company", { length: 200 }).notNull().default(""),
+    billingAddress: jsonb("billing_address").$type<OrderAddressLines | Record<string, never>>().notNull().default({}),
     notes: text("notes").notNull().default(""),
     createdAt: createdAt(),
     paidAt: timestamp("paid_at", { withTimezone: true }),

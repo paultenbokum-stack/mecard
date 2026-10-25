@@ -8,6 +8,14 @@ export type SplitAddress = { address1: string; address2: string; suburb: string;
 
 const squash = (s: string) => s.toLowerCase().replace(/[^a-z]/g, "");
 const PROVINCE_BY_KEY = new Map<string, string>([...PROVINCES.map((p) => [squash(p), p] as [string, string]), ["kzn", "KwaZulu-Natal"], ["natal", "KwaZulu-Natal"], ["ec", "Eastern Cape"], ["wc", "Western Cape"], ["gp", "Gauteng"]]);
+// WooCommerce's state codes (billing_state "GP"), for saved addresses from WordPress.
+const PROVINCE_BY_CODE = new Map<string, string>([["fs", "Free State"], ["mp", "Mpumalanga"], ["lp", "Limpopo"], ["nc", "Northern Cape"], ["nw", "North West"]]);
+
+/** The province's full name as the checkout lists it ("GP" → "Gauteng"); "" when unknown. */
+export function provinceName(raw: string): string {
+  const key = squash(raw);
+  return PROVINCE_BY_KEY.get(key) ?? PROVINCE_BY_CODE.get(key) ?? "";
+}
 
 export function splitAddress(text: string): SplitAddress {
   const out: SplitAddress = { address1: "", address2: "", suburb: "", city: "", state: "", postcode: "" };

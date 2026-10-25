@@ -12,6 +12,8 @@ import { config } from "dotenv";
 config({ path: ".env.local" });
 
 import mysql from "mysql2/promise";
+import type { OrderAddressLines, SavedAddress } from "../src/db/schema";
+import { provinceName } from "../src/lib/address-split";
 
 const WP_URL = process.env.WP_DATABASE_URL;
 if (!WP_URL) throw new Error("WP_DATABASE_URL is not set (see .env.example)");
@@ -40,6 +42,23 @@ const decode = (v: unknown) =>
     e[0] === "#" ? String.fromCodePoint(e[1].toLowerCase() === "x" ? parseInt(e.slice(2), 16) : Number(e.slice(1))) : (ENTITIES[e.toLowerCase()] ?? m),
   );
 const text = (v: unknown, n: number) => decode(v).slice(0, n);
+
+// WooCommerce's address meta (billing_* / shipping_* on the user, _billing_* / _shipping_* on the order).
+const ADDRESS_META = ["first_name", "last_name", "company", "phone", "address_1", "address_2", "suburb", "city", "state", "postcode"];
+const orderLines = (m: Record<string, string>, p: "_billing" | "_shipping" | "billing" | "shipping"): OrderAddressLines => ({
+  address1: clip(m[`${p}_address_1`], 255),
+  address2: clip(m[`${p}_address_2`], 255),
+  suburb: clip(m[`${p}_suburb`], 100),
+  city: clip(m[`${p}_city`], 100),
+  province: provinceName(str(m[`${p}_state`])) || clip(m[`${p}_state`], 100),
+  postcode: clip(m[`${p}_postcode`], 20),
+});
+/** A user's saved address (My Account → Addresses), or null when there is no street. */
+const savedAddress = (m: Record<string, string>, p: "billing" | "shipping"): SavedAddress | null => {
+  const lines = orderLines(m, p);
+  if (!lines.address1.trim()) return null;
+  return { firstName: clip(m[`${p}_first_name`], 100), lastName: clip(m[`${p}_last_name`], 100), company: clip(m[`${p}_company`], 200), phone: clip(m[`${p}_phone`], 50), ...lines };
+};
 
 async function main() {
   const { db } = await import("../src/db/client");
@@ -100,7 +119,8 @@ async function main() {
   const users = await q(`SELECT ID, user_login, user_email, user_pass, display_name, user_registered FROM wp_users`);
   const umeta = await q(
     `SELECT user_id, meta_key, meta_value FROM wp_usermeta
-      WHERE meta_key IN ('first_name', 'last_name', 'wp_capabilities', 'billing_phone', 'wc_last_active')`,
+      WHERE meta_key IN ('first_name', 'last_name', 'wp_capabilities', 'wc_last_active')
+         OR meta_key IN (${ADDRESS_META.flatMap((k) => [`'billing_${k}'`, `'shipping_${k}'`]).join(", ")})`,
   );
   const um = new Map<number, Record<string, string>>();
   for (const r of umeta) {
@@ -129,6 +149,8 @@ async function main() {
         lastName: clip(m.last_name, 100),
         displayName: clip(u.display_name, 250),
         phone: clip(m.billing_phone, 50),
+        billingAddress: savedAddress(m, "billing"),
+        shippingAddress: savedAddress(m, "shipping"),
         isAdmin: (m.wp_capabilities ?? "").includes('"administrator";b:1'),
         lastActiveAt: active > 0 ? new Date(active * 1000) : null,
         createdAt: utc(u.user_registered) ?? new Date(),
@@ -335,10 +357,20 @@ async function main() {
         billingPhone: clip(m._billing_phone, 50),
         address1: clip(m[`${ship}_address_1`], 255),
         address2: clip(m[`${ship}_address_2`], 255),
+        suburb: clip(m[`${ship}_suburb`], 100),
         city: clip(m[`${ship}_city`], 100),
         province: clip(m[`${ship}_state`], 100),
         postcode: clip(m[`${ship}_postcode`], 20),
         country: clip(m[`${ship}_country`] || "ZA", 2),
+        // Shipped to a different address or person: keep the recipient and the billing lines too.
+        ...(ship === "_shipping" && (orderLines(m, "_shipping").address1 !== orderLines(m, "_billing").address1 || str(m._shipping_first_name) !== str(m._billing_first_name))
+          ? {
+              shippingFirstName: clip(m._shipping_first_name, 100),
+              shippingLastName: clip(m._shipping_last_name, 100),
+              shippingCompany: clip(m._shipping_company, 200),
+              billingAddress: orderLines(m, "_billing"),
+            }
+          : {}),
         notes: str(o.post_excerpt),
         createdAt: utc(o.post_date_gmt) ?? new Date(),
         paidAt: paid > 0 ? new Date(paid * 1000) : null,

@@ -2,16 +2,19 @@
 
 import Link from "next/link";
 import { useActionState, useEffect, useRef, useState } from "react";
+import type { SavedAddress } from "@/db/schema";
 import { PROVINCES, splitAddress } from "@/lib/address-split";
 import { placeOrderAction } from "@/lib/shop-actions";
 
-// WooCommerce's checkout: billing details, delivery options (live Bob Go
-// rates once the address is complete) and PayFast or direct bank transfer.
+// WooCommerce's checkout: billing details (filled from the saved address),
+// "Ship to a different address?", delivery options (live Bob Go rates for the
+// delivery address once it is complete) and PayFast or direct bank transfer.
 
-const ADDRESS_FIELDS = ["billing_company", "billing_address_1", "billing_address_2", "billing_suburb", "billing_city", "billing_state", "billing_postcode"];
+const ADDRESS_FIELDS = ["company", "address_1", "address_2", "suburb", "city", "state", "postcode"];
+const ADDRESS_REQUIRED = ["address_1", "suburb", "city", "state", "postcode"];
 
 type Method = { id: string; label: string; price: string; note?: string };
-type Defaults = { firstName: string; lastName: string; email: string; phone: string };
+type Defaults = { email: string; billing: SavedAddress; shipping: SavedAddress | null; shipElsewhere: boolean };
 type ProfileCompany = { name: string; address: string };
 
 export function CheckoutForm({
@@ -41,14 +44,17 @@ export function CheckoutForm({
   const last = useRef("");
   const picked = useRef(false);
   const requestNo = useRef(0);
-  const [companyBlank, setCompanyBlank] = useState(true);
+  const [companyBlank, setCompanyBlank] = useState(!defaults.billing.company);
+  const [shipElsewhere, setShipElsewhere] = useState(ships && defaults.shipElsewhere);
 
-  // Re-quote when the address changes (debounced), like WooCommerce's update_checkout.
+  // Re-quote when the delivery address changes (debounced), like WooCommerce's update_checkout.
+  // The rates endpoint reads billing_* keys, so the shipping fields are sent under those names.
   const requote = (force = false) => {
     if (!liveRates || !ships || !form.current) return;
     const data = new FormData(form.current);
-    const address = Object.fromEntries(ADDRESS_FIELDS.map((k) => [k, String(data.get(k) ?? "").trim()]));
-    const complete = ["billing_address_1", "billing_suburb", "billing_city", "billing_state", "billing_postcode"].every((k) => address[k]);
+    const from = data.get("ship_to_different_address") ? "shipping" : "billing";
+    const address = Object.fromEntries(ADDRESS_FIELDS.map((k) => [`billing_${k}`, String(data.get(`${from}_${k}`) ?? "").trim()]));
+    const complete = ADDRESS_REQUIRED.every((k) => address[`billing_${k}`]);
     const key = JSON.stringify(address);
     if (!complete || (key === last.current && !force)) return;
     last.current = key;
@@ -89,6 +95,43 @@ export function CheckoutForm({
     </div>
   );
 
+  // Street, suburb, city, province and postcode under a prefix; autocomplete sections keep the browser's two addresses apart.
+  const addressFields = (prefix: "billing" | "shipping", a: SavedAddress | null) => {
+    const ac = (token: string) => `${prefix} ${token}`;
+    return (
+      <>
+        <div className="acc-field">
+          <span className="acc-field__label">Country / Region</span>
+          <strong>South Africa</strong>
+        </div>
+        {field(`${prefix}_address_1`, "Street address", { autoComplete: ac("address-line1"), defaultValue: a?.address1 })}
+        {field(`${prefix}_address_2`, "Apartment, suite, unit, etc.", { required: false, autoComplete: ac("address-line2"), defaultValue: a?.address2 })}
+        <div className="acc-grid">
+          {field(`${prefix}_suburb`, "Suburb", { autoComplete: ac("address-level3"), defaultValue: a?.suburb })}
+          {field(`${prefix}_city`, "Town / City", { autoComplete: ac("address-level2"), defaultValue: a?.city })}
+        </div>
+        <div className="acc-grid">
+          <div className="acc-field">
+            <label htmlFor={`${prefix}_state`}>
+              Province <abbr title="required">*</abbr>
+            </label>
+            <select id={`${prefix}_state`} name={`${prefix}_state`} required defaultValue={PROVINCES.includes(a?.province ?? "") ? a!.province : ""}>
+              <option value="" disabled>
+                Select an option…
+              </option>
+              {PROVINCES.map((p) => (
+                <option key={p}>{p}</option>
+              ))}
+            </select>
+          </div>
+          {field(`${prefix}_postcode`, "Postcode / ZIP", { autoComplete: ac("postal-code"), defaultValue: a?.postcode })}
+        </div>
+      </>
+    );
+  };
+  const b = defaults.billing;
+  const s = defaults.shipping;
+
   // Company name from the profile; its address goes into the address fields that are still empty.
   const copyCompany = (c: ProfileCompany) => {
     const el = form.current?.elements;
@@ -122,14 +165,14 @@ export function CheckoutForm({
         <h2>Billing details</h2>
         <div className="acc-form">
           <div className="acc-grid">
-            {field("billing_first_name", "First name", { defaultValue: defaults.firstName, autoComplete: "given-name" })}
-            {field("billing_last_name", "Last name", { defaultValue: defaults.lastName, autoComplete: "family-name" })}
+            {field("billing_first_name", "First name", { defaultValue: b.firstName, autoComplete: "billing given-name" })}
+            {field("billing_last_name", "Last name", { defaultValue: b.lastName, autoComplete: "billing family-name" })}
           </div>
           <div className="acc-field">
             <label htmlFor="billing_company">
               Company name <span className="acc__muted">(optional)</span>
             </label>
-            <input id="billing_company" name="billing_company" type="text" autoComplete="organization" onChange={(e) => setCompanyBlank(!e.target.value.trim())} />
+            <input id="billing_company" name="billing_company" type="text" autoComplete="billing organization" defaultValue={b.company} onChange={(e) => setCompanyBlank(!e.target.value.trim())} />
             {companyBlank && profileCompanies.length ? (
               <span className="acc-field__hint">
                 {profileCompanies.map((c, i) => (
@@ -143,40 +186,43 @@ export function CheckoutForm({
               </span>
             ) : null}
           </div>
+          {ships ? addressFields("billing", b) : null}
+          <div className="acc-grid">
+            {field("billing_phone", "Phone", { type: "tel", defaultValue: b.phone, autoComplete: "billing tel" })}
+            {field("billing_email", "Email address", { type: "email", defaultValue: defaults.email, autoComplete: "billing email" })}
+          </div>
           {ships ? (
             <>
-              <div className="acc-field">
-                <span className="acc-field__label">Country / Region</span>
-                <strong>South Africa</strong>
+              <div className="acc-check" style={{ margin: "6px 0" }}>
+                <input
+                  type="checkbox"
+                  id="ship_to_different_address"
+                  name="ship_to_different_address"
+                  value="1"
+                  checked={shipElsewhere}
+                  onChange={(e) => {
+                    setShipElsewhere(e.target.checked);
+                    // The fields appear or go after this render; quote for whichever address now applies.
+                    setTimeout(() => requote(true), 0);
+                  }}
+                />
+                <label htmlFor="ship_to_different_address">
+                  <strong>Ship to a different address?</strong>
+                </label>
               </div>
-              {field("billing_address_1", "Street address", { autoComplete: "address-line1" })}
-              {field("billing_address_2", "Apartment, suite, unit, etc.", { required: false, autoComplete: "address-line2" })}
-              <div className="acc-grid">
-                {field("billing_suburb", "Suburb", { autoComplete: "address-level3" })}
-                {field("billing_city", "Town / City", { autoComplete: "address-level2" })}
-              </div>
-              <div className="acc-grid">
-                <div className="acc-field">
-                  <label htmlFor="billing_state">
-                    Province <abbr title="required">*</abbr>
-                  </label>
-                  <select id="billing_state" name="billing_state" required defaultValue="">
-                    <option value="" disabled>
-                      Select an option…
-                    </option>
-                    {PROVINCES.map((p) => (
-                      <option key={p}>{p}</option>
-                    ))}
-                  </select>
-                </div>
-                {field("billing_postcode", "Postcode / ZIP", { autoComplete: "postal-code" })}
-              </div>
+              {shipElsewhere ? (
+                <fieldset className="acc-fieldset">
+                  <legend className="acc-field__label">Shipping address</legend>
+                  <div className="acc-grid">
+                    {field("shipping_first_name", "First name", { defaultValue: s?.firstName, autoComplete: "shipping given-name" })}
+                    {field("shipping_last_name", "Last name", { defaultValue: s?.lastName, autoComplete: "shipping family-name" })}
+                  </div>
+                  {field("shipping_company", "Company name", { required: false, defaultValue: s?.company, autoComplete: "shipping organization" })}
+                  {addressFields("shipping", s)}
+                </fieldset>
+              ) : null}
             </>
           ) : null}
-          <div className="acc-grid">
-            {field("billing_phone", "Phone", { type: "tel", defaultValue: defaults.phone, autoComplete: "tel" })}
-            {field("billing_email", "Email address", { type: "email", defaultValue: defaults.email, autoComplete: "email" })}
-          </div>
           <div className="acc-field">
             <label htmlFor="order_comments">
               Order notes <span className="acc__muted">(optional)</span>

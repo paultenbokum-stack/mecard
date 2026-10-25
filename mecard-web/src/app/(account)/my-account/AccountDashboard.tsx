@@ -24,7 +24,8 @@ export async function AccountDashboard({ userId }: { userId: number }) {
       </p>
       <p>
         From your account overview you can manage <Link href="/manage/">your profiles and cards</Link>, view your <Link href="/my-account/orders/">orders</Link> and
-        download invoices, and edit <Link href="/my-account/edit-account/">your password and account details</Link>.
+        download invoices, manage your <Link href="/my-account/edit-address/">shipping and billing addresses</Link>, and edit{" "}
+        <Link href="/my-account/edit-account/">your password and account details</Link>.
       </p>
       <div className="acc-myaccount__tiles">
         <Link className="acc-myaccount__tile" href="/manage/">

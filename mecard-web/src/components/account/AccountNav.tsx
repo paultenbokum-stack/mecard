@@ -5,7 +5,7 @@ import { LOGOUT } from "@/lib/auth-paths";
 import { manageViewFor } from "@/lib/manage-view";
 
 // WooCommerce's My Account navigation (woocommerce-MyAccount-navigation) beside
-// the page content, with the MeCard console in place of Downloads/Addresses.
+// the page content, with the MeCard console in place of Downloads.
 
 export const ACCOUNT_LINKS = [
   ["dashboard", "Overview", "/my-account/"],
@@ -13,6 +13,7 @@ export const ACCOUNT_LINKS = [
   ["orders", "Orders", "/my-account/orders/"],
   ["quotes", "Quotes", "/my-account/quotes/"],
   ["images", "My images", "/my-account/images/"],
+  ["edit-address", "Addresses", "/my-account/edit-address/"],
   ["edit-account", "Account details", "/my-account/edit-account/"],
   ["help", "Get help", "/contact-us/"],
   ["logout", "Log out", LOGOUT],
