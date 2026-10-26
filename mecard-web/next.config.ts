@@ -21,6 +21,9 @@ const nextConfig: NextConfig = {
       // Invites sent from WordPress pointed at the request post; open invites
       // for the signed-in email are listed on /manage/.
       to("/request/:slug/", "/manage/"),
+      // Some printed QR codes carry an extra segment (/t/<slug>/12345678/);
+      // card pages have no sub-pages, so anything after the slug goes to the card.
+      to("/t/:slug/:rest+/", "/t/:slug/"),
       // Site pages: copies and old pages that are dropped, and links on the
       // live pages that already led nowhere (get-started, teams).
       to("/home-page/", "/"),
