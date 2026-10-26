@@ -95,7 +95,7 @@ try {
   Write-Step "Deploying Cloud Run service '$Service'"
   try {
     Invoke-Gcloud run deploy $Service "--project=$Project" "--image=$image" "--region=$Region" --allow-unauthenticated `
-      --min-instances=0 --max-instances=3 --memory=512Mi "--add-cloudsql-instances=$(Get-ConnectionName $Project)" `
+      --min-instances=0 --max-instances=3 --memory=1Gi "--add-cloudsql-instances=$(Get-ConnectionName $Project)" `
       "--env-vars-file=$envFile" "--set-secrets=$($secrets -join ',')"
   } finally { Remove-Item $envFile -Force -ErrorAction SilentlyContinue }
 
