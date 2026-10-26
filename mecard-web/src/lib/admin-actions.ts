@@ -6,7 +6,9 @@ import { revalidatePath } from "next/cache";
 import { db } from "@/db/client";
 import { orderNotes, orders } from "@/db/schema";
 import { sendOrderToBobgo } from "@/lib/bobgo";
-import { ORDER_STATUS_LABEL, PAID_STATUSES } from "@/lib/money";
+import { ORDER_STATUS_LABEL, PAID_STATUSES, randsToCents } from "@/lib/money";
+import { editOrder, type EditResult } from "@/lib/order-edit";
+import { parseQty } from "@/lib/order-edit-rules";
 import { sendCustomerNoteEmail } from "@/lib/order-emails";
 import { setOrderStatus } from "@/lib/orders";
 import { markOrderCollected, markOrderDelivered, markOrderShipped, syncOrderTracking } from "@/lib/order-shipping";
@@ -128,4 +130,55 @@ export async function checkTrackingAction(form: FormData) {
   const id = Number(form.get("order_id"));
   const result = await syncOrderTracking(id);
   back(`/admin/orders/${id}/`, { saved: `Bob Go tracking: ${result}.` });
+}
+
+// ── Editing an order on hold: items, coupon, discount and shipping ──────────
+
+function editOutcome(id: number, res: EditResult): never {
+  revalidatePath("/admin/orders/");
+  back(`/admin/orders/${id}/`, res.ok ? { saved: res.message } : { error: res.error });
+}
+
+export async function updateOrderItemsAction(form: FormData) {
+  const me = await requireAdmin();
+  const id = Number(form.get("order_id"));
+  const qty = new Map<number, number>();
+  const remove = Number(form.get("remove"));
+  if (remove) qty.set(remove, 0);
+  else {
+    for (const [k, v] of form.entries()) {
+      const m = /^qty_(\d+)$/.exec(k);
+      if (!m) continue;
+      const n = parseQty(String(v));
+      if (Number.isNaN(n)) back(`/admin/orders/${id}/`, { error: "Quantities are whole numbers from 0 to 999." });
+      qty.set(Number(m[1]), n);
+    }
+  }
+  editOutcome(id, await editOrder(id, me, { kind: "items", qty }));
+}
+
+export async function addOrderItemAction(form: FormData) {
+  const me = await requireAdmin();
+  const id = Number(form.get("order_id"));
+  const qty = parseQty(str(form, "qty"));
+  if (!(qty >= 1)) back(`/admin/orders/${id}/`, { error: "Please enter a quantity of 1 or more." });
+  editOutcome(id, await editOrder(id, me, { kind: "add", productId: Number(form.get("product_id")), qty }));
+}
+
+export async function applyOrderCouponAction(form: FormData) {
+  const me = await requireAdmin();
+  const id = Number(form.get("order_id"));
+  if (form.get("remove_coupon")) editOutcome(id, await editOrder(id, me, { kind: "removeCoupon" }));
+  const code = str(form, "coupon");
+  if (!code) back(`/admin/orders/${id}/`, { error: "Please enter a coupon code." });
+  editOutcome(id, await editOrder(id, me, { kind: "coupon", code }));
+}
+
+export async function adjustOrderAction(form: FormData) {
+  const me = await requireAdmin();
+  const id = Number(form.get("order_id"));
+  const path = `/admin/orders/${id}/`;
+  const shippingCents = randsToCents(str(form, "shipping")) ?? 0;
+  if (Number.isNaN(shippingCents)) back(path, { error: "Enter the shipping as an amount, such as R99." });
+  editOutcome(id, await editOrder(id, me, { kind: "adjust", discount: str(form, "discount"), shippingCents }));
 }

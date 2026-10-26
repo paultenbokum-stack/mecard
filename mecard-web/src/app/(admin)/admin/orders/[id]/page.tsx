@@ -7,7 +7,10 @@ import { CARD_TYPES } from "@/components/account/Bits";
 import { SubmitButton } from "@/components/admin/SubmitButton";
 import { AdminHeader, type AdminSearchParams, Badge, Card, Flash } from "@/components/admin/ui";
 import {
+  addOrderItemAction,
   addOrderNoteAction,
+  adjustOrderAction,
+  applyOrderCouponAction,
   checkTrackingAction,
   deleteOrderNoteAction,
   markCollectedAction,
@@ -16,12 +19,16 @@ import {
   sendToBobgoAction,
   setOrderStatusAction,
   updateOrderAddressAction,
+  updateOrderItemsAction,
 } from "@/lib/admin-actions";
 import { billingLinesOf, deliveryOf, formatAddress, shipsElsewhere } from "@/lib/addresses";
 import { cardProgress } from "@/lib/admin-cards";
 import { bobgoEnabled } from "@/lib/bobgo";
+import { isForProfile } from "@/lib/catalog";
 import { hasInvoice } from "@/lib/invoice";
 import { formatDate, ORDER_STATUS_LABEL, PAYMENT_LABEL, rands } from "@/lib/money";
+import { discountParts, productsToAdd } from "@/lib/order-edit";
+import { isEditableOrder } from "@/lib/order-edit-rules";
 import { PICKUP_METHOD } from "@/lib/shipping";
 
 export const metadata = { title: "Order" };
@@ -64,6 +71,8 @@ export default async function AdminOrder({ params, searchParams }: { params: Pro
     db.select().from(entitlements).where(eq(entitlements.sourceOrderId, id)).orderBy(asc(entitlements.id)),
   ]);
   const statusLabel = ORDER_STATUS_LABEL[o.status] ?? o.status;
+  const editable = isEditableOrder(o.status);
+  const edit = editable ? { ...(await discountParts(o, items)), products: await productsToAdd() } : null;
 
   return (
     <>
@@ -85,7 +94,8 @@ export default async function AdminOrder({ params, searchParams }: { params: Pro
       <div className="adm-grid">
         <div>
           <Card title="Items">
-            <div className="adm-table-wrap">
+            <form action={updateOrderItemsAction} className="adm-table-wrap">
+              <input type="hidden" name="order_id" value={o.id} />
               <table className="adm-table">
                 <thead>
                   <tr>
@@ -93,6 +103,7 @@ export default async function AdminOrder({ params, searchParams }: { params: Pro
                     <th className="adm-num">Qty</th>
                     <th className="adm-num">Price</th>
                     <th className="adm-num">Total</th>
+                    {editable ? <th aria-label="Remove" /> : null}
                   </tr>
                 </thead>
                 <tbody>
@@ -103,15 +114,41 @@ export default async function AdminOrder({ params, searchParams }: { params: Pro
                         {Object.entries(i.meta).length ? (
                           <div className="adm-muted adm-small">
                             {Object.entries(i.meta)
-                              .filter(([k]) => !k.startsWith("_"))
+                              .filter(([k]) => !k.startsWith("_") && k !== "cartItemKey")
                               .map(([k, v]) => `${k}: ${v}`)
                               .join(" · ")}
                           </div>
                         ) : null}
                       </td>
-                      <td className="adm-num">{i.quantity}</td>
+                      <td className="adm-num">
+                        {editable ? (
+                          <input
+                            name={`qty_${i.id}`}
+                            type="number"
+                            min={0}
+                            max={i.meta.profileId && isForProfile(i.productId) ? 1 : 999}
+                            defaultValue={i.quantity}
+                            className="adm-input adm-input--sm adm-input--qty"
+                            aria-label={`Quantity of ${i.name}`}
+                          />
+                        ) : (
+                          i.quantity
+                        )}
+                      </td>
                       <td className="adm-num">{rands(i.unitPriceCents)}</td>
                       <td className="adm-num">{rands(i.unitPriceCents * i.quantity)}</td>
+                      {editable ? (
+                        <td className="adm-num">
+                          <SubmitButton
+                            name="remove"
+                            value={String(i.id)}
+                            className="adm-link adm-link--danger adm-small"
+                            confirm={`Remove ${i.name} from the order? Its cards are archived.`}
+                          >
+                            Remove
+                          </SubmitButton>
+                        </td>
+                      ) : null}
                     </tr>
                   ))}
                 </tbody>
@@ -121,6 +158,7 @@ export default async function AdminOrder({ params, searchParams }: { params: Pro
                       Subtotal
                     </td>
                     <td className="adm-num">{rands(o.subtotalCents)}</td>
+                    {editable ? <td /> : null}
                   </tr>
                   {o.discountCents > 0 ? (
                     <tr>
@@ -128,6 +166,7 @@ export default async function AdminOrder({ params, searchParams }: { params: Pro
                         Discount{o.couponCode ? ` (${o.couponCode})` : ""}
                       </td>
                       <td className="adm-num">-{rands(o.discountCents)}</td>
+                      {editable ? <td /> : null}
                     </tr>
                   ) : null}
                   <tr>
@@ -135,16 +174,93 @@ export default async function AdminOrder({ params, searchParams }: { params: Pro
                       Shipping{o.shippingMethod ? ` via ${o.shippingMethod}` : ""}
                     </td>
                     <td className="adm-num">{rands(o.shippingCents)}</td>
+                    {editable ? <td /> : null}
                   </tr>
                   <tr>
                     <th colSpan={3} className="adm-num">
                       Total
                     </th>
                     <th className="adm-num">{rands(o.totalCents)}</th>
+                    {editable ? <th /> : null}
                   </tr>
                 </tfoot>
               </table>
-            </div>
+              {editable && items.length ? (
+                <div className="adm-inline" style={{ justifyContent: "flex-end", marginTop: 8 }}>
+                  <SubmitButton busy="Saving…">Save quantities</SubmitButton>
+                </div>
+              ) : null}
+            </form>
+
+            {edit ? (
+              <details className="adm-order-edit" open={!items.length}>
+                <summary className="adm-small">Add items, a coupon or a discount</summary>
+                <form action={addOrderItemAction} className="adm-inline">
+                  <input type="hidden" name="order_id" value={o.id} />
+                  <select name="product_id" className="adm-select" aria-label="Product" required defaultValue="">
+                    <option value="" disabled>
+                      Choose a product
+                    </option>
+                    {edit.products.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.name} ({rands(p.priceCents)}){p.active ? "" : ", hidden in the shop"}
+                      </option>
+                    ))}
+                  </select>
+                  <input name="qty" type="number" min={1} max={999} defaultValue={1} className="adm-input adm-input--qty" aria-label="Quantity" />
+                  <SubmitButton busy="Adding…">Add item</SubmitButton>
+                </form>
+
+                <form action={applyOrderCouponAction} className="adm-inline">
+                  <input type="hidden" name="order_id" value={o.id} />
+                  {o.couponCode ? (
+                    <>
+                      <span className="adm-small" style={{ flex: 1 }}>
+                        Coupon <strong>{o.couponCode}</strong>: -{rands(edit.couponCents)}
+                      </span>
+                      <SubmitButton name="remove_coupon" value="1" busy="Removing…" confirm={`Remove coupon ${o.couponCode} from the order?`}>
+                        Remove coupon
+                      </SubmitButton>
+                    </>
+                  ) : (
+                    <>
+                      <input name="coupon" className="adm-input" placeholder="Coupon code" aria-label="Coupon code" />
+                      <SubmitButton busy="Applying…">Apply coupon</SubmitButton>
+                    </>
+                  )}
+                </form>
+
+                <form action={adjustOrderAction} className="adm-form">
+                  <input type="hidden" name="order_id" value={o.id} />
+                  <div className="adm-field">
+                    <label htmlFor="edit-discount">{o.couponCode ? "Other discount" : "Discount"}</label>
+                    <input
+                      id="edit-discount"
+                      name="discount"
+                      defaultValue={edit.otherCents ? (edit.otherCents / 100).toFixed(2) : ""}
+                      placeholder="R50 or 10%"
+                      className="adm-input"
+                    />
+                  </div>
+                  <div className="adm-field">
+                    <label htmlFor="edit-shipping">Shipping</label>
+                    <input id="edit-shipping" name="shipping" defaultValue={(o.shippingCents / 100).toFixed(2)} className="adm-input" />
+                  </div>
+                  <div className="adm-field--full">
+                    <SubmitButton busy="Saving…">Save discount and shipping</SubmitButton>
+                    <div className="adm-help">
+                      A percentage is worked out on today&apos;s subtotal and then stays that amount. A coupon&apos;s discount is recalculated whenever the items change.
+                    </div>
+                  </div>
+                </form>
+              </details>
+            ) : null}
+            {editable ? (
+              <p className="adm-help" style={{ marginBottom: 0 }}>
+                The order can be changed while it&apos;s on hold. Totals are recalculated but the customer isn&apos;t emailed, so add a note to customer with the new
+                total.
+              </p>
+            ) : null}
           </Card>
 
           <Card title={`Cards on this order (${orderCards.length})`}>

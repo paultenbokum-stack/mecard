@@ -5,7 +5,7 @@ import { adminLog, users } from "@/db/schema";
 
 // Who changed what in the staff management screens.
 
-export type LogEntity = "user" | "company" | "profile" | "card";
+export type LogEntity = "user" | "company" | "profile" | "card" | "order";
 
 export async function logAdmin(actorId: number, entity: LogEntity, entityId: number, action: string, detail = "") {
   await db.insert(adminLog).values({ actorId, entity, entityId, action, detail: detail.slice(0, 2000) });

@@ -491,7 +491,7 @@ export const adminLog = pgTable(
   {
     id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
     actorId: integer("actor_id").references(() => users.id, { onDelete: "set null" }),
-    // user | company | profile | card
+    // user | company | profile | card | order
     entity: varchar("entity", { length: 20 }).notNull(),
     entityId: integer("entity_id").notNull(),
     action: varchar("action", { length: 40 }).notNull(),

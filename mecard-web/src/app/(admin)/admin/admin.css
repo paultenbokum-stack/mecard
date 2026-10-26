@@ -72,6 +72,11 @@
 .adm-textarea { width: 100%; }
 .adm-input--sm { padding: 3px 6px; font-size: 13px; }
 .adm-input--num { width: 90px; }
+.adm-input--qty { width: 72px; text-align: right; }
+.adm-order-edit { margin-top: 12px; }
+.adm-order-edit > form { margin-top: 10px; }
+.adm-order-edit > .adm-inline { display: flex; flex-wrap: wrap; }
+.adm-order-edit .adm-inline > .adm-select, .adm-order-edit .adm-inline > .adm-input:not(.adm-input--qty) { flex: 1 1 200px; min-width: 0; }
 .adm-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 16px; }
 .adm-field { display: flex; flex-direction: column; gap: 4px; }
 .adm-field--full { grid-column: 1 / -1; }
