@@ -1,12 +1,14 @@
 "use server";
 
 import { and, eq, sql } from "drizzle-orm";
+import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { db } from "@/db/client";
-import { cards, companies, profiles, users } from "@/db/schema";
+import { cards, companies, profiles, profileSlugHistory, users } from "@/db/schema";
 import { profileArchiveGuard } from "@/lib/admin-guards";
 import { logAdmin } from "@/lib/admin-log";
 import { createProfile, refreshProfilePages, setProfileArchived } from "@/lib/manage";
+import { checkProfileSlug } from "@/lib/profile-slug-rules";
 import { requireAdmin } from "@/lib/session";
 
 // Staff management of profiles. The profile's own details (name, contact
@@ -85,6 +87,41 @@ export async function saveProfileAdminAction(form: FormData) {
   await refreshProfilePages(id);
   await logAdmin(me, "profile", id, "edited", changes.join(", "));
   back(path, { saved: "Profile saved." });
+}
+
+// The profile's address, /mecard-profile/<slug>/. The old one goes into
+// profile_slug_history and redirects to the new one. Tag URLs (/t/<slug>/)
+// point at the profile by id and don't change.
+export async function changeProfileSlugAction(form: FormData) {
+  const me = await requireAdmin();
+  const id = Number(form.get("profile_id"));
+  const path = `/admin/profiles/${id}/`;
+  const [p] = await db.select({ slug: profiles.slug }).from(profiles).where(eq(profiles.id, id));
+  if (!p) back("/admin/profiles/", { error: "Profile not found." });
+  const check = checkProfileSlug(str(form, "slug"));
+  if (!check.ok) back(path, { error: check.error });
+  const slug = check.slug;
+  if (slug === p.slug) back(path, { saved: "Nothing changed." });
+
+  const [inUse] = await db.select({ id: profiles.id }).from(profiles).where(eq(profiles.slug, slug));
+  if (inUse) back(path, { error: `/mecard-profile/${slug}/ is already profile #${inUse.id}'s address.` });
+  const [former] = await db.select({ id: profileSlugHistory.profileId }).from(profileSlugHistory).where(eq(profileSlugHistory.oldSlug, slug));
+  if (former && former.id !== id) back(path, { error: `/mecard-profile/${slug}/ was profile #${former.id}'s address and still redirects there.` });
+
+  try {
+    await db.transaction(async (tx) => {
+      // Taking back one of its own earlier addresses: that one stops redirecting.
+      await tx.delete(profileSlugHistory).where(eq(profileSlugHistory.oldSlug, slug));
+      await tx.insert(profileSlugHistory).values({ oldSlug: p.slug, profileId: id }).onConflictDoUpdate({ target: profileSlugHistory.oldSlug, set: { profileId: id } });
+      await tx.update(profiles).set({ slug, updatedAt: new Date() }).where(eq(profiles.id, id));
+    });
+  } catch {
+    back(path, { error: `/mecard-profile/${slug}/ was taken just now. Try another.` });
+  }
+  revalidatePath(`/mecard-profile/${p.slug}/`);
+  await refreshProfilePages(id);
+  await logAdmin(me, "profile", id, "address changed", `/mecard-profile/${p.slug}/ → /mecard-profile/${slug}/ (old address redirects)`);
+  back(path, { saved: `Address changed. /mecard-profile/${p.slug}/ now redirects to /mecard-profile/${slug}/.` });
 }
 
 export async function profileArchiveCounts(id: number) {

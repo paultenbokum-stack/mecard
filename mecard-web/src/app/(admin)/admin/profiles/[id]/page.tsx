@@ -3,13 +3,13 @@ import { notFound } from "next/navigation";
 import { desc, eq, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import { db } from "@/db/client";
-import { cards, companies, entitlements, events, profiles, users } from "@/db/schema";
+import { cards, companies, entitlements, events, profiles, profileSlugHistory, users } from "@/db/schema";
 import { CARD_TYPES } from "@/components/account/Bits";
 import { AdminLogList } from "@/components/admin/AdminLogList";
 import { SubmitButton } from "@/components/admin/SubmitButton";
 import { AdminHeader, type AdminSearchParams, Badge, Breadcrumbs, Card, Flash } from "@/components/admin/ui";
 import { profileArchiveGuard } from "@/lib/admin-guards";
-import { archiveProfileAction, profileArchiveCounts, restoreProfileAction, saveProfileAdminAction } from "@/lib/admin-profile-actions";
+import { archiveProfileAction, changeProfileSlugAction, profileArchiveCounts, restoreProfileAction, saveProfileAdminAction } from "@/lib/admin-profile-actions";
 import { ENTITLEMENT_STATUS_LABEL, ENTITLEMENT_TYPE_LABEL } from "@/lib/entitlement-labels";
 import { formatDate } from "@/lib/money";
 
@@ -32,7 +32,7 @@ export default async function AdminProfile({ params, searchParams }: { params: P
   if (!row) notFound();
   const { p, owner, company } = row;
   const mgr = row.manager;
-  const [tags, ents, [usage], counts] = await Promise.all([
+  const [tags, ents, [usage], counts, formerSlugs] = await Promise.all([
     db.select().from(cards).where(eq(cards.profileId, id)).orderBy(cards.archived, desc(cards.id)),
     db.select().from(entitlements).where(eq(entitlements.assignedProfileId, id)).orderBy(desc(entitlements.id)),
     db
@@ -45,6 +45,7 @@ export default async function AdminProfile({ params, searchParams }: { params: P
       .from(events)
       .where(eq(events.profileId, id)),
     profileArchiveCounts(id),
+    db.select({ oldSlug: profileSlugHistory.oldSlug }).from(profileSlugHistory).where(eq(profileSlugHistory.profileId, id)).orderBy(desc(profileSlugHistory.createdAt)),
   ]);
   const name = `${p.firstName} ${p.lastName}`.trim() || `Profile ${p.id}`;
   const guard = profileArchiveGuard(counts);
@@ -174,6 +175,37 @@ export default async function AdminProfile({ params, searchParams }: { params: P
               <div>
                 <SubmitButton className="adm-btn adm-btn--primary" busy="Saving…">
                   Save
+                </SubmitButton>
+              </div>
+            </form>
+          </Card>
+          <Card title="Address">
+            <form action={changeProfileSlugAction} className="adm-form" style={{ gridTemplateColumns: "1fr" }}>
+              <input type="hidden" name="profile_id" value={p.id} />
+              <div className="adm-field">
+                <label htmlFor="p-slug">Profile address</label>
+                <div style={{ display: "flex", alignItems: "center", gap: 4, fontFamily: "var(--font-mono)" }}>
+                  <span className="adm-muted adm-small">/mecard-profile/</span>
+                  <input id="p-slug" name="slug" defaultValue={p.slug} className="adm-input" style={{ flex: 1, minWidth: 0, fontFamily: "var(--font-mono)" }} autoComplete="off" spellCheck={false} required />
+                  <span className="adm-muted adm-small">/</span>
+                </div>
+                <span className="adm-help">
+                  Lowercase letters, numbers and hyphens. The old address keeps working and redirects here. Printed tag URLs (/t/…/) don&apos;t change.
+                </span>
+              </div>
+              {formerSlugs.length ? (
+                <p className="adm-small adm-muted" style={{ margin: 0 }}>
+                  Earlier addresses that redirect here:{" "}
+                  {formerSlugs.map((s, i) => (
+                    <span key={s.oldSlug} style={{ fontFamily: "var(--font-mono)" }}>
+                      {i ? ", " : ""}/mecard-profile/{s.oldSlug}/
+                    </span>
+                  ))}
+                </p>
+              ) : null}
+              <div>
+                <SubmitButton className="adm-btn" busy="Changing…">
+                  Change address
                 </SubmitButton>
               </div>
             </form>

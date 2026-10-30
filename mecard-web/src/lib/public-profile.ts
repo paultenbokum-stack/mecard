@@ -1,7 +1,7 @@
 import { cache } from "react";
 import { and, asc, desc, eq } from "drizzle-orm";
 import { db } from "@/db/client";
-import { cards, companies, profileLinks, profiles } from "@/db/schema";
+import { cards, companies, profileLinks, profiles, profileSlugHistory } from "@/db/schema";
 import { normalizeSlug } from "./profile-format";
 import type { ProfileView } from "./profile-view";
 
@@ -21,7 +21,18 @@ export const getProfileBySlug = cache(async (slug: string) => {
   return p ?? null;
 });
 
-export const getCardBySlug = cache(async (slug: string) => {
+/** The current slug of the profile that had this slug before staff changed it. */
+export async function currentSlugFor(oldSlug: string): Promise<string | null> {
+  const [r] = await db
+    .select({ slug: profiles.slug })
+    .from(profileSlugHistory)
+    .innerJoin(profiles, eq(profiles.id, profileSlugHistory.profileId))
+    .where(eq(profileSlugHistory.oldSlug, norm(oldSlug)))
+    .limit(1);
+  return r?.slug ?? null;
+}
+
+export const getCardBySlug =cache(async (slug: string) => {
   const [c] = await db
     .select({ id: cards.id, slug: cards.slug, title: cards.title, type: cards.type, archived: cards.archived, profileId: cards.profileId, autoDownloadVcard: cards.autoDownloadVcard })
     .from(cards)

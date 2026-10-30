@@ -98,7 +98,8 @@ export const profiles = pgTable(
   "profiles",
   {
     id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
-    // Public URL /mecard-profile/<slug>/ — never changes once issued.
+    // Public URL /mecard-profile/<slug>/. Staff can change it; the old one is
+    // kept in profile_slug_history and redirects here.
     slug: varchar("slug", { length: 200 }).notNull().unique(),
     // The person the profile belongs to (me_profile_owner_user_id).
     ownerId: integer("owner_id").references(() => users.id, { onDelete: "set null" }),
@@ -132,6 +133,20 @@ export const profiles = pgTable(
     index("profiles_manager").on(t.managerId),
     index("profiles_company").on(t.companyId),
   ],
+);
+
+// A profile's earlier addresses: /mecard-profile/<old_slug>/ redirects to its
+// current one, so shared links keep working after staff change the address.
+export const profileSlugHistory = pgTable(
+  "profile_slug_history",
+  {
+    oldSlug: varchar("old_slug", { length: 200 }).primaryKey(),
+    profileId: integer("profile_id")
+      .notNull()
+      .references(() => profiles.id, { onDelete: "cascade" }),
+    createdAt: createdAt(),
+  },
+  (t) => [index("profile_slug_history_profile").on(t.profileId)],
 );
 
 // "More links" buttons, on a profile or company-wide.

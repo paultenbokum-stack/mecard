@@ -2,12 +2,13 @@ import type { Metadata } from "next";
 import { notFound, permanentRedirect } from "next/navigation";
 import { CardPage } from "@/components/card/CardPage";
 import { cardMetadata } from "@/lib/card-metadata";
-import { displayName, getProfileBySlug, needsCanonicalRedirect } from "@/lib/public-profile";
+import { currentSlugFor, displayName, getProfileBySlug, needsCanonicalRedirect } from "@/lib/public-profile";
 import { getPublicProfileView } from "@/lib/public-view";
 import { siteUrl } from "@/lib/site";
 
 // /mecard-profile/<slug>/ — a profile's own page. Archived (trashed) profiles
-// were 404 on WordPress and stay 404.
+// were 404 on WordPress and stay 404. A former address (profile_slug_history)
+// redirects to the current one.
 
 // Rendered on first request, then served from cache. Five minutes until the
 // editors (phase 4) refresh pages on save with revalidatePath() over
@@ -32,7 +33,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function ProfilePage({ params }: Props) {
   const { slug } = await params;
   const view = await load(slug);
-  if (!view) notFound();
+  if (!view) {
+    // An address the profile had before staff changed it.
+    const moved = await currentSlugFor(slug);
+    if (moved) permanentRedirect(`/mecard-profile/${moved}/`);
+    notFound();
+  }
   if (needsCanonicalRedirect(slug)) permanentRedirect(`/mecard-profile/${view.profile.slug}/`);
   return (
     <CardPage
