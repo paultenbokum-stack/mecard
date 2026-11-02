@@ -4,6 +4,7 @@ import { inArray } from "drizzle-orm";
 import { db } from "@/db/client";
 import { profiles } from "@/db/schema";
 import { ConfirmButton, Subnav } from "@/components/account/Bits";
+import { GtagEvents } from "@/components/GtagEvents";
 import { cartView } from "@/lib/cart";
 import { paymentCancelledReturn } from "@/lib/checkout-events";
 import { cardTypesFor } from "@/lib/catalog";
@@ -37,6 +38,7 @@ export default async function BasketPage({ searchParams }: { searchParams: Promi
       <Subnav active="" />
       <h1>Basket</h1>
       {sp.added ? <div className="acc-panel acc-panel--ok">Added to your basket.</div> : null}
+      {sp.added ? <GtagEvents events={[["add_to_cart", { currency: "ZAR", value: cart.subtotalCents / 100 }]]} /> : null}
       {sp.updated ? <div className="acc-panel acc-panel--ok">Basket updated.</div> : null}
       {sp.removed ? <div className="acc-panel acc-panel--ok">Item removed.</div> : null}
       {sp.coupon === "applied" ? <div className="acc-panel acc-panel--ok">Coupon code applied successfully.</div> : null}

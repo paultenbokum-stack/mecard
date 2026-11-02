@@ -9,6 +9,11 @@ $BillingAccount = '01A155-4693EF-CBE86E'   # "Taggable"
 $SiteUrl = 'https://mecard.co.za'
 $SiteDomains = @('mecard.co.za', 'www.mecard.co.za')
 
+# Google tag, built into live deploys only (a test deploy stays out of the stats): GA4 and the
+# Google Ads "MeCard Purchase" conversion (AW-<account>/<label>, Ads account 648-678-2627).
+$GaMeasurementId = 'G-3SRCS4Y6TR'
+$GoogleAdsPurchase = 'AW-920347099/gtpkCNCnh5AYENvD7bYD'
+
 # Mail addresses are not here: the app keeps them in src/lib/mail-settings.ts (Taggable for now).
 
 # The live WordPress site at Xneelo, for copying wp-content/uploads (pull-uploads.ps1).

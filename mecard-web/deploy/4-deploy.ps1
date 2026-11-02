@@ -54,10 +54,11 @@ try {
   }
   $ErrorActionPreference = 'Stop'
 
+  $googleArgs = if ($Test) { @() } else { @('--build-arg', "NEXT_PUBLIC_GA_MEASUREMENT_ID=$GaMeasurementId", '--build-arg', "NEXT_PUBLIC_GOOGLE_ADS_PURCHASE=$GoogleAdsPurchase") }
   Write-Step "Building $image"
   # next/font downloads the Google fonts during the build; a network blip fails it, so try twice.
   foreach ($try in 1, 2) {
-    docker build -t $image --build-arg "NEXT_PUBLIC_APP_URL=$SiteUrl" --build-arg NEXT_PUBLIC_AUTH_GOOGLE=1 .
+    docker build -t $image --build-arg "NEXT_PUBLIC_APP_URL=$SiteUrl" --build-arg NEXT_PUBLIC_AUTH_GOOGLE=1 @googleArgs .
     if ($LASTEXITCODE -eq 0) { break }
     if ($try -eq 2) { throw 'docker build failed' }
     Write-Host 'docker build failed; trying once more (a font download can fail on a network blip).' -ForegroundColor Yellow

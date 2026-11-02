@@ -4,6 +4,8 @@ import { and, eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { db } from "@/db/client";
 import { cards, orderItems, orders } from "@/db/schema";
+import { ADS_PURCHASE } from "@/components/GoogleTag";
+import { GtagEvents, type GtagEvent } from "@/components/GtagEvents";
 import { BankDetails, OrderDetails } from "@/components/shop/OrderDetails";
 import { cardTypesFor, PRODUCT } from "@/lib/catalog";
 import { formatDate, ORDER_STATUS_LABEL, PAID_STATUSES, rands } from "@/lib/money";
@@ -27,6 +29,16 @@ export default async function OrderReceivedPage({ params }: { params: Promise<{ 
   const designable = orderCards.filter((c) => c.type !== "phonetag");
   const done = designable.filter((c) => c.designSubmitted).length;
   const allDone = designable.length > 0 && done >= designable.length;
+  // The sale for GA4 and Google Ads: paid, or back from PayFast before its ITN
+  // arrived. An EFT order on hold isn't counted until it is paid.
+  const value = order.totalCents / 100;
+  const purchase: GtagEvent[] =
+    paid || (order.status === "pending" && order.paymentMethod === "payfast")
+      ? [
+          ["purchase", { transaction_id: String(order.id), value, currency: "ZAR", items: items.map((i) => ({ item_id: String(i.productId), item_name: i.name, price: i.unitPriceCents / 100, quantity: i.quantity })) }],
+          ...(ADS_PURCHASE ? [["conversion", { send_to: ADS_PURCHASE, value, currency: "ZAR", transaction_id: String(order.id) }] as GtagEvent] : []),
+        ]
+      : [];
 
   return (
     <div className="acc__wrap">
@@ -80,6 +92,7 @@ export default async function OrderReceivedPage({ params }: { params: Promise<{ 
       </ul>
       {order.paymentMethod === "bacs" && order.status === "on-hold" ? <BankDetails orderId={order.id} /> : null}
       <OrderDetails order={order} items={items} />
+      {purchase.length ? <GtagEvents events={purchase} onceKey={`purchase_${order.id}`} /> : null}
     </div>
   );
 }

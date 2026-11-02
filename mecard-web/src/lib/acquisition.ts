@@ -13,6 +13,10 @@ export interface Acquisition {
   utm_campaign?: string;
   utm_term?: string;
   utm_content?: string;
+  /** Google Ads click ids (auto-tagging): the visit came from a paid ad. */
+  gclid?: string;
+  gbraid?: string;
+  wbraid?: string;
   /** Referrer host, without www.; absent for direct visits and same-site referrers. */
   referrer_domain?: string;
   landing_path?: string;
@@ -23,6 +27,7 @@ export interface Acquisition {
 }
 
 const UTM = ["utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content"] as const;
+const CLICK_IDS = ["gclid", "gbraid", "wbraid"] as const;
 const clip = (v: unknown, max: number) => String(v ?? "").replace(/[^\w\-.~/:@+% ]/g, "").slice(0, max);
 
 /** The first-touch record for a page load at `href` that came from `referrer`. */
@@ -32,6 +37,10 @@ export function firstTouch(href: string, referrer: string, now = new Date()): Ac
   for (const k of UTM) {
     const v = url.searchParams.get(k) ?? (k === "utm_source" ? url.searchParams.get("me_source") : null);
     if (v) a[k] = clip(v, 100);
+  }
+  for (const k of CLICK_IDS) {
+    const v = url.searchParams.get(k);
+    if (v) a[k] = clip(v, 200);
   }
   const ref = referrerDomain(referrer, url.hostname);
   if (ref) a.referrer_domain = ref;
@@ -63,8 +72,8 @@ export function parseAcquisition(raw: string | null | undefined): Acquisition | 
   if (!v || typeof v !== "object") return null;
   const o = v as Record<string, unknown>;
   const a: Acquisition = {};
-  for (const k of [...UTM, "referrer_domain", "landing_path", "first_seen"] as const) {
-    if (typeof o[k] === "string" && o[k]) a[k] = clip(o[k], k === "landing_path" ? 200 : 100);
+  for (const k of [...UTM, ...CLICK_IDS, "referrer_domain", "landing_path", "first_seen"] as const) {
+    if (typeof o[k] === "string" && o[k]) a[k] = clip(o[k], k === "landing_path" || k.endsWith("clid") || k.endsWith("braid") ? 200 : 100);
   }
   const ref = Number(o.ref_profile_id);
   if (Number.isInteger(ref) && ref > 0 && ref <= 2147483647) a.ref_profile_id = ref;

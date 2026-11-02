@@ -9,6 +9,13 @@ test("first touch keeps UTMs, the landing path and an outside referrer", () => {
   assert.deepEqual(a, { landing_path: "/cards/", first_seen: now.toISOString(), utm_source: "linkedin", utm_medium: "social", referrer_domain: "linkedin.com" });
 });
 
+test("a Google Ads click keeps its click id", () => {
+  const a = firstTouch("https://mecard.co.za/cards/?gclid=Cj0KCQ-abc_123&gbraid=0AAAA", "https://www.google.com/", now);
+  assert.equal(a.gclid, "Cj0KCQ-abc_123");
+  assert.equal(a.gbraid, "0AAAA");
+  assert.deepEqual(parseAcquisition(encodeAcquisition(a)), a);
+});
+
 test("me_source counts as utm_source; a same-site referrer is no source", () => {
   const a = firstTouch("https://mecard.co.za/t/abc/?me_source=nfc", "https://mecard.co.za/", now);
   assert.equal(a.utm_source, "nfc");
