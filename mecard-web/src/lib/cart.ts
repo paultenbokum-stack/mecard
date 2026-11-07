@@ -141,7 +141,6 @@ async function createCard(tx: Tx, userId: number, type: string, line: CartLine) 
       title: slug,
       type,
       ownerId: userId,
-      autoDownloadVcard: true,
       cartItemKey: cardCartKey(line.key, userId),
     });
     return;

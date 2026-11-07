@@ -54,6 +54,6 @@ function standIn(c: Company): Profile {
     id: 0, slug: "preview", ownerId: null, managerId: null, companyId: c.id, type: "pro",
     firstName: "Your", lastName: "Name", jobTitle: "Job title", email: "you@example.com", mobile: "082 000 0000", whatsapp: "", workPhone: "",
     companyName: "", website: "", socials: { linkedin: "https://www.linkedin.com/" }, photoPath: null, companyLogoPath: null,
-    hideProfileLinkOnVcard: false, onboarding: {}, archived: false, createdAt: now, updatedAt: now,
+    hideProfileLinkOnVcard: false, autoDownloadVcard: true, onboarding: {}, archived: false, createdAt: now, updatedAt: now,
   };
 }

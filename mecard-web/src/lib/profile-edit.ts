@@ -27,6 +27,7 @@ export interface ProfileInput {
   socials: Record<string, string>;
   photoPath: string | null;
   hideProfileLinkOnVcard: boolean;
+  autoDownloadVcard: boolean;
   links: { id?: number; label: string; url: string }[];
 }
 
@@ -59,6 +60,7 @@ export function cleanProfileInput(raw: Record<string, unknown>): ProfileInput {
     socials,
     photoPath: photo,
     hideProfileLinkOnVcard: raw.hideProfileLinkOnVcard === true,
+    autoDownloadVcard: raw.autoDownloadVcard === true,
     links,
   };
 }
@@ -85,6 +87,7 @@ export async function saveProfile(profileId: number, input: ProfileInput): Promi
         socials: input.socials,
         ...(input.photoPath ? { photoPath: input.photoPath } : {}),
         hideProfileLinkOnVcard: input.hideProfileLinkOnVcard,
+        autoDownloadVcard: input.autoDownloadVcard,
         updatedAt: new Date(),
       })
       .where(eq(profiles.id, profileId));

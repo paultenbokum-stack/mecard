@@ -69,7 +69,7 @@ export async function cardSettingsAction(form: FormData) {
   const v = await me();
   const cardId = id(form.get("card_id"));
   if (!(await canManageCard(v, cardId))) back(form, "denied");
-  await updateCardSettings(cardId, { label: String(form.get("label") ?? "").trim().slice(0, 255), autoDownloadVcard: form.get("auto_download") === "1" });
+  await updateCardSettings(cardId, { label: String(form.get("label") ?? "").trim().slice(0, 255) });
   await cardBack(form, cardId, "card-saved");
 }
 

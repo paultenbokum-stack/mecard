@@ -3,7 +3,7 @@ import { notFound, permanentRedirect } from "next/navigation";
 import { CardPage } from "@/components/card/CardPage";
 import { UnlinkedCard } from "@/components/card/UnlinkedCard";
 import { cardMetadata } from "@/lib/card-metadata";
-import { getCardBySlug, needsCanonicalRedirect } from "@/lib/public-profile";
+import { autoDownloadOn, getCardBySlug, needsCanonicalRedirect } from "@/lib/public-profile";
 import { getPublicProfileView } from "@/lib/public-view";
 import { siteUrl } from "@/lib/site";
 
@@ -18,12 +18,6 @@ import { siteUrl } from "@/lib/site";
 // revalidatePath(); a newly linked card must not stay on a cached 404 for long.
 export const revalidate = 300;
 export const generateStaticParams = async () => [];
-
-// Each card's "auto download vCard" setting: the first tap on that card saves
-// the contact. (WordPress read the setting from the profile instead of the
-// card, so it never fired there.) MECARD_VCARD_AUTO_DOWNLOAD=off switches it
-// off everywhere.
-const AUTO_DOWNLOAD_ENABLED = process.env.MECARD_VCARD_AUTO_DOWNLOAD !== "off";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -61,7 +55,7 @@ export default async function TagPage({ params }: Props) {
         id: card.id,
         tagType: card.type || null,
         pageUrl: siteUrl(`/t/${card.slug}/`),
-        autoDownload: AUTO_DOWNLOAD_ENABLED && card.autoDownloadVcard,
+        autoDownload: autoDownloadOn(view.profile),
       }}
     />
   );

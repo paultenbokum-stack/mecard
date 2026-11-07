@@ -130,7 +130,6 @@ export async function listCards(v: Viewer, opts: { tab: CardTab; q?: string; pag
         nameOnCard: cards.nameOnCard,
         jobTitleOnCard: cards.jobTitleOnCard,
         frontPath: cards.frontPath,
-        autoDownloadVcard: cards.autoDownloadVcard,
         orderId: cards.orderId,
         printed: cards.printed,
         shipped: cards.shipped,
@@ -393,10 +392,10 @@ export async function linkCard(cardId: number, profileId: number | null) {
   revalidatePath(`/t/${before.slug}/`);
 }
 
-export async function updateCardSettings(cardId: number, input: { label: string; autoDownloadVcard: boolean }) {
+export async function updateCardSettings(cardId: number, input: { label: string }) {
   const [c] = await db
     .update(cards)
-    .set({ label: input.label, autoDownloadVcard: input.autoDownloadVcard, updatedAt: new Date() })
+    .set({ label: input.label, updatedAt: new Date() })
     .where(eq(cards.id, cardId))
     .returning({ slug: cards.slug });
   if (c) revalidatePath(`/t/${c.slug}/`);

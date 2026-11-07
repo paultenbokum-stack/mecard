@@ -29,6 +29,7 @@ type Fields = {
   companyName: string;
   photoPath: string | null;
   hideProfileLinkOnVcard: boolean;
+  autoDownloadVcard: boolean;
   socials: Record<string, string>;
 };
 
@@ -64,6 +65,7 @@ export function ProfileEditor({
     companyName: p0.companyName,
     photoPath: p0.photoPath,
     hideProfileLinkOnVcard: p0.hideProfileLinkOnVcard,
+    autoDownloadVcard: p0.autoDownloadVcard,
     socials: { ...p0.socials },
   };
   const [saved, setSaved] = useState({ fields: start, links: toRows(initial.profileLinks) });
@@ -202,6 +204,10 @@ export function ProfileEditor({
 
         <section className="acc-panel acc-panel--white">
           <h2>Saved contact</h2>
+          <div className="acc-check">
+            <input type="checkbox" id="pe-auto" checked={f.autoDownloadVcard} onChange={(e) => set("autoDownloadVcard", e.target.checked)} />
+            <label htmlFor="pe-auto">Save my contact to their phone automatically the first time someone taps my card or opens my link</label>
+          </div>
           <div className="acc-check">
             <input type="checkbox" id="pe-hide" checked={f.hideProfileLinkOnVcard} onChange={(e) => set("hideProfileLinkOnVcard", e.target.checked)} />
             <label htmlFor="pe-hide">Leave the link to this profile out of the contact people save</label>

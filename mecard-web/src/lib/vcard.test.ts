@@ -9,7 +9,7 @@ function view(over: Partial<ProfileView["profile"]> = {}, company: Partial<NonNu
       id: 12345, slug: "jane-doe", type: "pro", firstName: "Jane", lastName: "Doe", jobTitle: "Principal &amp; Agent",
       email: "jane@example.com", mobile: "071 234 5678", whatsapp: "071 000 0000", workPhone: "031 000 0000", companyName: "Typed Co",
       website: "", socials: { facebook: "https://facebook.com/x", instagram: "https://instagram.com/mj" }, photoPath: null, companyLogoPath: null,
-      hideProfileLinkOnVcard: false, onboarding: {}, archived: false, ownerId: null, managerId: null, companyId: 1,
+      hideProfileLinkOnVcard: false, autoDownloadVcard: true, onboarding: {}, archived: false, ownerId: null, managerId: null, companyId: 1,
       createdAt: new Date("2025-01-01T00:00:00Z"), updatedAt: new Date("2025-11-24T16:29:52Z"), ...over,
     },
     company: company === null ? null : ({ id: 1, name: "Acme Properties", phone: "031 555 0100", website: "https://www.example.co.za/", address: "1 Main Rd, Durban; KZN", ...company } as NonNullable<ProfileView["company"]>),

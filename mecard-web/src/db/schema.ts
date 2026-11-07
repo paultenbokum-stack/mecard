@@ -122,6 +122,8 @@ export const profiles = pgTable(
     photoPath: text("photo_path"),
     companyLogoPath: text("company_logo_path"),
     hideProfileLinkOnVcard: boolean("hide_profile_link_on_vcard").notNull().default(false),
+    // Save the contact automatically the first time someone taps a card or opens the link.
+    autoDownloadVcard: boolean("auto_download_vcard").notNull().default(true),
     // { stage, started, completed, installDone, installSkipped }
     onboarding: jsonb("onboarding").$type<Record<string, string>>().notNull().default({}),
     archived: boolean("archived").notNull().default(false),
@@ -191,6 +193,7 @@ export const cards = pgTable(
     qrWidth: varchar("qr_width", { length: 20 }).notNull().default(""),
     qrCodeColour: varchar("qr_code_colour", { length: 20 }).notNull().default(""),
     qrFillColour: varchar("qr_fill_colour", { length: 20 }).notNull().default(""),
+    // Replaced by profiles.auto_download_vcard (migration 0015). No longer read.
     autoDownloadVcard: boolean("auto_download_vcard").notNull().default(false),
     // Production workflow flags, in order.
     designSubmitted: boolean("design_submitted").notNull().default(false),

@@ -3,7 +3,7 @@ import { and, asc, desc, eq } from "drizzle-orm";
 import { db } from "@/db/client";
 import { cards, companies, profileLinks, profiles, profileSlugHistory } from "@/db/schema";
 import { normalizeSlug } from "./profile-format";
-import type { ProfileView } from "./profile-view";
+import type { Profile, ProfileView } from "./profile-view";
 
 // Data for the public card pages (/t/<slug>/ and /mecard-profile/<slug>/),
 // shaped like Me\Preview\Module::get_profile_data() / get_company_data().
@@ -32,9 +32,12 @@ export async function currentSlugFor(oldSlug: string): Promise<string | null> {
   return r?.slug ?? null;
 }
 
+/** Whether a card tap or link opens the save automatically. MECARD_VCARD_AUTO_DOWNLOAD=off switches it off everywhere. */
+export const autoDownloadOn = (p: Pick<Profile, "autoDownloadVcard">) => process.env.MECARD_VCARD_AUTO_DOWNLOAD !== "off" && p.autoDownloadVcard;
+
 export const getCardBySlug =cache(async (slug: string) => {
   const [c] = await db
-    .select({ id: cards.id, slug: cards.slug, title: cards.title, type: cards.type, archived: cards.archived, profileId: cards.profileId, autoDownloadVcard: cards.autoDownloadVcard })
+    .select({ id: cards.id, slug: cards.slug, title: cards.title, type: cards.type, archived: cards.archived, profileId: cards.profileId })
     .from(cards)
     .where(eq(cards.slug, norm(slug)))
     .limit(1);

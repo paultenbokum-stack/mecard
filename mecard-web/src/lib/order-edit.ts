@@ -251,7 +251,7 @@ async function createOrderCard(tx: Tx, userId: number, type: string, orderId: nu
     const slug = newCardSlug(type, userId);
     const [taken] = await tx.select({ id: cards.id }).from(cards).where(eq(cards.slug, slug)).limit(1);
     if (taken) continue;
-    const [card] = await tx.insert(cards).values({ slug, title: slug, type, ownerId: userId, autoDownloadVcard: true, orderId }).returning();
+    const [card] = await tx.insert(cards).values({ slug, title: slug, type, ownerId: userId, orderId }).returning();
     return card;
   }
   throw new Error("Could not create a unique card address");

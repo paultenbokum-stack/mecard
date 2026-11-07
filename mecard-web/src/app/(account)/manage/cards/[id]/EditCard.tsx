@@ -94,10 +94,6 @@ export function EditCard({ data }: { data: Awaited<ReturnType<typeof loadCardEdi
             <label htmlFor={`label-${c.id}`}>Label</label>
             <input id={`label-${c.id}`} type="text" name="label" defaultValue={c.label} maxLength={255} placeholder="Only you see this" />
           </div>
-          <span className="acc-check">
-            <input type="checkbox" id={`ad-${c.id}`} name="auto_download" value="1" defaultChecked={c.autoDownloadVcard} />
-            <label htmlFor={`ad-${c.id}`}>Save the contact automatically on the first tap</label>
-          </span>
           <div>
             <ConfirmButton>Save settings</ConfirmButton>
           </div>

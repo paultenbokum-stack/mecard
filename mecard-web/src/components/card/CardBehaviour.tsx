@@ -144,6 +144,14 @@ export function CardBehaviour({ config }: { config: CardConfig }) {
       if (a?.canEdit && a.editUrl && !new URLSearchParams(location.search).has("me_preview")) showEditBar(a.editUrl);
       if (owner && config.isFree) showOwnerUpsell();
       if (owner) document.getElementById("mecard-watermark-strip")?.remove();
+      // The first visit saves the contact, for visitors only: not for the people who edit this
+      // profile, and not in previews. The button's save is counted by its click handler; this one
+      // has no click, so it's counted here. Store only: GA4's download-contact stays a button press.
+      const preview = new URLSearchParams(location.search).has("me_preview");
+      if (config.autoDownload && !owner && !a?.canEdit && !preview && !getCookie(`me_${config.profileId}`) && once(`auto:${config.profileId}`)) {
+        startDownload();
+        track("vcard_downloaded", { meta: { trigger: "auto" } });
+      }
     });
     // Taps on the card's own contact details (call, email, WhatsApp, website, map,
     // socials, extra links): a beacon, so the tap itself is never held up.
@@ -216,12 +224,6 @@ export function CardBehaviour({ config }: { config: CardConfig }) {
       startDownload();
     });
     on("click", "#download-close", () => message && (message.style.display = "none"));
-    // The button's save is counted by the click handler above; an automatic one has no click, so
-    // it's counted here. Store only: GA4's download-contact stays a deliberate button press.
-    if (config.autoDownload && !getCookie(`me_${config.profileId}`) && once(`auto:${config.profileId}`)) {
-      startDownload();
-      track("vcard_downloaded", { meta: { trigger: "auto" } });
-    }
     cleanups.push(() => timers.forEach(clearTimeout));
 
     // ── mecard-viral.js (free profiles) ────────────────────

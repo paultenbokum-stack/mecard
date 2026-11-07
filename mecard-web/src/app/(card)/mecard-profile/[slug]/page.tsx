@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound, permanentRedirect } from "next/navigation";
 import { CardPage } from "@/components/card/CardPage";
 import { cardMetadata } from "@/lib/card-metadata";
-import { currentSlugFor, displayName, getProfileBySlug, needsCanonicalRedirect } from "@/lib/public-profile";
+import { autoDownloadOn, currentSlugFor, displayName, getProfileBySlug, needsCanonicalRedirect } from "@/lib/public-profile";
 import { getPublicProfileView } from "@/lib/public-view";
 import { siteUrl } from "@/lib/site";
 
@@ -43,7 +43,7 @@ export default async function ProfilePage({ params }: Props) {
   return (
     <CardPage
       view={view}
-      context={{ type: "profile", id: view.profile.id, tagType: null, pageUrl: siteUrl(`/mecard-profile/${view.profile.slug}/`), autoDownload: false }}
+      context={{ type: "profile", id: view.profile.id, tagType: null, pageUrl: siteUrl(`/mecard-profile/${view.profile.slug}/`), autoDownload: autoDownloadOn(view.profile) }}
     />
   );
 }
