@@ -4,7 +4,7 @@ import { cookies } from "next/headers";
 import { db } from "@/db/client";
 import { events, users } from "@/db/schema";
 import { FIRST_TOUCH_COOKIE, parseAcquisition } from "./acquisition";
-import type { SignupFor } from "./signup-choice";
+import { SIGNUP_CONVERSION_COOKIE, type SignupFor } from "./signup-choice";
 import { SESSION_COOKIE } from "./tracking";
 import { teamWelcomeCookie } from "./upsell-rules";
 
@@ -36,4 +36,6 @@ export async function onNewUser(userId: number, opts: { source: string; signupFo
   if (opts.signupFor === "teams") jar.set(teamWelcomeCookie(userId), "1", { path: "/", maxAge: 60 * 60 * 24 * 365, sameSite: "lax" });
   // meta.for is the signup intent (0.4): "me" or "teams", from the sign-up page's first question.
   await db.insert(events).values({ name: "signup_completed", userId, sessionId: sid, source: opts.source, meta: { for: opts.signupFor ?? "me" } });
+  // Read in the browser by SignupConversion, which sends mecard_signup to Google.
+  jar.set(SIGNUP_CONVERSION_COOKIE, opts.source, { path: "/", maxAge: 30 * 60, sameSite: "lax" });
 }

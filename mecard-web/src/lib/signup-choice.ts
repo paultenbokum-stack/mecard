@@ -10,3 +10,9 @@ export const signupFor = (v: unknown): SignupFor | null => (v === "teams" ? "tea
 
 /** Where a new account goes first: a team starts on Companies (set up your company), a person on onboarding. */
 export const signupLanding = (f: SignupFor | null) => (f === "teams" ? "/manage/companies/" : "/onboarding/");
+
+/**
+ * Set for a few minutes when an account is created, and read by SignupConversion
+ * in the browser, which tells Google once and clears it. Holds the sign-up method.
+ */
+export const SIGNUP_CONVERSION_COOKIE = "mecard_new_signup";
