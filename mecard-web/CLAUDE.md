@@ -22,3 +22,7 @@ All UI follows the MeCard design system.
 Measurement, experiments and the weekly UX review are planned in `docs/conversion-plan.md`, with the
 Insights dashboard mockup in `docs/insights-mockup.html`. Build sessions follow its sections 3 and 4.
 Cutover with feature parity comes first; don't start the plan until Paul says so.
+
+## Staff view-as
+
+Staff can open the site as a customer from `/admin/users/<id>/`. `currentUserId()` then returns the customer, and `src/proxy.ts` refuses every write, so new actions and API routes are covered without extra code. A page that writes while it renders must skip that write when `isViewingAs()` is true.
