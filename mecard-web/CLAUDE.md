@@ -26,3 +26,7 @@ Cutover with feature parity comes first; don't start the plan until Paul says so
 ## Staff view-as
 
 Staff can open the site as a customer from `/admin/users/<id>/`. `currentUserId()` then returns the customer, and `src/proxy.ts` refuses every write, so new actions and API routes are covered without extra code. A page that writes while it renders must skip that write when `isViewingAs()` is true.
+
+## Salespeople and commission
+
+Staff tick Salesperson and set a rate on `/admin/users/<id>/`. A salesperson gets `/sales/` (their link, their quotes, their commission) and never `/admin/`; `requireSales()` and `requireQuoteStaff()` are in `src/lib/session.ts`, and `quoteDesk()` keeps them to their own quotes. The link is `/r/<code>/`. A new account within 30 days of a click stores `users.referred_by`, and their orders credit that salesperson for 12 months from sign-up. An order through a quote credits the quote's salesperson instead, and staff can override either on the order page. Commission is written when an order is paid (`setOrderStatus`), on sales excluding shipping, including the Additional Shipping quote line, and it never blocks a payment. The rules and their tests are in `src/lib/sales-rules.ts`, the database side in `src/lib/sales.ts`, and the report is `/admin/commissions/`. Sign-ups and quotes from before this was built have no salesperson.

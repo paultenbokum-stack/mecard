@@ -8,6 +8,7 @@ import { cancelOrderEntitlements, processPaidOrder } from "@/lib/entitlements";
 import { refreshProfilePages } from "@/lib/manage";
 import { ORDER_STATUS_LABEL, PAID_STATUSES as PAID } from "@/lib/money";
 import { sendOrderStatusEmails } from "@/lib/order-emails";
+import { recordCommission, reverseCommission } from "@/lib/sales";
 
 /**
  * Order status changes, with what the plugin hung off WooCommerce's hooks:
@@ -19,6 +20,7 @@ import { sendOrderStatusEmails } from "@/lib/order-emails";
  *   - completed after shipped: delivered, so the delivery date is recorded;
  *   - cancelled: entitlements are cancelled and the order's cards removed
  *     (delete_tags / delink_cards_from_cancelled_order); refunded: entitlements refunded.
+ * A salesperson's commission is written when the order is paid and taken back when it's cancelled or refunded.
  * Each change is written to the order history and sends WooCommerce's
  * emails (opts.emails = false skips them, for a step the customer doesn't need
  * to hear about separately); Bob Go follows paid, completed and cancelled orders.
@@ -61,6 +63,8 @@ export async function setOrderStatus(
     return o.status;
   });
   if (prev === null) return false;
+  if (PAID.includes(next) && !PAID.includes(prev)) await recordCommission(orderId);
+  if (next === "cancelled" || next === "refunded") await reverseCommission(orderId);
   // A Pro upgrade or bundle for a profile went live (or was taken back): refresh its public pages now.
   if ((PAID.includes(next) && !PAID.includes(prev)) || next === "cancelled" || next === "refunded") {
     const items = await db.select({ meta: orderItems.meta }).from(orderItems).where(eq(orderItems.orderId, orderId));

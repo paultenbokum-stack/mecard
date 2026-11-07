@@ -12,6 +12,7 @@ import { isForProfile, isVirtual, PRODUCT } from "@/lib/catalog";
 import { addressFromForm, shippingOptions } from "@/lib/checkout-shipping";
 import { couponForLines } from "@/lib/coupons";
 import { rands } from "@/lib/money";
+import { attributeOrder } from "@/lib/sales";
 import { setOrderStatus } from "@/lib/orders";
 import { EMPTY_MINI_CART, miniCart, type MiniCart } from "@/lib/mini-cart";
 import { currentUserId, requireUserId } from "@/lib/session";
@@ -174,6 +175,9 @@ export async function placeOrderAction(_: ShopState, form: FormData): Promise<Sh
     await clearCart(tx, userId);
     return o.id;
   });
+
+  // The salesperson it credits shows on the order from now; it's checked again when paid.
+  await attributeOrder(orderId).catch((e) => console.error(`[sales] attributing order ${orderId}`, e));
 
   // Remember the details for next time, like WooCommerce's saved billing and shipping addresses
   // (it copies billing to shipping when the order isn't shipped elsewhere).

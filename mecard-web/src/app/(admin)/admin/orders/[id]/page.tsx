@@ -21,6 +21,7 @@ import {
   updateOrderAddressAction,
   updateOrderItemsAction,
 } from "@/lib/admin-actions";
+import { setOrderSalespersonAction } from "@/lib/admin-sales-actions";
 import { billingLinesOf, deliveryOf, formatAddress, shipsElsewhere } from "@/lib/addresses";
 import { cardProgress } from "@/lib/admin-cards";
 import { bobgoEnabled } from "@/lib/bobgo";
@@ -29,6 +30,8 @@ import { hasInvoice } from "@/lib/invoice";
 import { formatDate, ORDER_STATUS_LABEL, PAYMENT_LABEL, rands } from "@/lib/money";
 import { discountParts, productsToAdd } from "@/lib/order-edit";
 import { isEditableOrder } from "@/lib/order-edit-rules";
+import { listSalespeople, orderCommission } from "@/lib/sales";
+import { COMMISSION_SOURCE_LABEL, COMMISSION_STATUS_LABEL } from "@/lib/sales-rules";
 import { PICKUP_METHOD } from "@/lib/shipping";
 
 export const metadata = { title: "Order" };
@@ -53,7 +56,7 @@ export default async function AdminOrder({ params, searchParams }: { params: Pro
   const [o] = Number.isInteger(id) ? await db.select().from(orders).where(eq(orders.id, id)) : [];
   if (!o) notFound();
 
-  const [items, notes, [customer], orderCards, ents] = await Promise.all([
+  const [items, notes, [customer], orderCards, ents, salespeople, commission] = await Promise.all([
     db.select().from(orderItems).where(eq(orderItems.orderId, id)).orderBy(orderItems.id),
     db
       .select({ n: orderNotes, author: sql<string | null>`coalesce(nullif(${users.displayName}, ''), ${users.email})` })
@@ -69,6 +72,8 @@ export default async function AdminOrder({ params, searchParams }: { params: Pro
       .where(eq(cards.orderId, id))
       .orderBy(asc(cards.id)),
     db.select().from(entitlements).where(eq(entitlements.sourceOrderId, id)).orderBy(asc(entitlements.id)),
+    listSalespeople(),
+    orderCommission(id),
   ]);
   const statusLabel = ORDER_STATUS_LABEL[o.status] ?? o.status;
   const editable = isEditableOrder(o.status);
@@ -386,6 +391,29 @@ export default async function AdminOrder({ params, searchParams }: { params: Pro
             </ul>
           </Card>
 
+          <Card title="Salesperson">
+            <form action={setOrderSalespersonAction} className="adm-form" style={{ gridTemplateColumns: "1fr" }}>
+              <input type="hidden" name="order_id" value={o.id} />
+              <div className="adm-field">
+                <label htmlFor="o-sales">Earns commission on this order</label>
+                <select id="o-sales" name="sales_user_id" defaultValue={o.salesUserId ?? ""} className="adm-select" disabled={commission?.status === "paid"}>
+                  <option value="">Nobody</option>
+                  {salespeople.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              {o.salesSource ? <p className="adm-help" style={{ margin: 0 }}>Credited by: {COMMISSION_SOURCE_LABEL[o.salesSource] ?? o.salesSource}.</p> : null}
+              {commission ? (
+                <p className="adm-help" style={{ margin: 0 }}>
+                  Commission: {rands(commission.amountCents)} ({COMMISSION_STATUS_LABEL[commission.status] ?? commission.status}), on sales of {rands(commission.baseCents)}.
+                </p>
+              ) : null}
+              {commission?.status !== "paid" ? <SubmitButton busy="Saving…">Save salesperson</SubmitButton> : null}
+            </form>
+          </Card>
           <Card title="Shipping">
             {o.shippingMethod ? <p className="adm-small" style={{ marginTop: 0 }}>{o.shippingMethod}</p> : null}
             {o.trackingReference || o.shippedAt ? (

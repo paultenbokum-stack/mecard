@@ -48,6 +48,31 @@ export async function isAdminUser(userId: number): Promise<boolean> {
   return !!u?.isAdmin;
 }
 
+/** The signed-in user's real roles, never the customer staff are viewing as. */
+async function staffRoles() {
+  const s = await auth();
+  const id = Number(s?.user?.id);
+  if (!id) return null;
+  const [u] = await db.select({ isAdmin: users.isAdmin, isSales: users.isSales }).from(users).where(eq(users.id, id)).limit(1);
+  return u ? { id, ...u } : null;
+}
+
+/** The salesperson's own screens (/sales/). */
+export async function requireSales(next = "/sales/"): Promise<number> {
+  const who = await staffRoles();
+  if (!who) redirect(loginUrl(next));
+  if (!who.isSales) redirect("/my-account/");
+  return who.id;
+}
+
+/** Staff or a salesperson, for what both may do. The caller keeps a salesperson to their own records. */
+export async function requireQuoteStaff(): Promise<{ id: number; isAdmin: boolean; isSales: boolean }> {
+  const who = await staffRoles();
+  if (!who) redirect(loginUrl("/sales/"));
+  if (!who.isAdmin && !who.isSales) redirect("/my-account/");
+  return who;
+}
+
 /** Staff screens (/admin/): signed-out visitors go to the login page first; customers to their account. */
 export async function requireAdmin(next = "/admin/"): Promise<number> {
   const s = await auth();

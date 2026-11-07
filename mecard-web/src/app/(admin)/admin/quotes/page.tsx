@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { and, desc, eq, ilike, or, type SQL, sql } from "drizzle-orm";
 import { db } from "@/db/client";
-import { quotes } from "@/db/schema";
+import { quotes, users } from "@/db/schema";
 import { SubmitButton } from "@/components/admin/SubmitButton";
 import { AdminHeader, type AdminSearchParams, Badge, Card, Flash, PAGE_SIZE, Pager, pageNumber, SearchBox, Tabs } from "@/components/admin/ui";
 import { createQuoteAction } from "@/lib/admin-quote-actions";
@@ -9,6 +9,8 @@ import { formatDate, rands } from "@/lib/money";
 import { QUOTE_STATUS_LABEL } from "@/lib/quote-rules";
 
 export const metadata = { title: "Quotes" };
+
+const salesName = sql<string | null>`coalesce(nullif(${users.displayName}, ''), ${users.email})`;
 
 // effectiveStatus() in SQL: a sent quote past its date counts as expired.
 const STATUS = sql<string>`case when ${quotes.status} in ('sent', 'new') and ${quotes.expiresAt} < now() then 'expired' else ${quotes.status} end`;
@@ -27,8 +29,9 @@ export default async function AdminQuotes({ searchParams }: { searchParams: Prom
   const where = filters.length ? and(...filters) : undefined;
   const [rows, [{ total }], counts] = await Promise.all([
     db
-      .select({ q: quotes, status: STATUS })
+      .select({ q: quotes, status: STATUS, salesperson: salesName })
       .from(quotes)
+      .leftJoin(users, eq(users.id, quotes.salesUserId))
       .where(where)
       .orderBy(desc(quotes.createdAt), desc(quotes.id))
       .limit(PAGE_SIZE)
@@ -66,7 +69,7 @@ export default async function AdminQuotes({ searchParams }: { searchParams: Prom
             </tr>
           </thead>
           <tbody>
-            {rows.map(({ q: r, status: s }) => (
+            {rows.map(({ q: r, status: s, salesperson }) => (
               <tr key={r.id}>
                 <td>
                   <Link href={`/admin/quotes/${r.id}/`}>
@@ -78,6 +81,7 @@ export default async function AdminQuotes({ searchParams }: { searchParams: Prom
                   {r.name || "—"}
                   {r.company ? <span className="adm-muted"> · {r.company}</span> : null}
                   <div className="adm-muted adm-small">{r.email}</div>
+                  {salesperson ? <div className="adm-muted adm-small">Salesperson: {salesperson}</div> : null}
                 </td>
                 <td className="adm-small">{r.items.map((i) => `${i.name} × ${i.qty}`).join(", ") || <span className="adm-muted">No lines</span>}</td>
                 <td className="adm-num">{rands(r.totalCents)}</td>

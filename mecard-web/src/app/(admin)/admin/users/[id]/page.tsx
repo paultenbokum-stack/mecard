@@ -9,13 +9,17 @@ import { SubmitButton } from "@/components/admin/SubmitButton";
 import { AdminHeader, type AdminSearchParams, Badge, Breadcrumbs, Card, Flash } from "@/components/admin/ui";
 import { userDeleteGuard } from "@/lib/admin-guards";
 import { createQuoteForUserAction } from "@/lib/admin-quote-actions";
+import { saveSalesAction } from "@/lib/admin-sales-actions";
 import { deleteUserAction, saveUserAction, sendResetAction, userDeleteCounts, viewAsCustomerAction } from "@/lib/admin-user-actions";
 import { ENTITLEMENT_STATUS_LABEL, ENTITLEMENT_TYPE_LABEL } from "@/lib/entitlement-labels";
 import { imageUrl } from "@/lib/images/paths";
 import { listLibrary } from "@/lib/media-library";
 import { formatDate, ORDER_STATUS_LABEL, rands } from "@/lib/money";
 import { effectiveStatus, QUOTE_STATUS_LABEL } from "@/lib/quote-rules";
+import { listSalespeople } from "@/lib/sales";
+import { bpsToPercent, referralEnds } from "@/lib/sales-rules";
 import { requireAdmin } from "@/lib/session";
+import { siteUrl } from "@/lib/site";
 
 export const metadata = { title: "User" };
 
@@ -25,7 +29,7 @@ export default async function AdminUser({ params, searchParams }: { params: Prom
   const sp = await searchParams;
   const [u] = Number.isInteger(id) ? await db.select().from(users).where(eq(users.id, id)) : [];
   if (!u) notFound();
-  const [profs, comps, cardRows, orderRows, quoteRows, ents, counts, images] = await Promise.all([
+  const [profs, comps, cardRows, orderRows, quoteRows, ents, counts, images, salespeople] = await Promise.all([
     db
       .select({ p: profiles, company: companies.name })
       .from(profiles)
@@ -48,6 +52,7 @@ export default async function AdminUser({ params, searchParams }: { params: Prom
       .groupBy(entitlements.type, entitlements.status),
     userDeleteCounts(id),
     listLibrary(id),
+    listSalespeople(),
   ]);
   const name = u.displayName || `${u.firstName} ${u.lastName}`.trim() || u.email;
   const guard = userDeleteGuard({ ...counts, isSelf: id === me });
@@ -255,6 +260,48 @@ export default async function AdminUser({ params, searchParams }: { params: Prom
               <div className="adm-field--full">
                 <SubmitButton className="adm-btn adm-btn--primary" busy="Saving…">
                   Save account
+                </SubmitButton>
+              </div>
+            </form>
+          </Card>
+          <Card title="Sales">
+            <form action={saveSalesAction} className="adm-form">
+              <input type="hidden" name="user_id" value={u.id} />
+              <div className="adm-field adm-field--full">
+                <label>
+                  <input type="checkbox" name="is_sales" defaultChecked={u.isSales} /> Salesperson: gets /sales/, a link and their own quotes, and earns commission
+                </label>
+              </div>
+              <div className="adm-field">
+                <label htmlFor="u-rate">Commission rate (%)</label>
+                <input id="u-rate" name="rate" inputMode="decimal" defaultValue={bpsToPercent(u.commissionRateBps)} className="adm-input" />
+              </div>
+              <div className="adm-field">
+                <label htmlFor="u-referred">Referred by</label>
+                <select id="u-referred" name="referred_by" defaultValue={u.referredBy ?? ""} className="adm-select">
+                  <option value="">Nobody</option>
+                  {salespeople
+                    .filter((s) => s.id !== u.id)
+                    .map((s) => (
+                      <option key={s.id} value={s.id}>
+                        {s.name}
+                      </option>
+                    ))}
+                </select>
+              </div>
+              {u.referredAt ? (
+                <p className="adm-help adm-field--full" style={{ margin: 0 }}>
+                  Their purchases earn commission until {formatDate(referralEnds(u.referredAt))}.
+                </p>
+              ) : null}
+              {u.isSales && u.salesCode ? (
+                <p className="adm-help adm-field--full" style={{ margin: 0 }}>
+                  Their link: {siteUrl(`/r/${u.salesCode}/`)}
+                </p>
+              ) : null}
+              <div className="adm-field--full">
+                <SubmitButton className="adm-btn adm-btn--primary" busy="Saving…">
+                  Save sales details
                 </SubmitButton>
               </div>
             </form>

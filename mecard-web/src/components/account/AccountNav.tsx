@@ -2,7 +2,11 @@ import Link from "next/link";
 import { Fragment } from "react";
 import { switchToTeamsAction } from "@/app/(account)/manage/actions";
 import { LOGOUT } from "@/lib/auth-paths";
+import { eq } from "drizzle-orm";
+import { db } from "@/db/client";
+import { users } from "@/db/schema";
 import { manageViewFor } from "@/lib/manage-view";
+import { currentUserId } from "@/lib/session";
 
 // WooCommerce's My Account navigation (woocommerce-MyAccount-navigation) beside
 // the page content, with the MeCard console in place of Downloads.
@@ -24,6 +28,8 @@ type Section = (typeof ACCOUNT_LINKS)[number][0];
 export async function AccountLayout({ active, children }: { active: Section; children: React.ReactNode }) {
   // The individual view offers the way to the team dashboard here too.
   const single = (await manageViewFor()).view === "single";
+  const userId = await currentUserId();
+  const [roles] = userId ? await db.select({ isSales: users.isSales }).from(users).where(eq(users.id, userId)).limit(1) : [];
   return (
     <div className="acc__wrap acc__wrap--wide acc-myaccount">
       <nav className="acc-myaccount__nav" aria-label="My account">
@@ -35,6 +41,11 @@ export async function AccountLayout({ active, children }: { active: Section; chi
                   {label}
                 </Link>
               </li>
+              {key === "quotes" && roles?.isSales ? (
+                <li>
+                  <Link href="/sales/">Sales</Link>
+                </li>
+              ) : null}
               {key === "console" && single ? (
                 <li>
                   <form action={switchToTeamsAction}>

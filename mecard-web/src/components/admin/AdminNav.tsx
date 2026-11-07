@@ -10,6 +10,7 @@ const items = [
   { href: "/admin/cards/", label: "Card processing", icon: "fa-id-card" },
   { href: "/admin/encoding/", label: "Encoding file", icon: "fa-file-csv" },
   { href: "/admin/quotes/", label: "Quotes", icon: "fa-file-invoice" },
+  { href: "/admin/commissions/", label: "Commissions", icon: "fa-coins" },
   { href: "/admin/coupons/", label: "Coupons", icon: "fa-percent" },
   { href: "/admin/entitlements/", label: "Entitlements", icon: "fa-key" },
   { href: "/admin/users/", label: "Users", icon: "fa-users" },

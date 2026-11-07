@@ -1,5 +1,6 @@
 import { sql } from "drizzle-orm";
 import {
+  type AnyPgColumn,
   bigint,
   boolean,
   index,
@@ -52,11 +53,20 @@ export const users = pgTable(
     firstSessionId: varchar("first_session_id", { length: 64 }),
     // First-touch source from the mecard_ft cookie at signup: utm_*, referrer domain, landing path, ref_profile_id (0.2).
     acquisition: jsonb("acquisition").$type<Acquisition>(),
+    // Salespeople: they get /sales/, a link /r/<salesCode>/ and earn commission (sales-rules.ts).
+    isSales: boolean("is_sales").notNull().default(false),
+    salesCode: varchar("sales_code", { length: 16 }).unique(),
+    // Their rate in basis points (2000 = 20%). A commission keeps the rate it was earned at.
+    commissionRateBps: integer("commission_rate_bps").notNull().default(2000),
+    // The salesperson whose link this customer signed up through, and when; commission runs 12 months from then.
+    referredBy: integer("referred_by").references((): AnyPgColumn => users.id, { onDelete: "set null" }),
+    referredAt: timestamp("referred_at", { withTimezone: true }),
     createdAt: createdAt(),
   },
   (t) => [
     uniqueIndex("users_email_lower").on(sql`lower(${t.email})`),
     uniqueIndex("users_username_lower").on(sql`lower(${t.username})`),
+    index("users_referred_by").on(t.referredBy),
   ],
 );
 
@@ -289,10 +299,13 @@ export const orders = pgTable(
     shippingCompany: varchar("shipping_company", { length: 200 }).notNull().default(""),
     billingAddress: jsonb("billing_address").$type<OrderAddressLines | Record<string, never>>().notNull().default({}),
     notes: text("notes").notNull().default(""),
+    // Who earns commission on this order, and why: quote | link | manual (staff chose; null salesperson = nobody).
+    salesUserId: integer("sales_user_id").references(() => users.id, { onDelete: "set null" }),
+    salesSource: varchar("sales_source", { length: 10 }),
     createdAt: createdAt(),
     paidAt: timestamp("paid_at", { withTimezone: true }),
   },
-  (t) => [index("orders_user").on(t.userId), index("orders_status").on(t.status)],
+  (t) => [index("orders_user").on(t.userId), index("orders_status").on(t.status), index("orders_sales_user").on(t.salesUserId)],
 );
 
 export const orderItems = pgTable(
@@ -495,12 +508,61 @@ export const quotes = pgTable(
     // Shown to the customer on the quote (the admin's note when editing it).
     note: text("note").notNull().default(""),
     orderId: integer("order_id"),
+    // The salesperson this quote belongs to: they earn on the order it becomes.
+    salesUserId: integer("sales_user_id").references(() => users.id, { onDelete: "set null" }),
     expiresAt: timestamp("expires_at", { withTimezone: true }),
     sentAt: timestamp("sent_at", { withTimezone: true }),
+    acceptedAt: timestamp("accepted_at", { withTimezone: true }),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
-  (t) => [index("quotes_user").on(t.userId), index("quotes_email").on(sql`lower(${t.email})`)],
+  (t) => [index("quotes_user").on(t.userId), index("quotes_email").on(sql`lower(${t.email})`), index("quotes_sales_user").on(t.salesUserId)],
+);
+
+// A click on a salesperson's link: counted once per visitor (an anonymous cookie).
+// No IP or user agent is kept. See sales-rules.ts.
+export const salesLinkClicks = pgTable(
+  "sales_link_clicks",
+  {
+    id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
+    salesUserId: integer("sales_user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    visitorId: varchar("visitor_id", { length: 64 }).notNull(),
+    landing: varchar("landing", { length: 20 }).notNull().default("home"),
+    createdAt: createdAt(),
+  },
+  (t) => [uniqueIndex("sales_link_clicks_visitor").on(t.salesUserId, t.visitorId), index("sales_link_clicks_time").on(t.createdAt)],
+);
+
+// The commission ledger: one row per paid, credited order, plus a negative row
+// (reversesId) when an order whose commission was already paid out is cancelled
+// or refunded. Base and rate are stored, so a later rate change rewrites nothing.
+export const commissions = pgTable(
+  "commissions",
+  {
+    id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
+    salesUserId: integer("sales_user_id").references(() => users.id, { onDelete: "set null" }),
+    orderId: integer("order_id")
+      .notNull()
+      .references(() => orders.id, { onDelete: "cascade" }),
+    source: varchar("source", { length: 10 }).notNull(), // quote | link | manual
+    baseCents: integer("base_cents").notNull(), // Sales excluding shipping.
+    rateBps: integer("rate_bps").notNull(),
+    amountCents: integer("amount_cents").notNull(),
+    status: varchar("status", { length: 10 }).notNull().default("due"), // due | paid | reversed
+    earnedAt: timestamp("earned_at", { withTimezone: true }).notNull(),
+    paidAt: timestamp("paid_at", { withTimezone: true }),
+    paidRef: varchar("paid_ref", { length: 120 }),
+    paidBy: integer("paid_by").references(() => users.id, { onDelete: "set null" }),
+    reversesId: integer("reverses_id"),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    uniqueIndex("commissions_order").on(t.orderId).where(sql`${t.reversesId} is null`),
+    index("commissions_sales_user").on(t.salesUserId, t.status),
+    index("commissions_earned").on(t.earnedAt),
+  ],
 );
 
 // Who changed what in the staff screens (users, companies, profiles, tags).
@@ -509,7 +571,7 @@ export const adminLog = pgTable(
   {
     id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
     actorId: integer("actor_id").references(() => users.id, { onDelete: "set null" }),
-    // user | company | profile | card | order
+    // user | company | profile | card | order | quote
     entity: varchar("entity", { length: 20 }).notNull(),
     entityId: integer("entity_id").notNull(),
     action: varchar("action", { length: 40 }).notNull(),

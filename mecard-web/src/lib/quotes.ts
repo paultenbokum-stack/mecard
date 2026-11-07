@@ -117,7 +117,7 @@ export async function acceptQuote(q: Quote, userId: number): Promise<{ ok: true 
   if (status === "expired") return { ok: false, error: "This quote has expired. Please ask us for a new one." };
   if (status === "rejected") return { ok: false, error: "This quote was rejected." };
   await addQuoteLines(userId, q.id, q.items);
-  if (status !== "accepted") await db.update(quotes).set({ status: "accepted", userId, updatedAt: new Date() }).where(eq(quotes.id, q.id));
+  if (status !== "accepted") await db.update(quotes).set({ status: "accepted", userId, acceptedAt: new Date(), updatedAt: new Date() }).where(eq(quotes.id, q.id));
   return { ok: true };
 }
 

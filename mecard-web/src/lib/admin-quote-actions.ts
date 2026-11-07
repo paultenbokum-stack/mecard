@@ -9,15 +9,23 @@ import { cleanEmail } from "@/lib/form-values";
 import { randsToCents } from "@/lib/money";
 import { QUOTE_STATUS_LABEL, QUOTE_VALID_DAYS, quotePrefill, quoteTotals } from "@/lib/quote-rules";
 import { quoteById, sendQuoteEmails } from "@/lib/quotes";
-import { requireAdmin } from "@/lib/session";
+import { requireAdmin, requireQuoteStaff } from "@/lib/session";
 
 // Staff editing of quotes (YITH's quote screen in WooCommerce): lines and
 // prices, a discount, a note to the customer, expiry and status; then send.
+// A salesperson uses the same screen at /sales/quotes/, for their own quotes only.
 
 const str = (form: FormData, key: string) => String(form.get(key) ?? "").trim();
 
 function back(path: string, outcome: { saved?: string; error?: string }): never {
   redirect(`${path}?${new URLSearchParams(outcome as Record<string, string>)}`);
+}
+
+/** Who is working on quotes, from which screen, and whether they're kept to their own. */
+async function quoteDesk(form: FormData) {
+  const who = await requireQuoteStaff();
+  const sales = !who.isAdmin || (who.isSales && form.get("desk") === "sales");
+  return { ...who, base: sales ? "/sales/quotes/" : "/admin/quotes/", ownOnly: !who.isAdmin };
 }
 
 /** The quote's lines from the form: product_id[], qty[], price[] (Rands); quantity 0 removes a line. */
@@ -42,11 +50,11 @@ async function linesFromForm(form: FormData): Promise<QuoteLine[] | string> {
 }
 
 export async function saveQuoteAction(form: FormData) {
-  await requireAdmin();
+  const desk = await quoteDesk(form);
   const id = Number(form.get("quote_id"));
-  const path = `/admin/quotes/${id}/`;
+  const path = `${desk.base}${id}/`;
   const q = await quoteById(id);
-  if (!q) back("/admin/quotes/", { error: "Quote not found." });
+  if (!q || (desk.ownOnly && q.salesUserId !== desk.id)) back(desk.base, { error: "Quote not found." });
   const send = form.get("intent") === "send";
 
   const status = str(form, "status");
@@ -70,6 +78,17 @@ export async function saveQuoteAction(form: FormData) {
   const fresh = new Date(Date.now() + QUOTE_VALID_DAYS * 864e5);
   const expiresAt = send ? (typed && typed > fresh ? typed : fresh) : typed;
 
+  // Only staff move a quote to another salesperson. A commission already written stays as it is.
+  let salesUserId = q.salesUserId;
+  if (!desk.ownOnly && form.has("sales_user_id")) {
+    salesUserId = Number(form.get("sales_user_id")) || null;
+    if (salesUserId) {
+      const [u] = await db.select({ isSales: users.isSales }).from(users).where(eq(users.id, salesUserId)).limit(1);
+      if (!u?.isSales) back(path, { error: "Choose a salesperson." });
+    }
+    if (salesUserId !== q.salesUserId) await logAdmin(desk.id, "quote", id, "salesperson changed", `${q.salesUserId ?? "nobody"} → ${salesUserId ?? "nobody"}`);
+  }
+
   await db
     .update(quotes)
     .set({
@@ -88,7 +107,9 @@ export async function saveQuoteAction(form: FormData) {
       items: lines,
       ...totals,
       status: send ? "sent" : locked ? "accepted" : status,
+      salesUserId,
       expiresAt,
+      ...(!send && status === "accepted" && !q.acceptedAt ? { acceptedAt: new Date() } : {}),
       ...(send ? { sentAt: new Date() } : {}),
       updatedAt: new Date(),
     })
@@ -104,14 +125,21 @@ export async function saveQuoteAction(form: FormData) {
 
 /** A quote staff start themselves (a phone or email request). */
 export async function createQuoteAction(form: FormData) {
-  const me = await requireAdmin();
+  const desk = await quoteDesk(form);
   const email = cleanEmail(form.get("email"));
-  if (!email) back("/admin/quotes/", { error: "Please enter the customer's email address." });
+  if (!email) back(desk.base, { error: "Please enter the customer's email address." });
   const [q] = await db
     .insert(quotes)
-    .values({ status: "new", name: str(form, "name").slice(0, 200), email, company: str(form, "company").slice(0, 255), message: `Created by staff (user ${me}).` })
+    .values({
+      status: "new",
+      name: str(form, "name").slice(0, 200),
+      email,
+      company: str(form, "company").slice(0, 255),
+      salesUserId: desk.isSales ? desk.id : null,
+      message: `Created by staff (user ${desk.id}).`,
+    })
     .returning({ id: quotes.id });
-  back(`/admin/quotes/${q.id}/`, { saved: "Quote created. Add its lines, then send it." });
+  back(`${desk.base}${q.id}/`, { saved: "Quote created. Add its lines, then send it." });
 }
 
 /**
@@ -122,6 +150,7 @@ export async function createQuoteAction(form: FormData) {
  */
 export async function createQuoteForUserAction(form: FormData) {
   const me = await requireAdmin();
+  const [staff] = await db.select({ isSales: users.isSales }).from(users).where(eq(users.id, me)).limit(1);
   const userId = Number(form.get("user_id"));
   const companyId = Number(form.get("company_id")) || 0;
   const [u] = Number.isInteger(userId) && userId > 0 ? await db.select().from(users).where(eq(users.id, userId)).limit(1) : [];
@@ -137,15 +166,18 @@ export async function createQuoteForUserAction(form: FormData) {
   ]);
   const [q] = await db
     .insert(quotes)
-    .values({ status: "new", userId: u.id, ...quotePrefill(u, order, company), message: `Created by staff (user ${me}) from the customer's account.` })
+    .values({ status: "new", userId: u.id, ...quotePrefill(u, order, company), salesUserId: staff?.isSales ? me : null, message: `Created by staff (user ${me}) from the customer's account.` })
     .returning({ id: quotes.id });
   await logAdmin(me, companyId ? "company" : "user", companyId || u.id, "quote created", `Quote #${q.id}`);
   back(`/admin/quotes/${q.id}/`, { saved: "Quote created from the customer's account. Add its lines, then send it." });
 }
 
 export async function deleteQuoteAction(form: FormData) {
-  await requireAdmin();
+  const desk = await quoteDesk(form);
   const id = Number(form.get("quote_id"));
+  const q = await quoteById(id);
+  if (!q || (desk.ownOnly && q.salesUserId !== desk.id)) back(desk.base, { error: "Quote not found." });
+  if (desk.ownOnly && q.status === "accepted") back(`${desk.base}${id}/`, { error: "The customer accepted this quote, so only staff can delete it." });
   await db.delete(quotes).where(eq(quotes.id, id));
-  back("/admin/quotes/", { saved: `Quote #${id} deleted.` });
+  back(desk.base, { saved: `Quote #${id} deleted.` });
 }
