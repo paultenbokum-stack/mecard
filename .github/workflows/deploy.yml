@@ -1,0 +1,115 @@
+name: Deploy mecard-web
+
+# Push to master that touches mecard-web: lint, typecheck, test, build the image,
+# migrate Cloud SQL, deploy to Cloud Run. Mirrors deploy/4-deploy.ps1 and
+# deploy/5-migrate-import.ps1 -MigrateOnly. Keyless: deploy/7-github-actions.ps1
+# set up the provider and account below, so GitHub holds no secrets.
+on:
+  push:
+    branches: [master]
+    paths:
+      - "mecard-web/**"
+      - ".github/workflows/deploy.yml"
+  workflow_dispatch: {}
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+env:
+  PROJECT: mecard-512711
+  REGION: africa-south1
+  SERVICE: mecard
+  INSTANCE: mecard-512711:africa-south1:mecard-db
+  SITE_URL: https://mecard.co.za
+  GA_ID: G-3SRCS4Y6TR
+  ADS_PURCHASE: AW-920347099/gtpkCNCnh5AYENvD7bYD
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mecard-web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: mecard-web/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write # Workload Identity Federation
+    defaults:
+      run:
+        working-directory: mecard-web
+    env:
+      IMAGE: africa-south1-docker.pkg.dev/mecard-512711/mecard/web:${{ github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: mecard-web/package-lock.json
+      - run: npm ci
+
+      - uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: projects/642052318659/locations/global/workloadIdentityPools/github/providers/github
+          service_account: mecard-deployer@mecard-512711.iam.gserviceaccount.com
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - name: Build and push the image
+        # NEXT_PUBLIC_* are inlined into the client bundle at build time.
+        run: |
+          gcloud auth configure-docker "$REGION-docker.pkg.dev" --quiet
+          docker build -t "$IMAGE" \
+            --build-arg NEXT_PUBLIC_APP_URL="$SITE_URL" \
+            --build-arg NEXT_PUBLIC_AUTH_GOOGLE=1 \
+            --build-arg NEXT_PUBLIC_GA_MEASUREMENT_ID="$GA_ID" \
+            --build-arg NEXT_PUBLIC_GOOGLE_ADS_PURCHASE="$ADS_PURCHASE" .
+          docker push "$IMAGE"
+
+      - name: Run database migrations
+        run: |
+          curl -sSL -o /tmp/cloud-sql-proxy \
+            https://storage.googleapis.com/cloud-sql-connectors/cloud-sql-proxy/v2.14.1/cloud-sql-proxy.linux.amd64
+          chmod +x /tmp/cloud-sql-proxy
+          /tmp/cloud-sql-proxy --port 5440 "$INSTANCE" &
+          for i in $(seq 1 30); do (echo > /dev/tcp/127.0.0.1/5440) >/dev/null 2>&1 && break; sleep 1; done
+          # The secret is the unix-socket form; point the same login at the proxy.
+          url="$(gcloud secrets versions access latest --secret=DATABASE_URL --project="$PROJECT")"
+          creds="${url#postgresql://}"; creds="${creds%%@*}"
+          name="${url#*@/}"; name="${name%%\?*}"
+          echo "::add-mask::${creds#*:}"
+          DATABASE_URL="postgres://$creds@127.0.0.1:5440/$name" npm run db:migrate
+
+      - name: Deploy to Cloud Run
+        run: |
+          secrets=DATABASE_URL=DATABASE_URL:latest
+          for s in AUTH_SECRET AUTH_GOOGLE_ID AUTH_GOOGLE_SECRET RESEND_API_KEY PAYFAST_MERCHANT_ID \
+                   PAYFAST_MERCHANT_KEY PAYFAST_PASSPHRASE BOBGO_API_KEY CRON_SECRET \
+                   INSIGHTS_DATABASE_URL INSIGHTS_MCP_TOKEN; do
+            secrets="$secrets,$s=$s:latest"
+          done
+          cat > /tmp/env.yaml <<YAML
+          AUTH_URL: "$SITE_URL"
+          AUTH_TRUST_HOST: "true"
+          NEXT_PUBLIC_APP_URL: "$SITE_URL"
+          MEDIA_BUCKET: "$PROJECT-media"
+          ARCHIVE_BUCKET: "$PROJECT-uploads"
+          PAYFAST_SANDBOX: ""
+          YAML
+          gcloud run deploy "$SERVICE" --project="$PROJECT" --image="$IMAGE" --region="$REGION" \
+            --allow-unauthenticated --min-instances=0 --max-instances=3 --memory=1Gi \
+            --add-cloudsql-instances="$INSTANCE" --env-vars-file=/tmp/env.yaml --set-secrets="$secrets"
