@@ -48,6 +48,15 @@ function StartUpgrade({ profileId, context, className, children }: { profileId: 
   );
 }
 
+/** An upgrade button on its own, for screens with their own offer around it. */
+export function ProUpgradeButton({ profileId, context, className, children }: { profileId: number; context: string; className: string; children: React.ReactNode }) {
+  return (
+    <StartUpgrade profileId={profileId} context={context} className={className}>
+      {children}
+    </StartUpgrade>
+  );
+}
+
 /** The compact "Upgrade" on each free profile in the list. */
 export function UpgradeButton({ profileId }: { profileId: number }) {
   return (

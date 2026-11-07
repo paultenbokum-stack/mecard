@@ -11,6 +11,7 @@ const TABS = [
   ["home", "Profiles", "/manage/"],
   ["cards", "My Cards", "/manage/cards/"],
   ["companies", "Companies", "/manage/companies/"],
+  ["analytics", "Analytics", "/manage/analytics/"],
 ] as const;
 
 /**
@@ -24,6 +25,7 @@ export async function Subnav({ active }: { active: (typeof TABS)[number][0] | "p
       ["home", "Home", "/manage/"],
       ["profile", "Edit Profile", "/manage/my-profile/"],
       ["cards", "My Cards", "/manage/cards/"],
+      ["analytics", "Analytics", "/manage/analytics/"],
     ] as const;
     return (
       <nav className="acc-subnav" aria-label="My MeCard">
