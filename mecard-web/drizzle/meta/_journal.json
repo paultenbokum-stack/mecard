@@ -113,6 +113,13 @@
       "when": 1794056934074,
       "tag": "0015_profile_auto_download",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1794064759462,
+      "tag": "0016_insights_advisor",
+      "breakpoints": true
     }
   ]
 }
