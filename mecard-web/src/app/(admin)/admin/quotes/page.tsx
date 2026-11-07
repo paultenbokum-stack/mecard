@@ -7,6 +7,7 @@ import { AdminHeader, type AdminSearchParams, Badge, Card, Flash, PAGE_SIZE, Pag
 import { createQuoteAction } from "@/lib/admin-quote-actions";
 import { formatDate, rands } from "@/lib/money";
 import { QUOTE_STATUS_LABEL } from "@/lib/quote-rules";
+import { requireQuoteStaff } from "@/lib/session";
 
 export const metadata = { title: "Quotes" };
 
@@ -16,11 +17,13 @@ const salesName = sql<string | null>`coalesce(nullif(${users.displayName}, ''), 
 const STATUS = sql<string>`case when ${quotes.status} in ('sent', 'new') and ${quotes.expiresAt} < now() then 'expired' else ${quotes.status} end`;
 
 export default async function AdminQuotes({ searchParams }: { searchParams: Promise<AdminSearchParams & { status?: string }> }) {
+  const who = await requireQuoteStaff("/admin/quotes/");
+  const own = who.isAdmin ? undefined : eq(quotes.salesUserId, who.id);
   const sp = await searchParams;
   const q = sp.q?.trim().replace(/^#/, "");
   const status = sp.status && sp.status in QUOTE_STATUS_LABEL ? sp.status : undefined;
   const page = pageNumber(sp.page);
-  const filters: SQL[] = [];
+  const filters: SQL[] = own ? [own] : [];
   if (status) filters.push(sql`${STATUS} = ${status}`);
   if (q) {
     const like = `%${q}%`;
@@ -37,7 +40,7 @@ export default async function AdminQuotes({ searchParams }: { searchParams: Prom
       .limit(PAGE_SIZE)
       .offset((page - 1) * PAGE_SIZE),
     db.select({ total: sql<number>`count(*)::int` }).from(quotes).where(where),
-    db.select({ status: STATUS, n: sql<number>`count(*)::int` }).from(quotes).groupBy(STATUS),
+    db.select({ status: STATUS, n: sql<number>`count(*)::int` }).from(quotes).where(own).groupBy(STATUS),
   ]);
   const countOf = new Map(counts.map((c) => [c.status, c.n]));
   const tab = (s?: string) => `?${new URLSearchParams({ ...(s ? { status: s } : {}), ...(q ? { q } : {}) })}`;
@@ -90,7 +93,7 @@ export default async function AdminQuotes({ searchParams }: { searchParams: Prom
                   <Badge status={s}>{QUOTE_STATUS_LABEL[s] ?? s}</Badge>
                   {r.orderId ? (
                     <div className="adm-small">
-                      <Link href={`/admin/orders/${r.orderId}/`}>Order #{r.orderId}</Link>
+                      {who.isAdmin ? <Link href={`/admin/orders/${r.orderId}/`}>Order #{r.orderId}</Link> : `Order #${r.orderId}`}
                     </div>
                   ) : null}
                 </td>

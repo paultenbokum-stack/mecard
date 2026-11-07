@@ -3,17 +3,12 @@ import { SalesLinkCard } from "@/components/admin/SalesLinkCard";
 import { AdminHeader, Card } from "@/components/admin/ui";
 import { rands } from "@/lib/money";
 import { commissionLines, ensureSalesCode, salesReport } from "@/lib/sales";
-import { bpsToPercent, currentMonth, isMonth, monthLabel, REFERRAL_MONTHS } from "@/lib/sales-rules";
-import { requireSales } from "@/lib/session";
+import { bpsToPercent, FIRST_SALE_MONTHS, monthLabel, PAYOUT_CUTOFF_DAY, PAYOUT_DAY, REFERRAL_MONTHS, SIGNUP_DAYS } from "@/lib/sales-rules";
 import { siteUrl } from "@/lib/site";
 
-export const metadata = { title: "My commission" };
-
-export default async function SalesHome({ searchParams }: { searchParams: Promise<{ month?: string }> }) {
-  const me = await requireSales();
-  const sp = await searchParams;
-  const month = isMonth(sp.month) ? sp.month : currentMonth();
-  const [code, rows, lines] = await Promise.all([ensureSalesCode(me), salesReport(month, me), commissionLines(month, me)]);
+/** A salesperson's own month: their link, their figures and the sales behind them. */
+export async function MyCommission({ userId, month }: { userId: number; month: string }) {
+  const [code, rows, lines] = await Promise.all([ensureSalesCode(userId), salesReport(month, userId), commissionLines(month, userId)]);
   const r = rows[0] ?? { ...emptyRow(), rateBps: 0 };
   const stats: [string, string][] = [
     ["Link clicks", String(r.clicks)],
@@ -27,13 +22,13 @@ export default async function SalesHome({ searchParams }: { searchParams: Promis
     ["Commission paid", rands(r.paidCents)],
     ["Due to you now", rands(r.dueCents)],
   ];
-
   return (
     <>
       <AdminHeader title="My commission" />
       <p className="adm-muted">
-        You earn {bpsToPercent(r.rateBps)}% of sales excluding shipping, on everything a customer buys in the {REFERRAL_MONTHS} months after signing up through your link, and on anything bought through
-        your quote.
+        You earn {bpsToPercent(r.rateBps)}% of sales excluding shipping, on anything bought through your quote. With your link, a customer must sign up within {SIGNUP_DAYS} days of clicking and make a
+        first purchase within {FIRST_SALE_MONTHS} month of signing up; you then earn on what they buy for {REFERRAL_MONTHS} months from signing up. Paid on the {PAYOUT_DAY}th for orders paid up to the{" "}
+        {PAYOUT_CUTOFF_DAY}th.
       </p>
       {code ? (
         <Card title="Your link" className="adm-card--narrow">

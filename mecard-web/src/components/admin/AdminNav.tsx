@@ -19,16 +19,19 @@ const items = [
   { href: "/admin/tags/", label: "Tags", icon: "fa-tags" },
 ];
 
-export function AdminNav() {
+/** A salesperson's admin: the screens src/proxy.ts lets them open. */
+const SALES_ITEMS = new Set(["/admin/quotes/", "/admin/commissions/"]);
+
+export function AdminNav({ salesOnly = false }: { salesOnly?: boolean }) {
   const path = usePathname() ?? "";
   const norm = path.endsWith("/") ? path : path + "/";
   return (
     <nav aria-label="Admin">
-      <Link href="/admin/" className="adm-brand">
+      <Link href={salesOnly ? "/admin/commissions/" : "/admin/"} className="adm-brand">
         <strong>me</strong>card <span>admin</span>
       </Link>
       <ul className="adm-nav">
-        {items.map((i) => {
+        {items.filter((i) => !salesOnly || SALES_ITEMS.has(i.href)).map((i) => {
           const active = i.exact ? norm === i.href : norm.startsWith(i.href);
           return (
             <li key={i.href}>

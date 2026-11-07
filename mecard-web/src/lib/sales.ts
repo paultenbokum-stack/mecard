@@ -1,11 +1,11 @@
 import "server-only";
-import { and, asc, desc, eq, gte, inArray, isNull, lt, ne, sql, type SQL } from "drizzle-orm";
+import { and, asc, desc, eq, gte, inArray, isNull, lt, lte, ne, or, sql, type SQL } from "drizzle-orm";
 import { cookies } from "next/headers";
 import { db } from "@/db/client";
 import { commissions, orderItems, orders, quotes, salesLinkClicks, users } from "@/db/schema";
 import { PAID_STATUSES } from "./money";
 import { ADDITIONAL_SHIPPING_PRODUCT } from "./quote-rules";
-import { clickStillValid, commissionBase, commissionFor, creditFor, decodeClick, isSalesCode, monthRange, newSalesCode, SALES_REF_COOKIE } from "./sales-rules";
+import { clickStillValid, commissionBase, commissionFor, creditFor, decodeClick, isSalesCode, monthRange, newSalesCode, payoutDateFor, SALES_REF_COOKIE } from "./sales-rules";
 
 // Salespeople and commission against the database. The rules are in sales-rules.ts.
 
@@ -62,6 +62,13 @@ export async function attributeOrder(orderId: number) {
     db.select({ salesUserId: quotes.salesUserId }).from(quotes).where(eq(quotes.orderId, orderId)).orderBy(asc(quotes.id)),
     o.userId ? db.select({ referredBy: users.referredBy, referredAt: users.referredAt }).from(users).where(eq(users.id, o.userId)).limit(1) : Promise.resolve([]),
   ]);
+  // The customer's first sale, counting this order if it's the first.
+  const [first] = o.userId
+    ? await db
+        .select({ at: sql<Date>`min(${orders.createdAt})`.mapWith((v) => new Date(v)) })
+        .from(orders)
+        .where(and(eq(orders.userId, o.userId), or(eq(orders.id, orderId), inArray(orders.status, PAID_STATUSES))))
+    : [];
   const candidates = [...fromQuotes.map((q) => q.salesUserId), customer?.referredBy].filter((id): id is number => !!id);
   const sales = candidates.length ? await db.select({ id: users.id }).from(users).where(and(inArray(users.id, candidates), eq(users.isSales, true))) : [];
   const credit = creditFor({
@@ -69,6 +76,7 @@ export async function attributeOrder(orderId: number) {
     quoteSalesUserIds: fromQuotes.map((q) => q.salesUserId),
     referredBy: customer?.referredBy ?? null,
     referredAt: customer?.referredAt ?? null,
+    firstSaleAt: first?.at ?? null,
     placedAt: o.createdAt,
     customerId: o.userId,
     isSales: (id) => sales.some((s) => s.id === id),
@@ -93,7 +101,8 @@ async function commissionValues(o: typeof orders.$inferSelect, salesUserId: numb
   const [u] = await db.select({ rate: users.commissionRateBps }).from(users).where(eq(users.id, salesUserId)).limit(1);
   const rateBps = u?.rate ?? 0;
   const base = await baseCents(o);
-  return { salesUserId, orderId: o.id, source, baseCents: base, rateBps, amountCents: commissionFor(base, rateBps), earnedAt: o.paidAt ?? new Date() };
+  const earnedAt = o.paidAt ?? new Date();
+  return { salesUserId, orderId: o.id, source, baseCents: base, rateBps, amountCents: commissionFor(base, rateBps), earnedAt, payoutDate: payoutDateFor(earnedAt) };
 }
 
 /** A paid order's commission. Idempotent, and a problem here never stops a payment going through. */
@@ -136,6 +145,7 @@ export async function reverseCommission(orderId: number): Promise<void> {
       rateBps: line.rateBps,
       amountCents: -line.amountCents,
       earnedAt: new Date(),
+      payoutDate: payoutDateFor(new Date()),
       reversesId: line.id,
     });
   } catch (e) {
@@ -158,9 +168,20 @@ export async function setOrderSalesperson(orderId: number, salesUserId: number |
   return null;
 }
 
-/** Everything due to a salesperson, up to `through`, marked paid. Returns the total, or null if nothing is due. */
-export async function payCommissions(salesUserId: number, through: Date, ref: string, by: number): Promise<number | null> {
-  const where = and(eq(commissions.salesUserId, salesUserId), eq(commissions.status, "due"), lt(commissions.createdAt, through));
+/** What each salesperson is owed in a payout run, with anything left over from earlier runs. */
+export function payoutRun(payoutDate: string) {
+  return db
+    .select({ salesUserId: commissions.salesUserId, name: nameOf, cents: sql<number>`sum(${commissions.amountCents})::int` })
+    .from(commissions)
+    .leftJoin(users, eq(users.id, commissions.salesUserId))
+    .where(and(eq(commissions.status, "due"), lte(commissions.payoutDate, payoutDate)))
+    .groupBy(commissions.salesUserId, users.displayName, users.email)
+    .orderBy(asc(nameOf));
+}
+
+/** A salesperson's run marked paid, as it stood at `through`. Returns the total, or null if nothing is owed. */
+export async function payCommissions(salesUserId: number, payoutDate: string, through: Date, ref: string, by: number): Promise<number | null> {
+  const where = and(eq(commissions.salesUserId, salesUserId), eq(commissions.status, "due"), lte(commissions.payoutDate, payoutDate), lt(commissions.createdAt, through));
   const [{ cents }] = await db.select({ cents: sql<number>`coalesce(sum(${commissions.amountCents}), 0)::int` }).from(commissions).where(where);
   if (cents <= 0) return null;
   await db.update(commissions).set({ status: "paid", paidAt: new Date(), paidRef: ref, paidBy: by }).where(where);

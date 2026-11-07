@@ -15,7 +15,7 @@ test("writes are blocked by default, on pages and APIs alike", () => {
 });
 
 test("staff screens, sign-in and leaving view-as still work", () => {
-  for (const p of ["/admin/", "/admin/users/5/", "/sales/quotes/", "/api/auth/signout/", "/api/view-as/stop/"]) assert.equal(viewAsBlocks("POST", p), false, p);
+  for (const p of ["/admin/", "/admin/users/5/", "/api/auth/signout/", "/api/view-as/stop/"]) assert.equal(viewAsBlocks("POST", p), false, p);
 });
 
 test("a refused form returns to the page it came from", () => {

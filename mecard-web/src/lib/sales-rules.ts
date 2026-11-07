@@ -1,18 +1,23 @@
 import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 
 // Salespeople and commission, the rules without the database (plain functions, tested).
-//   click     /r/<code>/ counts once per visitor and leaves a signed cookie for 30 days
+//   click     /r/<code>/ counts once per visitor and leaves a signed cookie for 7 days
 //             (the first salesperson clicked keeps it; their own new click restarts it)
-//   sign-up   a new account within those 30 days is theirs: users.referred_by
-//   order     through a salesperson's quote: that salesperson; otherwise within 12 months
-//             of the sign-up: whoever referred the customer. One salesperson per order.
-//   paid      the commission is written: a percentage of sales excluding shipping
+//   sign-up   a new account within those 7 days is theirs: users.referred_by
+//   order     through a salesperson's quote: that salesperson; otherwise whoever referred
+//             the customer, if the first sale came within 1 month of sign-up and this
+//             order within 12 months. One salesperson per order.
+//   paid      the commission is written: a percentage of sales excluding shipping,
+//             paid out on the 25th for orders paid up to the 20th
 //   reversed  a cancelled or refunded order takes it back (paid out already: a negative row)
 
 export const SALES_REF_COOKIE = "mecard_sales_ref";
 export const SALES_VISITOR_COOKIE = "mecard_vid";
-export const REF_COOKIE_DAYS = 30;
+export const SIGNUP_DAYS = 7;
+export const FIRST_SALE_MONTHS = 1;
 export const REFERRAL_MONTHS = 12;
+export const PAYOUT_DAY = 25;
+export const PAYOUT_CUTOFF_DAY = 20;
 export const DEFAULT_RATE_BPS = 2000;
 
 const DAY = 864e5;
@@ -52,7 +57,7 @@ export function decodeClick(value: string | null | undefined, secret: string): C
 
 export function clickStillValid(c: Click, now = new Date()): boolean {
   const age = now.getTime() - c.clickedAt.getTime();
-  return age >= 0 && age <= REF_COOKIE_DAYS * DAY;
+  return age >= 0 && age <= SIGNUP_DAYS * DAY;
 }
 
 /** The first salesperson clicked keeps the visitor; only an expired click, or their own, is replaced. */
@@ -66,11 +71,14 @@ const BOT = /bot|crawl|spider|slurp|facebookexternalhit|facebookcatalog|whatsapp
 export const isBot = (userAgent: string | null) => !userAgent || BOT.test(userAgent);
 
 // ── Who an order credits ─────────────────────────────────────────────────────
-export function referralEnds(referredAt: Date): Date {
-  const d = new Date(referredAt);
-  d.setUTCMonth(d.getUTCMonth() + REFERRAL_MONTHS);
+function addMonths(from: Date, months: number): Date {
+  const d = new Date(from);
+  d.setUTCMonth(d.getUTCMonth() + months);
   return d;
 }
+
+export const referralEnds = (referredAt: Date) => addMonths(referredAt, REFERRAL_MONTHS);
+export const firstSaleDeadline = (referredAt: Date) => addMonths(referredAt, FIRST_SALE_MONTHS);
 
 export type Credit = { salesUserId: number; source: "quote" | "link" | "manual" };
 
@@ -81,6 +89,8 @@ export function creditFor(o: {
   quoteSalesUserIds: (number | null)[];
   referredBy: number | null;
   referredAt: Date | null;
+  /** When the customer's first sale was placed, counting this order. */
+  firstSaleAt: Date | null;
   placedAt: Date;
   customerId: number | null;
   /** Who can still earn: taking someone's sales role away stops new commission. */
@@ -90,7 +100,8 @@ export function creditFor(o: {
   const earns = (id: number | null): id is number => !!id && id !== o.customerId && o.isSales(id);
   const quote = o.quoteSalesUserIds.find(earns);
   if (quote) return { salesUserId: quote, source: "quote" };
-  if (earns(o.referredBy) && o.referredAt && o.placedAt >= o.referredAt && o.placedAt < referralEnds(o.referredAt)) {
+  const firstSaleInTime = !!o.referredAt && !!o.firstSaleAt && o.firstSaleAt < firstSaleDeadline(o.referredAt);
+  if (earns(o.referredBy) && o.referredAt && firstSaleInTime && o.placedAt >= o.referredAt && o.placedAt < referralEnds(o.referredAt)) {
     return { salesUserId: o.referredBy, source: "link" };
   }
   return null;
@@ -107,6 +118,20 @@ export function commissionBase(o: { subtotalCents: number; discountCents: number
 }
 
 export const commissionFor = (baseCents: number, rateBps: number) => Math.round((baseCents * rateBps) / 10000);
+
+/** The run a payment falls in: the 25th of the same month up to and including the 20th (South African time), else of the next. */
+export function payoutDateFor(paidAt: Date): string {
+  const local = new Date(paidAt.getTime() + SAST);
+  const next = local.getUTCDate() > PAYOUT_CUTOFF_DAY ? 1 : 0;
+  const d = new Date(Date.UTC(local.getUTCFullYear(), local.getUTCMonth() + next, 1));
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-${PAYOUT_DAY}`;
+}
+
+/** A run can be paid once its last day, the 20th, is over. */
+export function payoutClosed(payoutDate: string, now = new Date()): boolean {
+  const cutoff = Date.parse(`${payoutDate.slice(0, 8)}${PAYOUT_CUTOFF_DAY}T23:59:59.999+02:00`);
+  return now.getTime() > cutoff;
+}
 
 export const bpsToPercent = (bps: number) => String(bps / 100);
 

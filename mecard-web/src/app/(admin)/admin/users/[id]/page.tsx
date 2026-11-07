@@ -17,7 +17,7 @@ import { listLibrary } from "@/lib/media-library";
 import { formatDate, ORDER_STATUS_LABEL, rands } from "@/lib/money";
 import { effectiveStatus, QUOTE_STATUS_LABEL } from "@/lib/quote-rules";
 import { listSalespeople } from "@/lib/sales";
-import { bpsToPercent, referralEnds } from "@/lib/sales-rules";
+import { bpsToPercent, firstSaleDeadline, referralEnds } from "@/lib/sales-rules";
 import { requireAdmin } from "@/lib/session";
 import { siteUrl } from "@/lib/site";
 
@@ -269,7 +269,7 @@ export default async function AdminUser({ params, searchParams }: { params: Prom
               <input type="hidden" name="user_id" value={u.id} />
               <div className="adm-field adm-field--full">
                 <label>
-                  <input type="checkbox" name="is_sales" defaultChecked={u.isSales} /> Salesperson: gets /sales/, a link and their own quotes, and earns commission
+                  <input type="checkbox" name="is_sales" defaultChecked={u.isSales} /> Salesperson: gets a link and their own quotes in admin, and earns commission
                 </label>
               </div>
               <div className="adm-field">
@@ -291,7 +291,7 @@ export default async function AdminUser({ params, searchParams }: { params: Prom
               </div>
               {u.referredAt ? (
                 <p className="adm-help adm-field--full" style={{ margin: 0 }}>
-                  Their purchases earn commission until {formatDate(referralEnds(u.referredAt))}.
+                  Their purchases earn commission until {formatDate(referralEnds(u.referredAt))}, if their first sale is by {formatDate(firstSaleDeadline(u.referredAt))}.
                 </p>
               ) : null}
               {u.isSales && u.salesCode ? (

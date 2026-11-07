@@ -10,7 +10,7 @@ export const VIEW_AS_TTL_SECONDS = 60 * 60;
 const SAFE_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
 // Staff screens stay usable as staff (requireAdmin ignores view-as), sign-in keeps
 // working, and leaving view-as is itself a POST.
-const NEVER_BLOCKED = /^\/(admin|sales|api\/auth|api\/view-as)(\/|$)/;
+const NEVER_BLOCKED = /^\/(admin|api\/auth|api\/view-as)(\/|$)/;
 
 export function viewAsBlocks(method: string, pathname: string): boolean {
   return !SAFE_METHODS.has(method.toUpperCase()) && !NEVER_BLOCKED.test(pathname);

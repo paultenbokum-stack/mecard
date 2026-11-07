@@ -13,7 +13,7 @@ import { requireAdmin, requireQuoteStaff } from "@/lib/session";
 
 // Staff editing of quotes (YITH's quote screen in WooCommerce): lines and
 // prices, a discount, a note to the customer, expiry and status; then send.
-// A salesperson uses the same screen at /sales/quotes/, for their own quotes only.
+// A salesperson uses the same screens, for their own quotes only.
 
 const str = (form: FormData, key: string) => String(form.get(key) ?? "").trim();
 
@@ -21,11 +21,10 @@ function back(path: string, outcome: { saved?: string; error?: string }): never 
   redirect(`${path}?${new URLSearchParams(outcome as Record<string, string>)}`);
 }
 
-/** Who is working on quotes, from which screen, and whether they're kept to their own. */
-async function quoteDesk(form: FormData) {
-  const who = await requireQuoteStaff();
-  const sales = !who.isAdmin || (who.isSales && form.get("desk") === "sales");
-  return { ...who, base: sales ? "/sales/quotes/" : "/admin/quotes/", ownOnly: !who.isAdmin };
+/** Who is working on quotes, and whether they're kept to their own. */
+async function quoteDesk() {
+  const who = await requireQuoteStaff("/admin/quotes/");
+  return { ...who, base: "/admin/quotes/", ownOnly: !who.isAdmin };
 }
 
 /** The quote's lines from the form: product_id[], qty[], price[] (Rands); quantity 0 removes a line. */
@@ -50,7 +49,7 @@ async function linesFromForm(form: FormData): Promise<QuoteLine[] | string> {
 }
 
 export async function saveQuoteAction(form: FormData) {
-  const desk = await quoteDesk(form);
+  const desk = await quoteDesk();
   const id = Number(form.get("quote_id"));
   const path = `${desk.base}${id}/`;
   const q = await quoteById(id);
@@ -125,7 +124,7 @@ export async function saveQuoteAction(form: FormData) {
 
 /** A quote staff start themselves (a phone or email request). */
 export async function createQuoteAction(form: FormData) {
-  const desk = await quoteDesk(form);
+  const desk = await quoteDesk();
   const email = cleanEmail(form.get("email"));
   if (!email) back(desk.base, { error: "Please enter the customer's email address." });
   const [q] = await db
@@ -173,7 +172,7 @@ export async function createQuoteForUserAction(form: FormData) {
 }
 
 export async function deleteQuoteAction(form: FormData) {
-  const desk = await quoteDesk(form);
+  const desk = await quoteDesk();
   const id = Number(form.get("quote_id"));
   const q = await quoteById(id);
   if (!q || (desk.ownOnly && q.salesUserId !== desk.id)) back(desk.base, { error: "Quote not found." });

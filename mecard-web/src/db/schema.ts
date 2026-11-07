@@ -552,6 +552,8 @@ export const commissions = pgTable(
     amountCents: integer("amount_cents").notNull(),
     status: varchar("status", { length: 10 }).notNull().default("due"), // due | paid | reversed
     earnedAt: timestamp("earned_at", { withTimezone: true }).notNull(),
+    // The payout run this falls in, YYYY-MM-25: orders paid up to the 20th go out on the 25th.
+    payoutDate: varchar("payout_date", { length: 10 }).notNull().default(""),
     paidAt: timestamp("paid_at", { withTimezone: true }),
     paidRef: varchar("paid_ref", { length: 120 }),
     paidBy: integer("paid_by").references(() => users.id, { onDelete: "set null" }),
@@ -562,6 +564,7 @@ export const commissions = pgTable(
     uniqueIndex("commissions_order").on(t.orderId).where(sql`${t.reversesId} is null`),
     index("commissions_sales_user").on(t.salesUserId, t.status),
     index("commissions_earned").on(t.earnedAt),
+    index("commissions_payout").on(t.payoutDate),
   ],
 );
 

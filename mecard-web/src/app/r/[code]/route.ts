@@ -7,10 +7,10 @@ import { db } from "@/db/client";
 import { salesLinkClicks, users } from "@/db/schema";
 import { salesCookieSecret, salesUserByCode } from "@/lib/sales";
 import { LINK_LANDINGS } from "@/lib/sales-link-landings";
-import { decodeClick, encodeClick, isBot, keepsExistingClick, REF_COOKIE_DAYS, SALES_REF_COOKIE, SALES_VISITOR_COOKIE } from "@/lib/sales-rules";
+import { decodeClick, encodeClick, isBot, keepsExistingClick, SALES_REF_COOKIE, SALES_VISITOR_COOKIE, SIGNUP_DAYS } from "@/lib/sales-rules";
 
 // A salesperson's link, /r/<code>/ or /r/<code>/?to=teams. Counts the click once per
-// visitor, remembers it for 30 days in a signed cookie, and sends the visitor on.
+// visitor, remembers it for 7 days in a signed cookie, and sends the visitor on.
 // Link previews and signed-in staff go straight through without counting, so this
 // GET writes nothing for staff, including during view-as.
 type Ctx = { params: Promise<{ code: string }> };
@@ -46,7 +46,7 @@ export async function GET(req: Request, { params }: Ctx) {
   if (!keepsExistingClick(existing, sales.id, now)) {
     res.cookies.set(SALES_REF_COOKIE, encodeClick({ salesUserId: sales.id, clickedAt: now }, salesCookieSecret()), {
       path: "/",
-      maxAge: 60 * 60 * 24 * REF_COOKIE_DAYS,
+      maxAge: 60 * 60 * 24 * SIGNUP_DAYS,
       httpOnly: true,
       sameSite: "lax",
       secure,

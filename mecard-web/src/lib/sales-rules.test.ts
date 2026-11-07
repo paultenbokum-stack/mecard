@@ -11,6 +11,8 @@ import {
   isBot,
   keepsExistingClick,
   monthRange,
+  payoutClosed,
+  payoutDateFor,
   percentToBps,
   shiftMonth,
 } from "./sales-rules";
@@ -21,6 +23,7 @@ const base = {
   quoteSalesUserIds: [] as (number | null)[],
   referredBy: null as number | null,
   referredAt: null as Date | null,
+  firstSaleAt: null as Date | null,
   placedAt: new Date("2026-06-01T10:00:00Z"),
   customerId: 50,
   isSales: () => true,
@@ -36,10 +39,10 @@ test("a signed click round-trips and can't be edited", () => {
   assert.equal(decodeClick(undefined, "s"), null);
 });
 
-test("a click lasts 30 days and the first salesperson keeps it", () => {
+test("a click lasts 7 days and the first salesperson keeps it", () => {
   const now = new Date("2026-06-01T00:00:00Z");
-  const fresh = { salesUserId: 1, clickedAt: new Date(now.getTime() - 29 * day) };
-  const old = { salesUserId: 1, clickedAt: new Date(now.getTime() - 31 * day) };
+  const fresh = { salesUserId: 1, clickedAt: new Date(now.getTime() - 6 * day) };
+  const old = { salesUserId: 1, clickedAt: new Date(now.getTime() - 8 * day) };
   assert.equal(clickStillValid(fresh, now), true);
   assert.equal(clickStillValid(old, now), false);
   assert.equal(keepsExistingClick(fresh, 2, now), true);
@@ -55,19 +58,26 @@ test("link previews are not clicks", () => {
 });
 
 test("a referred customer earns for 12 months from sign-up", () => {
-  const referred = { ...base, referredBy: 7, referredAt: new Date("2025-06-02T10:00:00Z") };
+  const referred = { ...base, referredBy: 7, referredAt: new Date("2025-06-02T10:00:00Z"), firstSaleAt: new Date("2025-06-20T10:00:00Z") };
   assert.deepEqual(creditFor(referred), { salesUserId: 7, source: "link" });
   assert.equal(creditFor({ ...referred, referredAt: new Date("2025-05-31T10:00:00Z") }), null);
   assert.equal(creditFor({ ...referred, referredAt: new Date("2026-06-02T10:00:00Z") }), null, "placed before the sign-up");
 });
 
+test("no first sale within a month ends the referral", () => {
+  const referred = { ...base, referredBy: 7, referredAt: new Date("2026-03-01T10:00:00Z") };
+  assert.deepEqual(creditFor({ ...referred, firstSaleAt: new Date("2026-03-31T10:00:00Z") }), { salesUserId: 7, source: "link" });
+  assert.equal(creditFor({ ...referred, firstSaleAt: new Date("2026-04-02T10:00:00Z") }), null);
+  assert.equal(creditFor({ ...referred, firstSaleAt: null }), null);
+});
+
 test("a quote beats the link that brought the customer in", () => {
-  const c = creditFor({ ...base, quoteSalesUserIds: [9], referredBy: 7, referredAt: new Date("2026-01-01T00:00:00Z") });
+  const c = creditFor({ ...base, quoteSalesUserIds: [9], referredBy: 7, referredAt: new Date("2026-05-20T00:00:00Z"), firstSaleAt: base.placedAt });
   assert.deepEqual(c, { salesUserId: 9, source: "quote" });
 });
 
 test("a quote with no salesperson leaves the link's credit", () => {
-  const c = creditFor({ ...base, quoteSalesUserIds: [null], referredBy: 7, referredAt: new Date("2026-01-01T00:00:00Z") });
+  const c = creditFor({ ...base, quoteSalesUserIds: [null], referredBy: 7, referredAt: new Date("2026-05-20T00:00:00Z"), firstSaleAt: base.placedAt });
   assert.deepEqual(c, { salesUserId: 7, source: "link" });
 });
 
@@ -92,6 +102,17 @@ test("commission is on sales excluding shipping, after discount", () => {
   assert.equal(commissionFor(b, 2000), 19000);
   assert.equal(commissionFor(b, 1250), 11875);
   assert.equal(commissionBase({ subtotalCents: 1000, discountCents: 5000, shippingLineCents: 0 }), 0);
+});
+
+test("the 25th pays orders paid up to the 20th, South African time", () => {
+  assert.equal(payoutDateFor(new Date("2026-11-20T21:59:00Z")), "2026-11-25");
+  assert.equal(payoutDateFor(new Date("2026-11-20T22:01:00Z")), "2026-12-25");
+  assert.equal(payoutDateFor(new Date("2026-12-28T10:00:00Z")), "2027-01-25");
+});
+
+test("a run can be paid once the 20th is over", () => {
+  assert.equal(payoutClosed("2026-11-25", new Date("2026-11-20T21:00:00Z")), false);
+  assert.equal(payoutClosed("2026-11-25", new Date("2026-11-20T22:30:00Z")), true);
 });
 
 test("a rate is typed as a percentage", () => {

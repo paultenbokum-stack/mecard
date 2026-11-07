@@ -57,18 +57,13 @@ async function staffRoles() {
   return u ? { id, ...u } : null;
 }
 
-/** The salesperson's own screens (/sales/). */
-export async function requireSales(next = "/sales/"): Promise<number> {
+/**
+ * Staff or a salesperson, for what both may do. The caller keeps a salesperson
+ * to their own records; src/proxy.ts keeps them to the screens in admin-paths.ts.
+ */
+export async function requireQuoteStaff(next = "/admin/commissions/"): Promise<{ id: number; isAdmin: boolean; isSales: boolean }> {
   const who = await staffRoles();
   if (!who) redirect(loginUrl(next));
-  if (!who.isSales) redirect("/my-account/");
-  return who.id;
-}
-
-/** Staff or a salesperson, for what both may do. The caller keeps a salesperson to their own records. */
-export async function requireQuoteStaff(): Promise<{ id: number; isAdmin: boolean; isSales: boolean }> {
-  const who = await staffRoles();
-  if (!who) redirect(loginUrl("/sales/"));
   if (!who.isAdmin && !who.isSales) redirect("/my-account/");
   return who;
 }

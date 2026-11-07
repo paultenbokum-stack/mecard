@@ -1,10 +1,13 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { auth } from "@/auth";
+import { SALES_LANDING, salesMayOpen } from "@/lib/admin-paths";
 import { legacyLoginRedirect } from "@/lib/auth-paths";
+import { isAdminUser } from "@/lib/session";
 import { readOnlyReturnPath, VIEW_AS_COOKIE, viewAsBlocks } from "@/lib/view-as-rules";
 
 // A test deploy (SITE_NOINDEX=1, on its *.run.app address) asks search engines to stay away.
-export function proxy(req: NextRequest) {
-  const res = refuseViewAsWrite(req) ?? route(req);
+export async function proxy(req: NextRequest) {
+  const res = refuseViewAsWrite(req) ?? (await refuseNonStaff(req)) ?? route(req);
   if (process.env.SITE_NOINDEX === "1") res.headers.set("X-Robots-Tag", "noindex, nofollow");
   return res;
 }
@@ -21,6 +24,17 @@ function refuseViewAsWrite(req: NextRequest) {
   // the page stays up rather than failing on an answer that isn't a Flight response.
   if (req.headers.has("next-action")) return new NextResponse(null, { status: 303, headers: { "x-action-redirect": `${back};replace` } });
   return NextResponse.redirect(new URL(back, req.nextUrl), 303);
+}
+
+// Salespeople sign in to /admin/ but see only their own part. This has to be here:
+// the admin layout doesn't run when moving between admin pages, and most pages have
+// no check of their own. Signed-out visitors go on to the layout's login redirect.
+async function refuseNonStaff(req: NextRequest) {
+  const { pathname } = req.nextUrl;
+  if (!pathname.startsWith("/admin/") || salesMayOpen(pathname)) return null;
+  const id = Number((await auth())?.user?.id);
+  if (!id || (await isAdminUser(id))) return null;
+  return NextResponse.redirect(new URL(SALES_LANDING, req.nextUrl), 303);
 }
 
 function route(req: NextRequest) {

@@ -43,7 +43,7 @@ export async function AccountLayout({ active, children }: { active: Section; chi
               </li>
               {key === "quotes" && roles?.isSales ? (
                 <li>
-                  <Link href="/sales/">Sales</Link>
+                  <Link href="/admin/commissions/">Sales</Link>
                 </li>
               ) : null}
               {key === "console" && single ? (

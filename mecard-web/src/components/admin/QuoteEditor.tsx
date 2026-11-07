@@ -14,19 +14,19 @@ const randsInput = (c: number) => (c / 100).toFixed(2);
 const saDate = (d: Date | null) => (d ? new Intl.DateTimeFormat("en-CA", { timeZone: "Africa/Johannesburg" }).format(d) : "");
 const BLANK_LINES = 3;
 
-/** The quote screen, for staff at /admin/quotes/ and a salesperson at /sales/quotes/ (no order links, no choosing the salesperson). */
+/** The quote screen. A salesperson (staff = false) gets no order links and can't choose the salesperson. */
 export async function QuoteEditor({
   q,
   sp,
-  desk,
+  staff,
   salespeople = [],
 }: {
   q: typeof quotes.$inferSelect;
   sp: AdminSearchParams;
-  desk: "admin" | "sales";
+  staff: boolean;
   salespeople?: { id: number; name: string }[];
 }) {
-  const base = desk === "admin" ? "/admin/quotes/" : "/sales/quotes/";
+  const base = "/admin/quotes/";
   const catalogue = await db.select({ id: products.id, name: products.name, priceCents: products.priceCents, active: products.active }).from(products).orderBy(asc(products.sortOrder), asc(products.name));
   const status = effectiveStatus(q);
   const locked = q.status === "accepted";
@@ -55,7 +55,7 @@ export async function QuoteEditor({
         {q.orderId ? (
           <>
             {" "}
-            · paid as {desk === "admin" ? <Link href={`/admin/orders/${q.orderId}/`}>order #{q.orderId}</Link> : `order #${q.orderId}`}
+            · paid as {staff ? <Link href={`/admin/orders/${q.orderId}/`}>order #{q.orderId}</Link> : `order #${q.orderId}`}
           </>
         ) : null}
       </p>
@@ -63,7 +63,6 @@ export async function QuoteEditor({
 
       <form action={saveQuoteAction}>
         <input type="hidden" name="quote_id" value={q.id} />
-        <input type="hidden" name="desk" value={desk} />
         <div className="adm-grid">
           <div>
             <Card title="Lines">
@@ -194,7 +193,7 @@ export async function QuoteEditor({
                 Printed under the customer on the quote, the PDF and the email.
               </p>
             </Card>
-            {desk === "admin" ? (
+            {staff ? (
               <Card title="Salesperson">
                 <div className="adm-field">
                   <label htmlFor="q-sales">Earns commission on this quote</label>
@@ -247,7 +246,6 @@ export async function QuoteEditor({
         <Card title="Delete quote" className="adm-card--danger">
           <form action={deleteQuoteAction} className="adm-inline">
             <input type="hidden" name="quote_id" value={q.id} />
-            <input type="hidden" name="desk" value={desk} />
             <span className="adm-small">For spam or duplicates. To decline a real request, set the status to Rejected instead.</span>
             <SubmitButton className="adm-btn adm-btn--danger" confirm={`Delete quote #${q.id}?`}>
               Delete

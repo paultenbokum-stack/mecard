@@ -7,7 +7,7 @@ import { users } from "@/db/schema";
 import { logAdmin } from "@/lib/admin-log";
 import { rands } from "@/lib/money";
 import { ensureSalesCode, payCommissions, setOrderSalesperson } from "@/lib/sales";
-import { bpsToPercent, percentToBps } from "@/lib/sales-rules";
+import { bpsToPercent, payoutClosed, percentToBps } from "@/lib/sales-rules";
 import { requireAdmin } from "@/lib/session";
 
 // Staff actions on salespeople and commission. Every action checks the admin again.
@@ -62,7 +62,7 @@ export async function setOrderSalespersonAction(form: FormData) {
   back(path, { saved: "Salesperson saved." });
 }
 
-/** Pay out what's due to a salesperson. `through` is when the page was opened, so the total shown is the total paid. */
+/** Pay a salesperson's run on the 25th. `through` is when the page was opened, so the total shown is the total paid. */
 export async function payCommissionsAction(form: FormData) {
   const me = await requireAdmin();
   const id = Number(form.get("sales_user_id"));
@@ -71,10 +71,13 @@ export async function payCommissionsAction(form: FormData) {
   const go = (outcome: { saved?: string; error?: string }): never => redirect(`${path}&${new URLSearchParams(outcome as Record<string, string>)}`);
   const ref = String(form.get("ref") ?? "").trim().slice(0, 120);
   const through = new Date(String(form.get("through") ?? ""));
+  const run = String(form.get("payout_date") ?? "");
+  if (!/^\d{4}-\d{2}-25$/.test(run)) go({ error: "Please try again." });
+  if (!payoutClosed(run)) go({ error: "This run is still open. It closes on the 20th." });
   if (!ref) go({ error: "Add a payment reference." });
   if (Number.isNaN(through.getTime())) go({ error: "Please try again." });
-  const cents = await payCommissions(id, through, ref, me);
+  const cents = await payCommissions(id, run, through, ref, me);
   if (cents === null) go({ error: "Nothing is due to pay." });
-  await logAdmin(me, "user", id, "commission paid", `${rands(cents as number)}, reference ${ref}`);
+  await logAdmin(me, "user", id, "commission paid", `${rands(cents as number)}, run ${run}, reference ${ref}`);
   go({ saved: `${rands(cents as number)} marked as paid.` });
 }
