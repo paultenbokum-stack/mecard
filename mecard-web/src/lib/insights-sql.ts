@@ -5,6 +5,8 @@
 
 export const MAX_ROWS = 500;
 export const TIMEOUT_MS = 10_000;
+/** JSON-RPC messages in one request: a client sends one or a few, so a long list isn't a client. */
+export const MAX_BATCH = 10;
 
 const FORBIDDEN =
   /\b(insert|update|delete|merge|upsert|drop|alter|create|grant|revoke|truncate|copy|call|do|lock|vacuum|analyze|cluster|reindex|refresh|listen|notify|unlisten|prepare|execute|deallocate|discard|reset|set|begin|commit|rollback|savepoint|into)\b/i;

@@ -1,5 +1,6 @@
 import { timingSafeEqual } from "node:crypto";
 import { handleRpc } from "@/lib/insights-mcp";
+import { MAX_BATCH } from "@/lib/insights-sql";
 
 // The mecard-insights MCP endpoint (conversion plan 4.2), read-only. Register it
 // in Claude Code (Taggable account only) with:
@@ -24,6 +25,7 @@ export async function POST(req: Request) {
     return json({ jsonrpc: "2.0", id: null, error: { code: -32700, message: "Parse error" } }, 400);
   }
   if (Array.isArray(body)) {
+    if (body.length > MAX_BATCH) return json({ jsonrpc: "2.0", id: null, error: { code: -32600, message: `At most ${MAX_BATCH} messages in one request` } }, 400);
     const out = (await Promise.all(body.map(handleRpc))).filter(Boolean);
     return out.length ? json(out) : new Response(null, { status: 202 });
   }

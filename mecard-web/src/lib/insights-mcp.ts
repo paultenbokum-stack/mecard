@@ -2,6 +2,7 @@ import "server-only";
 import postgres from "postgres";
 import { connect, db } from "@/db/client";
 import { adminLog } from "@/db/schema";
+import { eq } from "drizzle-orm";
 import { checkQuery, limited, MAX_ROWS, TIMEOUT_MS } from "./insights-sql";
 
 // The read-only MCP server behind /api/mcp (conversion plan 4.2): JSON-RPC over
@@ -67,6 +68,9 @@ async function queryTool(args: Record<string, unknown>): Promise<ToolResult> {
     await log(String(args.sql ?? ""), `refused: ${checked.error}`);
     return text(checked.error, true);
   }
+  // No query runs unrecorded: the row goes in first, and its outcome is added after.
+  const entry = await log(checked.sql, "started");
+  if (entry === null) return text("The query wasn't run because it couldn't be logged.", true);
   try {
     const rows = await insights().begin("read only", async (tx) => {
       await tx.unsafe(`set local statement_timeout = ${TIMEOUT_MS}`);
@@ -74,21 +78,34 @@ async function queryTool(args: Record<string, unknown>): Promise<ToolResult> {
     });
     const truncated = rows.length > MAX_ROWS;
     const out = truncated ? rows.slice(0, MAX_ROWS) : [...rows];
-    await log(checked.sql, `${out.length} rows${truncated ? " (truncated)" : ""} in ${Date.now() - started} ms`);
+    await logOutcome(entry, checked.sql, `${out.length} rows${truncated ? " (truncated)" : ""} in ${Date.now() - started} ms`);
     return text({ columns: rows.columns?.map((c) => c.name) ?? [], row_count: out.length, truncated, rows: out });
   } catch (e) {
     const message = e instanceof Error ? e.message : String(e);
-    await log(checked.sql, `error: ${message}`);
+    await logOutcome(entry, checked.sql, `error: ${message}`);
     return text(`The query failed: ${message}`, true);
   }
 }
 
-/** Every query, refused or run, goes in admin_log. */
-async function log(sql: string, outcome: string) {
-  await db
-    .insert(adminLog)
-    .values({ actorId: null, entity: "insights", entityId: 0, action: "mcp_query", detail: `${outcome}\n${sql}`.slice(0, 2000) })
-    .catch((e) => console.error(JSON.stringify({ severity: "ERROR", message: "insights_log_failed", error: String(e) })));
+const logDetail = (sql: string, outcome: string) => `${outcome}\n${sql}`.slice(0, 2000);
+const logFailed = (e: unknown) => console.error(JSON.stringify({ severity: "ERROR", message: "insights_log_failed", error: String(e) }));
+
+/** Every query, refused or run, goes in admin_log. The row's id, or null if it couldn't be written. */
+async function log(sql: string, outcome: string): Promise<number | null> {
+  try {
+    const [row] = await db
+      .insert(adminLog)
+      .values({ actorId: null, entity: "insights", entityId: 0, action: "mcp_query", detail: logDetail(sql, outcome) })
+      .returning({ id: adminLog.id });
+    return row.id;
+  } catch (e) {
+    logFailed(e);
+    return null;
+  }
+}
+
+async function logOutcome(id: number, sql: string, outcome: string) {
+  await db.update(adminLog).set({ detail: logDetail(sql, outcome) }).where(eq(adminLog.id, id)).catch(logFailed);
 }
 
 const result = (id: Rpc["id"], value: unknown) => ({ jsonrpc: "2.0", id, result: value });
