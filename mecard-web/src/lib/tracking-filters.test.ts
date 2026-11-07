@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { classifyContactLink } from "./contact-action";
-import { deviceClass, isBotUserAgent } from "./tracking";
+import { deviceClass, isBotUserAgent, OWNER_SKIPPED_EVENTS } from "./tracking";
 
 const UA = {
   iphone: "Mozilla/5.0 (iPhone; CPU iPhone OS 18_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.1 Mobile/15E148 Safari/604.1",
@@ -51,4 +51,9 @@ test("contact links are classified by what they do", () => {
   assert.deepEqual(classifyContactLink("https://shop.example.com/x", "", "  Our   brochure "), { kind: "website", label: "Our brochure" });
   assert.equal(classifyContactLink("#", "email"), null);
   assert.equal(classifyContactLink("javascript:void(0)"), null);
+});
+
+test("owners' own views, taps and saves are skipped, their shares are not", () => {
+  for (const name of ["profile_viewed", "contact_action", "vcard_downloaded"]) assert.ok(OWNER_SKIPPED_EVENTS.has(name));
+  assert.equal(OWNER_SKIPPED_EVENTS.has("share_intent"), false);
 });

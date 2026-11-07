@@ -26,6 +26,9 @@ export const ALLOWED_EVENTS = new Set([
   "first_profile_created",
 ]);
 
+/** Owners looking at, tapping or saving their own card don't count. */
+export const OWNER_SKIPPED_EVENTS = new Set(["profile_viewed", "contact_action", "vcard_downloaded"]);
+
 export const SESSION_COOKIE = "mecard_sid";
 
 /** WordPress sanitize_key(): lowercase letters, digits, _ and -. */

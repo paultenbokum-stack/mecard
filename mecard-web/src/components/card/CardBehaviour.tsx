@@ -216,7 +216,12 @@ export function CardBehaviour({ config }: { config: CardConfig }) {
       startDownload();
     });
     on("click", "#download-close", () => message && (message.style.display = "none"));
-    if (config.autoDownload && !getCookie(`me_${config.profileId}`) && once(`auto:${config.profileId}`)) startDownload();
+    // The button's save is counted by the click handler above; an automatic one has no click, so
+    // it's counted here. Store only: GA4's download-contact stays a deliberate button press.
+    if (config.autoDownload && !getCookie(`me_${config.profileId}`) && once(`auto:${config.profileId}`)) {
+      startDownload();
+      track("vcard_downloaded", { meta: { trigger: "auto" } });
+    }
     cleanups.push(() => timers.forEach(clearTimeout));
 
     // ── mecard-viral.js (free profiles) ────────────────────

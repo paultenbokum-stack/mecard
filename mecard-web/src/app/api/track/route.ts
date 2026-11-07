@@ -3,7 +3,7 @@ import { db } from "@/db/client";
 import { events } from "@/db/schema";
 import { isProfileOwner } from "@/lib/access";
 import { currentUserId } from "@/lib/session";
-import { clientInfo, eventRow, isBotUserAgent, newSessionId, SESSION_COOKIE } from "@/lib/tracking";
+import { clientInfo, eventRow, isBotUserAgent, newSessionId, OWNER_SKIPPED_EVENTS, SESSION_COOKIE } from "@/lib/tracking";
 
 // POST /api/track — the browser side of the event store (was
 // /wp-json/mecard/v1/track, which next.config.ts rewrites here).
@@ -26,9 +26,10 @@ export async function POST(req: NextRequest) {
   const row = eventRow({ body, sessionCookie: cookie, userId, ...info });
   if (!row) return NextResponse.json({ error: "invalid_event" }, { status: 400 });
 
-  // Owners looking at (or tapping) their own card don't count (the page skips
-  // sending them too; this covers pages opened before the check came back).
-  if ((row.name === "profile_viewed" || row.name === "contact_action") && userId && row.profileId && (await isProfileOwner(userId, row.profileId))) {
+  // Owners looking at, tapping or saving their own card don't count (the page skips
+  // sending views and taps too; this covers pages opened before the check came back,
+  // and automatic saves, which fire before it does).
+  if (OWNER_SKIPPED_EVENTS.has(row.name) && userId && row.profileId && (await isProfileOwner(userId, row.profileId))) {
     return NextResponse.json({ ok: true, skipped: "owner" });
   }
 
