@@ -1,6 +1,9 @@
 -- Insights by profile, company and account over time, to find where the
--- opportunities are. Same rule as 0012: IDs and counts only, never names, emails,
--- phone numbers, addresses, ip_hash or ua_hash.
+-- opportunities are. Same rule as 0012, IDs and counts only and never names,
+-- emails, phone numbers, addresses, ip_hash or ua_hash, with one exception:
+-- insights.companies shows company names, so advice can name the business. Those
+-- that are just a person's name are left out: sign-up names a company
+-- "<first> <last> Company" when nobody gave it one.
 
 -- Public engagement per South African day, per profile, by source and device. A
 -- profile's owner and manager looking at it don't count. company_id and
@@ -72,6 +75,16 @@ LEFT JOIN (
 CREATE OR REPLACE VIEW insights.companies AS
 SELECT
   c.id AS company_id,
+  CASE
+    WHEN regexp_replace(lower(trim(c.name)), '\s+company$', '') IN (
+      lower(trim(u.first_name || ' ' || u.last_name)), lower(trim(u.display_name)), lower(trim(u.email)), ''
+    ) OR EXISTS (
+      SELECT 1 FROM profiles n
+      WHERE n.company_id = c.id
+        AND regexp_replace(lower(trim(c.name)), '\s+company$', '') = lower(trim(n.first_name || ' ' || n.last_name))
+    ) THEN NULL
+    ELSE c.name
+  END AS company_name,
   c.owner_id AS owner_user_id,
   c.created_at,
   (c.logo_path <> '') AS has_logo,
@@ -92,6 +105,7 @@ SELECT
   o.owner_paid_cents,
   o.owner_last_paid_at
 FROM companies c
+LEFT JOIN users u ON u.id = c.owner_id
 LEFT JOIN LATERAL (
   SELECT
     coalesce(sum(p.views_total), 0) AS views_total,
@@ -165,7 +179,7 @@ COMMENT ON VIEW insights.profile_engagement_daily IS 'Public engagement per Sout
 --> statement-breakpoint
 COMMENT ON VIEW insights.profiles IS 'One row per profile: owner, manager, company, plan (standard/pro), archived, onboarding stage, linked cards, and views, saves and contact taps in total, the last 30 days and the 30 days before.';
 --> statement-breakpoint
-COMMENT ON VIEW insights.companies IS 'One row per company: owner, logo, active, Pro and archived profiles, cards and unlinked cards, engagement in total and recent, and paid orders by its owner (repeated if they own several companies).';
+COMMENT ON VIEW insights.companies IS 'One row per company: its name (null when that is just a person''s name), owner, logo, active, Pro and archived profiles, cards and unlinked cards, engagement in total and recent, and paid orders by its owner (repeated if they own several companies).';
 --> statement-breakpoint
 COMMENT ON VIEW insights.accounts IS 'One row per account (staff excluded): activity, profiles owned or managed, companies, cards, unlinked cards, paid orders and spend, Pro upgrades paid for but unused, basket lines, quotes, and recent engagement.';
 --> statement-breakpoint

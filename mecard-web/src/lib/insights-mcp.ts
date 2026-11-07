@@ -12,7 +12,8 @@ const PROTOCOL_VERSIONS = ["2025-11-25", "2025-06-18", "2025-03-26", "2024-11-05
 const SERVER_INFO = { name: "mecard-insights", version: "1.0.0" };
 
 const INSTRUCTIONS =
-  "MeCard's conversion data: read-only views in the insights schema, with IDs and counts only. " +
+  "MeCard's conversion data: read-only views in the insights schema, with IDs, counts and company names only. " +
+  "Link each result to its staff page: /admin/users/<id>/, /admin/companies/<id>/ or /admin/profiles/<id>/ on mecard.co.za. " +
   "Call schema first to see the views and their columns, then query with one SELECT (500 rows, 10 seconds at most). " +
   "Times are UTC timestamps; engagement_daily days are South African dates.";
 
