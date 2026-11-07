@@ -46,10 +46,16 @@ function ownedProfiles(userId: number) {
     .limit(2);
 }
 
+/** The user's profile, if they have one yet. */
+export async function existingOnboardingProfile(userId: number): Promise<number | null> {
+  const [existing] = await ownedProfiles(userId);
+  return existing?.id ?? null;
+}
+
 /** ensure_current_user_profile(): the user's profile, created from their account the first time. */
 export async function ensureOnboardingProfile(userId: number): Promise<number> {
-  const [existing] = await ownedProfiles(userId);
-  if (existing) return existing.id;
+  const existing = await existingOnboardingProfile(userId);
+  if (existing) return existing;
   const [u] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
   const [first, ...rest] = (u.displayName || "").split(" ");
   const id = await createProfile(

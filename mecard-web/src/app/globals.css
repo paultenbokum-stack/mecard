@@ -2,3 +2,42 @@ body {
   margin: 0;
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 }
+
+/* Staff view-as: on every page, above the site header and any modal, so Exit is always in reach. */
+.view-as {
+  position: sticky;
+  top: 0;
+  z-index: 1100;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2) var(--space-4);
+  padding: var(--space-2) var(--space-4);
+  background: var(--ink);
+  color: var(--surface);
+  font-family: var(--font-text);
+  font-size: 15px;
+  line-height: 1.4;
+}
+.view-as__text {
+  margin: 0;
+}
+.view-as__exit {
+  padding: 4px 14px;
+  border: 1px solid var(--surface);
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--surface);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.view-as__exit:hover {
+  background: var(--surface);
+  color: var(--ink);
+}
+.view-as__exit:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}

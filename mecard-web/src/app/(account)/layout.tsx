@@ -3,7 +3,7 @@ import { CardShell } from "@/components/card/CardShell";
 import { SiteFooter, SiteHeader } from "@/components/card/SiteChrome";
 import { GoogleTag } from "@/components/GoogleTag";
 import { SignupConversion } from "@/components/SignupConversion";
-import { currentUserId } from "@/lib/session";
+import { currentUserId, isViewingAs } from "@/lib/session";
 import "./account.css";
 import "./shop.css";
 
@@ -13,6 +13,8 @@ export const metadata: Metadata = { robots: { index: false, follow: false } };
 // The Google tag is here too, for the basket and the signup and purchase conversions.
 export default async function AccountLayout({ children }: { children: React.ReactNode }) {
   const loggedIn = !!(await currentUserId());
+  // Staff viewing as a customer aren't that customer's page views or conversions.
+  const viewingAs = await isViewingAs();
   return (
     <CardShell>
       <SiteHeader loggedIn={loggedIn} detect />
@@ -20,8 +22,8 @@ export default async function AccountLayout({ children }: { children: React.Reac
         {children}
       </main>
       <SiteFooter />
-      <GoogleTag />
-      <SignupConversion />
+      {viewingAs ? null : <GoogleTag />}
+      {viewingAs ? null : <SignupConversion />}
     </CardShell>
   );
 }

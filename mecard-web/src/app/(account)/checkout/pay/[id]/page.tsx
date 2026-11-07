@@ -6,7 +6,7 @@ import { orderItems, orders } from "@/db/schema";
 import { AutoSubmit } from "@/components/shop/AutoSubmit";
 import { rands } from "@/lib/money";
 import { checkoutFields } from "@/lib/payfast";
-import { requireUserId } from "@/lib/session";
+import { isViewingAs, requireUserId } from "@/lib/session";
 import { devMarkPaidAction } from "@/lib/shop-actions";
 import { SITE_URL } from "@/lib/site";
 
@@ -32,6 +32,8 @@ export default async function PayPage({ params }: { params: Promise<{ id: string
     SITE_URL,
   );
   const isDev = process.env.NODE_ENV === "development";
+  // Staff viewing as the customer stay on this page: the form would go straight to PayFast.
+  const viewingAs = await isViewingAs();
   return (
     <div className="acc__wrap acc__wrap--narrow">
       <h1>Pay for order</h1>
@@ -48,7 +50,7 @@ export default async function PayPage({ params }: { params: Promise<{ id: string
           </button>
         </form>
       </div>
-      {!isDev ? <AutoSubmit formId="payfast-form" /> : null}
+      {!isDev && !viewingAs ? <AutoSubmit formId="payfast-form" /> : null}
       {isDev ? (
         <form action={devMarkPaidAction} className="shop-dev">
           <input type="hidden" name="order_id" value={order.id} />

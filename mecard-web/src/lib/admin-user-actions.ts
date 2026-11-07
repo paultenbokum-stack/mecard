@@ -1,6 +1,7 @@
 "use server";
 
 import { and, eq, ne, or, sql } from "drizzle-orm";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { db } from "@/db/client";
 import { cards, companies, orders, profiles, users } from "@/db/schema";
@@ -9,6 +10,8 @@ import { logAdmin } from "@/lib/admin-log";
 import { cleanEmail } from "@/lib/form-values";
 import { requestPasswordReset } from "@/lib/password-reset";
 import { requireAdmin } from "@/lib/session";
+import { VIEW_AS_COOKIE, VIEW_AS_LABEL_COOKIE, VIEW_AS_TTL_SECONDS } from "@/lib/view-as-rules";
+import { signViewAsToken } from "@/lib/view-as-token";
 
 // Staff management of accounts (WordPress's Users screen).
 
@@ -51,6 +54,24 @@ export async function saveUserAction(form: FormData) {
   await db.update(users).set(values).where(eq(users.id, id));
   await logAdmin(me, "user", id, "edited", changed.map((k) => (k === "isAdmin" ? `role ${isAdmin ? "staff" : "customer"}` : k === "email" ? `email ${u.email} → ${email}` : k)).join(", "));
   back(path, { saved: "Account saved." });
+}
+
+/** See the site as this customer: read-only, for an hour at most, and on the record. */
+export async function viewAsCustomerAction(form: FormData) {
+  const me = await requireAdmin();
+  const id = Number(form.get("user_id"));
+  const [u] = await db.select().from(users).where(eq(users.id, id));
+  if (!u) back("/admin/users/", { error: "Account not found." });
+  if (u.isAdmin) back(`/admin/users/${id}/`, { error: "Staff accounts can't be viewed as a customer." });
+
+  const expiresAt = Math.floor(Date.now() / 1000) + VIEW_AS_TTL_SECONDS;
+  const value = signViewAsToken({ actorId: me, targetId: id, expiresAt }, process.env.AUTH_SECRET ?? "");
+  await logAdmin(me, "user", id, "viewed as customer");
+  const jar = await cookies();
+  const options = { path: "/", maxAge: VIEW_AS_TTL_SECONDS, sameSite: "lax", secure: process.env.NODE_ENV === "production" } as const;
+  jar.set(VIEW_AS_COOKIE, value, { ...options, httpOnly: true });
+  jar.set(VIEW_AS_LABEL_COOKIE, u.displayName || `${u.firstName} ${u.lastName}`.trim() || u.email, options);
+  redirect("/manage/");
 }
 
 export async function createUserAction(form: FormData) {

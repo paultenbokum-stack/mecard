@@ -5,8 +5,8 @@ import { db } from "@/db/client";
 import { profiles, users } from "@/db/schema";
 import { PageTitle } from "@/components/account/Signup";
 import { OnboardingWizard } from "@/components/account/OnboardingWizard";
-import { accountState, ensureOnboardingProfile, type Onboarding } from "@/lib/onboarding";
-import { currentUserId } from "@/lib/session";
+import { accountState, ensureOnboardingProfile, existingOnboardingProfile, type Onboarding } from "@/lib/onboarding";
+import { currentUserId, isViewingAs } from "@/lib/session";
 import "../onboarding.css";
 
 export const metadata: Metadata = { title: { absolute: "Onboarding - MeCard" } };
@@ -18,7 +18,16 @@ export default async function OnboardingPage() {
   const state = await accountState(userId);
   if (state === "existing") redirect("/manage/");
 
-  const profileId = await ensureOnboardingProfile(userId);
+  // Opening this page creates a first profile, which view-as mustn't do.
+  const profileId = (await isViewingAs()) ? await existingOnboardingProfile(userId) : await ensureOnboardingProfile(userId);
+  if (!profileId) {
+    return (
+      <div className="acc__wrap acc__wrap--narrow">
+        <PageTitle>Create your MeCard</PageTitle>
+        <div className="acc-panel acc-panel--white">This customer hasn&rsquo;t started yet. They&rsquo;ll see the first onboarding step here.</div>
+      </div>
+    );
+  }
   const [[p], [u]] = await Promise.all([
     db.select().from(profiles).where(eq(profiles.id, profileId)).limit(1),
     db.select({ email: users.email }).from(users).where(eq(users.id, userId)).limit(1),

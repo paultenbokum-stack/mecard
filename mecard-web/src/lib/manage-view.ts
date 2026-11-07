@@ -4,7 +4,7 @@ import { cache } from "react";
 import { db } from "@/db/client";
 import { companies, profiles, users } from "@/db/schema";
 import { type AccountMode, canGoIndividual, manageView, shouldMarkTeams } from "./manage-view-rules";
-import { currentUserId } from "./session";
+import { currentUserId, isViewingAs } from "./session";
 
 /** The signed-in user's /manage/ view (manageView) and, in the single view, their profile. Once per request. */
 export const manageViewFor = cache(async (userId?: number | null) => {
@@ -32,7 +32,7 @@ export const manageViewFor = cache(async (userId?: number | null) => {
   const mode = (user?.mode ?? null) as AccountMode;
   const facts = { mode, ownProfiles: own.length, ownsCompany: owned.length > 0, companyIsOwnBranding };
   // Once they have a team the account is a team account, even if they archive down to one profile later.
-  if (shouldMarkTeams(facts)) await setAccountMode(id, "teams");
+  if (shouldMarkTeams(facts) && !(await isViewingAs())) await setAccountMode(id, "teams");
   const view = manageView(facts);
   return { view, profileId: view === "single" ? own[0].id : null, mode: shouldMarkTeams(facts) ? ("teams" as const) : mode, canGoIndividual: canGoIndividual(facts) };
 });

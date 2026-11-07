@@ -11,7 +11,7 @@ import { cardTypesFor } from "@/lib/catalog";
 import { couponForLines } from "@/lib/coupons";
 import { imageUrl } from "@/lib/images/paths";
 import { rands } from "@/lib/money";
-import { requireUserId } from "@/lib/session";
+import { isViewingAs, requireUserId } from "@/lib/session";
 import { applyCouponAction, removeCouponAction, removeLineAction, updateBasketAction } from "@/lib/shop-actions";
 
 export const metadata: Metadata = { title: { absolute: "Basket - MeCard" } };
@@ -23,7 +23,7 @@ export default async function BasketPage({ searchParams }: { searchParams: Promi
   const userId = await requireUserId("/basket/");
   const sp = await searchParams;
   const cart = await cartView(userId);
-  if (Number(sp.cancelled) > 0) await paymentCancelledReturn(userId, Number(sp.cancelled)).catch(() => undefined);
+  if (Number(sp.cancelled) > 0 && !(await isViewingAs())) await paymentCancelledReturn(userId, Number(sp.cancelled)).catch(() => undefined);
   const profileIds = cart.lines.map((l) => l.profileId).filter((x): x is number => !!x);
   const names = profileIds.length
     ? new Map((await db.select({ id: profiles.id, f: profiles.firstName, l: profiles.lastName }).from(profiles).where(inArray(profiles.id, profileIds))).map((p) => [p.id, `${p.f} ${p.l}`.trim()]))

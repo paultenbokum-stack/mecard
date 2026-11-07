@@ -9,7 +9,7 @@ import { SubmitButton } from "@/components/admin/SubmitButton";
 import { AdminHeader, type AdminSearchParams, Badge, Breadcrumbs, Card, Flash } from "@/components/admin/ui";
 import { userDeleteGuard } from "@/lib/admin-guards";
 import { createQuoteForUserAction } from "@/lib/admin-quote-actions";
-import { deleteUserAction, saveUserAction, sendResetAction, userDeleteCounts } from "@/lib/admin-user-actions";
+import { deleteUserAction, saveUserAction, sendResetAction, userDeleteCounts, viewAsCustomerAction } from "@/lib/admin-user-actions";
 import { ENTITLEMENT_STATUS_LABEL, ENTITLEMENT_TYPE_LABEL } from "@/lib/entitlement-labels";
 import { imageUrl } from "@/lib/images/paths";
 import { listLibrary } from "@/lib/media-library";
@@ -57,6 +57,14 @@ export default async function AdminUser({ params, searchParams }: { params: Prom
     <>
       <Breadcrumbs items={[{ href: "/admin/", label: "Admin" }, { href: "/admin/users/", label: "Users" }, { label: name }]} />
       <AdminHeader title={name}>
+        {u.isAdmin ? null : (
+          <form action={viewAsCustomerAction}>
+            <input type="hidden" name="user_id" value={u.id} />
+            <button type="submit" className="adm-btn" title="See the live site as this customer. Read-only, and logged.">
+              <i className="fas fa-eye" aria-hidden="true" /> View as customer
+            </button>
+          </form>
+        )}
         <form action={createQuoteForUserAction}>
           <input type="hidden" name="user_id" value={u.id} />
           <button type="submit" className="adm-btn" title="A quote filled in from this account">

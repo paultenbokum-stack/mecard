@@ -11,7 +11,7 @@ import { checkoutStarted } from "@/lib/checkout-events";
 import { needsShipping, shippingOptions } from "@/lib/checkout-shipping";
 import { couponForLines } from "@/lib/coupons";
 import { rands } from "@/lib/money";
-import { requireUserId } from "@/lib/session";
+import { isViewingAs, requireUserId } from "@/lib/session";
 
 export const metadata: Metadata = { title: { absolute: "Checkout - MeCard" } };
 
@@ -40,7 +40,7 @@ export default async function CheckoutPage() {
       </div>
     );
   }
-  await checkoutStarted(userId, cart.lines.map((l) => l.productId), cart.subtotalCents).catch(() => undefined);
+  if (!(await isViewingAs())) await checkoutStarted(userId, cart.lines.map((l) => l.productId), cart.subtotalCents).catch(() => undefined);
   const [[u], companyRows] = await Promise.all([
     db.select().from(users).where(eq(users.id, userId)),
     // "Copy from my profile": the company on the user's own profiles (its record, or the name typed on a standard profile).
