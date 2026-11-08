@@ -23,6 +23,14 @@ const load = unstable_cache(
 /** "R199" for whole rands, else "R199.50". */
 export const priceWords = (cents: number) => rands(cents).replace(/\.00$/, "");
 
+/** Each active product's price in cents, by product id. Empty if the database can't be read. */
+export async function productPriceCents(): Promise<Record<number, number>> {
+  return load().catch((e) => {
+    console.error("[products] loading prices", e);
+    return {} as Record<number, number>;
+  });
+}
+
 /** Each shown product's price as text, by product id. Empty if the database can't be read, so a page still renders. */
 export async function productPriceWords(): Promise<Record<number, string>> {
   const prices = await load().catch((e) => {

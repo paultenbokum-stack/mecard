@@ -11,9 +11,9 @@ import { MiniCart } from "@/components/shop/MiniCart";
 // my_wp_nav_menu_args().
 
 const MENU = [
+  ["For teams", "/for-teams/"],
   ["How it works", "/how-it-works/"],
   ["Gallery", "/gallery/"],
-  ["Sign Up", "/sign-up/"],
   ["Log in", "/my-account/"],
   ["Contact Us", "/contact-us/"],
 ] as const;

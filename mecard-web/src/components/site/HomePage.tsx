@@ -2,40 +2,58 @@ import Image from "next/image";
 import Link from "next/link";
 import { PageScripts } from "./PageScripts";
 
-// The homepage, built on the MeCard design system (docs/design-system.md) rather
-// than the exported WordPress markup the other site pages use, with the copy of the
-// live WordPress homepage (content/pages/home.json). Styles: (site)/home.css.
+// The homepage, team first, built on the MeCard design system (docs/design-system.md)
+// rather than the exported WordPress markup the other site pages use. Styles: (site)/home.css.
 
-const faq = (pro?: string) => [
+const faq = [
   {
     q: "Are there any monthly or recurring fees?",
-    a: `The Free plan is free forever. MeCard Pro is ${pro ? `${pro} once off` : "a once-off upgrade"} — no monthly charges, no surprises. NFC cards are a once-off purchase too. Bundles include Pro.`,
+    a: "No. Cards and Pro profiles are once-off purchases, and the team dashboard is free.",
   },
   {
-    q: "Do I need to buy a card to use MeCard?",
-    a: "Not at all. Your digital profile works immediately via QR code, WhatsApp, and a shareable link. The NFC card is a premium add-on for people who want the physical tap-to-share experience.",
+    q: "Does everyone need a physical card?",
+    a: "No. Every profile works by QR code, WhatsApp and a shareable link. Add cards for the people who need them.",
   },
   {
-    q: "Can I try it before I pay?",
-    a: "Absolutely. Start with a free profile — it’s fully functional. You can share it, add it to your home screen, and see your view count. When you’re ready for company branding, analytics, and lead capture, upgrade to Pro. Your profile and data carry forward seamlessly.",
+    q: "What happens when someone leaves?",
+    a: "Archive their profile and move their card to the replacement without reprinting.",
   },
   {
     q: "How does the NFC card work?",
-    a: "You hold your MeCard up to someone’s phone. It instantly opens your digital profile — no app required on their end. They can save your contact details with one tap. It works with virtually all modern iPhones and Android phones.",
+    a: "You hold your MeCard up to someone’s phone. It instantly opens your digital profile with no app required on their end, and they can save your contact details with one tap. It works with virtually all modern iPhones and Android phones.",
   },
   {
-    q: "What about teams and companies?",
-    a: "If you need profiles and cards for your team, tap “For my team” on the signup page. You’ll get team management, centralised branding, and bulk card ordering. Each team member gets their own profile that they can share independently.",
+    q: "Can I buy just one?",
+    a: "Yes. Create a free profile in 60 seconds and add a card whenever you want.",
   },
 ];
 
-function Check() {
-  return <i className="fa-solid fa-check mc-home__tick" aria-hidden="true" />;
-}
+const STEPS = [
+  { title: "Tap your card", text: "Hold your card to any modern iPhone or Android phone, or let them scan the QR code." },
+  { title: "They see your profile", text: "It opens instantly in their browser with your photo, details and company branding, and no app is needed." },
+  { title: "You’re saved", text: "One tap puts your details in their contacts, ready to call, email or WhatsApp." },
+];
 
-function Cross() {
-  return <i className="fa-solid fa-xmark mc-home__cross" aria-hidden="true" />;
-}
+const SHARES = [
+  { kind: "nfc", icon: "fa-solid fa-wifi", name: "NFC", text: "Tap a card or phone tag" },
+  { kind: "wa", icon: "fa-brands fa-whatsapp", name: "WhatsApp", text: "Send it to any number" },
+  { kind: "qr", icon: "fa-solid fa-qrcode", name: "QR code", text: "Scan it, or print it anywhere" },
+  { kind: "link", icon: "fa-solid fa-link", name: "Link", text: "Email, SMS or signature" },
+];
+
+// Sample rows for the product illustrations.
+const PEOPLE = [
+  { initials: "TM", name: "Thandi Mokoena", title: "Operations manager", status: "Using", tone: "using" },
+  { initials: "JB", name: "Johan Botha", title: "Sales manager", status: "Using", tone: "using" },
+  { initials: "AP", name: "Aisha Patel", title: "Account manager", status: "Quiet", tone: "quiet" },
+  { initials: "NK", name: "Naledi Khumalo", title: "Sales representative", status: "Not started", tone: "new" },
+];
+const WEEKS = [22, 30, 26, 38, 34, 46, 42, 52, 48, 60, 56, 68];
+const RANKS = [
+  { name: "Johan Botha", views: 31 },
+  { name: "Thandi Mokoena", views: 14 },
+  { name: "Aisha Patel", views: 3 },
+];
 
 // The signal motif: a dot and rings, drawn in currentColor.
 function Signal({ className }: { className?: string }) {
@@ -87,6 +105,68 @@ function HeroDevice() {
   );
 }
 
+function ManageShot() {
+  return (
+    <div className="mc-home__panel mc-home__panel--tint">
+      <div className="mc-shot" aria-hidden="true">
+        <div className="mc-shot__bar">
+          <span /><span /><span />
+          <code>mecard.co.za/manage</code>
+        </div>
+        <div className="mc-shot__head">
+          <strong>Riverside Logistics</strong>
+          <em>Add people</em>
+        </div>
+        <div className="mc-shot__tabs">
+          <b>People</b><span>Cards</span><span>Branding</span><span>Analytics</span>
+        </div>
+        <ul className="mc-shot__people">
+          {PEOPLE.map((p) => (
+            <li key={p.name}>
+              <span className="mc-shot__avatar">{p.initials}</span>
+              <span className="mc-shot__person"><b>{p.name}</b><small>{p.title}</small></span>
+              <span className={`mc-shot__status mc-shot__status--${p.tone}`}>{p.status}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+      <span className="mc-home__toast" aria-hidden="true"><i className="fa-solid fa-check" />Card moved to the new starter</span>
+    </div>
+  );
+}
+
+function AnalyticsShot() {
+  const peak = Math.max(...WEEKS);
+  const top = Math.max(...RANKS.map((r) => r.views));
+  return (
+    <div className="mc-home__panel">
+      <div className="mc-shot mc-shot--stats" aria-hidden="true">
+        <strong className="mc-shot__title">Team analytics, last 30 days</strong>
+        <dl className="mc-shot__stats">
+          <div><dd>124</dd><dt>views</dt></div>
+          <div><dd>38</dd><dt>contacts saved</dt></div>
+          <div><dd>21</dd><dt>calls and messages</dt></div>
+        </dl>
+        <div className="mc-shot__bars">
+          {WEEKS.map((w, i) => (
+            <span key={i} style={{ height: `${Math.round((w / peak) * 100)}%`, opacity: i === WEEKS.length - 1 ? 1 : 0.35 }} />
+          ))}
+        </div>
+        <ul className="mc-shot__ranks">
+          {RANKS.map((r) => (
+            <li key={r.name}>
+              <b>{r.name}</b>
+              <span className="mc-shot__track"><span style={{ width: `${Math.round((r.views / top) * 100)}%` }} /></span>
+              <small>{r.views}</small>
+            </li>
+          ))}
+        </ul>
+      </div>
+      <p className="mc-home__panel-note">Sample figures</p>
+    </div>
+  );
+}
+
 /** Prices come from the products table. A missing one (the database couldn't be read) is left out. */
 type HomePrices = { pro?: string; classic?: string; custom?: string; bundle?: string };
 
@@ -97,18 +177,86 @@ export function HomePage({ prices }: { prices: HomePrices }) {
         <div className="mc-home__wrap mc-home__hero-grid">
           <div className="mc-home__hero-copy">
             <h1 className="mc-home__hero-title">
-              Electronic and tech-savvy smart business cards.
+              Smart business cards for your whole team.
               <span className="mc-home__hero-title-sub">Built for functionality. Designed to make a lasting impression.</span>
             </h1>
-            <p className="mc-home__lead">Tap your nfc business card on a phone to share contact information instantly</p>
-            <p className="mc-home__lead">Create a professional profile in 60 seconds. Share it via NFC, QR code, or WhatsApp. No app to install.</p>
+            <p className="mc-home__lead">Tap a card on any phone and your contact details are saved instantly, with no app to install.</p>
+            <p className="mc-home__lead">Add people, keep everyone on-brand and see who’s using their card, all from one dashboard.</p>
             <div className="mc-home__ctas">
-              <Link href="/sign-up/" className="mc-btn mc-btn-primary mc-btn-lg mc-when-out">Create my free Profile</Link>
+              <Link href="/for-teams/" className="mc-btn mc-btn-primary mc-btn-lg mc-when-out">See team pricing</Link>
               <Link href="/manage/" className="mc-btn mc-btn-primary mc-btn-lg mc-when-in">Go to Dashboard</Link>
-              <Link href="/for-teams/" className="mc-btn mc-btn-outline mc-btn-lg">For my team</Link>
+              <Link href="/how-it-works/" className="mc-btn mc-btn-outline mc-btn-lg">How it works</Link>
             </div>
+            <p className="mc-home__solo-line mc-when-out">Just you? <Link href="/sign-up/?for=me">Create your free profile in 60 seconds</Link></p>
           </div>
           <HeroDevice />
+        </div>
+      </section>
+
+      <section className="mc-home__section mc-home__section--features" aria-labelledby="why-heading">
+        <div className="mc-home__wrap">
+          <div className="mc-home__head">
+            <span className="mc-label">Why teams choose MeCard</span>
+            <h2 id="why-heading">Everything your team needs, in one place</h2>
+          </div>
+
+          <div className="mc-home__feature mc-reveal">
+            <div className="mc-home__feature-copy">
+              <h3>Cards for your whole team</h3>
+              <p className="mc-home__lead">Your design or your logo on a card for every person, shipped together and each linked to the right profile.</p>
+              <p>These are once-off prices with no monthly fees, and you can add a card for each new starter.</p>
+              <Link href="/for-teams/" className="mc-home__feature-link">See team pricing</Link>
+            </div>
+            <div className="mc-home__panel mc-home__panel--tint">
+              <div className="mc-home__cards" aria-hidden="true">
+                <Image className="mc-home__cards-back" src="/images/home/card-classic.webp" alt="" width={900} height={600} />
+                <Image className="mc-home__cards-front" src="/images/home/card-custom.webp" alt="" width={900} height={563} />
+              </div>
+              <dl className="mc-home__price-row">
+                <div><dd>{prices.custom}</dd><dt>Custom card</dt><small>Full custom design</small></div>
+                <div><dd>{prices.classic}</dd><dt>Classic card</dt><small>White + your logo</small></div>
+                <div><dd>{prices.bundle}</dd><dt>Classic bundle</dt><small>Card + Pro + phone tag</small></div>
+              </dl>
+            </div>
+          </div>
+
+          <div className="mc-home__feature mc-home__feature--flip mc-reveal">
+            <div className="mc-home__feature-copy">
+              <h3>Every way to share</h3>
+              <p className="mc-home__lead">However you meet someone, your details land in their phone in one tap, with no app needed on either side.</p>
+            </div>
+            <div className="mc-home__panel">
+              <div className="mc-home__share-grid">
+                {SHARES.map((s) => (
+                  <div className={`mc-share mc-share--${s.kind}`} key={s.name}>
+                    <span className="mc-share__icon"><i className={s.icon} aria-hidden="true" /></span>
+                    <span>
+                      <span className="mc-share__label">{s.name}</span>
+                      <span className="mc-share__desc">{s.text}</span>
+                    </span>
+                  </div>
+                ))}
+              </div>
+              <p className="mc-home__saved-line"><span className="mc-badge mc-badge--connect"><span className="mc-badge__dot" />Saved to their contacts in one tap</span></p>
+            </div>
+          </div>
+
+          <div className="mc-home__feature mc-reveal">
+            <div className="mc-home__feature-copy">
+              <h3>Easy online management</h3>
+              <p className="mc-home__lead">Keep everyone in one place, and update your branding once for every profile to follow.</p>
+              <p>When someone leaves, move their card to the replacement without reprinting anything.</p>
+            </div>
+            <ManageShot />
+          </div>
+
+          <div className="mc-home__feature mc-home__feature--flip mc-reveal">
+            <div className="mc-home__feature-copy">
+              <h3>Rich analytics</h3>
+              <p className="mc-home__lead">See views, saved contacts and calls, emails and WhatsApps for each person, so you know the cards are being used and can spot who hasn’t started yet.</p>
+            </div>
+            <AnalyticsShot />
+          </div>
         </div>
       </section>
 
@@ -116,105 +264,39 @@ export function HomePage({ prices }: { prices: HomePrices }) {
         <div className="mc-home__wrap">
           <div className="mc-home__head">
             <span className="mc-label">How it works</span>
-            <h2 id="how-heading">Live in 60 Seconds</h2>
+            <h2 id="how-heading">One tap, you’re saved</h2>
           </div>
           <div className="mc-home__steps mc-reveal">
-            <div className="mc-step">
-              <span className="mc-step__num">1</span>
-              <h3 className="mc-step__title">Sign up</h3>
-              <p className="mc-step__desc">One-tap login with Google or LinkedIn. No passwords, no forms.</p>
-            </div>
-            <div className="mc-step">
-              <span className="mc-step__num">2</span>
-              <h3 className="mc-step__title">Build your profile</h3>
-              <p className="mc-step__desc">Add your name, photo, and contact details. We pre-fill what we can.</p>
-            </div>
-            <div className="mc-step">
-              <span className="mc-step__num">3</span>
-              <h3 className="mc-step__title">Start sharing</h3>
-              <p className="mc-step__desc">QR code, WhatsApp, order an NFC card — your profile is instantly shareable.</p>
-            </div>
+            {STEPS.map((s, i) => (
+              <div className="mc-step" key={s.title}>
+                <span className="mc-step__num">{i + 1}</span>
+                <h3 className="mc-step__title">{s.title}</h3>
+                <p className="mc-step__desc">{s.text}</p>
+              </div>
+            ))}
           </div>
+          <p className="mc-home__center-link"><Link href="/how-it-works/">See how it works</Link></p>
         </div>
       </section>
 
-      <section className="mc-home__section mc-home__section--soft" id="pricing" aria-labelledby="pricing-heading">
-        <div className="mc-home__wrap">
-          <div className="mc-home__head">
-            <span className="mc-label">Pricing</span>
-            <h2 id="pricing-heading">Start free. Upgrade when you’re ready</h2>
-            <p>No monthly fees. MeCard Pro is a once-off upgrade — that’s it.</p>
+      <section className="mc-home__solo" aria-labelledby="solo-heading">
+        <div className="mc-home__wrap mc-home__solo-inner">
+          <div>
+            <h2 id="solo-heading">Just for you?</h2>
+            <p>Your free profile is live in 60 seconds, ready to share by QR code and WhatsApp. Add a card from {prices.classic ?? "the shop"} whenever you want.</p>
           </div>
-          <div className="mc-home__prices mc-reveal">
-            <div className="mc-price-card">
-              <h3 className="mc-price-card__tier">Free</h3>
-              <p className="mc-price-card__price">R0</p>
-              <p className="mc-price-card__sub">Free forever — no catch</p>
-              <ul className="mc-features">
-                <li><Check />Digital profile with shareable link</li>
-                <li><Check />QR code &amp; WhatsApp sharing</li>
-                <li><Check />Save to home screen (PWA)</li>
-                <li><Check />Basic view count</li>
-                <li className="is-off"><Cross />Company branding &amp; colours</li>
-                <li className="is-off"><Cross />Remove MeCard branding</li>
-              </ul>
-              <Link href="/sign-up/" className="mc-btn mc-btn-outline">Get started free</Link>
-            </div>
-            <div className="mc-price-card mc-price-card--featured">
-              <span className="mc-badge">Recommended</span>
-              <h3 className="mc-price-card__tier mc-price-card__tier--pro">MeCard Pro</h3>
-              <p className="mc-price-card__price">{prices.pro}</p>
-              <p className="mc-price-card__sub">Once off. Everything in Free, plus:</p>
-              <ul className="mc-features">
-                <li><Check />WhatsApp button &amp; direct line</li>
-                <li><Check />Company branding &amp; custom colours</li>
-                <li><Check />Remove MeCard branding</li>
-              </ul>
-              <Link href="/sign-up/" className="mc-btn mc-btn-primary">Start free, upgrade anytime</Link>
-            </div>
-          </div>
+          <Link href="/sign-up/?for=me" className="mc-btn mc-btn-outline">Create my free profile</Link>
         </div>
       </section>
 
-      <section className="mc-home__section" id="cards" aria-labelledby="cards-heading">
-        <div className="mc-home__wrap">
-          <div className="mc-home__head">
-            <span className="mc-label">NFC smart business cards</span>
-            <h2 id="cards-heading">Add a physical card</h2>
-            <p>Tap your card on any phone to share your profile instantly. Works with Free or Pro.</p>
-          </div>
-          <div className="mc-home__products mc-reveal">
-            <Link href="/cards/" className="mc-product">
-              <Image src="/images/home/card-classic.webp" alt="Classic MeCard" width={900} height={600} />
-              <span className="mc-product__name">Classic card</span>
-              <span className="mc-product__price">{prices.classic}</span>
-              <span className="mc-product__desc">White + your logo</span>
-            </Link>
-            <Link href="/cards/" className="mc-product">
-              <Image src="/images/home/card-custom.webp" alt="Custom MeCard" width={900} height={563} />
-              <span className="mc-product__name">Custom card</span>
-              <span className="mc-product__price">{prices.custom}</span>
-              <span className="mc-product__desc">Full custom design</span>
-            </Link>
-            <Link href="/cards/" className="mc-product mc-product--best">
-              <span className="mc-badge">Best value</span>
-              <Image src="/images/home/bundle-classic.webp" alt="Classic Bundle" width={900} height={493} />
-              <span className="mc-product__name">Classic bundle</span>
-              <span className="mc-product__price">{prices.bundle}</span>
-              <span className="mc-product__desc">Card + Pro + phone tag</span>
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      <section className="mc-home__section" id="faq" aria-labelledby="faq-heading">
+      <section className="mc-home__section mc-home__section--faq" id="faq" aria-labelledby="faq-heading">
         <div className="mc-home__wrap mc-home__wrap--narrow">
           <div className="mc-home__head">
             <span className="mc-label">FAQ</span>
-            <h2 id="faq-heading">Common Questions</h2>
+            <h2 id="faq-heading">Common questions</h2>
           </div>
           <div className="mc-home__faq">
-            {faq(prices.pro).map((f, i) => (
+            {faq.map((f, i) => (
               <details key={f.q} open={i === 0}>
                 <summary>{f.q}</summary>
                 <p>{f.a}</p>
@@ -230,12 +312,11 @@ export function HomePage({ prices }: { prices: HomePrices }) {
             <Signal className="mc-cta__signal" />
             <div>
               <h2 className="mc-cta__heading">Ready to make an impression?</h2>
-              <p className="mc-cta__text">Create your free digital business card in 60 seconds. No credit card, no commitment.</p>
+              <p className="mc-cta__text">Work out what your team will cost, with no need to sign up first.</p>
             </div>
             <div className="mc-cta__actions">
-              <Link href="/sign-up/" className="mc-btn mc-btn-primary mc-btn-lg mc-when-out">Create my free profile</Link>
+              <Link href="/for-teams/" className="mc-btn mc-btn-primary mc-btn-lg mc-when-out">See team pricing</Link>
               <Link href="/manage/" className="mc-btn mc-btn-primary mc-btn-lg mc-when-in">Go to Dashboard</Link>
-              <Link href="/for-teams/" className="mc-btn mc-btn-outline">For my team</Link>
             </div>
           </div>
         </div>
