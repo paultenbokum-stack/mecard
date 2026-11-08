@@ -5,7 +5,6 @@ import { PageScripts } from "./PageScripts";
 // /how-it-works/: the tap, sharing and the profile. Styles: (site)/home.css.
 
 const SHARES = [
-  { kind: "nfc", icon: "fa-solid fa-wifi", title: "NFC tap", text: "Tap your card or phone tag on someone’s phone and their browser opens your profile." },
   { kind: "wa", icon: "fa-brands fa-whatsapp", title: "WhatsApp", text: "Type a phone number, hit send, and they get your profile in their WhatsApp chat." },
   { kind: "qr", icon: "fa-solid fa-qrcode", title: "QR code", text: "Show it on your phone, or download it to print on a poster, slide or window decal." },
   { kind: "link", icon: "fa-solid fa-link", title: "Link", text: "Copy your profile link into an email, an SMS or your email signature." },
@@ -47,7 +46,7 @@ export function HowItWorksPage() {
             <span className="mc-label">Sharing</span>
             <h2 id="share-heading">No card on you? Share it anyway</h2>
           </div>
-          <div className="mc-home__shares mc-reveal">
+          <div className="mc-home__shares mc-home__shares--three mc-reveal">
             {SHARES.map((s) => (
               <div className={`mc-share mc-share--${s.kind}`} key={s.title}>
                 <span className="mc-share__icon"><i className={s.icon} aria-hidden="true" /></span>
