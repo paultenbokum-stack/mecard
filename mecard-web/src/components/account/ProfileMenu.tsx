@@ -99,9 +99,6 @@ export function ProfileMenu({ profile, editHref, back, ownerEmail, invite, cards
           <button type="button" role="menuitem" onClick={downloadQr}>
             Download QR Code
           </button>
-          <Link role="menuitem" href={`/team/left/${profile.id}/`}>
-            Has left
-          </Link>
           <form action={archiveProfileAction}>
             {hidden}
             <input type="hidden" name="archive" value="1" />

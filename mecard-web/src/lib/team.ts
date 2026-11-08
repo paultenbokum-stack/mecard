@@ -191,22 +191,3 @@ export async function noteIfComplete(ownerId: number, companyId: number) {
   if (places === 0) await db.insert(events).values({ name: "team_names_completed", userId: ownerId, companyId, source: "team" });
 }
 
-/**
- * "Has left": the profile is archived and its cards move to the replacement, or
- * wait unlinked as spares. Classic cards printed with the old name stay printed.
- */
-export async function replaceLeaver(ownerId: number, profileId: number, replacement: { firstName: string; lastName: string; jobTitle: string } | null) {
-  const [old] = await db.select({ companyId: profiles.companyId, jobTitle: profiles.jobTitle }).from(profiles).where(eq(profiles.id, profileId)).limit(1);
-  if (!old) return null;
-  const linked = await db.select({ id: cards.id }).from(cards).where(and(eq(cards.profileId, profileId), eq(cards.archived, false)));
-  let newId: number | null = null;
-  if (replacement) {
-    newId = await createProfile({ id: ownerId, isAdmin: false }, { firstName: replacement.firstName, lastName: replacement.lastName, jobTitle: replacement.jobTitle || old.jobTitle, companyId: old.companyId });
-    await refreshProfilePages(newId);
-  }
-  for (const c of linked) await linkCard(c.id, newId);
-  await db.update(profiles).set({ archived: true, updatedAt: new Date() }).where(eq(profiles.id, profileId));
-  await refreshProfilePages(profileId);
-  await db.insert(events).values({ name: "card_reassigned", userId: ownerId, profileId, companyId: old.companyId, source: "team", meta: { outcome: replacement ? "moved" : "spare", cards: linked.length } });
-  return { newId, cards: linked.length };
-}

@@ -1,4 +1,4 @@
-/* The team flow: /team/setup/, /team/order/, /team/people/, /team/left/ and /join/. Design-system tokens only. */
+/* The team flow: /team/setup/, /team/order/, /team/people/ and /join/. Design-system tokens only. */
 
 .team { max-width: 1040px; margin: 0 auto; padding: var(--space-10) var(--space-5); color: var(--ink-muted); font-family: var(--font-text); line-height: 1.65; }
 .team--narrow { max-width: 620px; }
