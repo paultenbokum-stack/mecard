@@ -5,14 +5,14 @@ import type { ProductCents } from "@/lib/team-packages";
 // /for-teams/: the price comes first, before any signup. Styles: (site)/home.css.
 
 const TICKS = [
-  "Order on a headcount, then send your team one link to add their details",
+  "Order on a headcount, then add your team from a spreadsheet",
   "One logo and colour scheme across every card",
   "Someone left? Archive their profile and deactivate or reassign their card",
   "See who is using their card, person by person",
 ];
 
 const TILES = [
-  { title: "Add people your way", text: "Share one link so staff add themselves, or paste from a spreadsheet." },
+  { title: "Add people in bulk", text: "Paste your team from a spreadsheet, and invite staff to edit their own details." },
   { title: "Change branding once", text: "Update your logo or colours and every Pro profile follows." },
   { title: "Handle leavers", text: "Archive a profile so the old details disappear, then deactivate or reassign the card." },
   { title: "See what is working", text: "Views, saves and contact taps for each person, with a list of who has not started." },

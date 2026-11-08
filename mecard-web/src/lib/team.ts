@@ -11,8 +11,7 @@ import { createInvite } from "./invites";
 import { createProfile, linkCard, refreshProfilePages } from "./manage";
 import { recordUpload } from "./media-library";
 import { firstStylesheet, isPrivateAddress, normaliseSiteUrl, parseCompanySite, type SiteRead } from "./site-read";
-import { joinToken, type ListedPerson } from "./team-people-rules";
-import { siteUrl } from "./site";
+import type { ListedPerson } from "./team-people-rules";
 
 // The team flow's server side: reading a company's website, counting the places
 // a team has paid for, and adding people to them.
@@ -109,8 +108,6 @@ export async function readCompanySite(userId: number, rawUrl: string): Promise<S
 export const teamCompanies = (userId: number) =>
   db.select({ id: companies.id, name: companies.name, logoPath: companies.logoPath, accentColour: companies.accentColour }).from(companies).where(eq(companies.ownerId, userId)).orderBy(desc(companies.id));
 
-export const joinPath = (companyId: number) => `/join/${companyId}/${joinToken(companyId)}/`;
-export const joinUrl = (companyId: number) => siteUrl(joinPath(companyId));
 
 /** Cards bought and waiting for a person, and Pro upgrades bought and not used. Phone tags follow their card. */
 async function freePlaces(ownerId: number) {
@@ -168,7 +165,7 @@ async function linkNextCards(profileId: number, ownerId: number, person: { name:
 }
 
 /** Add one person to a team: their profile, the next bought card and a bought Pro upgrade. */
-export async function addTeamPerson(ownerId: number, companyId: number, person: ListedPerson & { mobile?: string }): Promise<number> {
+async function addTeamPerson(ownerId: number, companyId: number, person: ListedPerson): Promise<number> {
   const profileId = await createProfile({ id: ownerId, isAdmin: false }, { firstName: person.firstName, lastName: person.lastName, email: person.email, jobTitle: person.jobTitle, companyId });
   if (person.mobile) await db.update(profiles).set({ mobile: person.mobile }).where(eq(profiles.id, profileId));
   await linkNextCards(profileId, ownerId, { name: `${person.firstName} ${person.lastName}`.trim(), jobTitle: person.jobTitle });
@@ -182,7 +179,9 @@ export async function addTeamList(ownerId: number, companyId: number, people: Li
     const profileId = await addTeamPerson(ownerId, companyId, person);
     if (invite && person.email) await createInvite(profileId, person.email, invitedBy).catch((e) => console.error("[team] invite", e));
   }
-  await db.insert(events).values({ name: "team_people_added", userId: invitedBy, companyId, source: "team", meta: { method: "paste", count: people.length, with_email: people.filter((p) => p.email).length, invited: invite } });
+  const withEmail = people.filter((p) => p.email).length;
+  await db.insert(events).values({ name: "team_people_added", userId: invitedBy, companyId, source: "team", meta: { count: people.length, with_email: withEmail, with_mobile: people.filter((p) => p.mobile).length } });
+  if (invite && withEmail) await db.insert(events).values({ name: "team_invite_sent", userId: invitedBy, companyId, source: "team", meta: { count: withEmail } });
   await noteIfComplete(ownerId, companyId);
 }
 

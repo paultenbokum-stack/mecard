@@ -1,7 +1,7 @@
 import "server-only";
 import { and, desc, eq, inArray, sql } from "drizzle-orm";
 import { db } from "@/db/client";
-import { companies, profileInvites, profiles, users } from "@/db/schema";
+import { companies, events, profileInvites, profiles, users } from "@/db/schema";
 import { sendEmail } from "./email";
 import { inviteToken, verifyInviteToken } from "./invite-token";
 import { refreshProfilePages } from "./manage";
@@ -99,5 +99,6 @@ export async function acceptInvite(inviteId: number, userId: number, opts: { req
     await tx.update(profileInvites).set({ status: "accepted" }).where(eq(profileInvites.id, inviteId));
   });
   await refreshProfilePages(inv.profileId);
+  await db.insert(events).values({ name: "team_invite_accepted", userId, profileId: inv.profileId, source: "invite" }).catch(() => undefined);
   return { ok: true, profileId: inv.profileId };
 }

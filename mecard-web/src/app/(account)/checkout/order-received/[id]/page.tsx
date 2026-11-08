@@ -69,7 +69,7 @@ export default async function OrderReceivedPage({ params }: { params: Promise<{ 
       {teamOrder ? (
         <section className="acc-panel" aria-labelledby="team-next">
           <h2 id="team-next">Next, tell us who’s on the team</h2>
-          <p>Send your team one link and they’ll add their own details. Each card goes to print once its name is in.</p>
+          <p>Paste your team from a spreadsheet, and we’ll set up everyone’s profile. Each card goes to print once its name is in.</p>
           <Link className="acc-btn acc-btn--primary" href="/team/people/">Add my people</Link>
         </section>
       ) : null}

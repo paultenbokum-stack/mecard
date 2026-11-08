@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { requireUserId } from "@/lib/session";
-import { joinUrl, teamCompanies, teamPlaces, teamProfiles } from "@/lib/team";
+import { teamCompanies, teamPlaces, teamProfiles } from "@/lib/team";
 import { TeamPeople } from "./TeamPeople";
 import "../team.css";
 
@@ -26,7 +26,7 @@ export default async function TeamPeoplePage({ searchParams }: { searchParams: P
         </div>
         {sp.added ? <p className="team-ok" role="status">{sp.added === "1" ? "1 person added." : `${sp.added} people added.`}</p> : null}
         {sp.error ? <p className="team-error" role="alert">Add at least one name to the list.</p> : null}
-        <TeamPeople companyId={company.id} company={company.name} url={joinUrl(company.id)} joined={people.length} total={total} />
+        <TeamPeople companyId={company.id} added={people.length} total={total} />
         {people.length ? (
           <section className="team-panel">
             <h2>{company.name}</h2>

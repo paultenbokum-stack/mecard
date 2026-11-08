@@ -2,19 +2,17 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { z } from "zod";
-import { and, eq } from "drizzle-orm";
 import { db } from "@/db/client";
-import { companies, events } from "@/db/schema";
+import { events } from "@/db/schema";
 import { canEditProfile, canManageCompany, viewer } from "@/lib/access";
 import { addToCart, getCart, setLineQty } from "@/lib/cart";
 import { cleanCompanyInput, saveCompany } from "@/lib/company-edit";
 import { createCompany } from "@/lib/manage";
 import { setAccountMode } from "@/lib/manage-view";
 import { requireUserId } from "@/lib/session";
-import { addTeamList, addTeamPerson, archiveLeaver, noteIfComplete, readCompanySite, teamPlaces, type SiteReadResult } from "@/lib/team";
+import { addTeamList, archiveLeaver, readCompanySite, type SiteReadResult } from "@/lib/team";
 import { clampPeople, teamPackage } from "@/lib/team-packages";
-import { parseTeamList, verifyJoinToken } from "@/lib/team-people-rules";
+import { parseTeamList } from "@/lib/team-people-rules";
 
 // The team flow's forms. Each checks the user's rights again.
 
@@ -83,36 +81,6 @@ export async function addTeamListAction(form: FormData) {
   await addTeamList(v.id, companyId, people, form.get("invite") === "1", v.id);
   revalidatePath("/manage", "layout");
   redirect(`/team/people/?company=${companyId}&added=${people.length}`);
-}
-
-const joinForm = z.object({
-  firstName: z.string().trim().min(1).max(100),
-  lastName: z.string().trim().min(1).max(100),
-  jobTitle: z.string().trim().max(200),
-  mobile: z.string().trim().max(50),
-  email: z.union([z.literal(""), z.email().max(255)]),
-});
-
-export type JoinState = { error?: string; slug?: string };
-
-/** A staff member adds themselves from the team's link. Limited to the places the team has paid for. */
-export async function joinTeamAction(_: JoinState, form: FormData): Promise<JoinState> {
-  const companyId = Number(form.get("company_id"));
-  if (!Number.isInteger(companyId) || !verifyJoinToken(companyId, String(form.get("token") ?? ""))) return { error: "This link isn't valid. Ask your manager for a new one." };
-  // Bots fill the hidden field or post straight away.
-  const started = Number(form.get("started"));
-  if (String(form.get("website") ?? "") !== "" || !started || Date.now() - started < 2000) return { error: "Please try again." };
-  const parsed = joinForm.safeParse({ firstName: form.get("first_name") ?? "", lastName: form.get("last_name") ?? "", jobTitle: form.get("job_title") ?? "", mobile: form.get("mobile") ?? "", email: String(form.get("email") ?? "").trim() });
-  if (!parsed.success) return { error: "Enter your first name, last name and a valid email address, if you add one." };
-  const [company] = await db.select({ ownerId: companies.ownerId }).from(companies).where(and(eq(companies.id, companyId))).limit(1);
-  if (!company?.ownerId) return { error: "This link isn't valid. Ask your manager for a new one." };
-  const { places } = await teamPlaces(company.ownerId);
-  if (places < 1) return { error: "Every place on this team has been filled. Ask your manager to add you." };
-  const profileId = await addTeamPerson(company.ownerId, companyId, parsed.data);
-  await db.insert(events).values({ name: "team_invite_accepted", companyId, profileId, source: "team_link" });
-  await noteIfComplete(company.ownerId, companyId);
-  revalidatePath("/manage", "layout");
-  return { slug: String(profileId) };
 }
 
 /** "Has left": archive the profile, and deactivate or reassign their card. */
