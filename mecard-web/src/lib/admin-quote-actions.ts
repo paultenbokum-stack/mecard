@@ -7,7 +7,7 @@ import { companies, orders, products, quotes, users, type QuoteLine } from "@/db
 import { logAdmin } from "@/lib/admin-log";
 import { cleanEmail } from "@/lib/form-values";
 import { randsToCents } from "@/lib/money";
-import { QUOTE_STATUS_LABEL, QUOTE_VALID_DAYS, quotePrefill, quoteTotals } from "@/lib/quote-rules";
+import { ADDITIONAL_SHIPPING_PRODUCT, QUOTE_STATUS_LABEL, QUOTE_VALID_DAYS, quotePrefill, quoteTotals } from "@/lib/quote-rules";
 import { quoteById, sendQuoteEmails } from "@/lib/quotes";
 import { requireAdmin, requireQuoteStaff } from "@/lib/session";
 
@@ -43,7 +43,7 @@ async function linesFromForm(form: FormData): Promise<QuoteLine[] | string> {
     if (!Number.isInteger(qtys[i]) || qtys[i] < 0 || qtys[i] > 5000) return "Quantities must be whole numbers up to 5000.";
     const price = prices[i]?.trim() ? randsToCents(prices[i]) : p.priceCents;
     if (price === null || Number.isNaN(price)) return `Please enter a valid price for ${p.name}.`;
-    lines.push({ productId: p.id, name: p.name, qty: qtys[i], unitPriceCents: price });
+    lines.push({ productId: p.id, name: p.name, qty: qtys[i], unitPriceCents: price, ...(p.id === ADDITIONAL_SHIPPING_PRODUCT ? {} : { regularPriceCents: p.priceCents }) });
   }
   return lines;
 }

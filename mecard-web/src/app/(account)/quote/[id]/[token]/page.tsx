@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ConfirmButton } from "@/components/account/Bits";
 import { acceptQuoteAction, rejectQuoteAction } from "@/lib/quote-actions";
-import { effectiveStatus, quoteBillingLines, QUOTE_STATUS_LABEL, verifyQuoteToken } from "@/lib/quote-rules";
+import { effectiveStatus, lineDiscountCents, linePriceShown, quoteBillingLines, quoteParts, QUOTE_STATUS_LABEL, verifyQuoteToken } from "@/lib/quote-rules";
 import { quoteById } from "@/lib/quotes";
 import { formatDate, rands } from "@/lib/money";
 
@@ -18,6 +18,8 @@ export default async function QuotePage({ params, searchParams }: Props) {
   if (!q || !verifyQuoteToken(q.id, q.email, token)) notFound();
   const status = effectiveStatus(q);
   const open = status === "sent" || status === "new";
+  const parts = quoteParts(q.items);
+  const span = parts.hasLineDiscount ? 4 : 3;
 
   return (
     <div className="acc__wrap">
@@ -47,28 +49,42 @@ export default async function QuotePage({ params, searchParams }: Props) {
               <th>Product</th>
               <th className="shop-num">Price</th>
               <th className="shop-num">Qty</th>
+              {parts.hasLineDiscount ? <th className="shop-num">Discount</th> : null}
               <th className="shop-num">Total</th>
             </tr>
           </thead>
           <tbody>
-            {q.items.map((i) => (
-              <tr key={i.productId}>
+            {parts.products.map((i, n) => (
+              <tr key={n}>
                 <td>{i.name}</td>
-                <td className="shop-num">{rands(i.unitPriceCents)}</td>
+                <td className="shop-num">{rands(linePriceShown(i))}</td>
                 <td className="shop-num">{i.qty}</td>
+                {parts.hasLineDiscount ? <td className="shop-num">{lineDiscountCents(i) ? `-${rands(lineDiscountCents(i))}` : ""}</td> : null}
                 <td className="shop-num">{rands(i.unitPriceCents * i.qty)}</td>
               </tr>
             ))}
           </tbody>
           <tfoot>
+            {q.discountCents > 0 || parts.shippingCents ? (
+              <tr>
+                <th colSpan={span}>Subtotal</th>
+                <td className="shop-num">{rands(parts.productsCents)}</td>
+              </tr>
+            ) : null}
             {q.discountCents > 0 ? (
               <tr>
-                <th colSpan={3}>Discount</th>
+                <th colSpan={span}>Discount</th>
                 <td className="shop-num">-{rands(q.discountCents)}</td>
               </tr>
             ) : null}
+            {parts.shippingCents ? (
+              <tr>
+                <th colSpan={span}>Shipping</th>
+                <td className="shop-num">{rands(parts.shippingCents)}</td>
+              </tr>
+            ) : null}
             <tr>
-              <th colSpan={3}>Total</th>
+              <th colSpan={span}>Total</th>
               <td className="shop-num">
                 <strong>{rands(q.totalCents)}</strong>
               </td>

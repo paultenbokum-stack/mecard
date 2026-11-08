@@ -11,7 +11,7 @@ import { ORDER_NOTIFY_TO } from "@/lib/mail-settings";
 import { sendEmail } from "./email";
 import { INVOICE_SELLER } from "./invoice-settings";
 import { formatDate, rands } from "./money";
-import { ADDITIONAL_SHIPPING_PRODUCT, effectiveStatus, quoteBillingLines, QUOTE_VALID_DAYS, quoteToken, quoteTotals } from "./quote-rules";
+import { ADDITIONAL_SHIPPING_PRODUCT, effectiveStatus, lineDiscountCents, linePriceShown, quoteBillingLines, quoteParts, QUOTE_VALID_DAYS, quoteToken, quoteTotals } from "./quote-rules";
 import { siteUrl } from "./site";
 
 export type Quote = typeof quotes.$inferSelect;
@@ -66,7 +66,12 @@ export async function requestQuote(input: {
 export async function sendQuoteEmails(q: Quote) {
   const pdf = await renderQuotePdf(q).catch((e) => (console.error(`[quotes] PDF for quote ${q.id} failed`, e), null));
   const link = siteUrl(quotePath(q));
-  const lines = q.items.map((i) => `  ${i.name} × ${i.qty}   ${rands(i.unitPriceCents * i.qty)}`).join("\n");
+  const parts = quoteParts(q.items);
+  const lines = [
+    ...parts.products.map((i) => `  ${i.name} × ${i.qty}   ${rands(i.unitPriceCents * i.qty)}${lineDiscountCents(i) ? ` (after ${rands(lineDiscountCents(i))} discount)` : ""}`),
+    ...(q.discountCents > 0 ? [`  Discount   -${rands(q.discountCents)}`] : []),
+    ...(parts.shippingCents ? [`  Shipping   ${rands(parts.shippingCents)}`] : []),
+  ].join("\n");
   await sendEmail({
     to: q.email,
     subject: `Your MeCard quote #${q.id}`,
@@ -175,24 +180,30 @@ export async function renderQuotePdf(q: Quote): Promise<Uint8Array> {
   to.forEach((l, i) => text(l, left, y - 16 - i * 13, { size: 9.5 }));
   y = y - 16 - to.length * 13 - 26;
 
+  // Products, then the discount, then shipping. A Discount column only when a line has one.
+  const parts = quoteParts(q.items);
+  const col = parts.hasLineDiscount ? { qty: 250, price: 170, off: 85, name: 46 } : { qty: 190, price: 95, off: 0, name: 60 };
   page.drawRectangle({ x: left, y: y - 6, width: right - left, height: 20, color: rgb(0.96, 0.96, 0.97) });
   text("Product", left + 6, y, { font: bold, size: 9.5 });
-  text("Qty", right - 190, y, { font: bold, size: 9.5, right: true });
-  text("Price", right - 95, y, { font: bold, size: 9.5, right: true });
+  text("Qty", right - col.qty, y, { font: bold, size: 9.5, right: true });
+  text("Price", right - col.price, y, { font: bold, size: 9.5, right: true });
+  if (col.off) text("Discount", right - col.off, y, { font: bold, size: 9.5, right: true });
   text("Total", right - 6, y, { font: bold, size: 9.5, right: true });
   y -= 24;
-  for (const i of q.items) {
-    text(i.name.slice(0, 60), left + 6, y);
-    text(String(i.qty), right - 190, y, { right: true });
-    text(rands(i.unitPriceCents), right - 95, y, { right: true });
+  for (const i of parts.products) {
+    text(i.name.slice(0, col.name), left + 6, y);
+    text(String(i.qty), right - col.qty, y, { right: true });
+    text(rands(linePriceShown(i)), right - col.price, y, { right: true });
+    if (col.off && lineDiscountCents(i)) text(`-${rands(lineDiscountCents(i))}`, right - col.off, y, { right: true });
     text(rands(i.unitPriceCents * i.qty), right - 6, y, { right: true });
     page.drawLine({ start: { x: left, y: y - 7 }, end: { x: right, y: y - 7 }, thickness: 0.5, color: LINE });
     y -= 22;
   }
   y -= 6;
   const totals: [string, string, boolean?][] = [
-    ["Subtotal", rands(q.subtotalCents)],
+    ["Subtotal", rands(parts.productsCents)],
     ...(q.discountCents > 0 ? [["Discount", `-${rands(q.discountCents)}`] as [string, string]] : []),
+    ...(parts.shippingCents ? [["Shipping", rands(parts.shippingCents)] as [string, string]] : []),
     ["Total", rands(q.totalCents), true],
   ];
   for (const [k, v, strong] of totals) {

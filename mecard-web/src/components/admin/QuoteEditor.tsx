@@ -2,17 +2,16 @@ import Link from "next/link";
 import { asc } from "drizzle-orm";
 import { db } from "@/db/client";
 import { products, type quotes } from "@/db/schema";
+import { QuoteLinesEditor } from "@/components/admin/QuoteLinesEditor";
 import { SubmitButton } from "@/components/admin/SubmitButton";
 import { AdminHeader, type AdminSearchParams, Badge, Card, Flash } from "@/components/admin/ui";
 import { deleteQuoteAction, saveQuoteAction } from "@/lib/admin-quote-actions";
-import { formatDate, rands } from "@/lib/money";
-import { effectiveStatus, QUOTE_STATUS_LABEL, QUOTE_VALID_DAYS } from "@/lib/quote-rules";
+import { formatDate } from "@/lib/money";
+import { ADDITIONAL_SHIPPING_PRODUCT, effectiveStatus, QUOTE_STATUS_LABEL, QUOTE_VALID_DAYS, quoteParts } from "@/lib/quote-rules";
 import { quotePath } from "@/lib/quotes";
 
-const randsInput = (c: number) => (c / 100).toFixed(2);
 /** YYYY-MM-DD in South Africa, for a date input. */
 const saDate = (d: Date | null) => (d ? new Intl.DateTimeFormat("en-CA", { timeZone: "Africa/Johannesburg" }).format(d) : "");
-const BLANK_LINES = 3;
 
 /** The quote screen. A salesperson (staff = false) gets no order links and can't choose the salesperson. */
 export async function QuoteEditor({
@@ -30,7 +29,7 @@ export async function QuoteEditor({
   const catalogue = await db.select({ id: products.id, name: products.name, priceCents: products.priceCents, active: products.active }).from(products).orderBy(asc(products.sortOrder), asc(products.name));
   const status = effectiveStatus(q);
   const locked = q.status === "accepted";
-  const lines = [...q.items, ...(locked ? [] : Array.from({ length: BLANK_LINES }, () => null))];
+  const parts = quoteParts(q.items);
 
   return (
     <>
@@ -66,76 +65,14 @@ export async function QuoteEditor({
         <div className="adm-grid">
           <div>
             <Card title="Lines">
-              <div className="adm-table-wrap">
-                <table className="adm-table adm-table--tight">
-                  <thead>
-                    <tr>
-                      <th>Product</th>
-                      <th>Qty</th>
-                      <th>Price each (R)</th>
-                      <th className="adm-num">Total</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {lines.map((l, n) => (
-                      <tr key={n}>
-                        <td>
-                          <select name="product_id" defaultValue={l?.productId ?? ""} className="adm-select" disabled={locked} aria-label={`Line ${n + 1} product`} style={{ width: "100%" }}>
-                            <option value="">{l ? "" : "Add a product…"}</option>
-                            {catalogue
-                              .filter((p) => p.active || p.id === l?.productId)
-                              .map((p) => (
-                                <option key={p.id} value={p.id}>
-                                  {p.name} ({rands(p.priceCents)})
-                                </option>
-                              ))}
-                          </select>
-                        </td>
-                        <td>
-                          <input name="qty" type="number" min={0} max={5000} defaultValue={l?.qty ?? ""} className="adm-input adm-input--num" disabled={locked} aria-label={`Line ${n + 1} quantity`} />
-                        </td>
-                        <td>
-                          <input
-                            name="price"
-                            inputMode="decimal"
-                            defaultValue={l ? randsInput(l.unitPriceCents) : ""}
-                            placeholder="Shop price"
-                            className="adm-input adm-input--num"
-                            disabled={locked}
-                            aria-label={`Line ${n + 1} price`}
-                          />
-                        </td>
-                        <td className="adm-num">{l ? rands(l.qty * l.unitPriceCents) : ""}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                  <tfoot>
-                    <tr>
-                      <td colSpan={3} className="adm-num">
-                        Subtotal
-                      </td>
-                      <td className="adm-num">{rands(q.subtotalCents)}</td>
-                    </tr>
-                    <tr>
-                      <td colSpan={3} className="adm-num">
-                        <label htmlFor="discount">Discount (R)</label>{" "}
-                        <input id="discount" name="discount" inputMode="decimal" defaultValue={q.discountCents ? randsInput(q.discountCents) : ""} placeholder="0.00" className="adm-input adm-input--num" disabled={locked} />
-                      </td>
-                      <td className="adm-num">{q.discountCents ? `-${rands(q.discountCents)}` : ""}</td>
-                    </tr>
-                    <tr>
-                      <th colSpan={3} className="adm-num">
-                        Total
-                      </th>
-                      <th className="adm-num">{rands(q.totalCents)}</th>
-                    </tr>
-                  </tfoot>
-                </table>
-              </div>
-              <p className="adm-help" style={{ marginBottom: 0 }}>
-                Set a line&apos;s quantity to 0 to remove it. Leave the price empty for the shop price. Totals update when you save. Delivery is the Additional
-                Shipping product; checkout then offers delivery included in the quote.
-              </p>
+              <QuoteLinesEditor
+                catalogue={catalogue.filter((p) => p.id !== ADDITIONAL_SHIPPING_PRODUCT)}
+                shippingProduct={catalogue.find((p) => p.id === ADDITIONAL_SHIPPING_PRODUCT) ?? null}
+                items={parts.products}
+                shippingLine={parts.shippingLine}
+                discountCents={q.discountCents}
+                locked={locked}
+              />
             </Card>
             <Card title="Note to the customer">
               <textarea name="note" rows={4} defaultValue={q.note} className="adm-textarea" aria-label="Note to the customer" />

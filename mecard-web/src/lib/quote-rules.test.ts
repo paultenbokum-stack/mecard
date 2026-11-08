@@ -1,16 +1,40 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { effectiveStatus, quoteBillingLines, quotePrefill, quoteToken, quoteTotals, verifyQuoteToken } from "./quote-rules";
+import { effectiveStatus, lineDiscountCents, linePriceShown, quoteBillingLines, quoteParts, quotePrefill, quoteToken, quoteTotals, verifyQuoteToken } from "./quote-rules";
 
 const now = new Date("2026-10-21T12:00:00Z");
 
-test("quote totals add the lines and cap the discount at the subtotal", () => {
+test("quote totals add the lines, and the discount never comes off shipping", () => {
   const items = [
     { productId: 706, name: "Card", qty: 3, unitPriceCents: 39900 },
     { productId: 57884, name: "Additional Shipping", qty: 1, unitPriceCents: 10000 },
   ];
   assert.deepEqual(quoteTotals(items), { subtotalCents: 129700, discountCents: 0, totalCents: 129700 });
-  assert.deepEqual(quoteTotals(items, 200000), { subtotalCents: 129700, discountCents: 129700, totalCents: 0 });
+  assert.deepEqual(quoteTotals(items, 5000), { subtotalCents: 129700, discountCents: 5000, totalCents: 124700 });
+  assert.deepEqual(quoteTotals(items, 200000), { subtotalCents: 129700, discountCents: 119700, totalCents: 10000 });
+});
+
+test("a lower price shows as a discount on the line", () => {
+  const cheaper = { productId: 706, name: "Card", qty: 3, unitPriceCents: 34900, regularPriceCents: 39900 };
+  assert.equal(lineDiscountCents(cheaper), 15000);
+  assert.equal(linePriceShown(cheaper), 39900);
+  const dearer = { ...cheaper, unitPriceCents: 45000 };
+  assert.equal(lineDiscountCents(dearer), 0);
+  assert.equal(linePriceShown(dearer), 45000);
+  const older = { productId: 706, name: "Card", qty: 3, unitPriceCents: 34900 };
+  assert.equal(lineDiscountCents(older), 0);
+});
+
+test("a quote's parts put shipping apart from the products", () => {
+  const parts = quoteParts([
+    { productId: 57884, name: "Additional Shipping", qty: 1, unitPriceCents: 10000 },
+    { productId: 706, name: "Card", qty: 2, unitPriceCents: 34900, regularPriceCents: 39900 },
+  ]);
+  assert.equal(parts.products.length, 1);
+  assert.equal(parts.productsCents, 69800);
+  assert.equal(parts.shippingCents, 10000);
+  assert.equal(parts.shippingLine?.name, "Additional Shipping");
+  assert.equal(parts.hasLineDiscount, true);
 });
 
 test("a sent quote past its date shows as expired", () => {

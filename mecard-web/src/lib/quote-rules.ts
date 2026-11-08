@@ -1,4 +1,5 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
+import { lineDiscountCents, type QuoteItem } from "./quote-lines";
 
 // Pure rules for quotes (YITH Request a Quote, as set up on mecard.co.za):
 // automatic quotes at shop prices, one "Additional Shipping" line when
@@ -7,11 +8,34 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 export const QUOTE_VALID_DAYS = 10;
 export const ADDITIONAL_SHIPPING_PRODUCT = 57884;
 
-export type QuoteItem = { productId: number; name: string; qty: number; unitPriceCents: number };
+export { lineDiscountCents, type QuoteItem };
 
+const lineCents = (i: QuoteItem) => i.unitPriceCents * i.qty;
+
+/** The price a line shows before its discount. */
+export const linePriceShown = (i: QuoteItem) => (lineDiscountCents(i) ? (i.regularPriceCents as number) : i.unitPriceCents);
+
+/**
+ * A quote's parts as customers read them: products, then the discount, then shipping.
+ * Shipping stays a line in quotes.items, so it reaches the basket and checkout as before.
+ */
+export function quoteParts<T extends QuoteItem>(items: T[]) {
+  const products = items.filter((i) => i.productId !== ADDITIONAL_SHIPPING_PRODUCT);
+  const shippingLines = items.filter((i) => i.productId === ADDITIONAL_SHIPPING_PRODUCT);
+  return {
+    products,
+    productsCents: products.reduce((n, i) => n + lineCents(i), 0),
+    shippingLine: shippingLines[0] ?? null,
+    shippingCents: shippingLines.reduce((n, i) => n + lineCents(i), 0),
+    hasLineDiscount: products.some((i) => lineDiscountCents(i) > 0),
+  };
+}
+
+/** subtotalCents includes shipping, as the basket does. The discount comes off the products only. */
 export function quoteTotals(items: QuoteItem[], discountCents = 0) {
-  const subtotal = items.reduce((n, i) => n + i.unitPriceCents * i.qty, 0);
-  return { subtotalCents: subtotal, discountCents: Math.min(discountCents, subtotal), totalCents: subtotal - Math.min(discountCents, subtotal) };
+  const { productsCents, shippingCents } = quoteParts(items);
+  const discount = Math.min(discountCents, productsCents);
+  return { subtotalCents: productsCents + shippingCents, discountCents: discount, totalCents: productsCents + shippingCents - discount };
 }
 
 /** Quotes past their expiry date show (and act) as expired, even before anything updates the row. */

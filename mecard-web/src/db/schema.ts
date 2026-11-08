@@ -476,6 +476,8 @@ export interface QuoteLine {
   name: string;
   qty: number;
   unitPriceCents: number;
+  /** The shop price when the quote was saved; a lower unitPriceCents shows as a discount on the line. */
+  regularPriceCents?: number;
 }
 
 // Quotes (replacing YITH Request a Quote): asked for at /request-quote/, sent
