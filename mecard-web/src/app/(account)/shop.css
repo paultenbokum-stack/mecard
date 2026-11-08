@@ -13,7 +13,7 @@
 
 .shop-product { display: grid; gap: 28px; grid-template-columns: minmax(0, 1fr); margin-top: 20px; }
 @media (min-width: 860px) { .shop-product { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
-.shop-product__image { border: 1px solid var(--surface-muted); border-radius: var(--radius-lg); background: var(--surface-subtle); padding: 20px; }
+.shop-product__image { align-self: start; border: 1px solid var(--surface-muted); border-radius: var(--radius-lg); background: var(--surface-subtle); padding: 20px; }
 .shop-product__image img { width: 100%; height: auto; }
 :where(.mecard-site) .shop-product .shop-price { font-size: 26px; display: block; margin: 6px 0 14px; }
 .shop-product__desc { color: var(--ink-strong); }
