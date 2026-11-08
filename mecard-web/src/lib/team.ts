@@ -1,6 +1,7 @@
 import "server-only";
 import { lookup } from "node:dns/promises";
 import { randomBytes } from "node:crypto";
+import { revalidatePath } from "next/cache";
 import { and, asc, desc, eq, gt, isNull, ne, sql } from "drizzle-orm";
 import { db } from "@/db/client";
 import { cards, companies, entitlements, events, profiles } from "@/db/schema";
@@ -191,22 +192,31 @@ export async function noteIfComplete(ownerId: number, companyId: number) {
   if (places === 0) await db.insert(events).values({ name: "team_names_completed", userId: ownerId, companyId, source: "team" });
 }
 
+export type LeaverChoice =
+  | { kind: "deactivate" }
+  | { kind: "reassign"; toProfileId: number }
+  | { kind: "reassign"; person: { firstName: string; lastName: string; jobTitle: string } };
+
 /**
- * "Has left": the profile is archived and its cards move to the replacement, or
- * wait unlinked as spares. Classic cards printed with the old name stay printed.
+ * "Has left": the profile is archived, and its cards are deactivated or
+ * reassigned. Most cards are printed with the person's name, so deactivating is
+ * the usual choice. A deactivated card's link stops working; staff can restore it.
  */
-export async function replaceLeaver(ownerId: number, profileId: number, replacement: { firstName: string; lastName: string; jobTitle: string } | null) {
-  const [old] = await db.select({ companyId: profiles.companyId, jobTitle: profiles.jobTitle }).from(profiles).where(eq(profiles.id, profileId)).limit(1);
-  if (!old) return null;
-  const linked = await db.select({ id: cards.id }).from(cards).where(and(eq(cards.profileId, profileId), eq(cards.archived, false)));
-  let newId: number | null = null;
-  if (replacement) {
-    newId = await createProfile({ id: ownerId, isAdmin: false }, { firstName: replacement.firstName, lastName: replacement.lastName, jobTitle: replacement.jobTitle || old.jobTitle, companyId: old.companyId });
-    await refreshProfilePages(newId);
+export async function archiveLeaver(ownerId: number, profileId: number, choice: LeaverChoice) {
+  const [old] = await db.select({ companyId: profiles.companyId }).from(profiles).where(eq(profiles.id, profileId)).limit(1);
+  if (!old) return;
+  const linked = await db.select({ id: cards.id, slug: cards.slug }).from(cards).where(and(eq(cards.profileId, profileId), eq(cards.archived, false)));
+  if (choice.kind === "deactivate") {
+    for (const c of linked) {
+      await db.update(cards).set({ archived: true, updatedAt: new Date() }).where(eq(cards.id, c.id));
+      revalidatePath(`/t/${c.slug}/`);
+    }
+  } else {
+    const target = "toProfileId" in choice ? choice.toProfileId : await createProfile({ id: ownerId, isAdmin: false }, { ...choice.person, companyId: old.companyId });
+    for (const c of linked) await linkCard(c.id, target);
+    await refreshProfilePages(target);
   }
-  for (const c of linked) await linkCard(c.id, newId);
   await db.update(profiles).set({ archived: true, updatedAt: new Date() }).where(eq(profiles.id, profileId));
   await refreshProfilePages(profileId);
-  await db.insert(events).values({ name: "card_reassigned", userId: ownerId, profileId, companyId: old.companyId, source: "team", meta: { outcome: replacement ? "moved" : "spare", cards: linked.length } });
-  return { newId, cards: linked.length };
+  await db.insert(events).values({ name: "card_reassigned", userId: ownerId, profileId, companyId: old.companyId, source: "team", meta: { outcome: choice.kind, cards: linked.length } });
 }

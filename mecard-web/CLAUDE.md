@@ -25,7 +25,7 @@ Cutover with feature parity comes first; don't start the plan until Paul says so
 
 ## Team flow
 
-Teams are the main path. `/for-teams/` shows the price before signup (`TeamPriceBox`, kept in the browser), then `/sign-up/?for=teams`, `/team/setup/` (reads the company's website, `src/lib/team.ts` and `src/lib/site-read.ts`), `/team/order/` (a headcount and a package, `src/lib/team-packages.ts`) and the normal checkout. Names come after paying at `/team/people/`: a list, or the join link `/join/<company>/<token>/`, limited to the places the team has bought. `/team/left/<id>/` moves a card to a replacement. Website reads refuse private addresses at every redirect (`safeFetch`). Events are counts and choices only, and `insights.team_funnel` reads them.
+Teams are the main path. `/for-teams/` shows the price before signup (`TeamPriceBox`, kept in the browser), then `/sign-up/?for=teams`, `/team/setup/` (reads the company's website, `src/lib/team.ts` and `src/lib/site-read.ts`), `/team/order/` (a headcount and a package, `src/lib/team-packages.ts`) and the normal checkout. Names come after paying at `/team/people/`: a list, or the join link `/join/<company>/<token>/`, limited to the places the team has bought. `/team/left/<id>/` archives a profile and deactivates or reassigns its card. Most cards are printed with a name, so don't promise moving a card to a replacement without a reprint. Website reads refuse private addresses at every redirect (`safeFetch`). Events are counts and choices only, and `insights.team_funnel` reads them.
 
 ## Staff view-as
 

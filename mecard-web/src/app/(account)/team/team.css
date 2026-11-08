@@ -26,6 +26,7 @@
 .team-field input, .team-field textarea { font: inherit; color: var(--ink); padding: var(--space-3); border: 1px solid var(--ink-subtle); border-radius: var(--radius-xs); min-height: 44px; width: 100%; box-sizing: border-box; background: var(--surface); }
 .team-field textarea { resize: vertical; }
 .team-field textarea.team-mono { font-family: var(--font-mono); font-size: 0.8rem; line-height: 1.5; }
+.team-select { font: inherit; color: var(--ink); padding: var(--space-3); border: 1px solid var(--ink-subtle); border-radius: var(--radius-xs); min-height: 44px; width: 100%; background: var(--surface); }
 .team-inline { display: flex; flex-wrap: wrap; gap: var(--space-2); }
 .team-inline input { flex: 1 1 200px; min-width: 0; width: auto; }
 

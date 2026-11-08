@@ -7,14 +7,14 @@ import type { ProductCents } from "@/lib/team-packages";
 const TICKS = [
   "Order on a headcount, then send your team one link to add their details",
   "One logo and colour scheme across every card",
-  "Someone left? Move their card to the next person",
+  "Someone left? Archive their profile and deactivate or reassign their card",
   "See who is using their card, person by person",
 ];
 
 const TILES = [
   { title: "Add people your way", text: "Share one link so staff add themselves, or paste from a spreadsheet." },
   { title: "Change branding once", text: "Update your logo or colours and every Pro profile follows." },
-  { title: "Handle leavers", text: "Move a card to the new person with no reprint, and the old details disappear." },
+  { title: "Handle leavers", text: "Archive a profile so the old details disappear, then deactivate or reassign the card." },
   { title: "See what is working", text: "Views, saves and contact taps for each person, with a list of who has not started." },
 ];
 
@@ -34,7 +34,7 @@ export function ForTeamsPage({ prices }: { prices: ProductCents }) {
           <div>
             <span className="mc-label">MeCard for teams</span>
             <h1 className="mc-home__hero-title">Cards for your whole team, without the admin</h1>
-            <p className="mc-home__lead">Set up everyone at once, keep every card on-brand, and never reprint because someone left.</p>
+            <p className="mc-home__lead">Set up everyone at once, keep every card on-brand, and update details without reprinting when someone’s number or email changes.</p>
             <ul className="mc-features">
               {TICKS.map((t) => (
                 <li key={t}><i className="fa-solid fa-check mc-home__tick" aria-hidden="true" />{t}</li>

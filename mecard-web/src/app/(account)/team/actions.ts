@@ -12,7 +12,7 @@ import { cleanCompanyInput, saveCompany } from "@/lib/company-edit";
 import { createCompany } from "@/lib/manage";
 import { setAccountMode } from "@/lib/manage-view";
 import { requireUserId } from "@/lib/session";
-import { addTeamList, addTeamPerson, noteIfComplete, readCompanySite, replaceLeaver, teamPlaces, type SiteReadResult } from "@/lib/team";
+import { addTeamList, addTeamPerson, archiveLeaver, noteIfComplete, readCompanySite, teamPlaces, type SiteReadResult } from "@/lib/team";
 import { clampPeople, teamPackage } from "@/lib/team-packages";
 import { parseTeamList, verifyJoinToken } from "@/lib/team-people-rules";
 
@@ -115,15 +115,28 @@ export async function joinTeamAction(_: JoinState, form: FormData): Promise<Join
   return { slug: String(profileId) };
 }
 
-/** "Has left": move their card to the new person, or keep it as a spare. */
+/** "Has left": archive the profile, and deactivate or reassign their card. */
 export async function leaverAction(form: FormData) {
   const v = await me();
   const profileId = Number(form.get("profile_id"));
   if (!(await canEditProfile(v, profileId))) redirect("/manage/?done=denied");
-  const outcome = form.get("outcome");
-  const first = String(form.get("first_name") ?? "").trim().slice(0, 100);
-  if (outcome === "move" && !first) redirect(`/team/left/${profileId}/?error=name`);
-  await replaceLeaver(v.id, profileId, outcome === "move" ? { firstName: first, lastName: String(form.get("last_name") ?? "").trim().slice(0, 100), jobTitle: String(form.get("job_title") ?? "").trim().slice(0, 200) } : null);
+  const text = (name: string, max: number) => String(form.get(name) ?? "").trim().slice(0, max);
+  let done = "profile-left";
+  if (form.get("card_choice") === "reassign") {
+    const to = form.get("reassign_to");
+    if (to && to !== "new") {
+      const toProfileId = Number(to);
+      if (toProfileId === profileId || !(await canEditProfile(v, toProfileId))) redirect("/manage/?done=denied");
+      await archiveLeaver(v.id, profileId, { kind: "reassign", toProfileId });
+    } else {
+      const firstName = text("first_name", 100);
+      if (!firstName) redirect(`/team/left/${profileId}/?error=name`);
+      await archiveLeaver(v.id, profileId, { kind: "reassign", person: { firstName, lastName: text("last_name", 100), jobTitle: text("job_title", 200) } });
+    }
+    done = "card-reassigned";
+  } else {
+    await archiveLeaver(v.id, profileId, { kind: "deactivate" });
+  }
   revalidatePath("/manage", "layout");
-  redirect(`/manage/?done=${outcome === "move" ? "card-moved" : "card-spare"}`);
+  redirect(`/manage/?done=${done}`);
 }
