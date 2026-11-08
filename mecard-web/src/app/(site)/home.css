@@ -281,7 +281,6 @@
 .mc-home .mc-teams-tile { text-align: left; }
 
 /* /how-it-works/ */
-.mc-home__shares--three { grid-template-columns: repeat(3, 1fr); }
 .mc-home__wrap.mc-home__feature { padding: 0 var(--space-5); }
 .mc-how-hero { text-align: center; }
 .mc-how-hero .mc-home__lead { margin: 0 auto; }
