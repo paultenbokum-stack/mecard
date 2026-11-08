@@ -39,6 +39,8 @@ export async function processPaidOrder(tx: Tx, orderId: number) {
 
     for (const row of rows) {
       if (["consumed", "refunded", "cancelled"].includes(row.status)) continue;
+      // Already granted when the EFT order was placed: paying it mustn't relink a card since moved.
+      if (row.status === "paid_assigned" && row.sourceOrderId === orderId) continue;
       const assigned = profileId ?? row.assignedProfileId;
       const status = row.type === "pro_upgrade" ? (assigned ? "paid_assigned" : "paid_unassigned") : "paid_assigned";
       await tx

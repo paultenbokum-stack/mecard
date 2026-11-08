@@ -205,8 +205,8 @@ export async function availableProUpgrades(userId: number): Promise<number> {
 export const UPGRADE_PRODUCT_IDS = [41811, 2044, 11160];
 
 /**
- * user_has_pending_upgrade(): an upgrade row not yet used up, or an on-hold /
- * pending order with an upgrade product (EFT payments not cleared yet).
+ * user_has_pending_upgrade(): an upgrade row not yet used up, or a pending order
+ * with an upgrade product. EFT orders on hold have already granted theirs.
  */
 export async function hasPendingUpgrade(userId: number, opts: { unassignedOnly?: boolean } = {}): Promise<boolean> {
   // unassignedOnly: leave out upgrades ordered for a particular profile (pendingProUpgrades covers those).
@@ -230,7 +230,7 @@ export async function hasPendingUpgrade(userId: number, opts: { unassignedOnly?:
     .where(
       and(
         eq(orders.userId, userId),
-        inArray(orders.status, ["on-hold", "pending"]),
+        eq(orders.status, "pending"),
         inArray(orderItems.productId, UPGRADE_PRODUCT_IDS),
         opts.unassignedOnly ? sql`coalesce(${orderItems.meta}->>'profileId', '') IN ('', '0')` : undefined,
       ),

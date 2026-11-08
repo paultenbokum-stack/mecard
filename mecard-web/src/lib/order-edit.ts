@@ -1,20 +1,24 @@
 import "server-only";
 import { randomBytes, randomUUID } from "node:crypto";
-import { and, asc, desc, eq, inArray } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, notInArray } from "drizzle-orm";
 import { db } from "@/db/client";
-import { adminLog, cards, entitlements, orderItems, orderNotes, orders, products } from "@/db/schema";
+import { adminLog, cards, entitlements, orderItems, orderNotes, orders, products, profiles } from "@/db/schema";
 import { cardCartKey, cardTypesFor, CARD_TYPE_FOR_ENTITLEMENT, entitlementTypesFor, isBundle, isForProfile, newCardSlug } from "./catalog";
 import { couponForLines, findCoupon } from "./coupons";
 import { evaluateCoupon } from "./coupon-rules";
 import type { LogEntity } from "./admin-log";
+import { processPaidOrder } from "./entitlements";
+import { refreshProfilePages } from "./manage";
 import { ORDER_STATUS_LABEL, rands } from "./money";
 import { cardsForQty, couponCodesOf, isEditableOrder, orderTotals, otherDiscountOf, parseDiscount } from "./order-edit-rules";
 
 // Staff edit an unpaid order (WooCommerce's editable order screen). The order's
 // cards and basket entitlements follow its items as they do in the basket:
-// a higher quantity adds cards (on the order, ready to design) and "in_cart"
-// rows, a lower one archives the newest cards and cancels rows, and removing
-// an item does both for all of them. Totals are recalculated after each edit,
+// a higher quantity adds cards (on the order, ready to design) and rows, a lower
+// one archives the newest cards and cancels rows, and removing an item does both
+// for all of them. An order on hold has already granted its rows, so added ones
+// are granted at once and a Pro upgrade cancelled here is taken back, spare
+// upgrades going first. Totals are recalculated after each edit,
 // the coupon's discount from the new items. Each edit goes in the order
 // history and admin_log.
 
@@ -45,7 +49,7 @@ export async function editOrder(orderId: number, by: number, edit: OrderEdit): P
     newCoupon = { code: r.code, freeShipping: r.freeShipping };
   }
 
-  return db.transaction(async (tx) => {
+  const result = await db.transaction(async (tx): Promise<EditResult> => {
     const [o] = await tx.select().from(orders).where(eq(orders.id, orderId)).for("update");
     if (!o) return { ok: false, error: "Order not found." };
     if (!isEditableOrder(o.status)) return { ok: false, error: `Only orders on hold can be edited. This one is ${ORDER_STATUS_LABEL[o.status] ?? o.status}.` };
@@ -108,6 +112,7 @@ export async function editOrder(orderId: number, by: number, edit: OrderEdit): P
       if (!changes.length) return { ok: true, message: "No changes to save." };
     }
 
+    if (edit.kind === "items" || edit.kind === "add") await processPaidOrder(tx, orderId);
     const after = await tx.select().from(orderItems).where(eq(orderItems.orderId, orderId));
     const totals = orderTotals({
       lineCents: after.map((i) => i.unitPriceCents * i.quantity),
@@ -126,6 +131,12 @@ export async function editOrder(orderId: number, by: number, edit: OrderEdit): P
     await tx.insert(adminLog).values({ actorId: by, entity: "order" satisfies LogEntity, entityId: orderId, action, detail: detail.slice(0, 2000) });
     return { ok: true, message: `Order updated. ${total}${o.bobgoOrderId ? " Update it in Bob Go to send the new items." : ""}` };
   });
+  // A Pro upgrade may have been granted or taken back: refresh those public pages now.
+  if (result.ok && (edit.kind === "items" || edit.kind === "add")) {
+    const spent = await db.select({ profileId: entitlements.assignedProfileId }).from(entitlements).where(and(eq(entitlements.sourceOrderId, orderId), eq(entitlements.type, "pro_upgrade")));
+    for (const id of new Set(spent.map((s) => s.profileId).filter((n): n is number => !!n))) await refreshProfilePages(id);
+  }
+  return result;
 }
 
 const linesOf = (items: Item[]) => items.map((i) => ({ productId: i.productId, lineCents: i.unitPriceCents * i.quantity }));
@@ -163,7 +174,7 @@ async function itemCards(tx: Tx, o: Order, items: Item[]) {
     ? await tx
         .select()
         .from(entitlements)
-        .where(and(eq(entitlements.ownerId, o.userId), inArray(entitlements.cartItemKey, keys), eq(entitlements.status, "in_cart")))
+        .where(and(eq(entitlements.ownerId, o.userId), inArray(entitlements.cartItemKey, keys), notInArray(entitlements.status, ["cancelled", "refunded"])))
     : [];
   const claimed = new Set<number>();
   for (const item of items) {
@@ -208,18 +219,22 @@ async function syncItem(tx: Tx, o: Order, item: Item, qty: number, itemCardsNow:
   const types = entitlementTypesFor(item.productId);
   const key = item.meta.cartItemKey;
   if (!types.length || !key) return;
-  const rows = await tx
+  const found = await tx
     .select()
     .from(entitlements)
-    .where(and(eq(entitlements.ownerId, userId), eq(entitlements.cartItemKey, key), eq(entitlements.status, "in_cart")))
+    .where(and(eq(entitlements.ownerId, userId), eq(entitlements.cartItemKey, key), notInArray(entitlements.status, ["cancelled", "refunded"])))
     .orderBy(asc(entitlements.id));
+  // Rows are dropped from the end, so upgrades already in use are kept longest.
+  const rows = [...found].sort((a, b) => Number(b.status === "consumed") - Number(a.status === "consumed"));
   const bundle = isBundle(item.productId);
   const units = bundle ? [...new Set(rows.map((r) => r.groupKey))].map((g) => rows.filter((r) => r.groupKey === g)) : rows.map((r) => [r]);
   const perUnit = bundle ? 1 : types.length;
   const have = bundle ? units.length : Math.floor(rows.length / Math.max(1, perUnit));
   if (qty < have) {
-    const drop = units.slice(bundle ? qty : qty * perUnit).flat().map((r) => r.id);
-    if (drop.length) await tx.update(entitlements).set({ status: "cancelled", updatedAt: new Date() }).where(inArray(entitlements.id, drop));
+    const drop = units.slice(bundle ? qty : qty * perUnit).flat();
+    const backToStandard = drop.filter((r) => r.type === "pro_upgrade" && r.status === "consumed" && r.assignedProfileId).map((r) => r.assignedProfileId!);
+    if (backToStandard.length) await tx.update(profiles).set({ type: "standard", updatedAt: new Date() }).where(inArray(profiles.id, backToStandard));
+    if (drop.length) await tx.update(entitlements).set({ status: "cancelled", updatedAt: new Date() }).where(inArray(entitlements.id, drop.map((r) => r.id)));
     return;
   }
   const used = new Set(rows.flatMap((r) => [r.assignedCardId, r.assignedTagId]).filter((x): x is number => !!x));

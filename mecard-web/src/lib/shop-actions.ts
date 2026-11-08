@@ -183,13 +183,12 @@ export async function placeOrderAction(_: ShopState, form: FormData): Promise<Sh
   // (it copies billing to shipping when the order isn't shipped elsewhere).
   const [u] = await db.select({ firstName: users.firstName, phone: users.phone }).from(users).where(eq(users.id, userId));
   if (u) {
-    await db
-      .update(users)
-      .set({
-        ...(!u.firstName || !u.phone ? { firstName: u.firstName || billing.firstName, lastName: billing.lastName, phone: u.phone || billing.phone } : {}),
-        ...(ships ? { billingAddress: billing, shippingAddress: { ...delivery, phone: shipElsewhere ? "" : billing.phone } } : {}),
-      })
-      .where(eq(users.id, userId));
+    const saved = {
+      ...(!u.firstName || !u.phone ? { firstName: u.firstName || billing.firstName, lastName: billing.lastName, phone: u.phone || billing.phone } : {}),
+      ...(ships ? { billingAddress: billing, shippingAddress: { ...delivery, phone: shipElsewhere ? "" : billing.phone } } : {}),
+    };
+    // Nothing to save for an upgrade-only order from an account with a name and phone: an empty update throws.
+    if (Object.keys(saved).length) await db.update(users).set(saved).where(eq(users.id, userId));
   }
 
   // Nothing to pay (a 100% coupon with free or no shipping): WooCommerce skips the gateway.

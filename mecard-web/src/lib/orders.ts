@@ -44,7 +44,9 @@ export async function setOrderStatus(
     if (["on-hold", ...PAID].includes(next)) {
       await tx.update(cards).set({ cartItemKey: null, updatedAt: new Date() }).where(eq(cards.orderId, orderId));
     }
-    if (PAID.includes(next) && !PAID.includes(o.status)) await processPaidOrder(tx, orderId);
+    // An EFT order counts from when it's placed: Pro goes live and staff chase payment.
+    // Cancelling it takes Pro back. PayFast waits for the payment, moments later.
+    if ((PAID.includes(next) && !PAID.includes(o.status)) || next === "on-hold") await processPaidOrder(tx, orderId);
     if (next === "shipped") {
       await tx
         .update(cards)
@@ -66,7 +68,7 @@ export async function setOrderStatus(
   if (PAID.includes(next) && !PAID.includes(prev)) await recordCommission(orderId);
   if (next === "cancelled" || next === "refunded") await reverseCommission(orderId);
   // A Pro upgrade or bundle for a profile went live (or was taken back): refresh its public pages now.
-  if ((PAID.includes(next) && !PAID.includes(prev)) || next === "cancelled" || next === "refunded") {
+  if ((PAID.includes(next) && !PAID.includes(prev)) || next === "on-hold" || next === "cancelled" || next === "refunded") {
     const items = await db.select({ meta: orderItems.meta }).from(orderItems).where(eq(orderItems.orderId, orderId));
     // Upgrades spent on a team's waiting profiles have no profile on the order line.
     const spent = await db.select({ profileId: entitlements.assignedProfileId }).from(entitlements).where(and(eq(entitlements.sourceOrderId, orderId), eq(entitlements.type, "pro_upgrade")));
