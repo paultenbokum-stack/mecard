@@ -6,3 +6,8 @@ export type QuoteItem = { productId: number; name: string; qty: number; unitPric
 export function lineDiscountCents(i: { qty: number; unitPriceCents: number; regularPriceCents?: number }): number {
   return i.regularPriceCents !== undefined && i.regularPriceCents > i.unitPriceCents ? (i.regularPriceCents - i.unitPriceCents) * i.qty : 0;
 }
+
+export const SALES_MAX_DISCOUNT_PERCENT = 10;
+
+/** The most a salesperson may take off a basket of products worth this much. */
+export const salesMaxDiscountCents = (productsCents: number) => Math.floor((productsCents * SALES_MAX_DISCOUNT_PERCENT) / 100);

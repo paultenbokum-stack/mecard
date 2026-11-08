@@ -4,6 +4,7 @@ import {
   clickStillValid,
   commissionBase,
   commissionFor,
+  commissionWithDiscount,
   creditFor,
   currentMonth,
   decodeClick,
@@ -113,6 +114,13 @@ test("the 25th pays orders paid up to the 20th, South African time", () => {
 test("a run can be paid once the 20th is over", () => {
   assert.equal(payoutClosed("2026-11-25", new Date("2026-11-20T21:00:00Z")), false);
   assert.equal(payoutClosed("2026-11-25", new Date("2026-11-20T22:30:00Z")), true);
+});
+
+test("a salesperson's discount comes off their commission", () => {
+  // R1,000 of products, R100 off, 20%: 20% of R1,000 less the R100. MeCard nets R800 either way.
+  assert.deepEqual(commissionWithDiscount({ netBaseCents: 90000, salesDiscountCents: 10000, rateBps: 2000 }), { baseCents: 100000, discountOffCents: 10000, amountCents: 10000 });
+  assert.deepEqual(commissionWithDiscount({ netBaseCents: 100000, salesDiscountCents: 0, rateBps: 2000 }), { baseCents: 100000, discountOffCents: 0, amountCents: 20000 });
+  assert.equal(commissionWithDiscount({ netBaseCents: 90000, salesDiscountCents: 10000, rateBps: 500 }).amountCents, 0, "never below zero");
 });
 
 test("a rate is typed as a percentage", () => {

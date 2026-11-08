@@ -1,5 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { salesMaxDiscountCents } from "./quote-lines";
 import { effectiveStatus, lineDiscountCents, linePriceShown, quoteBillingLines, quoteParts, quotePrefill, quoteToken, quoteTotals, verifyQuoteToken } from "./quote-rules";
 
 const now = new Date("2026-10-21T12:00:00Z");
@@ -12,6 +13,11 @@ test("quote totals add the lines, and the discount never comes off shipping", ()
   assert.deepEqual(quoteTotals(items), { subtotalCents: 129700, discountCents: 0, totalCents: 129700 });
   assert.deepEqual(quoteTotals(items, 5000), { subtotalCents: 129700, discountCents: 5000, totalCents: 124700 });
   assert.deepEqual(quoteTotals(items, 200000), { subtotalCents: 129700, discountCents: 119700, totalCents: 10000 });
+});
+
+test("a salesperson may take up to 10% off the products", () => {
+  assert.equal(salesMaxDiscountCents(119700), 11970);
+  assert.equal(salesMaxDiscountCents(999), 99);
 });
 
 test("a lower price shows as a discount on the line", () => {

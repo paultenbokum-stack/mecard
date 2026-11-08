@@ -76,7 +76,7 @@ export function SalesTable({ rows, nameHref, month }: { rows: SalesRow[]; nameHr
             <th className="adm-num" title="Orders paid through a quote">
               Orders
             </th>
-            <th className="adm-num" title="Sales excluding shipping, on orders paid this month">
+            <th className="adm-num" title="Sales excluding shipping, before a salesperson's own discount, on orders paid this month">
               Sales
             </th>
             <th className="adm-num">Earned</th>
@@ -155,6 +155,9 @@ export function CommissionLines({ lines, staff = false }: { lines: Line[]; staff
             <th>From</th>
             <th className="adm-num">Sales</th>
             <th className="adm-num">Rate</th>
+            <th className="adm-num" title="The salesperson's own quote discount, taken off the commission">
+              Discount off
+            </th>
             <th className="adm-num">Commission</th>
             <th>Status</th>
           </tr>
@@ -172,6 +175,7 @@ export function CommissionLines({ lines, staff = false }: { lines: Line[]; staff
               <td className="adm-small">{c.reversesId ? "Taken back" : (COMMISSION_SOURCE_LABEL[c.source] ?? c.source)}</td>
               <td className="adm-num">{rands(c.baseCents)}</td>
               <td className="adm-num">{bpsToPercent(c.rateBps)}%</td>
+              <td className="adm-num">{c.discountOffCents ? rands(-c.discountOffCents) : ""}</td>
               <td className="adm-num">{rands(c.amountCents)}</td>
               <td>
                 <Badge status={c.status === "paid" ? "completed" : c.status === "due" ? "on-hold" : "cancelled"}>{COMMISSION_STATUS_LABEL[c.status] ?? c.status}</Badge>
@@ -181,7 +185,7 @@ export function CommissionLines({ lines, staff = false }: { lines: Line[]; staff
           ))}
           {!lines.length ? (
             <tr>
-              <td colSpan={staff ? 9 : 8} className="adm-muted">
+              <td colSpan={staff ? 10 : 9} className="adm-muted">
                 No commission this month.
               </td>
             </tr>

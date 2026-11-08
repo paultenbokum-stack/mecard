@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import { rands, randsToCents } from "@/lib/money";
-import { lineDiscountCents, type QuoteItem } from "@/lib/quote-lines";
+import { lineDiscountCents, type QuoteItem, SALES_MAX_DISCOUNT_PERCENT, salesMaxDiscountCents } from "@/lib/quote-lines";
 
 type Product = { id: number; name: string; priceCents: number; active: boolean };
 type Row = { key: number; productId: string; qty: string; price: string; regularPriceCents?: number };
@@ -26,6 +26,7 @@ export function QuoteLinesEditor({
   shippingLine,
   discountCents,
   locked,
+  fixedPrices,
 }: {
   catalogue: Product[];
   shippingProduct: Product | null;
@@ -33,6 +34,8 @@ export function QuoteLinesEditor({
   shippingLine: QuoteItem | null;
   discountCents: number;
   locked: boolean;
+  /** A salesperson: prices show but can't be changed, and the discount has a limit. */
+  fixedPrices: boolean;
 }) {
   const nextKey = useRef(items.length);
   const [rows, setRows] = useState<Row[]>(() =>
@@ -54,6 +57,8 @@ export function QuoteLinesEditor({
   const discountNow = Math.min(subtotal, priceOf(discount, 0));
   const shippingCents = shipping ? priceOf(shipping.price, shippingProduct?.priceCents ?? 0) * shipping.qty : 0;
   const total = subtotal - discountNow + shippingCents;
+  const maxDiscount = salesMaxDiscountCents(subtotal);
+  const shownPrice = (r: Row) => r.price || (shop(r.productId) ? toRands(shop(r.productId)!.priceCents) : "");
 
   return (
     <>
@@ -96,7 +101,14 @@ export function QuoteLinesEditor({
                   <input name="qty" type="number" min={0} max={5000} value={r.qty} onChange={(e) => update(r.key, { qty: e.target.value })} className="adm-input adm-input--num" disabled={locked} aria-label={`Line ${n + 1} quantity`} />
                 </td>
                 <td>
-                  <input name="price" inputMode="decimal" value={r.price} onChange={(e) => update(r.key, { price: e.target.value })} placeholder="Shop price" className="adm-input adm-input--num" disabled={locked} aria-label={`Line ${n + 1} price`} />
+                  {fixedPrices ? (
+                    <>
+                      <input type="hidden" name="price" value={r.price} disabled={locked} />
+                      {shownPrice(r)}
+                    </>
+                  ) : (
+                    <input name="price" inputMode="decimal" value={r.price} onChange={(e) => update(r.key, { price: e.target.value })} placeholder="Shop price" className="adm-input adm-input--num" disabled={locked} aria-label={`Line ${n + 1} price`} />
+                  )}
                 </td>
                 <td className="adm-num">{figures[n].off ? `-${rands(figures[n].off)}` : ""}</td>
                 <td className="adm-num">{rands(figures[n].total)}</td>
@@ -140,12 +152,19 @@ export function QuoteLinesEditor({
             {shipping ? (
               <tr>
                 <td colSpan={2} className="adm-num">
-                  <label htmlFor="shipping">Shipping (R)</label>
+                  {fixedPrices ? "Shipping (R)" : <label htmlFor="shipping">Shipping (R)</label>}
                 </td>
                 <td>
                   <input type="hidden" name="product_id" value={shipping.productId} disabled={locked} />
                   <input type="hidden" name="qty" value={shipping.qty} disabled={locked} />
-                  <input id="shipping" name="price" inputMode="decimal" value={shipping.price} onChange={(e) => setShipping({ ...shipping, price: e.target.value })} className="adm-input adm-input--num" disabled={locked} />
+                  {fixedPrices ? (
+                    <>
+                      <input type="hidden" name="price" value={shipping.price} disabled={locked} />
+                      {shipping.price}
+                    </>
+                  ) : (
+                    <input id="shipping" name="price" inputMode="decimal" value={shipping.price} onChange={(e) => setShipping({ ...shipping, price: e.target.value })} className="adm-input adm-input--num" disabled={locked} />
+                  )}
                 </td>
                 <td />
                 <td className="adm-num">{rands(shippingCents)}</td>
@@ -171,6 +190,11 @@ export function QuoteLinesEditor({
           </tfoot>
         </table>
       </div>
+      {fixedPrices && !locked ? (
+        <p className={priceOf(discount, 0) > maxDiscount ? "adm-note" : "adm-help"} role="status">
+          You can give a discount of up to {SALES_MAX_DISCOUNT_PERCENT}% on this quote, which is {rands(maxDiscount)}. It comes off your commission.
+        </p>
+      ) : null}
       {locked ? null : (
         <>
           <div className="adm-head__actions" style={{ justifyContent: "flex-start", marginTop: 10 }}>
@@ -191,8 +215,8 @@ export function QuoteLinesEditor({
             ) : null}
           </div>
           <p className="adm-help" style={{ marginBottom: 0 }}>
-            Leave a price empty for the shop price. A lower price shows on the quote as a discount on that line. Shipping comes after the discount, and checkout then offers delivery as included in the
-            quote. Changes count once you save.
+            {fixedPrices ? "" : "Leave a price empty for the shop price. A lower price shows on the quote as a discount on that line. "}Shipping comes after the discount, and checkout then offers delivery as
+            included in the quote. Changes count once you save.
           </p>
         </>
       )}

@@ -8,6 +8,7 @@ import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 //             the customer, if the first sale came within 1 month of sign-up and this
 //             order within 12 months. One salesperson per order.
 //   paid      the commission is written: a percentage of sales excluding shipping,
+//             less any discount the salesperson gave on their quote,
 //             paid out on the 25th for orders paid up to the 20th
 //   reversed  a cancelled or refunded order takes it back (paid out already: a negative row)
 
@@ -118,6 +119,15 @@ export function commissionBase(o: { subtotalCents: number; discountCents: number
 }
 
 export const commissionFor = (baseCents: number, rateBps: number) => Math.round((baseCents * rateBps) / 10000);
+
+/**
+ * A salesperson's own discount comes out of their commission: they earn on the sale
+ * before it, less all of it, so MeCard nets the same as with no discount. Never below zero.
+ */
+export function commissionWithDiscount(o: { netBaseCents: number; salesDiscountCents: number; rateBps: number }) {
+  const baseCents = o.netBaseCents + o.salesDiscountCents;
+  return { baseCents, discountOffCents: o.salesDiscountCents, amountCents: Math.max(0, commissionFor(baseCents, o.rateBps) - o.salesDiscountCents) };
+}
 
 /** The run a payment falls in: the 25th of the same month up to and including the 20th (South African time), else of the next. */
 export function payoutDateFor(paidAt: Date): string {

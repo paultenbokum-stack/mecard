@@ -408,7 +408,8 @@ export default async function AdminOrder({ params, searchParams }: { params: Pro
               {o.salesSource ? <p className="adm-help" style={{ margin: 0 }}>Credited by: {COMMISSION_SOURCE_LABEL[o.salesSource] ?? o.salesSource}.</p> : null}
               {commission ? (
                 <p className="adm-help" style={{ margin: 0 }}>
-                  Commission: {rands(commission.amountCents)} ({COMMISSION_STATUS_LABEL[commission.status] ?? commission.status}), on sales of {rands(commission.baseCents)}.
+                  Commission: {rands(commission.amountCents)} ({COMMISSION_STATUS_LABEL[commission.status] ?? commission.status}), on sales of {rands(commission.baseCents)}
+                  {commission.discountOffCents ? `, less their ${rands(commission.discountOffCents)} discount` : ""}.
                 </p>
               ) : null}
               {commission?.status !== "paid" ? <SubmitButton busy="Saving…">Save salesperson</SubmitButton> : null}

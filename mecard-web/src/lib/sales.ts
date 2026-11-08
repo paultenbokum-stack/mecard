@@ -5,7 +5,7 @@ import { db } from "@/db/client";
 import { commissions, orderItems, orders, quotes, salesLinkClicks, users } from "@/db/schema";
 import { PAID_STATUSES } from "./money";
 import { ADDITIONAL_SHIPPING_PRODUCT } from "./quote-rules";
-import { clickStillValid, commissionBase, commissionFor, creditFor, decodeClick, isSalesCode, monthRange, newSalesCode, payoutDateFor, SALES_REF_COOKIE } from "./sales-rules";
+import { clickStillValid, commissionBase, commissionWithDiscount, creditFor, decodeClick, isSalesCode, monthRange, newSalesCode, payoutDateFor, SALES_REF_COOKIE } from "./sales-rules";
 
 // Salespeople and commission against the database. The rules are in sales-rules.ts.
 
@@ -100,9 +100,15 @@ async function baseCents(o: typeof orders.$inferSelect) {
 async function commissionValues(o: typeof orders.$inferSelect, salesUserId: number, source: string) {
   const [u] = await db.select({ rate: users.commissionRateBps }).from(users).where(eq(users.id, salesUserId)).limit(1);
   const rateBps = u?.rate ?? 0;
-  const base = await baseCents(o);
+  const netBaseCents = await baseCents(o);
+  // Only this salesperson's own discount comes off, not one from staff or a coupon.
+  const [own] = await db
+    .select({ cents: sql<number>`coalesce(sum(${quotes.salesDiscountCents}), 0)::int` })
+    .from(quotes)
+    .where(and(eq(quotes.orderId, o.id), eq(quotes.salesUserId, salesUserId)));
+  const salesDiscountCents = Math.min(own?.cents ?? 0, o.discountCents);
   const earnedAt = o.paidAt ?? new Date();
-  return { salesUserId, orderId: o.id, source, baseCents: base, rateBps, amountCents: commissionFor(base, rateBps), earnedAt, payoutDate: payoutDateFor(earnedAt) };
+  return { salesUserId, orderId: o.id, source, rateBps, ...commissionWithDiscount({ netBaseCents, salesDiscountCents, rateBps }), earnedAt, payoutDate: payoutDateFor(earnedAt) };
 }
 
 /** A paid order's commission. Idempotent, and a problem here never stops a payment going through. */
@@ -142,6 +148,7 @@ export async function reverseCommission(orderId: number): Promise<void> {
       orderId,
       source: line.source,
       baseCents: -line.baseCents,
+      discountOffCents: -line.discountOffCents,
       rateBps: line.rateBps,
       amountCents: -line.amountCents,
       earnedAt: new Date(),

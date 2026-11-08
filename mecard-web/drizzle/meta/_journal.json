@@ -134,6 +134,13 @@
       "when": 1794068109343,
       "tag": "0018_commission_payout_date",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1794129196103,
+      "tag": "0019_sales_discount",
+      "breakpoints": true
     }
   ]
 }

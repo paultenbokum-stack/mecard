@@ -72,6 +72,7 @@ export async function QuoteEditor({
                 shippingLine={parts.shippingLine}
                 discountCents={q.discountCents}
                 locked={locked}
+                fixedPrices={!staff}
               />
             </Card>
             <Card title="Note to the customer">

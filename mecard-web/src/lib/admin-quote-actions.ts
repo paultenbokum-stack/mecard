@@ -6,8 +6,9 @@ import { db } from "@/db/client";
 import { companies, orders, products, quotes, users, type QuoteLine } from "@/db/schema";
 import { logAdmin } from "@/lib/admin-log";
 import { cleanEmail } from "@/lib/form-values";
-import { randsToCents } from "@/lib/money";
-import { ADDITIONAL_SHIPPING_PRODUCT, QUOTE_STATUS_LABEL, QUOTE_VALID_DAYS, quotePrefill, quoteTotals } from "@/lib/quote-rules";
+import { rands, randsToCents } from "@/lib/money";
+import { SALES_MAX_DISCOUNT_PERCENT, salesMaxDiscountCents } from "@/lib/quote-lines";
+import { ADDITIONAL_SHIPPING_PRODUCT, QUOTE_STATUS_LABEL, QUOTE_VALID_DAYS, quoteParts, quotePrefill, quoteTotals } from "@/lib/quote-rules";
 import { quoteById, sendQuoteEmails } from "@/lib/quotes";
 import { requireAdmin, requireQuoteStaff } from "@/lib/session";
 
@@ -27,8 +28,11 @@ async function quoteDesk() {
   return { ...who, base: "/admin/quotes/", ownOnly: !who.isAdmin };
 }
 
-/** The quote's lines from the form: product_id[], qty[], price[] (Rands); quantity 0 removes a line. */
-async function linesFromForm(form: FormData): Promise<QuoteLine[] | string> {
+/**
+ * The quote's lines from the form: product_id[], qty[], price[] (Rands); quantity 0 removes a line.
+ * With `fixedPrices` (a salesperson) typed prices are ignored: a line keeps the price it has, a new one gets the shop price.
+ */
+async function linesFromForm(form: FormData, fixedPrices?: QuoteLine[]): Promise<QuoteLine[] | string> {
   const ids = form.getAll("product_id").map(Number);
   const qtys = form.getAll("qty").map((v) => Number(v || 0));
   const prices = form.getAll("price").map((v) => String(v));
@@ -41,7 +45,7 @@ async function linesFromForm(form: FormData): Promise<QuoteLine[] | string> {
     const p = byId.get(ids[i]);
     if (!p) return "Unknown product.";
     if (!Number.isInteger(qtys[i]) || qtys[i] < 0 || qtys[i] > 5000) return "Quantities must be whole numbers up to 5000.";
-    const price = prices[i]?.trim() ? randsToCents(prices[i]) : p.priceCents;
+    const price = fixedPrices ? (fixedPrices.find((l) => l.productId === p.id)?.unitPriceCents ?? p.priceCents) : prices[i]?.trim() ? randsToCents(prices[i]) : p.priceCents;
     if (price === null || Number.isNaN(price)) return `Please enter a valid price for ${p.name}.`;
     lines.push({ productId: p.id, name: p.name, qty: qtys[i], unitPriceCents: price, ...(p.id === ADDITIONAL_SHIPPING_PRODUCT ? {} : { regularPriceCents: p.priceCents }) });
   }
@@ -67,10 +71,16 @@ export async function saveQuoteAction(form: FormData) {
 
   // Accepted quotes are in the customer's basket at these prices: only the note and details can change.
   const locked = q.status === "accepted";
-  const lines = locked ? q.items : await linesFromForm(form);
+  const lines = locked ? q.items : await linesFromForm(form, desk.ownOnly ? q.items : undefined);
   if (typeof lines === "string") back(path, { error: lines });
   if (send && !lines.length) back(path, { error: "Add at least one line before sending." });
   const totals = quoteTotals(lines, locked ? q.discountCents : discount);
+  // A salesperson's discount is capped and comes off their commission. One staff gave stays as it is until they change it.
+  const staffDiscountKept = discount === q.discountCents && q.salesDiscountCents === 0;
+  if (desk.ownOnly && !locked && !staffDiscountKept && totals.discountCents > salesMaxDiscountCents(quoteParts(lines).productsCents)) {
+    back(path, { error: `You can give a discount of up to ${SALES_MAX_DISCOUNT_PERCENT}% on this quote, which is ${rands(salesMaxDiscountCents(quoteParts(lines).productsCents))}. Ask staff about anything more.` });
+  }
+  const salesDiscountCents = locked ? q.salesDiscountCents : desk.ownOnly ? (staffDiscountKept ? 0 : totals.discountCents) : discount === q.discountCents ? Math.min(q.salesDiscountCents, totals.discountCents) : 0;
 
   // Sending starts the 10 days again unless staff chose a later date.
   const typed = expires ? new Date(`${expires}T23:59:59.999+02:00`) : null;
@@ -105,6 +115,7 @@ export async function saveQuoteAction(form: FormData) {
       note: str(form, "note").slice(0, 3000),
       items: lines,
       ...totals,
+      salesDiscountCents,
       status: send ? "sent" : locked ? "accepted" : status,
       salesUserId,
       expiresAt,

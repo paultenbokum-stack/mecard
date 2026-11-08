@@ -27,7 +27,7 @@ export async function MyCommission({ userId, month }: { userId: number; month: s
       <AdminHeader title="My commission" />
       <p className="adm-muted">
         You earn {bpsToPercent(r.rateBps)}% of sales excluding shipping, on anything bought through your quote. With your link, a customer must sign up within {SIGNUP_DAYS} days of clicking and make a
-        first purchase within {FIRST_SALE_MONTHS} month of signing up; you then earn on what they buy for {REFERRAL_MONTHS} months from signing up. Paid on the {PAYOUT_DAY}th for orders paid up to the{" "}
+        first purchase within {FIRST_SALE_MONTHS} month of signing up; you then earn on what they buy for {REFERRAL_MONTHS} months from signing up. A discount you give on a quote comes off your commission. Paid on the {PAYOUT_DAY}th for orders paid up to the{" "}
         {PAYOUT_CUTOFF_DAY}th.
       </p>
       {code ? (

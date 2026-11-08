@@ -512,6 +512,8 @@ export const quotes = pgTable(
     orderId: integer("order_id"),
     // The salesperson this quote belongs to: they earn on the order it becomes.
     salesUserId: integer("sales_user_id").references(() => users.id, { onDelete: "set null" }),
+    // How much of discountCents the salesperson gave. It comes off their commission; a discount from staff doesn't.
+    salesDiscountCents: integer("sales_discount_cents").notNull().default(0),
     expiresAt: timestamp("expires_at", { withTimezone: true }),
     sentAt: timestamp("sent_at", { withTimezone: true }),
     acceptedAt: timestamp("accepted_at", { withTimezone: true }),
@@ -549,8 +551,10 @@ export const commissions = pgTable(
       .notNull()
       .references(() => orders.id, { onDelete: "cascade" }),
     source: varchar("source", { length: 10 }).notNull(), // quote | link | manual
-    baseCents: integer("base_cents").notNull(), // Sales excluding shipping.
+    baseCents: integer("base_cents").notNull(), // Sales excluding shipping, before the salesperson's own discount.
     rateBps: integer("rate_bps").notNull(),
+    // The salesperson's own discount, taken off amountCents.
+    discountOffCents: integer("discount_off_cents").notNull().default(0),
     amountCents: integer("amount_cents").notNull(),
     status: varchar("status", { length: 10 }).notNull().default("due"), // due | paid | reversed
     earnedAt: timestamp("earned_at", { withTimezone: true }).notNull(),
