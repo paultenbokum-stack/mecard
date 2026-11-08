@@ -22,7 +22,7 @@ export default async function TeamPeoplePage({ searchParams }: { searchParams: P
       <div className="team-main">
         <div>
           <h1>Who’s on the team?</h1>
-          <p>Your order is safe. Add people now or later, and we’ll print each card once its name is in.</p>
+          <p>Your order is safe. Add people now or later. Each card prints once its name is in, and Pro profiles go live once your payment is received.</p>
         </div>
         {sp.added ? <p className="team-ok" role="status">{sp.added === "1" ? "1 person added." : `${sp.added} people added.`}</p> : null}
         {sp.error ? <p className="team-error" role="alert">Add at least one name to the list.</p> : null}

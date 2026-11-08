@@ -133,22 +133,6 @@ export const teamProfiles = (companyId: number) =>
     .where(and(eq(profiles.companyId, companyId), eq(profiles.archived, false)))
     .orderBy(asc(profiles.id));
 
-/** Spend one bought Pro upgrade on a company profile, which is already pro, so it isn't left counted as unused. */
-async function spendProUpgrade(profileId: number, ownerId: number) {
-  await db.transaction(async (tx) => {
-    const [row] = await tx
-      .select({ id: entitlements.id })
-      .from(entitlements)
-      .where(and(eq(entitlements.ownerId, ownerId), eq(entitlements.type, "pro_upgrade"), eq(entitlements.status, "paid_unassigned")))
-      .orderBy(asc(entitlements.id))
-      .for("update", { skipLocked: true })
-      .limit(1);
-    if (!row) return;
-    const now = new Date();
-    await tx.update(entitlements).set({ status: "consumed", assignedProfileId: profileId, consumedAt: now, updatedAt: now }).where(eq(entitlements.id, row.id));
-  });
-}
-
 /** Give a new person the next bought card (with its phone tag, if any), printing their name on a Classic. */
 async function linkNextCards(profileId: number, ownerId: number, person: { name: string; jobTitle: string }) {
   for (const physical of [true, false]) {
@@ -164,12 +148,11 @@ async function linkNextCards(profileId: number, ownerId: number, person: { name:
   }
 }
 
-/** Add one person to a team: their profile, the next bought card and a bought Pro upgrade. */
+/** Add one person to a team: their profile (Pro if an upgrade is already paid for) and the next bought card. */
 async function addTeamPerson(ownerId: number, companyId: number, person: ListedPerson): Promise<number> {
   const profileId = await createProfile({ id: ownerId, isAdmin: false }, { firstName: person.firstName, lastName: person.lastName, email: person.email, jobTitle: person.jobTitle, companyId });
   if (person.mobile) await db.update(profiles).set({ mobile: person.mobile }).where(eq(profiles.id, profileId));
   await linkNextCards(profileId, ownerId, { name: `${person.firstName} ${person.lastName}`.trim(), jobTitle: person.jobTitle });
-  await spendProUpgrade(profileId, ownerId);
   await refreshProfilePages(profileId);
   return profileId;
 }

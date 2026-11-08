@@ -2,7 +2,7 @@ import "server-only";
 import { after } from "next/server";
 import { and, desc, eq } from "drizzle-orm";
 import { db } from "@/db/client";
-import { cards, orderItems, orderNotes, orders } from "@/db/schema";
+import { cards, entitlements, orderItems, orderNotes, orders } from "@/db/schema";
 import { bobgoAfterStatusChange, bobgoEnabled } from "@/lib/bobgo";
 import { cancelOrderEntitlements, processPaidOrder } from "@/lib/entitlements";
 import { refreshProfilePages } from "@/lib/manage";
@@ -68,7 +68,9 @@ export async function setOrderStatus(
   // A Pro upgrade or bundle for a profile went live (or was taken back): refresh its public pages now.
   if ((PAID.includes(next) && !PAID.includes(prev)) || next === "cancelled" || next === "refunded") {
     const items = await db.select({ meta: orderItems.meta }).from(orderItems).where(eq(orderItems.orderId, orderId));
-    for (const id of new Set(items.map((i) => Number(i.meta.profileId)).filter((n) => n > 0))) await refreshProfilePages(id);
+    // Upgrades spent on a team's waiting profiles have no profile on the order line.
+    const spent = await db.select({ profileId: entitlements.assignedProfileId }).from(entitlements).where(and(eq(entitlements.sourceOrderId, orderId), eq(entitlements.type, "pro_upgrade")));
+    for (const id of new Set([...items.map((i) => Number(i.meta.profileId)), ...spent.map((s) => Number(s.profileId))].filter((n) => n > 0))) await refreshProfilePages(id);
   }
   if (opts.emails !== false) await sendOrderStatusEmails(orderId, prev, next);
   if (bobgoEnabled()) after(() => bobgoAfterStatusChange(orderId, next, { by: opts.by, prev }));

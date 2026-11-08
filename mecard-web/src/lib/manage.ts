@@ -345,7 +345,8 @@ export async function createProfile(
 ): Promise<number> {
   const slug = await freeSlug(profiles, slugify(`${input.firstName} ${input.lastName}`));
   // Profiles added for a company belong to its owner's team (the person takes
-  // over by accepting an invite); a profile for yourself is your own.
+  // over by accepting an invite); a profile for yourself is your own. Every new
+  // profile starts standard, and turns Pro only once an upgrade is paid for.
   const ownForSelf = !input.companyId;
   const [row] = await db
     .insert(profiles)
@@ -356,12 +357,13 @@ export async function createProfile(
       email: input.email ?? "",
       jobTitle: input.jobTitle ?? "",
       companyId: input.companyId,
-      // Company profiles were pro on WordPress (the company branding needs it).
-      type: input.companyId ? "pro" : "standard",
+      type: "standard",
       ownerId: ownForSelf ? v.id : null,
       managerId: v.id,
     })
     .returning({ id: profiles.id });
+  // A paid, unused upgrade goes to the next company profile added.
+  if (input.companyId) await applyProUpgrade(row.id, v.id);
   return row.id;
 }
 

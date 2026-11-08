@@ -1,13 +1,13 @@
 import "server-only";
-import { and, asc, eq, inArray, ne, notInArray, or, sql } from "drizzle-orm";
+import { and, asc, eq, inArray, isNotNull, ne, notInArray, or, sql } from "drizzle-orm";
 import { db } from "@/db/client";
-import { cards, entitlements, orderItems, orders, profiles } from "@/db/schema";
+import { cards, companies, entitlements, orderItems, orders, profiles } from "@/db/schema";
 import { entitlementTypesFor, isBundle } from "./catalog";
 
 // Paid and cancelled orders (Me\Entitlements\Module::process_paid_order and
 // cancel_order_entitlements). A paid Pro upgrade for a profile makes it Pro
-// at once; one bought without a profile waits as "paid_unassigned" until it
-// is applied in the profile editor.
+// at once. One bought without a profile goes to a standard profile waiting in
+// the buyer's companies, or waits as "paid_unassigned" until a profile is added.
 
 type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
@@ -15,6 +15,7 @@ export async function processPaidOrder(tx: Tx, orderId: number) {
   const [o] = await tx.select({ userId: orders.userId }).from(orders).where(eq(orders.id, orderId)).limit(1);
   if (!o?.userId) return;
   const items = await tx.select().from(orderItems).where(eq(orderItems.orderId, orderId));
+  const unassignedUpgrades: number[] = [];
   for (const item of items) {
     const types = entitlementTypesFor(item.productId);
     if (!types.length) continue;
@@ -44,6 +45,7 @@ export async function processPaidOrder(tx: Tx, orderId: number) {
         .update(entitlements)
         .set({ sourceOrderId: orderId, sourceOrderItemId: item.id, sourceProductId: item.productId, assignedProfileId: assigned, status, updatedAt: new Date() })
         .where(eq(entitlements.id, row.id));
+      if (row.type === "pro_upgrade" && !assigned) unassignedUpgrades.push(row.id);
       if (assigned && row.type !== "pro_upgrade") await linkCardToProfile(tx, row, assigned);
       if (row.type === "pro_upgrade" && assigned) {
         await consumeProUpgrade(tx, row.id, assigned);
@@ -60,6 +62,34 @@ export async function processPaidOrder(tx: Tx, orderId: number) {
         }
       }
     }
+  }
+  await applyToWaitingProfiles(tx, o.userId, unassignedUpgrades);
+}
+
+/**
+ * A team's order pays for people added before the money cleared: spend this
+ * order's upgrades on their standard company profiles, oldest first. Upgrades
+ * from older orders stay put, so a new order can't change other profiles.
+ */
+async function applyToWaitingProfiles(tx: Tx, ownerId: number, upgradeIds: number[]) {
+  if (!upgradeIds.length) return;
+  const waiting = await tx
+    .select({ id: profiles.id })
+    .from(profiles)
+    .where(
+      and(
+        eq(profiles.archived, false),
+        eq(profiles.type, "standard"),
+        isNotNull(profiles.companyId),
+        or(eq(profiles.managerId, ownerId), inArray(profiles.companyId, sql`(SELECT ${companies.id} FROM ${companies} WHERE ${companies.ownerId} = ${ownerId})`)),
+        sql`NOT EXISTS (SELECT 1 FROM ${entitlements} e WHERE e.assigned_profile_id = ${profiles.id} AND e.type = 'pro_upgrade' AND e.status = 'in_cart')`,
+      ),
+    )
+    .orderBy(asc(profiles.id))
+    .limit(upgradeIds.length);
+  for (const [i, p] of waiting.entries()) {
+    await tx.update(entitlements).set({ assignedProfileId: p.id, updatedAt: new Date() }).where(eq(entitlements.id, upgradeIds[i]));
+    await consumeProUpgrade(tx, upgradeIds[i], p.id);
   }
 }
 
