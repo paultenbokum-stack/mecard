@@ -77,7 +77,7 @@ export function PageTitle({ children }: { children: React.ReactNode }) {
   return <h1 className="me-page-title">{children}</h1>;
 }
 
-const TEAM_GROUPS = ["Sign up", "Set up your company", "Add your people", "Order cards"];
+const TEAM_GROUPS = ["Your account", "Your company", "Team size and pay", "Add your people"];
 
 /** The team path's tracker on the sign-up pages ("For my team"): Sign up is the step they're on. */
 export function TeamProgressTracker() {

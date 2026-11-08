@@ -23,6 +23,10 @@ Measurement, experiments and the weekly UX review are planned in `docs/conversio
 Insights dashboard mockup in `docs/insights-mockup.html`. Build sessions follow its sections 3 and 4.
 Cutover with feature parity comes first; don't start the plan until Paul says so.
 
+## Team flow
+
+Teams are the main path. `/for-teams/` shows the price before signup (`TeamPriceBox`, kept in the browser), then `/sign-up/?for=teams`, `/team/setup/` (reads the company's website, `src/lib/team.ts` and `src/lib/site-read.ts`), `/team/order/` (a headcount and a package, `src/lib/team-packages.ts`) and the normal checkout. Names come after paying at `/team/people/`: a list, or the join link `/join/<company>/<token>/`, limited to the places the team has bought. `/team/left/<id>/` moves a card to a replacement. Website reads refuse private addresses at every redirect (`safeFetch`). Events are counts and choices only, and `insights.team_funnel` reads them.
+
 ## Staff view-as
 
 Staff can open the site as a customer from `/admin/users/<id>/`. `currentUserId()` then returns the customer, and `src/proxy.ts` refuses every write, so new actions and API routes are covered without extra code. A page that writes while it renders must skip that write when `isViewingAs()` is true.

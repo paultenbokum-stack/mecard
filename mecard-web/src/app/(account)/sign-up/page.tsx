@@ -17,6 +17,7 @@ export default async function SignUpPage({ searchParams }: { searchParams: Promi
   const forWhom = signupFor((await searchParams).for);
   const teams = forWhom === "teams";
   const state = await accountState(await currentUserId());
+  if (teams && state !== "anonymous") redirect("/team/setup/");
   if (state === "first_time" || state === "onboarding") redirect("/onboarding/");
   if (state === "existing") redirect("/manage/");
 
@@ -40,7 +41,7 @@ export default async function SignUpPage({ searchParams }: { searchParams: Promi
               <h2 className="me-auth-entry__title">{teams ? "Create your team account" : "Create your MeCard Profile"}</h2>
               <p className="me-auth-card__text">
                 {teams
-                  ? "Sign up, then set up your company, add your people and order their cards from your team dashboard."
+                  ? "Use your work email and we’ll set up your company’s branding for you on the next step. No payment details are needed yet."
                   : "Create your free shareable profile in seconds, then add it to your home screen for instant sharing."}
               </p>
               {googleEnabled ? (

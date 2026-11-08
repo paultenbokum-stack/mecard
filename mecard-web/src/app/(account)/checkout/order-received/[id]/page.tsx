@@ -26,6 +26,8 @@ export default async function OrderReceivedPage({ params }: { params: Promise<{ 
   const paid = PAID_STATUSES.includes(order.status);
   const hasCards = items.some((i) => cardTypesFor(i.productId).length);
   const hasUpgrades = items.some((i) => i.productId === PRODUCT.proUpgrade);
+  // Several people's worth of cards or upgrades, bought without naming them yet.
+  const teamOrder = items.some((i) => i.quantity >= 2 && (cardTypesFor(i.productId).length > 0 || i.productId === PRODUCT.proUpgrade));
   const designable = orderCards.filter((c) => c.type !== "phonetag");
   const done = designable.filter((c) => c.designSubmitted).length;
   const allDone = designable.length > 0 && done >= designable.length;
@@ -64,6 +66,13 @@ export default async function OrderReceivedPage({ params }: { params: Promise<{ 
           {hasUpgrades ? <li>Your profile upgrades will be applied automatically as your profiles are created or updated</li> : null}
         </ol>
       </section>
+      {teamOrder ? (
+        <section className="acc-panel" aria-labelledby="team-next">
+          <h2 id="team-next">Next, tell us who’s on the team</h2>
+          <p>Send your team one link and they’ll add their own details. Each card goes to print once its name is in.</p>
+          <Link className="acc-btn acc-btn--primary" href="/team/people/">Add my people</Link>
+        </section>
+      ) : null}
       <ul className="acc-list" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", display: "grid" }}>
         <li className="acc-item">
           <div className="acc-item__text">

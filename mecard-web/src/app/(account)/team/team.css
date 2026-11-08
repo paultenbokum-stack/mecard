@@ -1,0 +1,104 @@
+/* The team flow: /team/setup/, /team/order/, /team/people/, /team/left/ and /join/. Design-system tokens only. */
+
+.team { max-width: 1040px; margin: 0 auto; padding: var(--space-10) var(--space-5); color: var(--ink-muted); font-family: var(--font-text); line-height: 1.65; }
+.team--narrow { max-width: 620px; }
+.team :focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+.team h1, .team h2 { font-family: var(--font-display); color: var(--ink); margin: 0; }
+.team h1 { font-size: 1.5rem; line-height: 1.25; font-weight: 700; margin-bottom: var(--space-1); }
+.team h2 { font-size: 1.05rem; line-height: 1.4; font-weight: 600; }
+.team p { margin: 0; }
+
+.team-steps { list-style: none; margin: 0 0 var(--space-7); padding: 0; display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-5); font-size: 0.95rem; }
+.team-steps .is-done { color: var(--connect-strong); }
+.team-steps .is-now { color: var(--brand-strong); font-weight: 600; }
+
+.team-grid { display: flex; flex-wrap: wrap; gap: var(--space-10); align-items: flex-start; }
+.team-main { flex: 999 1 420px; min-width: 0; display: flex; flex-direction: column; gap: var(--space-4); }
+.team-side { flex: 1 1 340px; min-width: 0; display: flex; flex-direction: column; gap: var(--space-3); }
+.team-panel { background: var(--surface); border: 1px solid var(--surface-muted); border-radius: var(--radius-lg); padding: var(--space-7); display: flex; flex-direction: column; gap: var(--space-4); }
+.team-eyebrow { font-family: var(--font-display); font-weight: 700; font-size: 0.75rem; letter-spacing: 1.5px; text-transform: uppercase; color: var(--brand-strong); }
+.team-note { font-size: 0.85rem; line-height: 1.45; }
+.team-ok { color: var(--connect-strong); font-weight: 600; }
+.team-error { color: var(--danger); font-weight: 600; }
+
+.team-field { display: flex; flex-direction: column; gap: 6px; }
+.team-field label, .team-label { font-weight: 600; color: var(--ink); }
+.team-field input, .team-field textarea { font: inherit; color: var(--ink); padding: var(--space-3); border: 1px solid var(--ink-subtle); border-radius: var(--radius-xs); min-height: 44px; width: 100%; box-sizing: border-box; background: var(--surface); }
+.team-field textarea { resize: vertical; }
+.team-field textarea.team-mono { font-family: var(--font-mono); font-size: 0.8rem; line-height: 1.5; }
+.team-inline { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.team-inline input { flex: 1 1 200px; min-width: 0; width: auto; }
+
+.team-btn { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 10px var(--space-5); border-radius: var(--radius-md); border: 1px solid var(--ink-subtle); background: var(--surface); color: var(--ink-strong); font: inherit; font-weight: 600; cursor: pointer; text-decoration: none; }
+.team-btn:hover { border-color: var(--brand); color: var(--brand-strong); }
+.team-btn--primary { background: var(--brand); border-color: var(--brand); color: var(--on-brand); }
+.team-btn--primary:hover { background: var(--brand-strong); border-color: var(--brand-strong); color: var(--on-brand); }
+.team-btn--block { display: flex; width: 100%; box-sizing: border-box; }
+.team-btn[disabled] { opacity: 0.6; cursor: default; }
+.team-link { align-self: flex-start; background: none; border: none; padding: var(--space-2) 0; min-height: 44px; font: inherit; font-weight: 600; color: var(--link); cursor: pointer; }
+
+.team-swatches { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; }
+.team-swatch { width: 44px; height: 44px; border-radius: var(--radius-md); border: 3px solid var(--surface-muted); box-shadow: inset 0 0 0 2px var(--surface); cursor: pointer; padding: 0; }
+.team-swatch.is-on { border-color: var(--ink); }
+.team-logo { display: flex; align-items: center; gap: var(--space-3); min-height: 56px; }
+.team-logo img { max-width: 140px; max-height: 56px; object-fit: contain; }
+
+/* The sample profile. The company's chosen colour comes in through --team-colour. */
+.team-phone { width: 100%; max-width: 340px; align-self: center; box-sizing: border-box; background: var(--device); padding: 10px; border-radius: var(--radius-device); box-shadow: var(--shadow-device); }
+.team-phone__screen { background: var(--surface); border-radius: 30px; overflow: hidden; display: flex; flex-direction: column; min-height: 560px; text-align: center; }
+.team-phone__cover { height: 120px; background: var(--team-colour); display: flex; align-items: center; justify-content: center; padding: 0 var(--space-4); color: var(--on-brand); font-family: var(--font-display); font-weight: 700; font-size: 1.25rem; line-height: 1.2; overflow-wrap: anywhere; }
+.team-phone__cover img { max-width: 70%; max-height: 72px; object-fit: contain; background: var(--surface); border-radius: var(--radius-xs); padding: var(--space-1); }
+.team-phone__photo { width: 84px; height: 84px; margin: -42px auto 0; border-radius: var(--radius-md); border: 3px solid var(--surface); background: var(--surface-muted); display: flex; align-items: center; justify-content: center; font-size: 0.75rem; line-height: 1.2; position: relative; }
+.team-phone__name { padding: var(--space-3) var(--space-5) 0; }
+.team-phone__name b { display: block; font-family: var(--font-display); font-weight: 600; font-size: 1.25rem; line-height: 1.25; color: var(--ink); }
+.team-phone__name i { font-size: 0.95rem; }
+.team-phone__actions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-2); padding: 14px var(--space-5); }
+.team-phone__actions span { background: var(--team-colour); color: var(--on-brand); border-radius: 8px; padding: var(--space-2) var(--space-1); font-size: 0.8rem; font-weight: 600; }
+.team-phone__about { padding: 0 var(--space-5) 14px; flex-grow: 1; text-align: left; font-size: 0.875rem; line-height: 1.45; overflow-wrap: anywhere; }
+.team-phone__about b { display: block; font-family: var(--font-display); font-weight: 600; font-size: 1rem; color: var(--ink); }
+.team-phone__about em { display: block; font-style: normal; color: var(--team-colour); }
+.team-phone__about p { margin-top: var(--space-2); }
+.team-phone__save { background: var(--team-colour); color: var(--on-brand); font-weight: 600; padding: 14px; }
+
+/* Choosing a package. */
+.team-stepper { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-3) var(--space-4); background: var(--surface); border: 1px solid var(--surface-muted); border-radius: var(--radius-md); padding: var(--space-4); }
+.team-stepper__controls { display: flex; align-items: center; gap: var(--space-2); }
+.team-stepper__controls button { width: 44px; height: 44px; border-radius: var(--radius-md); border: 1px solid var(--ink-subtle); background: var(--surface); font-size: 1.25rem; color: var(--ink); cursor: pointer; }
+.team-stepper__controls output { min-width: 44px; text-align: center; font-family: var(--font-display); font-weight: 700; font-size: 1.5rem; color: var(--ink); }
+.team-packages { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: var(--space-3); }
+.team-package { display: flex; flex-direction: column; gap: 10px; padding: var(--space-3); text-align: left; font: inherit; font-size: 0.95rem; line-height: 1.4; color: var(--ink-muted); background: var(--surface); border: 2px solid var(--surface-muted); border-radius: var(--radius-md); cursor: pointer; }
+.team-package.is-on { border-color: var(--brand); background: var(--brand-tint); }
+.team-package__art { display: flex; align-items: center; justify-content: center; height: 120px; background: var(--surface-subtle); border-radius: var(--radius-md); overflow: hidden; }
+.team-package__art img { max-width: 100%; height: 112px; object-fit: contain; }
+.team-package b { color: var(--ink); font-weight: 600; font-size: 1rem; }
+.team-package span.team-package__text { flex-grow: 1; }
+.team-package strong { font-family: var(--font-display); font-weight: 700; color: var(--ink); }
+.team-mini { display: flex; flex-direction: column; justify-content: space-between; width: 140px; height: 88px; box-sizing: border-box; padding: 10px; background: var(--surface); border-radius: 8px; box-shadow: var(--shadow-sm); text-align: left; font-size: 0.65rem; line-height: 1.25; color: var(--ink); }
+.team-mini b { font-family: var(--font-display); font-weight: 700; font-size: 0.7rem; color: var(--team-colour); }
+.team-mini img { max-width: 90px; max-height: 34px; object-fit: contain; object-position: left; }
+.team-summary__row { display: flex; justify-content: space-between; gap: var(--space-3); font-size: 0.95rem; }
+.team-summary__total { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-3); border-top: 1px solid var(--surface-muted); padding-top: var(--space-3); }
+.team-summary__total b { color: var(--ink); font-weight: 600; }
+.team-summary__total strong { font-family: var(--font-display); font-weight: 700; font-size: 1.85rem; line-height: 1.1; color: var(--ink); }
+
+/* Adding people. */
+.team-tabs { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.team-tab { min-height: 44px; padding: var(--space-2) var(--space-4); border-radius: var(--radius-md); border: 1px solid var(--ink-subtle); background: var(--surface); color: var(--ink-strong); font: inherit; font-weight: 600; cursor: pointer; }
+.team-tab.is-on { border-color: var(--brand); background: var(--brand-tint); color: var(--brand-strong); }
+.team-url { font-family: var(--font-mono); font-size: 0.8rem; line-height: 1.5; color: var(--ink-strong); background: var(--surface-subtle); border-radius: var(--radius-md); padding: var(--space-3) var(--space-4); overflow-wrap: anywhere; }
+.team-progress { display: flex; justify-content: space-between; gap: var(--space-3); font-weight: 600; color: var(--ink); }
+.team-bar { height: 8px; background: var(--surface-muted); border-radius: var(--radius-pill); overflow: hidden; }
+.team-bar span { display: block; height: 8px; background: var(--connect-strong); border-radius: var(--radius-pill); }
+.team-check { display: flex; gap: var(--space-3); align-items: flex-start; cursor: pointer; }
+.team-check input { width: 20px; height: 20px; margin-top: 3px; flex: none; }
+.team-check b { display: block; font-weight: 600; color: var(--ink); }
+.team-check small { display: block; font-size: 0.95rem; line-height: 1.5; }
+.team-people { list-style: none; margin: 0; padding: 0; }
+.team-people li { padding: var(--space-3) 0; border-bottom: 1px solid var(--surface-muted); }
+.team-people b { color: var(--ink); font-weight: 600; }
+.team-foot { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: var(--space-3); }
+.team-hidden { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+
+@media (max-width: 480px) {
+  .team-panel { padding: var(--space-5); }
+}

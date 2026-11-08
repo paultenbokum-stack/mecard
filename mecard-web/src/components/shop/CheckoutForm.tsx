@@ -24,7 +24,10 @@ export function CheckoutForm({
   liveRates,
   ships,
   profileCompanies,
+  preferBankTransfer = false,
 }: {
+  /** Team orders start on EFT: most of them pay that way. */
+  preferBankTransfer?: boolean;
   defaults: Defaults;
   methods: Method[];
   summary: React.ReactNode;
@@ -271,14 +274,14 @@ export function CheckoutForm({
 
         <h3 style={{ marginTop: 16 }}>Payment</h3>
         <label className="shop-choice">
-          <input type="radio" name="payment_method" value="payfast" defaultChecked />
+          <input type="radio" name="payment_method" value="payfast" defaultChecked={!preferBankTransfer} />
           <span>
             PayFast
             <small>Pay by card, instant EFT and more. You will be taken to PayFast to complete your payment.</small>
           </span>
         </label>
         <label className="shop-choice">
-          <input type="radio" name="payment_method" value="bacs" />
+          <input type="radio" name="payment_method" value="bacs" defaultChecked={preferBankTransfer} />
           <span>
             Direct bank transfer
             <small>Make your payment directly into our bank account. Please use your Order ID as the payment reference. Your order will not be shipped until the funds have cleared in our account.</small>

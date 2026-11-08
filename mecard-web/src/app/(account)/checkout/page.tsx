@@ -116,6 +116,7 @@ export default async function CheckoutPage() {
         liveRates={shipping.live}
         ships={needsShipping(cart.lines)}
         profileCompanies={profileCompanies}
+        preferBankTransfer={cart.lines.some((l) => l.qty >= 2)}
       />
     </div>
   );

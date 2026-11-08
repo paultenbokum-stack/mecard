@@ -4,7 +4,7 @@ import path from "node:path";
 import { and, desc, eq, inArray, or, sql } from "drizzle-orm";
 import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
 import { db } from "@/db/client";
-import { products, quotes, users, type QuoteLine } from "@/db/schema";
+import { events, products, quotes, users, type QuoteLine } from "@/db/schema";
 import { addQuoteLines } from "./cart";
 import { cardTypesFor, isVirtual } from "./catalog";
 import { ORDER_NOTIFY_TO } from "@/lib/mail-settings";
@@ -59,6 +59,7 @@ export async function requestQuote(input: {
       sentAt: now,
     })
     .returning();
+  await db.insert(events).values({ name: "quote_requested", userId: input.userId, source: "quote", meta: { units: wanted.reduce((n, i) => n + i.qty, 0), total_cents: totals.totalCents } }).catch(() => undefined);
   await sendQuoteEmails(q);
   return q;
 }
@@ -68,7 +69,7 @@ export async function sendQuoteEmails(q: Quote) {
   const link = siteUrl(quotePath(q));
   const parts = quoteParts(q.items);
   const lines = [
-    ...parts.products.map((i) => `  ${i.name} × ${i.qty}   ${rands(i.unitPriceCents * i.qty)}${lineDiscountCents(i) ? ` (after ${rands(lineDiscountCents(i))} discount)` : ""}`),
+    ...parts.products.map((i) => `  ${i.name} Ã— ${i.qty}   ${rands(i.unitPriceCents * i.qty)}${lineDiscountCents(i) ? ` (after ${rands(lineDiscountCents(i))} discount)` : ""}`),
     ...(q.discountCents > 0 ? [`  Discount   -${rands(q.discountCents)}`] : []),
     ...(parts.shippingCents ? [`  Shipping   ${rands(parts.shippingCents)}`] : []),
   ].join("\n");
@@ -144,7 +145,7 @@ export async function renderQuotePdf(q: Quote): Promise<Uint8Array> {
   const page = pdf.addPage([595.28, 841.89]);
   const regular = await pdf.embedFont(StandardFonts.Helvetica);
   const bold = await pdf.embedFont(StandardFonts.HelveticaBold);
-  const clean = (s: string) => s.replace(/[^\x20-\x7e -ÿ]/g, "");
+  const clean = (s: string) => s.replace(/[^\x20-\x7eÂ -Ã¿]/g, "");
   const text = (s: string, x: number, y: number, o: { size?: number; font?: typeof regular; color?: typeof INK; right?: boolean } = {}) => {
     const font = o.font ?? regular;
     const size = o.size ?? 10;

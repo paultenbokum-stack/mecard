@@ -16,6 +16,7 @@ export default async function EmailSignUpPage({ searchParams }: { searchParams: 
   const forWhom = signupFor((await searchParams).for) ?? "me";
   const teams = forWhom === "teams";
   const state = await accountState(await currentUserId());
+  if (teams && state !== "anonymous") redirect("/team/setup/");
   if (state === "first_time" || state === "onboarding") redirect("/onboarding/");
   if (state === "existing") redirect("/manage/");
 
@@ -27,7 +28,7 @@ export default async function EmailSignUpPage({ searchParams }: { searchParams: 
           <p className="me-auth-entry__eyebrow">Step 1</p>
           <h2 className="me-auth-entry__title">{teams ? "Create your team account" : "Create your MeCard Profile"}</h2>
           <p className="me-auth-card__text">
-            {teams ? "Your details for the account. Your team dashboard opens next." : "Start with the basics here and we will carry them into your free profile."}
+            {teams ? "Your details for the account. We’ll set up your company’s branding on the next step." : "Start with the basics here and we will carry them into your free profile."}
           </p>
           <EmailSignupForm forWhom={forWhom} />
           <p className="me-auth-screen__footer">
