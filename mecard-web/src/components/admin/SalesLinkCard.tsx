@@ -20,15 +20,17 @@ export function SalesLinkCard({ url }: { url: string }) {
         <label htmlFor="sales-link">Link to share</label>
         <input id="sales-link" readOnly value={link} className="adm-input" onFocus={(e) => e.target.select()} style={{ fontFamily: "var(--font-mono)" }} />
       </div>
-      <div className="adm-field">
-        <label htmlFor="sales-link-to">Opens on</label>
-        <select id="sales-link-to" value={to} onChange={(e) => setTo(e.target.value)} className="adm-select">
+      <div className="adm-field" role="group" aria-labelledby="sales-link-to">
+        <span id="sales-link-to" className="adm-label">
+          Opens on
+        </span>
+        <div className="adm-head__actions" style={{ justifyContent: "flex-start", flexWrap: "wrap" }}>
           {Object.entries(LINK_LANDINGS).map(([k, l]) => (
-            <option key={k} value={k}>
+            <button key={k} type="button" className={to === k ? "adm-btn adm-btn--primary" : "adm-btn"} aria-pressed={to === k} onClick={() => setTo(k)}>
               {l.label}
-            </option>
+            </button>
           ))}
-        </select>
+        </div>
       </div>
       <div className="adm-head__actions">
         <button type="button" className="adm-btn" onClick={copy} aria-live="polite">
