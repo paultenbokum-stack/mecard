@@ -9,7 +9,7 @@ import { PageScripts } from "./PageScripts";
 const faq = (pro?: string) => [
   {
     q: "Are there any monthly or recurring fees?",
-    a: `The Free plan is free forever. MeCard Pro is ${pro ? `${pro} ` : ""}per year — no monthly charges, no surprises. NFC cards are a once-off purchase. Bundles include the first year of Pro.`,
+    a: `The Free plan is free forever. MeCard Pro is ${pro ? `${pro} once off` : "a once-off upgrade"} — no monthly charges, no surprises. NFC cards are a once-off purchase too. Bundles include Pro.`,
   },
   {
     q: "Do I need to buy a card to use MeCard?",
@@ -143,7 +143,7 @@ export function HomePage({ prices }: { prices: HomePrices }) {
           <div className="mc-home__head">
             <span className="mc-label">Pricing</span>
             <h2 id="pricing-heading">Start free. Upgrade when you’re ready</h2>
-            <p>No monthly fees on Free. MeCard Pro is billed annually — that’s it.</p>
+            <p>No monthly fees. MeCard Pro is a once-off upgrade — that’s it.</p>
           </div>
           <div className="mc-home__prices mc-reveal">
             <div className="mc-price-card">
@@ -164,7 +164,7 @@ export function HomePage({ prices }: { prices: HomePrices }) {
               <span className="mc-badge">Recommended</span>
               <h3 className="mc-price-card__tier mc-price-card__tier--pro">MeCard Pro</h3>
               <p className="mc-price-card__price">{prices.pro}</p>
-              <p className="mc-price-card__sub">Everything in Free, plus:</p>
+              <p className="mc-price-card__sub">Once off. Everything in Free, plus:</p>
               <ul className="mc-features">
                 <li><Check />WhatsApp button &amp; direct line</li>
                 <li><Check />Company branding &amp; custom colours</li>
