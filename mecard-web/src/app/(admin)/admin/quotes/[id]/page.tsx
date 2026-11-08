@@ -1,4 +1,7 @@
+import { eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
+import { db } from "@/db/client";
+import { users } from "@/db/schema";
 import { QuoteEditor } from "@/components/admin/QuoteEditor";
 import type { AdminSearchParams } from "@/components/admin/ui";
 import { quoteById } from "@/lib/quotes";
@@ -13,5 +16,7 @@ export default async function AdminQuote({ params, searchParams }: { params: Pro
   const sp = await searchParams;
   const q = Number.isInteger(id) ? await quoteById(id) : null;
   if (!q || (!who.isAdmin && q.salesUserId !== who.id)) notFound();
-  return <QuoteEditor q={q} sp={sp} staff={who.isAdmin} salespeople={who.isAdmin ? await listSalespeople() : []} />;
+  if (who.isAdmin) return <QuoteEditor q={q} sp={sp} staff salespeople={await listSalespeople()} />;
+  const [me] = await db.select({ rateBps: users.commissionRateBps }).from(users).where(eq(users.id, who.id)).limit(1);
+  return <QuoteEditor q={q} sp={sp} staff={false} salesRateBps={me?.rateBps ?? 0} />;
 }

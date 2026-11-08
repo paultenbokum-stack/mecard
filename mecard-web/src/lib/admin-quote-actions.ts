@@ -7,7 +7,8 @@ import { companies, orders, products, quotes, users, type QuoteLine } from "@/db
 import { logAdmin } from "@/lib/admin-log";
 import { cleanEmail } from "@/lib/form-values";
 import { rands, randsToCents } from "@/lib/money";
-import { SALES_MAX_DISCOUNT_PERCENT, salesMaxDiscountCents } from "@/lib/quote-lines";
+import { salesMaxDiscountCents } from "@/lib/quote-lines";
+import { bpsToPercent } from "@/lib/sales-rules";
 import { ADDITIONAL_SHIPPING_PRODUCT, QUOTE_STATUS_LABEL, QUOTE_VALID_DAYS, quoteParts, quotePrefill, quoteTotals } from "@/lib/quote-rules";
 import { quoteById, sendQuoteEmails } from "@/lib/quotes";
 import { requireAdmin, requireQuoteStaff } from "@/lib/session";
@@ -77,8 +78,11 @@ export async function saveQuoteAction(form: FormData) {
   const totals = quoteTotals(lines, locked ? q.discountCents : discount);
   // A salesperson's discount is capped and comes off their commission. One staff gave stays as it is until they change it.
   const staffDiscountKept = discount === q.discountCents && q.salesDiscountCents === 0;
-  if (desk.ownOnly && !locked && !staffDiscountKept && totals.discountCents > salesMaxDiscountCents(quoteParts(lines).productsCents)) {
-    back(path, { error: `You can give a discount of up to ${SALES_MAX_DISCOUNT_PERCENT}% on this quote, which is ${rands(salesMaxDiscountCents(quoteParts(lines).productsCents))}. Ask staff about anything more.` });
+  if (desk.ownOnly && !locked && !staffDiscountKept) {
+    const [me] = await db.select({ rateBps: users.commissionRateBps }).from(users).where(eq(users.id, desk.id)).limit(1);
+    const rateBps = me?.rateBps ?? 0;
+    const max = salesMaxDiscountCents(quoteParts(lines).productsCents, rateBps);
+    if (totals.discountCents > max) back(path, { error: `You can give a discount of up to ${bpsToPercent(rateBps)}% on this quote, which is ${rands(max)}. Ask staff about anything more.` });
   }
   const salesDiscountCents = locked ? q.salesDiscountCents : desk.ownOnly ? (staffDiscountKept ? 0 : totals.discountCents) : discount === q.discountCents ? Math.min(q.salesDiscountCents, totals.discountCents) : 0;
 

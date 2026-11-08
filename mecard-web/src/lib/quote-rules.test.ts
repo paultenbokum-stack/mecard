@@ -15,9 +15,11 @@ test("quote totals add the lines, and the discount never comes off shipping", ()
   assert.deepEqual(quoteTotals(items, 200000), { subtotalCents: 129700, discountCents: 119700, totalCents: 10000 });
 });
 
-test("a salesperson may take up to 10% off the products", () => {
-  assert.equal(salesMaxDiscountCents(119700), 11970);
-  assert.equal(salesMaxDiscountCents(999), 99);
+test("a salesperson may take off up to their commission rate", () => {
+  assert.equal(salesMaxDiscountCents(100000, 2000), 20000);
+  assert.equal(salesMaxDiscountCents(100000, 1250), 12500);
+  assert.equal(salesMaxDiscountCents(999, 1000), 99);
+  assert.equal(salesMaxDiscountCents(100000, 0), 0);
 });
 
 test("a lower price shows as a discount on the line", () => {

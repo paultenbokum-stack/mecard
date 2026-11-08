@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import { rands, randsToCents } from "@/lib/money";
-import { lineDiscountCents, type QuoteItem, SALES_MAX_DISCOUNT_PERCENT, salesMaxDiscountCents } from "@/lib/quote-lines";
+import { lineDiscountCents, type QuoteItem, salesMaxDiscountCents } from "@/lib/quote-lines";
 
 type Product = { id: number; name: string; priceCents: number; active: boolean };
 type Row = { key: number; productId: string; qty: string; price: string; regularPriceCents?: number };
@@ -27,6 +27,7 @@ export function QuoteLinesEditor({
   discountCents,
   locked,
   fixedPrices,
+  salesRateBps,
 }: {
   catalogue: Product[];
   shippingProduct: Product | null;
@@ -36,6 +37,7 @@ export function QuoteLinesEditor({
   locked: boolean;
   /** A salesperson: prices show but can't be changed, and the discount has a limit. */
   fixedPrices: boolean;
+  salesRateBps: number;
 }) {
   const nextKey = useRef(items.length);
   const [rows, setRows] = useState<Row[]>(() =>
@@ -57,7 +59,7 @@ export function QuoteLinesEditor({
   const discountNow = Math.min(subtotal, priceOf(discount, 0));
   const shippingCents = shipping ? priceOf(shipping.price, shippingProduct?.priceCents ?? 0) * shipping.qty : 0;
   const total = subtotal - discountNow + shippingCents;
-  const maxDiscount = salesMaxDiscountCents(subtotal);
+  const maxDiscount = salesMaxDiscountCents(subtotal, salesRateBps);
   const shownPrice = (r: Row) => r.price || (shop(r.productId) ? toRands(shop(r.productId)!.priceCents) : "");
 
   return (
@@ -192,7 +194,7 @@ export function QuoteLinesEditor({
       </div>
       {fixedPrices && !locked ? (
         <p className={priceOf(discount, 0) > maxDiscount ? "adm-note" : "adm-help"} role="status">
-          You can give a discount of up to {SALES_MAX_DISCOUNT_PERCENT}% on this quote, which is {rands(maxDiscount)}. It comes off your commission.
+          You can give a discount of up to {salesRateBps / 100}%, your commission rate, which is {rands(maxDiscount)} on this quote. It comes off your commission.
         </p>
       ) : null}
       {locked ? null : (

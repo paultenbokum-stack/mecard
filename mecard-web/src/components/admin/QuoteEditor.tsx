@@ -18,11 +18,14 @@ export async function QuoteEditor({
   q,
   sp,
   staff,
+  salesRateBps = 0,
   salespeople = [],
 }: {
   q: typeof quotes.$inferSelect;
   sp: AdminSearchParams;
   staff: boolean;
+  /** The salesperson's commission rate, which is also their discount limit. */
+  salesRateBps?: number;
   salespeople?: { id: number; name: string }[];
 }) {
   const base = "/admin/quotes/";
@@ -73,6 +76,7 @@ export async function QuoteEditor({
                 discountCents={q.discountCents}
                 locked={locked}
                 fixedPrices={!staff}
+                salesRateBps={salesRateBps}
               />
             </Card>
             <Card title="Note to the customer">
