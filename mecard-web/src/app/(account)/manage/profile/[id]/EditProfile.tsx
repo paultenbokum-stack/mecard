@@ -4,7 +4,9 @@ import { ConfirmButton, DoneNotice, NewTab, ProPendingBadge, ProPendingNote } fr
 import { ProfileEditor } from "@/components/account/ProfileEditor";
 import { UpsellSeen } from "@/components/account/Upsells";
 import { canEditProfile, canManageCompany, viewer } from "@/lib/access";
+import { PRODUCT } from "@/lib/catalog";
 import { availableProUpgrades, hasPendingUpgrade, pendingProUpgrades } from "@/lib/manage";
+import { productPriceWords } from "@/lib/product-prices";
 import { isPro } from "@/lib/profile-format";
 import { displayName, getProfileView } from "@/lib/public-profile";
 import { requireUserId } from "@/lib/session";
@@ -27,7 +29,8 @@ export async function loadProfileEditor(id: string) {
     pro ? undefined : pendingProUpgrades([p.id], v.id).then((m) => m.get(p.id)),
     view.company ? canManageCompany(v, view.company.id) : Promise.resolve(false),
   ]);
-  return { view, pro, upgrades, pending, proPending, manageCompany, name: displayName(p) };
+  const proPrice = (await productPriceWords())[PRODUCT.proUpgrade];
+  return { view, pro, upgrades, pending, proPending, manageCompany, name: displayName(p), proPrice };
 }
 
 export function ProfileBadge({ pro, pending }: { pro: boolean; pending?: boolean }) {
@@ -36,7 +39,7 @@ export function ProfileBadge({ pro, pending }: { pro: boolean; pending?: boolean
 }
 
 export function EditProfile({ data, done }: { data: Awaited<ReturnType<typeof loadProfileEditor>>; done?: string }) {
-  const { view, pro, upgrades, pending, proPending, manageCompany } = data;
+  const { view, pro, upgrades, pending, proPending, manageCompany, proPrice } = data;
   // Ordered but not paid: Pro is unlocked here, the public card stays standard.
   const proEditing = pro || !!proPending;
   const p = view.profile;
@@ -103,7 +106,7 @@ export function EditProfile({ data, done }: { data: Awaited<ReturnType<typeof lo
               <p style={{ marginBottom: 0 }}>Your Pro upgrade is pending &mdash; we&rsquo;re just waiting for EFT confirmation.</p>
             ) : (
               <>
-                <p className="acc-item__title">R199 once off</p>
+                {proPrice ? <p className="acc-item__title">{proPrice} once off</p> : null}
                 <UpsellSeen offer="pro" placement="profile_editor" profileId={p.id} />
                 <form action={startProUpgradeAction}>
                   <input type="hidden" name="profile_id" value={p.id} />

@@ -6,10 +6,10 @@ import { PageScripts } from "./PageScripts";
 // than the exported WordPress markup the other site pages use, with the copy of the
 // live WordPress homepage (content/pages/home.json). Styles: (site)/home.css.
 
-const FAQ = [
+const faq = (pro?: string) => [
   {
     q: "Are there any monthly or recurring fees?",
-    a: "The Free plan is free forever. MeCard Pro is R199 per year — no monthly charges, no surprises. NFC cards are a once-off purchase. Bundles include the first year of Pro.",
+    a: `The Free plan is free forever. MeCard Pro is ${pro ? `${pro} ` : ""}per year — no monthly charges, no surprises. NFC cards are a once-off purchase. Bundles include the first year of Pro.`,
   },
   {
     q: "Do I need to buy a card to use MeCard?",
@@ -87,7 +87,10 @@ function HeroDevice() {
   );
 }
 
-export function HomePage() {
+/** Prices come from the products table. A missing one (the database couldn't be read) is left out. */
+type HomePrices = { pro?: string; classic?: string; custom?: string; bundle?: string };
+
+export function HomePage({ prices }: { prices: HomePrices }) {
   return (
     <div className="mc-home" id="mc-wp">
       <section className="mc-home__hero">
@@ -160,7 +163,7 @@ export function HomePage() {
             <div className="mc-price-card mc-price-card--featured">
               <span className="mc-badge">Recommended</span>
               <h3 className="mc-price-card__tier mc-price-card__tier--pro">MeCard Pro</h3>
-              <p className="mc-price-card__price">R199</p>
+              <p className="mc-price-card__price">{prices.pro}</p>
               <p className="mc-price-card__sub">Everything in Free, plus:</p>
               <ul className="mc-features">
                 <li><Check />WhatsApp button &amp; direct line</li>
@@ -184,20 +187,20 @@ export function HomePage() {
             <Link href="/cards/" className="mc-product">
               <Image src="/images/home/card-classic.webp" alt="Classic MeCard" width={900} height={600} />
               <span className="mc-product__name">Classic card</span>
-              <span className="mc-product__price">R299</span>
+              <span className="mc-product__price">{prices.classic}</span>
               <span className="mc-product__desc">White + your logo</span>
             </Link>
             <Link href="/cards/" className="mc-product">
               <Image src="/images/home/card-custom.webp" alt="Custom MeCard" width={900} height={563} />
               <span className="mc-product__name">Custom card</span>
-              <span className="mc-product__price">R399</span>
+              <span className="mc-product__price">{prices.custom}</span>
               <span className="mc-product__desc">Full custom design</span>
             </Link>
             <Link href="/cards/" className="mc-product mc-product--best">
               <span className="mc-badge">Best value</span>
               <Image src="/images/home/bundle-classic.webp" alt="Classic Bundle" width={900} height={493} />
               <span className="mc-product__name">Classic bundle</span>
-              <span className="mc-product__price">R499</span>
+              <span className="mc-product__price">{prices.bundle}</span>
               <span className="mc-product__desc">Card + Pro + phone tag</span>
             </Link>
           </div>
@@ -211,7 +214,7 @@ export function HomePage() {
             <h2 id="faq-heading">Common Questions</h2>
           </div>
           <div className="mc-home__faq">
-            {FAQ.map((f, i) => (
+            {faq(prices.pro).map((f, i) => (
               <details key={f.q} open={i === 0}>
                 <summary>{f.q}</summary>
                 <p>{f.a}</p>

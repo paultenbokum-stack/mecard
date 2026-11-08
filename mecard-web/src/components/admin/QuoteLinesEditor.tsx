@@ -119,28 +119,35 @@ export function QuoteLinesEditor({
           </tbody>
           <tfoot>
             <tr>
-              <td colSpan={4} className="adm-num">
+              <td colSpan={2} className="adm-num">
                 Subtotal
               </td>
+              <td colSpan={2} />
               <td className="adm-num">{rands(subtotal)}</td>
               {locked ? null : <td />}
             </tr>
             <tr>
-              <td colSpan={4} className="adm-num">
-                <label htmlFor="discount">Discount (R)</label>{" "}
+              <td colSpan={2} className="adm-num">
+                <label htmlFor="discount">Discount (R)</label>
+              </td>
+              <td>
                 <input id="discount" name="discount" inputMode="decimal" value={discount} onChange={(e) => setDiscount(e.target.value)} placeholder="0.00" className="adm-input adm-input--num" disabled={locked} />
               </td>
+              <td />
               <td className="adm-num">{discountNow ? `-${rands(discountNow)}` : ""}</td>
               {locked ? null : <td />}
             </tr>
             {shipping ? (
               <tr>
-                <td colSpan={4} className="adm-num">
-                  <label htmlFor="shipping">Shipping (R)</label>{" "}
+                <td colSpan={2} className="adm-num">
+                  <label htmlFor="shipping">Shipping (R)</label>
+                </td>
+                <td>
                   <input type="hidden" name="product_id" value={shipping.productId} disabled={locked} />
                   <input type="hidden" name="qty" value={shipping.qty} disabled={locked} />
                   <input id="shipping" name="price" inputMode="decimal" value={shipping.price} onChange={(e) => setShipping({ ...shipping, price: e.target.value })} className="adm-input adm-input--num" disabled={locked} />
                 </td>
+                <td />
                 <td className="adm-num">{rands(shippingCents)}</td>
                 {locked ? null : (
                   <td className="adm-num">
@@ -152,11 +159,14 @@ export function QuoteLinesEditor({
               </tr>
             ) : null}
             <tr>
-              <th colSpan={4} className="adm-num">
-                Total
-              </th>
-              <th className="adm-num">{rands(total)}</th>
-              {locked ? null : <th />}
+              <td colSpan={2} className="adm-num">
+                <strong>Total</strong>
+              </td>
+              <td colSpan={2} />
+              <td className="adm-num">
+                <strong>{rands(total)}</strong>
+              </td>
+              {locked ? null : <td />}
             </tr>
           </tfoot>
         </table>

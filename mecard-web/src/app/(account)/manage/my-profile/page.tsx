@@ -106,7 +106,7 @@ function LookAndFeel({ data, proEditing }: { data: Awaited<ReturnType<typeof loa
             <p style={{ marginBottom: 0 }}>Your Pro upgrade is pending &mdash; we&rsquo;re just waiting for EFT confirmation.</p>
           ) : (
             <>
-              <p className="acc-item__title">R199 once off</p>
+              {data.proPrice ? <p className="acc-item__title">{data.proPrice} once off</p> : null}
               <UpsellSeen offer="pro" placement="look_and_feel" trigger="step_locked" profileId={p.id} />
               <form action={startProUpgradeAction}>
                 <input type="hidden" name="profile_id" value={p.id} />

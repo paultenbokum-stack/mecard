@@ -27,6 +27,10 @@ Cutover with feature parity comes first; don't start the plan until Paul says so
 
 Staff can open the site as a customer from `/admin/users/<id>/`. `currentUserId()` then returns the customer, and `src/proxy.ts` refuses every write, so new actions and API routes are covered without extra code. A page that writes while it renders must skip that write when `isViewingAs()` is true.
 
+## Products
+
+Staff edit a product's name, description, prices and visibility at `/admin/products/`. The product IDs are fixed in `src/lib/catalog.ts`, so there is no adding or deleting there. The home page and profile screens read prices through `src/lib/product-prices.ts`. The WordPress-exported pages in `src/content/pages` still have prices in their own text.
+
 ## Salespeople and commission
 
 Staff tick Salesperson and set a rate on `/admin/users/<id>/`. A salesperson signs in to `/admin/` but can open only the paths in `src/lib/admin-paths.ts` (quotes and commissions). `src/proxy.ts` enforces that, because the admin layout doesn't run between admin pages; a new page that should be theirs must also filter to their own records with `requireQuoteStaff()`. The link is `/r/<code>/`. A new account within 7 days of a click stores `users.referred_by`. If their first sale comes within 1 month of sign-up, their orders credit that salesperson for 12 months from sign-up. An order through a quote credits the quote's salesperson instead, and staff can override either on the order page. Commission is written when an order is paid (`setOrderStatus`), on sales excluding shipping, including the Additional Shipping quote line, and it never blocks a payment. It goes out on the 25th for orders paid up to the 20th (`commissions.payout_date`). The rules and their tests are in `src/lib/sales-rules.ts`, the database side in `src/lib/sales.ts`, and the report is `/admin/commissions/`. Sign-ups and quotes from before this was built have no salesperson.
