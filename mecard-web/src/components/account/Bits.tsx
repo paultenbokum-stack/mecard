@@ -49,6 +49,8 @@ export async function Subnav({ active }: { active: (typeof TABS)[number][0] | "p
 }
 
 const DONE: Record<string, [string, "ok" | "error"]> = {
+  "card-moved": ["The card now opens the new person’s profile. No reprint needed.", "ok"],
+  "card-spare": ["The profile is archived and the card is kept as a spare.", "ok"],
   "card-linked": ["The card is linked. Tapping it now opens the profile.", "ok"],
   "card-unlinked": ["The card is unlinked. It shows “not set up yet” until you link it again.", "ok"],
   "card-saved": ["Card settings saved.", "ok"],

@@ -24,7 +24,7 @@ export const ALLOWED_EVENTS = new Set([
   "recipient_ad_clicked", "post_save_cta_viewed", "post_save_cta_clicked", "post_save_cta_dismissed",
   // The team flow. Counts and choices only, never names or emails.
   "team_price_changed", "team_setup_started", "team_step_viewed", "team_site_read", "team_package_chosen", "team_people_added",
-  "team_names_completed", "team_artwork_step", "quote_requested", "team_reminder_sent", "one_card_started",
+  "team_names_completed", "team_artwork_step", "quote_requested", "card_reassigned", "team_reminder_sent", "one_card_started",
   // Legacy
   "first_profile_created",
 ]);

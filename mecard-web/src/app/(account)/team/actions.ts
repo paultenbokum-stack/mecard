@@ -6,13 +6,13 @@ import { z } from "zod";
 import { and, eq } from "drizzle-orm";
 import { db } from "@/db/client";
 import { companies, events } from "@/db/schema";
-import { canManageCompany, viewer } from "@/lib/access";
+import { canEditProfile, canManageCompany, viewer } from "@/lib/access";
 import { addToCart, getCart, setLineQty } from "@/lib/cart";
 import { cleanCompanyInput, saveCompany } from "@/lib/company-edit";
 import { createCompany } from "@/lib/manage";
 import { setAccountMode } from "@/lib/manage-view";
 import { requireUserId } from "@/lib/session";
-import { addTeamList, addTeamPerson, noteIfComplete, readCompanySite, teamPlaces, type SiteReadResult } from "@/lib/team";
+import { addTeamList, addTeamPerson, noteIfComplete, readCompanySite, replaceLeaver, teamPlaces, type SiteReadResult } from "@/lib/team";
 import { clampPeople, teamPackage } from "@/lib/team-packages";
 import { parseTeamList, verifyJoinToken } from "@/lib/team-people-rules";
 
@@ -113,4 +113,17 @@ export async function joinTeamAction(_: JoinState, form: FormData): Promise<Join
   await noteIfComplete(company.ownerId, companyId);
   revalidatePath("/manage", "layout");
   return { slug: String(profileId) };
+}
+
+/** "Has left": move their card to the new person, or keep it as a spare. */
+export async function leaverAction(form: FormData) {
+  const v = await me();
+  const profileId = Number(form.get("profile_id"));
+  if (!(await canEditProfile(v, profileId))) redirect("/manage/?done=denied");
+  const outcome = form.get("outcome");
+  const first = String(form.get("first_name") ?? "").trim().slice(0, 100);
+  if (outcome === "move" && !first) redirect(`/team/left/${profileId}/?error=name`);
+  await replaceLeaver(v.id, profileId, outcome === "move" ? { firstName: first, lastName: String(form.get("last_name") ?? "").trim().slice(0, 100), jobTitle: String(form.get("job_title") ?? "").trim().slice(0, 200) } : null);
+  revalidatePath("/manage", "layout");
+  redirect(`/manage/?done=${outcome === "move" ? "card-moved" : "card-spare"}`);
 }

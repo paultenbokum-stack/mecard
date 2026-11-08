@@ -16,7 +16,7 @@ const faq = [
   },
   {
     q: "What happens when someone leaves?",
-    a: "Archive their profile and their card stops working straight away. Then add the new starter and order their card from the same dashboard.",
+    a: "Archive their profile and move their card to the replacement without reprinting.",
   },
   {
     q: "How does the NFC card work?",
@@ -130,7 +130,7 @@ function ManageShot() {
           ))}
         </ul>
       </div>
-      <span className="mc-home__toast" aria-hidden="true"><i className="fa-solid fa-check" />New starter added</span>
+      <span className="mc-home__toast" aria-hidden="true"><i className="fa-solid fa-check" />Card moved to the new starter</span>
     </div>
   );
 }
@@ -245,7 +245,7 @@ export function HomePage({ prices }: { prices: HomePrices }) {
             <div className="mc-home__feature-copy">
               <h3>Easy online management</h3>
               <p className="mc-home__lead">Keep everyone in one place, and update your branding once for every profile to follow.</p>
-              <p>When someone leaves, archive their profile and their card stops sharing their details, then add the new starter in a few clicks.</p>
+              <p>When someone leaves, move their card to the replacement without reprinting anything.</p>
             </div>
             <ManageShot />
           </div>

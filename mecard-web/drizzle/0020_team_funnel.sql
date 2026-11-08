@@ -71,7 +71,7 @@ SELECT
 FROM events e
 WHERE (e.name = 'page_viewed' AND e.meta->>'path' = '/for-teams/')
    OR (e.name = 'signup_completed' AND e.meta->>'for' = 'teams')
-   OR e.name IN ('team_price_changed', 'team_setup_started', 'team_step_viewed', 'team_site_read', 'team_company_created', 'team_package_chosen', 'quote_requested', 'team_invite_sent', 'team_invite_accepted', 'team_people_added', 'team_names_completed', 'team_artwork_step', 'team_reminder_sent', 'one_card_started')
+   OR e.name IN ('team_price_changed', 'team_setup_started', 'team_step_viewed', 'team_site_read', 'team_company_created', 'team_package_chosen', 'quote_requested', 'team_invite_sent', 'team_invite_accepted', 'team_people_added', 'team_names_completed', 'team_artwork_step', 'card_reassigned', 'team_reminder_sent', 'one_card_started')
 GROUP BY 1, 2, 3;
 --> statement-breakpoint
 

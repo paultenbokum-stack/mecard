@@ -63,7 +63,7 @@ export default async function CardsPage({ searchParams }: { searchParams: Promis
               </>
             }
           >
-            A card is the physical NFC and QR card people tap or scan. Each card opens one profile, so when someone’s contact details change, the card stays up to date without reprinting.
+            A card is the physical NFC and QR card people tap or scan. Each card opens one profile, so when someone leaves you reassign the card instead of reprinting.
           </TeamEmpty>
         </section>
       </div>
