@@ -145,11 +145,11 @@ function AnalyticsShot() {
   return (
     <div className="mc-home__panel">
       <div className="mc-shot mc-shot--stats" aria-hidden="true">
-        <strong className="mc-shot__title">Team analytics, last 30 days</strong>
+        <strong className="mc-shot__title">Team connections, last 30 days</strong>
         <dl className="mc-shot__stats">
           <div><dd>124</dd><dt>views</dt></div>
           <div><dd>38</dd><dt>contacts saved</dt></div>
-          <div><dd>21</dd><dt>calls and messages</dt></div>
+          <div><dd>9</dd><dt>people sharing</dt></div>
         </dl>
         <div className="mc-shot__bars">
           {WEEKS.map((w, i) => (
@@ -257,8 +257,8 @@ export function HomePage({ prices }: { prices: HomePrices }) {
 
           <div className="mc-home__feature mc-home__feature--flip mc-reveal">
             <div className="mc-home__feature-copy">
-              <h3>Rich analytics</h3>
-              <p className="mc-home__lead">See views, saved contacts and calls, emails and WhatsApps for each person, so you know the cards are being used and can spot who hasn’t started yet.</p>
+              <h3>See the connections your team makes</h3>
+              <p className="mc-home__lead">See how often each person’s profile is opened and their details are saved, so you know the cards are making connections and can spot who hasn’t started yet.</p>
             </div>
             <AnalyticsShot />
           </div>

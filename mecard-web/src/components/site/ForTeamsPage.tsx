@@ -16,7 +16,7 @@ const TILES = [
   { title: "Add people in bulk", text: "Paste your team from a spreadsheet, and invite staff to edit their own details." },
   { title: "Change branding once", text: "Update your logo or colours and every Pro profile follows." },
   { title: "Handle leavers", text: "Archive a profile so the old details disappear, then deactivate or reassign the card." },
-  { title: "See what is working", text: "Views, saves and contact taps for each person, with a list of who has not started." },
+  { title: "See the connections", text: "Profile views and saved contacts for each person, with a list of who has not started." },
 ];
 
 const FAQ = [

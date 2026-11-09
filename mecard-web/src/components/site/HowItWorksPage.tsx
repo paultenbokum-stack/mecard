@@ -70,7 +70,7 @@ export function HowItWorksPage() {
             <ul className="mc-features">
               <li><i className="fa-solid fa-check mc-home__tick" aria-hidden="true" />Company logo, colours and details, set once for the whole team</li>
               <li><i className="fa-solid fa-check mc-home__tick" aria-hidden="true" />Add it to your home screen and it opens like an app, without an app store</li>
-              <li><i className="fa-solid fa-check mc-home__tick" aria-hidden="true" />See your views, saved contacts and contact taps</li>
+              <li><i className="fa-solid fa-check mc-home__tick" aria-hidden="true" />See how many people opened your profile and saved your details</li>
             </ul>
           </div>
           <div className="mc-how-profile">
