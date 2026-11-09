@@ -20,7 +20,7 @@ export function HowItWorksPage() {
           <h1 className="mc-home__hero-title">One tap, you’re saved</h1>
           <p className="mc-home__lead">A card with a chip, a profile that’s always up to date, and your details in their phone in one tap.</p>
           <p className="mc-how-noapp"><i className="fa-solid fa-check" aria-hidden="true" />No app to install, for you or for them</p>
-          <p className="mc-how-fast"><i className="fa-solid fa-truck-fast" aria-hidden="true" />In a rush? Once we have your artwork, we can get your cards to you in 3 working days in the major metros.</p>
+          <p className="mc-how-fast"><i className="fa-solid fa-truck-fast" aria-hidden="true" />In a rush? Once we have your artwork, we can get your cards to you in 3 working days in the major metros. Just select express shipping at checkout.</p>
         </div>
       </section>
 

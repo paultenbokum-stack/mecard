@@ -22,7 +22,7 @@ const TILES = [
 const FAQ = [
   { q: "Is there a minimum team size?", a: "No. A team of two works the same way as a team of two hundred." },
   { q: "Can staff edit their own profiles?", a: "Yes, if you let them. They can update their contact details while the look and feel stays consistent." },
-  { q: "How quickly will our cards arrive?", a: "If you’re in a rush, we can get your cards to you in 3 working days in the major metros once we have your artwork, so tell us when you order. Everyone’s profile is live as soon as you add them, so your team can share by QR code and WhatsApp in the meantime." },
+  { q: "How quickly will our cards arrive?", a: "If you’re in a rush, we can get your cards to you in 3 working days in the major metros once we have your artwork. Just select express shipping at checkout. Everyone’s profile is live as soon as you add them, so your team can share by QR code and WhatsApp in the meantime." },
   { q: "Do I need to buy cards for everyone?", a: "No. Every profile works by QR code, WhatsApp and a shareable link. Add cards for the people who need them." },
   { q: "Can I manage several branches or offices?", a: "Yes. Each branch can be its own company with its own details, all in one dashboard." },
   { q: "Can I pay by bank transfer?", a: "Yes. Choose EFT at checkout and pay when your accounts team is ready." },
