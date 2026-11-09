@@ -35,6 +35,9 @@ const ACCOUNT_MENU = [
   ["Log out", "/my-account/customer-logout/"],
 ] as const;
 
+/** The team setup steps, shown without the menus (see SiteHeader). */
+const TEAM_WIZARD = /^\/team\/(setup|order|people)(\/|$)/;
+
 function Chevron() {
   return (
     <svg className="mc-site-header__chevron" viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true">
@@ -105,6 +108,24 @@ export function SiteHeader({ loggedIn = false, detect = false, tagline = false }
     };
   }, [detect, pathname]);
   const menu = signedIn ? MENU_LOGGED_IN : MENU;
+  // The team setup steps are a wizard: just the logo and a way out, so nothing pulls the admin away mid-setup.
+  if (TEAM_WIZARD.test(pathname ?? "")) {
+    return (
+      <header className="mc-site-header mc-site-header--wizard">
+        <div className="mc-site-header__bar">
+          <div className="mc-site-header__inner">
+            <div className="mc-site-header__brand">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/images/mecard-logo.png" width={165} height={59} alt="MeCard" />
+            </div>
+            <Link className="mc-site-header__exit" href="/manage/">
+              Exit setup
+            </Link>
+          </div>
+        </div>
+      </header>
+    );
+  }
   return (
     <header className="mc-site-header">
       <div className="mc-site-header__bar">
