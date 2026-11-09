@@ -145,7 +145,7 @@ export async function renderQuotePdf(q: Quote): Promise<Uint8Array> {
   const page = pdf.addPage([595.28, 841.89]);
   const regular = await pdf.embedFont(StandardFonts.Helvetica);
   const bold = await pdf.embedFont(StandardFonts.HelveticaBold);
-  const clean = (s: string) => s.replace(/[^ -~ -ÿ]/g, "");
+  const clean = (s: string) => s.replace(/[^\x20-\x7e -ÿ]/g, "");
   const text = (s: string, x: number, y: number, o: { size?: number; font?: typeof regular; color?: typeof INK; right?: boolean } = {}) => {
     const font = o.font ?? regular;
     const size = o.size ?? 10;
