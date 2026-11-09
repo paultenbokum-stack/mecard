@@ -37,7 +37,7 @@ const ACCOUNT_MENU = [
 
 /** Pages shown without the menus, and their one way out (see SiteHeader). */
 function focusedExit(path: string): { label: string; href: string } | null {
-  if (/^\/team\/(setup|order|people)(\/|$)/.test(path)) return { label: "Exit setup", href: "/manage/" };
+  if (/^\/team\/order(\/|$)/.test(path)) return { label: "Exit", href: "/manage/" };
   if (/^\/checkout\/?$/.test(path)) return { label: "Back to basket", href: "/basket/" };
   if (/^\/checkout\/pay\//.test(path)) return { label: "My orders", href: "/my-account/orders/" };
   return null;
@@ -113,7 +113,7 @@ export function SiteHeader({ loggedIn = false, detect = false, tagline = false }
     };
   }, [detect, pathname]);
   const menu = signedIn ? MENU_LOGGED_IN : MENU;
-  // The team setup steps and the checkout: just the logo and a way out, so nothing pulls people away mid-way.
+  // The team order step and the checkout: just the logo and a way out, so nothing pulls people away mid-way.
   const exit = focusedExit(pathname ?? "");
   if (exit) {
     return (

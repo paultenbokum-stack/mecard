@@ -14,7 +14,9 @@ import { manageViewFor, setAccountMode } from "@/lib/manage-view";
 import { requireUserId } from "@/lib/session";
 import { eq } from "drizzle-orm";
 import { db } from "@/db/client";
-import { profiles, users } from "@/db/schema";
+import { events, profiles, users } from "@/db/schema";
+import { cleanCompanyInput, saveCompany } from "@/lib/company-edit";
+import { readCompanySite } from "@/lib/team";
 import { teamWelcomeCookie } from "@/lib/upsell-rules";
 
 // Form actions on /manage/. Each checks the user's rights again (the page
@@ -107,13 +109,53 @@ export async function addProfileAction(form: FormData) {
 }
 
 /** Companies' create form (CreateCompanyForm): the new company's id, for its editor to open in the modal. */
-export async function createCompanyAction(rawName: string): Promise<{ ok: true; id: number } | { ok: false; error: string }> {
+export async function createCompanyAction(rawName: string, fromOrder = false): Promise<{ ok: true; id: number } | { ok: false; error: string }> {
   const v = await me();
   const name = String(rawName ?? "").trim().slice(0, 255);
   if (!name) return { ok: false, error: "Enter the company name." };
   const id = await createCompany(v, name);
+  await db.insert(events).values({ name: "team_company_created", userId: v.id, companyId: id, source: "team", meta: { has_logo: false, from_site: false, from_order: !!fromOrder } });
   revalidatePath("/manage", "layout");
   return { ok: true, id };
+}
+
+/**
+ * Companies' "Build from my website": read the site (name, logo, colours and
+ * fonts, contacts, socials, about), create the company with all of it, and
+ * return its id for the editor to open on. fallbackName is the checkout's
+ * company name, used when the site doesn't state one.
+ */
+export async function buildCompanyFromSiteAction(
+  website: string,
+  fallbackName: string,
+  fromOrder: boolean,
+): Promise<{ ok: true; id: number; lightLogo: boolean } | { ok: false; error: string }> {
+  const v = await me();
+  const read = await readCompanySite(v.id, String(website ?? ""));
+  if ("error" in read) return { ok: false, error: read.error };
+  const sure = read.nameFrom === "structured" || read.nameFrom === "domain" || read.nameFrom === "ai";
+  const typed = String(fallbackName ?? "").trim();
+  const name = ((sure ? read.name : typed || read.name) || typed || new URL(read.website).hostname.replace(/^www\./, "")).slice(0, 255);
+  const companyId = await createCompany(v, name);
+  // A white logo would vanish on the profile: it stays in My images, unused, and the editor says so.
+  const logo = read.logos.find((l) => !l.light);
+  const lightOnly = !logo && read.logos.length > 0;
+  await saveCompany(
+    companyId,
+    cleanCompanyInput({
+      name,
+      website: read.website,
+      phone: read.phone,
+      address: read.address,
+      logoPath: logo?.path ?? null,
+      ...read.palette,
+      descriptionHtml: read.description ? `<p>${read.description.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")}</p>` : "",
+      links: read.socials,
+    }),
+  );
+  await db.insert(events).values({ name: "team_company_created", userId: v.id, companyId, source: "team", meta: { has_logo: !!logo, from_site: true, from_order: !!fromOrder } });
+  revalidatePath("/manage", "layout");
+  return { ok: true, id: companyId, lightLogo: lightOnly };
 }
 
 export async function acceptInviteAction(form: FormData) {

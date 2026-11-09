@@ -490,3 +490,20 @@
 .mc-site-header__exit { font-family: var(--font-text); font-weight: 600; color: var(--ink-muted); text-decoration: none; padding: var(--space-2) var(--space-3); border-radius: var(--radius-md); }
 .mc-site-header__exit:hover { color: var(--ink); background: var(--surface-muted); }
 .mc-site-header__exit:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+
+/* Companies: "Add new company" starts from the website. */
+.acc-company-create { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; text-align: left; }
+.acc-company-create label { font-weight: 600; color: var(--ink); }
+.acc-company-create .acc__muted { margin: 0; }
+.acc-company-create .acc-inline-form { margin-top: 4px; }
+.acc-company-create .acc-link { align-self: flex-start; }
+
+/* Thank-you page for a team order: a one-line summary, the invoice, and the details on request. */
+.acc-orderbar { display: flex; flex-direction: column; gap: 8px; }
+.acc-orderbar__row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; }
+.acc-orderbar__sum { margin: 0; color: var(--ink); }
+.acc-orderbar__note { margin: 0; color: var(--ink-muted); font-size: 0.95rem; }
+.acc-orderbar__more summary { cursor: pointer; font-weight: 600; color: var(--brand); width: fit-content; }
+.acc-orderbar__more summary:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+.acc-orderbar__more[open] summary { margin-bottom: 12px; }
+.acc-siteread { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }

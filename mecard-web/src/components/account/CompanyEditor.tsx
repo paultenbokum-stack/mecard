@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, useTransition } from "react";
-import { saveCompanyAction } from "@/app/(account)/manage/editor-actions";
+import { saveCompanyAction, sitePaletteAction } from "@/app/(account)/manage/editor-actions";
 import type { Company, ProfileView } from "@/lib/profile-view";
 import { Field, ImageField, LinksEditor, LivePreview, SaveBar, WizardNav, type LinkRow, type WizardLinks } from "./EditorParts";
 import { RichTextEditor } from "./RichTextEditor";
@@ -84,6 +84,7 @@ export function CompanyEditor({
   const [links, setLinks] = useState<LinkRow[]>(startLinks);
   const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null);
   const [saving, startSave] = useTransition();
+  const [reading, startRead] = useTransition();
 
   const dirty = useMemo(() => JSON.stringify([f, links]) !== JSON.stringify([saved.fields, saved.links]), [f, links, saved]);
   useEffect(() => {
@@ -178,6 +179,25 @@ export function CompanyEditor({
         {tab === "branding" ? (
           <section className="acc-panel acc-panel--white">
             <div className="acc-form">
+              <div className="acc-siteread">
+                <button
+                  type="button"
+                  className="acc-btn acc-btn--small"
+                  disabled={reading || !f.website.trim()}
+                  onClick={() =>
+                    startRead(async () => {
+                      const r = await sitePaletteAction(c0.id, f.website);
+                      if (!r.ok) return setMessage({ ok: false, text: r.error });
+                      // Only what the site gives: blank roles keep what's set.
+                      setF((x) => ({ ...x, ...Object.fromEntries(Object.entries(r.palette).filter(([, v]) => v)) }));
+                      setMessage({ ok: true, text: "Colours and fonts read from your website. Check the preview, then save." });
+                    })
+                  }
+                >
+                  {reading ? "Reading your website…" : "Read colours from my website"}
+                </button>
+                <span className="acc-field__hint">{f.website.trim() ? `From ${f.website.replace(/^https?:\/\//, "").replace(/\/$/, "")}` : "Add your website on Details first."}</span>
+              </div>
               <div className="acc-grid">
                 <Field id="ce-hfont" label="Heading font">
                   <select id="ce-hfont" value={f.headingFont} onChange={(e) => set("headingFont", e.target.value)}>

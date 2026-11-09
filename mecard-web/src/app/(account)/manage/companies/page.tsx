@@ -8,6 +8,7 @@ import { requireUserId } from "@/lib/session";
 import { cookies } from "next/headers";
 import { TeamEmpty } from "@/components/account/TeamEmpty";
 import { TeamWelcome } from "@/components/account/TeamWelcome";
+import { companySuggestions } from "@/lib/team";
 import { teamProgress } from "@/lib/team-progress";
 import { teamWelcomeCookie } from "@/lib/upsell-rules";
 import { CreateCompanyForm } from "@/components/account/CreateCompanyForm";
@@ -15,11 +16,12 @@ import { CreateCompanyForm } from "@/components/account/CreateCompanyForm";
 export const metadata: Metadata = { title: "Companies" };
 
 // The team console's Companies tab (company-management-v2 and the add-company form).
-export default async function CompaniesPage({ searchParams }: { searchParams: Promise<{ done?: string; add?: string }> }) {
+export default async function CompaniesPage({ searchParams }: { searchParams: Promise<{ done?: string; add?: string; from?: string }> }) {
   const sp = await searchParams;
   const v = await viewer(await requireUserId("/manage/companies/"));
   const welcome = (await cookies()).has(teamWelcomeCookie(v.id));
-  const [companies, progress] = await Promise.all([listCompanies(v), welcome ? teamProgress(v.id) : null]);
+  const [companies, progress, suggest] = await Promise.all([listCompanies(v), welcome ? teamProgress(v.id) : null, companySuggestions(v.id)]);
+  const fromOrder = sp.from === "order";
 
   return (
     <div className="acc__wrap">
@@ -65,7 +67,7 @@ export default async function CompaniesPage({ searchParams }: { searchParams: Pr
             active="company"
             title="Set up your company"
             actions={
-              <CreateCompanyForm label="Create your company" />
+              <CreateCompanyForm label="Create your company" suggestedName={suggest.name} suggestedWebsite={suggest.website} fromOrder={fromOrder} />
             }
           >
             A company holds your branding: logo, colours, fonts and the office number and website. Every Pro profile in it uses that look, so the whole team stays on-brand.
@@ -75,7 +77,7 @@ export default async function CompaniesPage({ searchParams }: { searchParams: Pr
         {companies.length ? (
           <details className="acc-details" id="add-company" style={{ marginTop: 16 }} open={!!sp.add}>
             <summary className="acc-btn">+ Add a company</summary>
-            <CreateCompanyForm label="Create company" />
+            <CreateCompanyForm label="Create company" suggestedName={fromOrder ? suggest.name : ""} suggestedWebsite={fromOrder ? suggest.website : ""} fromOrder={fromOrder} />
           </details>
         ) : (
           <p className="acc__muted" style={{ textAlign: "center", marginBottom: 0 }}>

@@ -15,6 +15,8 @@ import { canUseImage } from "@/lib/media-library";
 import { cleanProfileInput, createCompanyForProfile, saveProfile } from "@/lib/profile-edit";
 import { requireUserId } from "@/lib/session";
 import { sanitizeKey } from "@/lib/tracking";
+import type { Palette } from "@/lib/site-read";
+import { readSitePalette } from "@/lib/team";
 
 // Saves from the profile and company editors.
 
@@ -83,6 +85,16 @@ export async function setupCompanyAction(form: FormData) {
   if (!(await canEditProfile(v, profileId))) redirect("/manage/?done=denied");
   const companyId = await createCompanyForProfile(profileId, v.id);
   redirect(nextPath(form, `/manage/company/${companyId}/`, "company-created"));
+}
+
+/** The Branding tab's "Read colours from my website": a palette for the form, saved only when the user saves. */
+export async function sitePaletteAction(companyId: number, website: string): Promise<{ ok: true; palette: Palette; found: number } | { ok: false; error: string }> {
+  const v = await viewer(await requireUserId());
+  if (!(await canManageCompany(v, companyId))) return { ok: false, error: "You don't have permission to edit this company." };
+  const r = await readSitePalette(v.id, String(website ?? ""));
+  if ("error" in r) return { ok: false, error: r.error };
+  if (!r.palette.accentColour && !r.found) return { ok: false, error: "We couldn't find your colours on that website. Choose them below instead." };
+  return { ok: true, palette: r.palette, found: r.found };
 }
 
 export async function saveCompanyAction(companyId: number, raw: Record<string, unknown>): Promise<SaveResult> {

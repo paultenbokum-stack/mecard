@@ -1,10 +1,9 @@
-// The team flow's progress bar: sign up, pay, then set up the company and add people.
+// The team flow's progress bar: sign up and pay, then the company is set up in the dashboard.
 
 const STEPS = [
   ["account", "Your account"],
   ["order", "Team size and pay"],
   ["company", "Your company"],
-  ["people", "Your people"],
 ] as const;
 
 export function TeamSteps({ now }: { now: (typeof STEPS)[number][0] }) {

@@ -3,7 +3,6 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { requireUserId } from "@/lib/session";
 import { teamCompanies, teamPlaces, teamProfiles } from "@/lib/team";
-import { TeamSteps } from "../TeamSteps";
 import { TeamPeople } from "./TeamPeople";
 import "../team.css";
 
@@ -20,7 +19,6 @@ export default async function TeamPeoplePage({ searchParams }: { searchParams: P
 
   return (
     <div className="team team--narrow">
-      <TeamSteps now="people" />
       <div className="team-main">
         <div>
           <h1>Who’s on the team?</h1>

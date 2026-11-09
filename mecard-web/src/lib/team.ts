@@ -5,7 +5,7 @@ import sharp from "sharp";
 import { revalidatePath } from "next/cache";
 import { and, asc, desc, eq, gt, isNull, ne, sql } from "drizzle-orm";
 import { db } from "@/db/client";
-import { cards, companies, entitlements, events, profiles } from "@/db/schema";
+import { cards, companies, entitlements, events, orders, profiles, users } from "@/db/schema";
 import { imageDeps } from "./images/config";
 import { storeUpload } from "./images/pipeline";
 import { aiCompanyName } from "./ai-name";
@@ -98,7 +98,8 @@ async function storeLogo(userId: number, c: LogoCandidate): Promise<(FoundLogo &
 }
 
 /** Read a company's website for the setup step: name, contacts, logo choices and a palette for the profile. */
-export async function readCompanySite(userId: number, rawUrl: string): Promise<SiteReadResult> {
+/** A website's page and stylesheets, read under the hourly limit, or why not. */
+async function fetchSite(userId: number, rawUrl: string): Promise<{ read: SiteRead; url: string } | { error: string }> {
   const url = normaliseSiteUrl(rawUrl);
   if (!url) return { error: "Enter a website address, like yourcompany.co.za." };
   const [{ count }] = await db
@@ -113,10 +114,24 @@ export async function readCompanySite(userId: number, rawUrl: string): Promise<S
     await db.insert(events).values({ name: "team_site_read", userId, source: "team", meta: { ok: false } });
     return { error: "We couldn't read that website. Check the address, or enter your details yourself." };
   }
-
   const sheets = await Promise.all(stylesheets(html, page.url).map((u) => safeFetch(u, MAX_CSS)));
   const css = sheets.map((s) => (s && /css|text\/plain/i.test(s.type) ? s.body.toString("utf8") : "")).join("\n");
-  const { nameHints, ...read } = parseCompanySite(html, page.url, css);
+  return { read: parseCompanySite(html, page.url, css), url: page.url };
+}
+
+/** Just the colours and fonts, for an existing company's Branding tab. Nothing is stored. */
+export async function readSitePalette(userId: number, rawUrl: string): Promise<{ palette: SiteRead["palette"]; found: number } | { error: string }> {
+  const got = await fetchSite(userId, rawUrl);
+  if ("error" in got) return got;
+  await db.insert(events).values({ name: "team_site_read", userId, source: "team", meta: { ok: true, palette_only: true, palette_found: got.read.paletteFound, accent: !!got.read.palette.accentColour } });
+  return { palette: got.read.palette, found: got.read.paletteFound };
+}
+
+export async function readCompanySite(userId: number, rawUrl: string): Promise<SiteReadResult> {
+  const got = await fetchSite(userId, rawUrl);
+  if ("error" in got) return got;
+  const page = { url: got.url };
+  const { nameHints, ...read } = got.read;
 
   // A name that matches nothing on the page is a guess: the AI picks one that's written there.
   let { name, nameFrom } = read;
@@ -261,4 +276,26 @@ export async function archiveLeaver(ownerId: number, profileId: number, choice: 
   await db.update(profiles).set({ archived: true, updatedAt: new Date() }).where(eq(profiles.id, profileId));
   await refreshProfilePages(profileId);
   await db.insert(events).values({ name: "card_reassigned", userId: ownerId, profileId, companyId: old.companyId, source: "team", meta: { outcome: choice.kind, cards: linked.length } });
+}
+
+const FREE_MAIL = /^(gmail|googlemail|outlook|hotmail|live|yahoo|icloud|me|proton|protonmail|webmail|mweb|telkomsa|vodamail|afrihost)\./i;
+
+/** The website implied by a work email address, to save typing it. */
+export const websiteFromEmail = (email: string) => {
+  const domain = email.split("@")[1]?.trim().toLowerCase() ?? "";
+  return domain && !FREE_MAIL.test(domain) ? domain : "";
+};
+
+/** What "Add new company" can start from: the latest order's company name, and the website its email implies. */
+export async function companySuggestions(userId: number): Promise<{ name: string; website: string }> {
+  const [[u], [order]] = await Promise.all([
+    db.select({ email: users.email }).from(users).where(eq(users.id, userId)).limit(1),
+    db
+      .select({ company: orders.billingCompany, email: orders.billingEmail })
+      .from(orders)
+      .where(and(eq(orders.userId, userId), sql`${orders.status} NOT LIKE 'ywraq%'`))
+      .orderBy(desc(orders.id))
+      .limit(1),
+  ]);
+  return { name: order?.company?.trim() ?? "", website: websiteFromEmail(order?.email ?? "") || websiteFromEmail(u?.email ?? "") };
 }

@@ -107,7 +107,8 @@ export async function sendOrderStatusEmails(orderId: number, prev: string, next:
         next === "on-hold" && order.paymentMethod === "bacs"
           ? `Please pay by EFT, using your order number as the reference. Your order will not be processed until the funds have cleared in our account.\n\n${bankDetailsText(order.id)}\n\n`
           : "";
-      const pdf = next === "processing"
+      // Also with an EFT order on hold, so the buyer can forward it to whoever pays.
+      const pdf = next === "processing" || eftNote
         ? await renderInvoice(order.id).catch((e) => (console.error(`[orders] invoice for order ${order.id} failed`, e), null))
         : null;
       await sendEmail({

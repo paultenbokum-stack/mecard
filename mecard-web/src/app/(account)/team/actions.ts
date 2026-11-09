@@ -6,73 +6,15 @@ import { db } from "@/db/client";
 import { events } from "@/db/schema";
 import { canEditProfile, canManageCompany, viewer } from "@/lib/access";
 import { addToCart, getCart, setLineQty } from "@/lib/cart";
-import { cleanCompanyInput, saveCompany } from "@/lib/company-edit";
-import { createCompany } from "@/lib/manage";
 import { setAccountMode } from "@/lib/manage-view";
 import { requireUserId } from "@/lib/session";
-import { addTeamList, archiveLeaver, readCompanySite, type SiteReadResult } from "@/lib/team";
+import { addTeamList, archiveLeaver } from "@/lib/team";
 import { clampPeople, teamPackage } from "@/lib/team-packages";
 import { parseTeamList } from "@/lib/team-people-rules";
-import type { Palette } from "@/lib/site-read";
 
 // The team flow's forms. Each checks the user's rights again.
 
-const me = async () => viewer(await requireUserId("/team/setup/"));
-
-export async function readSiteAction(url: string): Promise<SiteReadResult> {
-  const v = await me();
-  return readCompanySite(v.id, String(url ?? ""));
-}
-
-const escapeHtml = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-
-export type SetupInput = {
-  name: string;
-  website: string;
-  phone: string;
-  address: string;
-  about: string;
-  palette: Palette;
-  logoPath: string | null;
-  socials: { label: string; url: string; icon: string }[];
-  fromSite: boolean;
-  /** Counts for the funnel: whether the admin changed what the website read gave. */
-  changed: { palette: boolean; logo: boolean; name: boolean };
-};
-
-/** Step 3, after paying: save the company, whether it came from the website or was typed in. */
-export async function saveTeamCompanyAction(input: SetupInput): Promise<{ error: string } | never> {
-  const v = await me();
-  const name = String(input.name ?? "").trim().slice(0, 255);
-  if (!name) return { error: "Enter your company name." };
-  const id = await createCompany(v, name);
-  const about = String(input.about ?? "").trim().slice(0, 1000);
-  await saveCompany(
-    id,
-    cleanCompanyInput({
-      name,
-      website: input.website,
-      phone: input.phone,
-      address: input.address,
-      logoPath: input.logoPath,
-      // cleanCompanyInput keeps only colours and fonts the editor allows.
-      headingColour: input.palette?.headingColour,
-      bodyColour: input.palette?.bodyColour,
-      accentColour: input.palette?.accentColour,
-      buttonTextColour: input.palette?.buttonTextColour,
-      downloadColour: input.palette?.downloadColour,
-      downloadTextColour: input.palette?.downloadTextColour,
-      headingFont: input.palette?.headingFont,
-      bodyFont: input.palette?.bodyFont,
-      descriptionHtml: about ? `<p>${escapeHtml(about)}</p>` : "",
-      links: input.socials,
-    }),
-  );
-  await setAccountMode(v.id, "teams");
-  await db.insert(events).values({ name: "team_company_created", userId: v.id, companyId: id, source: "team", meta: { has_logo: !!input.logoPath, from_site: !!input.fromSite, changed_palette: !!input.changed?.palette, changed_logo: !!input.changed?.logo, changed_name: !!input.changed?.name } });
-  revalidatePath("/manage", "layout");
-  redirect("/team/people/");
-}
+const me = async () => viewer(await requireUserId("/team/order/"));
 
 /** Step 2: one order for the whole team. Setting the same choice again changes the basket rather than doubling it. */
 export async function placeTeamOrderAction(form: FormData) {

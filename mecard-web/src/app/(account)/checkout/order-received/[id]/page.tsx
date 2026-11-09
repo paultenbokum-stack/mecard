@@ -9,6 +9,7 @@ import { GtagEvents, type GtagEvent } from "@/components/GtagEvents";
 import { BankDetails, OrderDetails } from "@/components/shop/OrderDetails";
 import { cardTypesFor, PRODUCT } from "@/lib/catalog";
 import { formatDate, ORDER_STATUS_LABEL, PAID_STATUSES, rands } from "@/lib/money";
+import { hasInvoice } from "@/lib/invoice";
 import { requireUserId } from "@/lib/session";
 
 export const metadata: Metadata = { title: { absolute: "Order received - MeCard" } };
@@ -47,6 +48,64 @@ export default async function OrderReceivedPage({ params }: { params: Promise<{ 
         ]
       : [];
 
+  const tracking = purchase.length ? <GtagEvents events={purchase} onceKey={`purchase_${order.id}`} /> : null;
+
+  // A team order: a one-line summary with the invoice, then the one next step in the dashboard.
+  if (teamOrder) {
+    const eftDue = order.paymentMethod === "bacs" && order.status === "on-hold";
+    const status = paid ? "Paid, thank you" : eftDue ? "Waiting for your EFT" : order.status === "pending" ? "Waiting for PayFast" : (ORDER_STATUS_LABEL[order.status] ?? order.status);
+    const customCards = hasCards && designable.length > 0 && !allDone;
+    return (
+      <div className="acc__wrap">
+        <h1>Thanks for your order, {order.billingFirstName}</h1>
+        <section className="acc-panel acc-orderbar" aria-label="Your order">
+          <div className="acc-orderbar__row">
+            <p className="acc-orderbar__sum">
+              <b>Order {order.id}</b> · {rands(order.totalCents)} · {status}
+            </p>
+            {hasInvoice(order) ? (
+              <a className="acc-btn acc-btn--small" href={`/my-account/invoice/${order.id}/`}>
+                Download invoice (PDF)
+              </a>
+            ) : null}
+          </div>
+          {eftDue ? <p className="acc-orderbar__note">Pay by EFT, with {order.id} as the reference. The invoice and our bank details are in your order email, so you can forward it to your finance team.</p> : null}
+          <details className="acc-orderbar__more">
+            <summary>View order</summary>
+            {eftDue ? <BankDetails orderId={order.id} /> : null}
+            <OrderDetails order={order} items={items} />
+          </details>
+        </section>
+        <section className="acc-panel acc-panel--ok" aria-labelledby="team-next">
+          {hasCompany ? (
+            <>
+              <h2 id="team-next">Next, add your people</h2>
+              <p>Add each person on Profiles. Their Pro profile goes live as you add them, and each card goes to print once its name is in.</p>
+              <Link className="acc-btn acc-btn--primary" href="/manage/">Add my people</Link>
+            </>
+          ) : (
+            <>
+              <h2 id="team-next">Next, set up your company</h2>
+              <p>We’ll read your website for your logo, colours and contact details, so every profile in your team looks like your brand. You can change anything.</p>
+              <Link className="acc-btn acc-btn--primary" href="/manage/companies/?add=1&from=order#add-company">Set up my company</Link>
+            </>
+          )}
+          {!hasCompany || customCards ? (
+            <p className="acc__muted" style={{ marginBottom: 0 }}>
+              {hasCompany ? "Then " : customCards ? "Then add your people on Profiles, and " : "Then add your people on Profiles."}
+              {customCards ? (
+                <>
+                  upload your card designs in <Link href="/manage/cards/?tab=new">My Cards</Link>.
+                </>
+              ) : null}
+            </p>
+          ) : null}
+        </section>
+        {tracking}
+      </div>
+    );
+  }
+
   return (
     <div className="acc__wrap">
       <h1>Order received</h1>
@@ -71,23 +130,6 @@ export default async function OrderReceivedPage({ params }: { params: Promise<{ 
           {hasUpgrades ? <li>Your profile upgrades will be applied automatically as your profiles are created or updated</li> : null}
         </ol>
       </section>
-      {teamOrder ? (
-        <section className="acc-panel" aria-labelledby="team-next">
-          {hasCompany ? (
-            <>
-              <h2 id="team-next">Next, tell us who’s on the team</h2>
-              <p>Paste your team from a spreadsheet, and we’ll set up everyone’s profile. Each card goes to print once its name is in.</p>
-              <Link className="acc-btn acc-btn--primary" href="/team/people/">Add my people</Link>
-            </>
-          ) : (
-            <>
-              <h2 id="team-next">Next, set up your company</h2>
-              <p>We’ll read your website for your logo, colours and details, so your team’s profile looks like your brand. Then you add your people.</p>
-              <Link className="acc-btn acc-btn--primary" href="/team/setup/">Set up my company</Link>
-            </>
-          )}
-        </section>
-      ) : null}
       <ul className="acc-list" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", display: "grid" }}>
         <li className="acc-item">
           <div className="acc-item__text">
@@ -116,7 +158,7 @@ export default async function OrderReceivedPage({ params }: { params: Promise<{ 
       </ul>
       {order.paymentMethod === "bacs" && order.status === "on-hold" ? <BankDetails orderId={order.id} /> : null}
       <OrderDetails order={order} items={items} />
-      {purchase.length ? <GtagEvents events={purchase} onceKey={`purchase_${order.id}`} /> : null}
+      {tracking}
     </div>
   );
 }
