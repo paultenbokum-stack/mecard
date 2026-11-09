@@ -142,7 +142,7 @@ export async function buildCompanyFromSiteAction(
   const dark = read.logos.find((l) => !l.light);
   const lightOnly = !dark && read.logos.length > 0;
   const logo = dark ?? read.logos[0];
-  const onBrand = lightOnly && read.palette.accentColour ? { logoBg: read.palette.accentColour, logoPadding: 16, logoWidth: 70 } : {};
+  const onBrand = lightOnly && read.palette.accentColour ? { logoBg: read.palette.accentColour, logoWidth: 70 } : {};
   await saveCompany(
     companyId,
     cleanCompanyInput({

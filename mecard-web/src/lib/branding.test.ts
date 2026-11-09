@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { designCss, fontToStack, scopeCss, scopeSelector, withFontFallback, cleanLogoPadding, cleanLogoWidth, logoAreaCss } from "./branding";
+import { designCss, fontToStack, scopeCss, scopeSelector, withFontFallback, cleanLogoHeight, cleanLogoWidth, cleanLogoX, logoAreaCss } from "./branding";
 import type { Company } from "./public-profile";
 
 const S = ".pro-profile-container.post-7";
@@ -76,13 +76,18 @@ test("values that could break out of the declaration are left out", () => {
   assert.match(css, /color: #333333;/, "empty colours fall back to the WordPress defaults");
 });
 
-test("the logo area adds nothing at its defaults, and centres a sized logo otherwise", () => {
-  assert.deepEqual(logoAreaCss(".s", { logoWidth: 100, logoPadding: 0, logoBg: "" }), []);
-  const css = logoAreaCss(".s", { logoWidth: 60, logoPadding: 16, logoBg: "#1d2a3a" }).join("\n");
-  assert.match(css, /\.s \.pro-logo \{ display: flex; align-items: center; justify-content: center; padding: 16px 0 46px; background-color: #1d2a3a; \}/);
-  assert.match(css, /\.s \.pro-logo img \{ max-width: 60%;/);
-  assert.equal(cleanLogoWidth(5), 30);
+test("the logo area adds nothing at its defaults, and sizes, places and sets the area otherwise", () => {
+  const fit = { logoWidth: 100, logoX: 0, logoY: 0, logoHeight: 0, logoBg: "" };
+  assert.deepEqual(logoAreaCss(".s", fit), []);
+  const css = logoAreaCss(".s", { logoWidth: 60, logoX: -10, logoY: 8, logoHeight: 180, logoBg: "#1d2a3a" }).join("\n");
+  assert.match(css, /\.s \.pro-logo \{[^}]*overflow: hidden; padding-bottom: 30px; height: 180px; min-height: 0; background-color: #1d2a3a; \}/);
+  assert.match(css, /\.s \.pro-logo img \{[^}]*width: 60%;[^}]*left: -10%; top: 8px; \}/);
+  // Only a logo width: the area still fits the logo.
+  assert.doesNotMatch(logoAreaCss(".s", { ...fit, logoWidth: 70 }).join("\n"), /height: \d+px/);
+  assert.equal(cleanLogoWidth(5), 10);
   assert.equal(cleanLogoWidth("abc"), 100);
-  assert.equal(cleanLogoPadding(999), 60);
-  assert.deepEqual(logoAreaCss(".s", { logoWidth: 100, logoPadding: 0, logoBg: "red;}body{x" }), []);
+  assert.equal(cleanLogoX(99), 50);
+  assert.equal(cleanLogoHeight(10), 60);
+  assert.equal(cleanLogoHeight(0), 0);
+  assert.deepEqual(logoAreaCss(".s", { ...fit, logoBg: "red;}body{x" }), []);
 });

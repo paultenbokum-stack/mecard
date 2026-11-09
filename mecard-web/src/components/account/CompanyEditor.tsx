@@ -6,7 +6,8 @@ import { saveCompanyAction, sitePaletteAction } from "@/app/(account)/manage/edi
 import type { Company, ProfileView } from "@/lib/profile-view";
 import { Field, ImageField, LinksEditor, LivePreview, SaveBar, WizardNav, type LinkRow, type WizardLinks } from "./EditorParts";
 import { RichTextEditor } from "./RichTextEditor";
-import { DEFAULT_COLOURS, LOGO_PADDING, LOGO_WIDTH } from "@/lib/branding";
+import { DEFAULT_COLOURS, DEFAULT_LOGO_FIT, isDefaultLogoFit, LOGO_HEIGHT, LOGO_WIDTH } from "@/lib/branding";
+import { LogoAreaEditor } from "./LogoAreaEditor";
 import { autop } from "@/lib/rich-text";
 
 // The company editor (edit-companies form, Me\Company_Editor and the company
@@ -23,7 +24,9 @@ type Fields = Pick<
   | "descriptionHtml"
   | "logoPath"
   | "logoWidth"
-  | "logoPadding"
+  | "logoX"
+  | "logoY"
+  | "logoHeight"
   | "logoBg"
   | "headingFont"
   | "bodyFont"
@@ -71,7 +74,9 @@ export function CompanyEditor({
     descriptionHtml: autop(c0.descriptionHtml),
     logoPath: c0.logoPath,
     logoWidth: c0.logoWidth,
-    logoPadding: c0.logoPadding,
+    logoX: c0.logoX,
+    logoY: c0.logoY,
+    logoHeight: c0.logoHeight,
     logoBg: c0.logoBg,
     headingFont: c0.headingFont,
     bodyFont: c0.bodyFont,
@@ -161,12 +166,15 @@ export function CompanyEditor({
               {f.logoPath ? (
                 <fieldset className="acc-logo-fit">
                   <legend>Logo area</legend>
+                  <p className="acc-field__hint" style={{ marginTop: 0 }}>
+                    In the preview, click the logo to drag it or resize it from a corner, or click the area around it and drag its bottom edge.
+                  </p>
                   <div className="acc-grid">
-                    <Field id="ce-logo-width" label={`Logo size: ${f.logoWidth}%`} hint="A short, wide logo often looks best smaller.">
-                      <input id="ce-logo-width" type="range" min={LOGO_WIDTH.min} max={LOGO_WIDTH.max} step={5} value={f.logoWidth} onChange={(e) => set("logoWidth", Number(e.target.value))} />
+                    <Field id="ce-logo-width" label={`Logo size: ${f.logoWidth}%`}>
+                      <input id="ce-logo-width" type="range" min={LOGO_WIDTH.min} max={LOGO_WIDTH.max} step={1} value={f.logoWidth} onChange={(e) => set("logoWidth", Number(e.target.value))} />
                     </Field>
-                    <Field id="ce-logo-pad" label={`Space above and below: ${f.logoPadding}px`} hint="Gives the logo room, centred in its area.">
-                      <input id="ce-logo-pad" type="range" min={LOGO_PADDING.min} max={LOGO_PADDING.max} step={4} value={f.logoPadding} onChange={(e) => set("logoPadding", Number(e.target.value))} />
+                    <Field id="ce-logo-height" label={`Area height: ${f.logoHeight ? `${f.logoHeight}px` : "fits the logo"}`}>
+                      <input id="ce-logo-height" type="range" min={LOGO_HEIGHT.min - 1} max={LOGO_HEIGHT.max} step={1} value={f.logoHeight || LOGO_HEIGHT.min - 1} onChange={(e) => set("logoHeight", Number(e.target.value) < LOGO_HEIGHT.min ? 0 : Number(e.target.value))} />
                     </Field>
                   </div>
                   <div className="acc-field">
@@ -177,11 +185,11 @@ export function CompanyEditor({
                     </div>
                     <span className="acc-field__hint">
                       For a white logo, choose your brand’s dark colour.{" "}
-                      {f.logoWidth !== 100 || f.logoPadding !== 0 || f.logoBg ? (
+                      {!isDefaultLogoFit(f) ? (
                         <button
                           type="button"
                           className="acc-link"
-                          onClick={() => setF((x) => ({ ...x, logoWidth: 100, logoPadding: 0, logoBg: "" }))}
+                          onClick={() => setF((x) => ({ ...x, ...DEFAULT_LOGO_FIT }))}
                         >
                           Reset the logo area
                         </button>
@@ -312,7 +320,9 @@ export function CompanyEditor({
         />
       </div>
       <aside className="acc-editor__preview">
-        <LivePreview view={view} pro label={sampleLabel} />
+        <LivePreview view={view} pro label={sampleLabel}>
+          {f.logoPath ? <LogoAreaEditor fit={f} onChange={(fit) => setF((x) => ({ ...x, ...fit }))} /> : null}
+        </LivePreview>
       </aside>
     </div>
   );

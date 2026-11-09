@@ -69,28 +69,45 @@ export function companyDesign(c: Company): Design {
   };
 }
 
-export const LOGO_WIDTH = { min: 30, max: 100 } as const;
-export const LOGO_PADDING = { min: 0, max: 60 } as const;
+export const LOGO_WIDTH = { min: 10, max: 100 } as const;
+export const LOGO_X = { min: -50, max: 50 } as const;
+export const LOGO_Y = { min: -200, max: 200 } as const;
+/** 0 is "fits the logo"; otherwise the area's height in px, including the 30px the photo overlaps. */
+export const LOGO_HEIGHT = { min: 60, max: 360 } as const;
+/** The photo overlaps the bottom of the logo area by this much (card.css .profile-image.pro). */
+export const PHOTO_OVERLAP = 30;
+
 const clamp = (n: unknown, { min, max }: { min: number; max: number }, fallback: number) => {
   const v = Math.round(Number(n));
   return Number.isFinite(v) ? Math.min(max, Math.max(min, v)) : fallback;
 };
 export const cleanLogoWidth = (n: unknown) => clamp(n, LOGO_WIDTH, 100);
-export const cleanLogoPadding = (n: unknown) => clamp(n, LOGO_PADDING, 0);
+export const cleanLogoX = (n: unknown) => clamp(n, LOGO_X, 0);
+export const cleanLogoY = (n: unknown) => clamp(n, LOGO_Y, 0);
+export const cleanLogoHeight = (n: unknown) => {
+  const v = Math.round(Number(n));
+  return Number.isFinite(v) && v > 0 ? clamp(v, LOGO_HEIGHT, 0) : 0;
+};
+
+export type LogoFit = Pick<Company, "logoWidth" | "logoX" | "logoY" | "logoHeight" | "logoBg">;
+export const DEFAULT_LOGO_FIT = { logoWidth: 100, logoX: 0, logoY: 0, logoHeight: 0, logoBg: "" } as const;
+export const isDefaultLogoFit = (c: LogoFit) =>
+  cleanLogoWidth(c.logoWidth) === 100 && !cleanLogoX(c.logoX) && !cleanLogoY(c.logoY) && !cleanLogoHeight(c.logoHeight) && !decl("background-color", c.logoBg ?? "");
 
 /**
- * The logo area's size and background. Nothing is emitted for the defaults
- * (full width, no space, white), so profiles that never set them look as before.
- * Otherwise the logo is centred in the area, at its width, with space above and below.
+ * The logo area's size, the logo's size and place in it, and the area's
+ * background. Nothing is emitted for the defaults, so profiles that never set
+ * them look as before. Otherwise the logo sits centred in the part of the area
+ * the photo doesn't cover, moved by its offset, and anything outside is cut off.
  */
-export function logoAreaCss(scope: string, c: Pick<Company, "logoWidth" | "logoPadding" | "logoBg">): string[] {
+export function logoAreaCss(scope: string, c: LogoFit): string[] {
+  if (isDefaultLogoFit(c)) return [];
   const width = cleanLogoWidth(c.logoWidth);
-  const pad = cleanLogoPadding(c.logoPadding);
+  const height = cleanLogoHeight(c.logoHeight);
   const bg = decl("background-color", c.logoBg ?? "");
-  if (width === 100 && pad === 0 && !bg) return [];
   return [
-    `${scope} .pro-logo { display: flex; align-items: center; justify-content: center; padding: ${pad}px 0 ${pad + (pad ? 30 : 0)}px; ${bg} }`,
-    `${scope} .pro-logo img { max-width: ${width}%; max-height: none; }`,
+    `${scope} .pro-logo { display: flex; align-items: center; justify-content: center; box-sizing: border-box; overflow: hidden; padding-bottom: ${PHOTO_OVERLAP}px; ${height ? `height: ${height}px; min-height: 0;` : ""} ${bg} }`,
+    `${scope} .pro-logo img { flex: none; width: ${width}%; max-width: none; height: auto; margin: 0; position: relative; left: ${cleanLogoX(c.logoX)}%; top: ${cleanLogoY(c.logoY)}px; }`,
   ];
 }
 

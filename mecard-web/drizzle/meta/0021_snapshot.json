@@ -1,5 +1,5 @@
 {
-  "id": "287092dc-17ba-4ef6-843a-88e90b55e68f",
+  "id": "6e30dc69-2a6b-428c-b58f-7b4af6907526",
   "prevId": "33edf49c-fa45-4d07-bfa5-d4544c8870b0",
   "version": "7",
   "dialect": "postgresql",
@@ -842,8 +842,22 @@
           "notNull": true,
           "default": 100
         },
-        "logo_padding": {
-          "name": "logo_padding",
+        "logo_x": {
+          "name": "logo_x",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "logo_y": {
+          "name": "logo_y",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "logo_height": {
+          "name": "logo_height",
           "type": "integer",
           "primaryKey": false,
           "notNull": true,

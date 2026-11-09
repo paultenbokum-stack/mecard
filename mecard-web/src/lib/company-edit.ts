@@ -3,7 +3,7 @@ import { eq } from "drizzle-orm";
 import { db } from "@/db/client";
 import { companies } from "@/db/schema";
 import FA_ICONS from "./fa-icons.json";
-import { cleanLogoPadding, cleanLogoWidth } from "./branding";
+import { cleanLogoHeight, cleanLogoWidth, cleanLogoX, cleanLogoY } from "./branding";
 import { cleanColour, cleanEmail, cleanPhone, cleanText, cleanUrl } from "./form-values";
 import { refreshCompanyPages } from "./manage";
 import { replaceLinks } from "./profile-edit";
@@ -45,7 +45,9 @@ export interface CompanyInput {
   descriptionHtml: string;
   logoPath: string | null;
   logoWidth: number;
-  logoPadding: number;
+  logoX: number;
+  logoY: number;
+  logoHeight: number;
   logoBg: string;
   headingFont: string;
   bodyFont: string;
@@ -94,7 +96,9 @@ export function cleanCompanyInput(raw: Record<string, unknown>): CompanyInput {
     descriptionHtml: sanitizeRichHtml(String(raw.descriptionHtml ?? "").slice(0, 20000)),
     logoPath: logo,
     logoWidth: cleanLogoWidth(raw.logoWidth),
-    logoPadding: cleanLogoPadding(raw.logoPadding),
+    logoX: cleanLogoX(raw.logoX),
+    logoY: cleanLogoY(raw.logoY),
+    logoHeight: cleanLogoHeight(raw.logoHeight),
     logoBg: cleanColour(raw.logoBg),
     headingFont: font(raw.headingFont),
     bodyFont: font(raw.bodyFont),

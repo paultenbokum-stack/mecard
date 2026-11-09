@@ -116,7 +116,7 @@
 /* The transform makes the screen the save bar's frame, and the page scrolls in .acc-phone__scroll,
    so the bar stays at the foot of the screen as on a phone, at any window width. */
 .acc-phone__screen { height: 680px; overflow: hidden; transform: translateZ(0); position: relative; }
-.acc-phone__scroll { height: 100%; overflow-y: auto; overflow-x: hidden; }
+.acc-phone__scroll { height: 100%; overflow-y: auto; overflow-x: hidden; position: relative; }
 .acc-phone__screen .mc-card-container { padding: 0; display: block; }
 /* The phone shows the card as a phone does, edge to edge, not in the desktop frame. */
 .acc-phone__screen .mecard-public-card { width: 100%; max-width: 100%; margin: 0; border: none; border-radius: 0; box-shadow: none; }
@@ -510,3 +510,18 @@
 .acc-logo-fit { border: 1px solid var(--surface-muted); border-radius: 12px; padding: 12px 16px 4px; margin: 0; min-width: 0; }
 .acc-logo-fit legend { font-weight: 600; color: var(--ink); padding: 0 4px; }
 .acc-logo-fit input[type="range"] { width: 100%; accent-color: var(--brand); }
+
+/* Logo handles over the company preview (LogoAreaEditor). */
+.acc-logoedit { position: absolute; top: 0; left: 0; width: 100%; height: 0; z-index: 10020; }
+.acc-logoedit__area, .acc-logoedit__logo { position: absolute; box-sizing: border-box; cursor: pointer; touch-action: none; }
+.acc-logoedit__area:hover, .acc-logoedit__area:focus-visible { outline: 1px dashed var(--brand); outline-offset: -1px; }
+.acc-logoedit__area.is-on { outline: 2px dashed var(--brand); outline-offset: -2px; }
+.acc-logoedit__logo { cursor: move; }
+.acc-logoedit__logo:hover, .acc-logoedit__logo:focus-visible { outline: 1px solid var(--brand); }
+.acc-logoedit__logo.is-on { outline: 2px solid var(--brand); }
+.acc-logoedit__handle { position: absolute; width: 12px; height: 12px; background: var(--surface); border: 2px solid var(--brand); border-radius: 3px; touch-action: none; }
+.acc-logoedit__handle--nw { top: -7px; left: -7px; cursor: nwse-resize; }
+.acc-logoedit__handle--ne { top: -7px; right: -7px; cursor: nesw-resize; }
+.acc-logoedit__handle--sw { bottom: -7px; left: -7px; cursor: nesw-resize; }
+.acc-logoedit__handle--se { bottom: -7px; right: -7px; cursor: nwse-resize; }
+.acc-logoedit__edge { position: absolute; left: 50%; bottom: -6px; width: 44px; height: 10px; margin-left: -22px; background: var(--surface); border: 2px solid var(--brand); border-radius: 6px; cursor: ns-resize; touch-action: none; }

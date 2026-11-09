@@ -14,7 +14,7 @@ import { ImageLibrary } from "./ImageLibrary";
 // Pieces shared by the profile and company editors.
 
 /** The public card, rendered from the editor's unsaved values. */
-export function LivePreview({ view, pro, label }: { view: ProfileView; pro: boolean; label?: string }) {
+export function LivePreview({ view, pro, label, children }: { view: ProfileView; pro: boolean; label?: string; children?: React.ReactNode }) {
   const p = view.profile;
   return (
     <>
@@ -36,6 +36,8 @@ export function LivePreview({ view, pro, label }: { view: ProfileView; pro: bool
                 )}
               </div>
             </div>
+            {/* Editing tools drawn over the preview, such as the logo handles. */}
+            {children}
           </div>
         </div>
       </div>

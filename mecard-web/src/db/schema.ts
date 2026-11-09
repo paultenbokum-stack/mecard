@@ -87,11 +87,14 @@ export const companies = pgTable(
     descriptionHtml: text("description_html").notNull().default(""),
     // Original upload path (/wp-content/uploads/…); served through the image route.
     logoPath: text("logo_path"),
-    // The logo area on pro profiles: the logo's width as a % of the card, the space
-    // above and below it in px, and the area's background (for white logos).
-    // 100 / 0 / "" is the WordPress look: full width, no space, white.
+    // The logo area on pro profiles (branding.ts logoAreaCss): the logo's width as a
+    // % of the card, its offset from the centre (x in % of the card, y in px), the
+    // area's height in px (0 = fits the logo) and its background (for white logos).
+    // 100 / 0 / 0 / 0 / "" is the WordPress look.
     logoWidth: integer("logo_width").notNull().default(100),
-    logoPadding: integer("logo_padding").notNull().default(0),
+    logoX: integer("logo_x").notNull().default(0),
+    logoY: integer("logo_y").notNull().default(0),
+    logoHeight: integer("logo_height").notNull().default(0),
     logoBg: varchar("logo_bg", { length: 20 }).notNull().default(""),
     // Branding. Fonts keep the WordPress option values (opensans, Montserrat, …).
     headingFont: varchar("heading_font", { length: 50 }).notNull().default(""),
