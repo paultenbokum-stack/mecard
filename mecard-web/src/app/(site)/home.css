@@ -182,6 +182,7 @@
 /* ── Team-first sections ────────────────────────────────── */
 
 .mc-home__solo-line { margin-top: var(--space-4) !important; font-size: 0.95rem; }
+.mc-home .mc-home__fast-line { display: flex; align-items: baseline; gap: 8px; margin-top: var(--space-5); margin-bottom: 0; font-size: 1rem; font-weight: 600; color: var(--ink); }
 .mc-home__section--features { padding-bottom: var(--space-10); }
 .mc-home__feature { display: grid; grid-template-columns: 2fr 3fr; gap: var(--space-12); align-items: center; padding: var(--space-10) 0; }
 .mc-home__feature--flip .mc-home__feature-copy { order: 2; }
@@ -286,6 +287,8 @@
 .mc-how-hero .mc-home__lead { margin: 0 auto; }
 .mc-home .mc-how-noapp { display: inline-flex; align-items: center; gap: 10px; margin-top: var(--space-6); background: var(--surface); border: 2px solid var(--brand); border-radius: var(--radius-pill); padding: var(--space-3) var(--space-6); font-family: var(--font-display); font-weight: 700; font-size: clamp(1.05rem, 2.5vw, 1.35rem); line-height: 1.25; color: var(--ink); }
 .mc-how-noapp i { color: var(--connect-strong); }
+.mc-home .mc-how-fast { display: flex; justify-content: center; align-items: baseline; gap: 8px; max-width: 560px; margin: var(--space-4) auto 0; font-size: 1.05rem; font-weight: 600; color: var(--ink); }
+.mc-how-fast i, .mc-home__fast-line i { color: var(--connect-strong); }
 .mc-home .mc-home__feature-copy h2 { font-size: 1.85rem; line-height: 1.25; margin-bottom: var(--space-3); }
 .mc-how-card img { display: block; width: 100%; max-width: 460px; height: auto; margin: 0 auto; border-radius: 14px; box-shadow: var(--shadow-device); }
 .mc-how-profile img { display: block; width: 100%; max-width: 280px; height: auto; margin: 0 auto; }

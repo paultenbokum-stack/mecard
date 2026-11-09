@@ -9,6 +9,7 @@ const TICKS = [
   "One logo and colour scheme across every card",
   "Someone left? Archive their profile and deactivate or reassign their card",
   "See who is using their card, person by person",
+  "Cards made and shipped to the major metros in 2 days once we have your artwork",
 ];
 
 const TILES = [
@@ -21,6 +22,7 @@ const TILES = [
 const FAQ = [
   { q: "Is there a minimum team size?", a: "No. A team of two works the same way as a team of two hundred." },
   { q: "Can staff edit their own profiles?", a: "Yes, if you let them. They can update their contact details while the look and feel stays consistent." },
+  { q: "How quickly will our cards arrive?", a: "Once we have your artwork, your cards are made and shipped to the major metros in 2 days. Everyone’s profile is live as soon as you add them, so your team can share by QR code and WhatsApp in the meantime." },
   { q: "Do I need to buy cards for everyone?", a: "No. Every profile works by QR code, WhatsApp and a shareable link. Add cards for the people who need them." },
   { q: "Can I manage several branches or offices?", a: "Yes. Each branch can be its own company with its own details, all in one dashboard." },
   { q: "Can I pay by bank transfer?", a: "Yes. Choose EFT at checkout and pay when your accounts team is ready." },

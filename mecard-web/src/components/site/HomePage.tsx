@@ -19,6 +19,10 @@ const faq = [
     a: "Archive their profile and choose whether to deactivate or reassign their card. Then add the new starter and order their card from the same dashboard.",
   },
   {
+    q: "How quickly will we get our cards?",
+    a: "Once we have your artwork, your cards are made and shipped to the major metros in 2 days. Profiles are live as soon as you create them, so your team can start sharing by QR code and WhatsApp while the cards are on their way.",
+  },
+  {
     q: "How does the NFC card work?",
     a: "You hold your MeCard up to someone’s phone. It instantly opens your digital profile with no app required on their end, and they can save your contact details with one tap. It works with virtually all modern iPhones and Android phones.",
   },
@@ -187,6 +191,7 @@ export function HomePage({ prices }: { prices: HomePrices }) {
               <Link href="/manage/" className="mc-btn mc-btn-primary mc-btn-lg mc-when-in">Go to Dashboard</Link>
               <Link href="/how-it-works/" className="mc-btn mc-btn-outline mc-btn-lg">How it works</Link>
             </div>
+            <p className="mc-home__fast-line"><i className="fa-solid fa-truck-fast" aria-hidden="true" />Once we have your artwork, your cards are made and shipped to the major metros in 2 days.</p>
             <p className="mc-home__solo-line mc-when-out">Just you? <Link href="/sign-up/?for=me">Create your free profile in 60 seconds</Link></p>
           </div>
           <HeroDevice />
@@ -204,7 +209,7 @@ export function HomePage({ prices }: { prices: HomePrices }) {
             <div className="mc-home__feature-copy">
               <h3>Cards for your whole team</h3>
               <p className="mc-home__lead">Your design or your logo on a card for every person, shipped together and each linked to the right profile.</p>
-              <p>These are once-off prices with no monthly fees, and you can add a card for each new starter.</p>
+              <p>Once we have your artwork, your cards are made and shipped to the major metros in 2 days. These are once-off prices with no monthly fees, and you can add a card for each new starter.</p>
               <Link href="/for-teams/" className="mc-home__feature-link">See team pricing</Link>
             </div>
             <div className="mc-home__panel mc-home__panel--tint">

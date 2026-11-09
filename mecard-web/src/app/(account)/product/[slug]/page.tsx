@@ -9,6 +9,7 @@ import { ConfirmButton, Subnav } from "@/components/account/Bits";
 import { Price } from "@/components/shop/Price";
 import { editableProfilesWhere } from "@/lib/access";
 import { isForProfile, PRODUCT } from "@/lib/catalog";
+import { needsShipping } from "@/lib/checkout-shipping";
 import { imageUrl } from "@/lib/images/paths";
 import { addToCartAction } from "@/lib/shop-actions";
 import { requireUserId } from "@/lib/session";
@@ -78,6 +79,11 @@ export default async function ProductPage({ params, searchParams }: Props) {
             <div>
               <ConfirmButton className="acc-btn acc-btn--primary">Add to basket</ConfirmButton>
             </div>
+            {needsShipping([{ productId: p.id }]) ? (
+              <p className="shop-fast">
+                <i className="fa-solid fa-truck-fast" aria-hidden="true" />Once we have your artwork, your cards are made and shipped to the major metros in 2 days.
+              </p>
+            ) : null}
           </form>
           <div className="shop-product__desc" style={{ marginTop: 24 }}>
             <RichText html={p.description} />
