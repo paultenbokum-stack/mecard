@@ -117,7 +117,9 @@
    so the bar stays at the foot of the screen as on a phone, at any window width. */
 .acc-phone__screen { height: 680px; overflow: hidden; transform: translateZ(0); position: relative; }
 .acc-phone__scroll { height: 100%; overflow-y: auto; overflow-x: hidden; }
-.acc-phone__screen .mc-card-container { padding: 0; }
+.acc-phone__screen .mc-card-container { padding: 0; display: block; }
+/* The phone shows the card as a phone does, edge to edge, not in the desktop frame. */
+.acc-phone__screen .mecard-public-card { width: 100%; max-width: 100%; margin: 0; border: none; border-radius: 0; box-shadow: none; }
 .acc-phone__screen .mecard-public-card .pro-profile-container,
 .acc-phone__screen .mecard-public-card .standard-profile-container { padding-bottom: 88px; }
 .acc-phone__screen .mecard-public-card [data-me-field="vcard-button"] { position: fixed; left: 0; right: 0; bottom: 0; z-index: 10010; width: 100%; }
