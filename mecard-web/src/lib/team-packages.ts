@@ -23,7 +23,7 @@ export const TEAM_PACKAGES: TeamPackage[] = [
 
 /** At this headcount the main offer becomes a quote. */
 export const TEAM_QUOTE_FROM = 20;
-export const TEAM_MIN = 2;
+export const TEAM_MIN = 1;
 export const TEAM_MAX = 500;
 
 /** Where the chosen team size waits in the browser between the price box and the order step. */

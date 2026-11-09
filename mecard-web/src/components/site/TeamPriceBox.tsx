@@ -77,7 +77,7 @@ export function TeamPriceBox({ prices }: { prices: ProductCents }) {
         })}
       </div>
       <div className="mc-teambox__total">
-        <span>{people} people, before delivery</span>
+        <span>{people === 1 ? "1 person" : `${people} people`}, before delivery</span>
         <strong>{each !== null ? wholeRands(each * people) : ""}</strong>
       </div>
       {large ? (

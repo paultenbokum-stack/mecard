@@ -20,9 +20,10 @@ test("unknown packages fall back to custom", () => {
 });
 
 test("team size stays in range", () => {
-  assert.equal(clampPeople(1), 2);
+  assert.equal(clampPeople(0), 1);
+  assert.equal(clampPeople(1), 1);
   assert.equal(clampPeople("7"), 7);
-  assert.equal(clampPeople("abc"), 2);
+  assert.equal(clampPeople("abc"), 1);
   assert.equal(clampPeople(9999), 500);
 });
 
