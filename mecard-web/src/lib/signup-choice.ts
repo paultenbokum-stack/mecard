@@ -8,8 +8,8 @@ export const SIGNUP_FOR_COOKIE = "mecard_signup_for";
 
 export const signupFor = (v: unknown): SignupFor | null => (v === "teams" ? "teams" : v === "me" ? "me" : null);
 
-/** Where a new account goes first: a team starts on the team flow (set up your company), a person on onboarding. */
-export const signupLanding = (f: SignupFor | null) => (f === "teams" ? "/team/setup/" : "/onboarding/");
+/** Where a new account goes first: a team starts on the team flow (team size and pay), a person on onboarding. */
+export const signupLanding = (f: SignupFor | null) => (f === "teams" ? "/team/order/" : "/onboarding/");
 
 /**
  * Set for a few minutes when an account is created, and read by SignupConversion

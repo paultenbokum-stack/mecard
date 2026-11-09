@@ -40,7 +40,7 @@ export type SetupInput = {
   changed: { palette: boolean; logo: boolean; name: boolean };
 };
 
-/** Step 2: save the company, whether it came from the website or was typed in. */
+/** Step 3, after paying: save the company, whether it came from the website or was typed in. */
 export async function saveTeamCompanyAction(input: SetupInput): Promise<{ error: string } | never> {
   const v = await me();
   const name = String(input.name ?? "").trim().slice(0, 255);
@@ -71,10 +71,10 @@ export async function saveTeamCompanyAction(input: SetupInput): Promise<{ error:
   await setAccountMode(v.id, "teams");
   await db.insert(events).values({ name: "team_company_created", userId: v.id, companyId: id, source: "team", meta: { has_logo: !!input.logoPath, from_site: !!input.fromSite, changed_palette: !!input.changed?.palette, changed_logo: !!input.changed?.logo, changed_name: !!input.changed?.name } });
   revalidatePath("/manage", "layout");
-  redirect("/team/order/");
+  redirect("/team/people/");
 }
 
-/** Step 3: one order for the whole team. Setting the same choice again changes the basket rather than doubling it. */
+/** Step 2: one order for the whole team. Setting the same choice again changes the basket rather than doubling it. */
 export async function placeTeamOrderAction(form: FormData) {
   const v = await me();
   const people = clampPeople(form.get("people"));
@@ -87,6 +87,8 @@ export async function placeTeamOrderAction(form: FormData) {
     else await addToCart(v.id, productId, people);
   }
   await db.insert(events).values({ name: "team_package_chosen", userId: v.id, source: "team", meta: { people, option: pkg.id, quote: wantsQuote } });
+  // The account is a team account from its first order, so the thank-you page and /manage/ lead on to setup.
+  await setAccountMode(v.id, "teams");
   redirect(wantsQuote ? "/request-quote/" : "/checkout/");
 }
 

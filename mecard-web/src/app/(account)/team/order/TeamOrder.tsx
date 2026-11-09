@@ -61,7 +61,7 @@ export function TeamOrder({ prices, company, logo, colour }: { prices: ProductCe
                     <img src={art.src} alt={art.alt} />
                   ) : (
                     <span className="team-mini">
-                      {logo ? <img src={logo} alt="" /> : <b>{company}</b>}
+                      {logo ? <img src={logo} alt="" /> : <b>{company || "Your logo"}</b>}
                       <span>Name Surname<br />Job title</span>
                     </span>
                   )}
@@ -77,7 +77,7 @@ export function TeamOrder({ prices, company, logo, colour }: { prices: ProductCe
       </div>
 
       <aside className="team-side team-panel" aria-label="Order summary">
-        <h2>{company}</h2>
+        <h2>{company || "Your team"}</h2>
         <div className="team-summary__row"><span>{people} x {pkg.name}</span></div>
         <div className="team-summary__total">
           <b>Total, once off</b>

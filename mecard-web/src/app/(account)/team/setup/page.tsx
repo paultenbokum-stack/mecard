@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
-import { eq } from "drizzle-orm";
+import { and, desc, eq, sql } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { db } from "@/db/client";
-import { users } from "@/db/schema";
+import { orders, users } from "@/db/schema";
 import { requireUserId } from "@/lib/session";
 import { FONT_CHOICES } from "@/lib/company-edit";
 import type { Company, Profile } from "@/lib/profile-view";
 import { teamCompanies } from "@/lib/team";
+import { TeamSteps } from "../TeamSteps";
 import { TeamSetup } from "./TeamSetup";
 import "../team.css";
 
@@ -20,20 +21,31 @@ const websiteFromEmail = (email: string) => {
   return domain && !FREE_MAIL.test(domain) ? domain : "";
 };
 
-// Step 2 of the team flow. An account that already has a company carries on to step 3.
+// Step 3 of the team flow, after paying. The checkout's company name and email
+// fill in what they can. An account that already has a company carries on to its people.
 export default async function TeamSetupPage({ searchParams }: { searchParams: Promise<{ new?: string }> }) {
   const userId = await requireUserId("/team/setup/");
   const [existing] = await teamCompanies(userId);
-  if (existing && !(await searchParams).new) redirect("/team/order/");
-  const [u] = await db.select({ email: users.email }).from(users).where(eq(users.id, userId)).limit(1);
+  if (existing && !(await searchParams).new) redirect("/team/people/");
+  const [[u], [order]] = await Promise.all([
+    db.select({ email: users.email }).from(users).where(eq(users.id, userId)).limit(1),
+    db
+      .select({ company: orders.billingCompany, email: orders.billingEmail })
+      .from(orders)
+      .where(and(eq(orders.userId, userId), sql`${orders.status} NOT LIKE 'ywraq%'`))
+      .orderBy(desc(orders.id))
+      .limit(1),
+  ]);
   return (
     <div className="team">
-      <ol className="team-steps" aria-label="Progress">
-        <li className="is-done">1 Your account, done</li>
-        <li className="is-now" aria-current="step">2 Your company</li>
-        <li>3 Team size and pay</li>
-      </ol>
-      <TeamSetup suggestedWebsite={websiteFromEmail(u?.email ?? "")} sampleProfile={sampleProfile()} baseCompany={baseCompany()} fonts={FONT_CHOICES} />
+      <TeamSteps now="company" />
+      <TeamSetup
+        suggestedWebsite={websiteFromEmail(order?.email || u?.email || "") || websiteFromEmail(u?.email ?? "")}
+        suggestedName={order?.company?.trim() ?? ""}
+        sampleProfile={sampleProfile()}
+        baseCompany={baseCompany()}
+        fonts={FONT_CHOICES}
+      />
     </div>
   );
 }

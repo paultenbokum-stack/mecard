@@ -3,7 +3,7 @@ import Link from "next/link";
 import { and, eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { db } from "@/db/client";
-import { cards, orderItems, orders } from "@/db/schema";
+import { cards, companies, orderItems, orders, users } from "@/db/schema";
 import { ADS_PURCHASE } from "@/components/GoogleTag";
 import { GtagEvents, type GtagEvent } from "@/components/GtagEvents";
 import { BankDetails, OrderDetails } from "@/components/shop/OrderDetails";
@@ -27,7 +27,12 @@ export default async function OrderReceivedPage({ params }: { params: Promise<{ 
   const hasCards = items.some((i) => cardTypesFor(i.productId).length);
   const hasUpgrades = items.some((i) => i.productId === PRODUCT.proUpgrade);
   // Several people's worth of cards or upgrades, bought without naming them yet.
-  const teamOrder = items.some((i) => i.quantity >= 2 && (cardTypesFor(i.productId).length > 0 || i.productId === PRODUCT.proUpgrade));
+  // A team account's order counts from one person, since a team may start with one.
+  const [buyer] = await db.select({ mode: users.accountMode }).from(users).where(eq(users.id, userId)).limit(1);
+  const forNobodyYet = (i: (typeof items)[number]) => !i.meta.profileId && (cardTypesFor(i.productId).length > 0 || i.productId === PRODUCT.proUpgrade);
+  const teamOrder = items.some((i) => forNobodyYet(i) && (i.quantity >= 2 || buyer?.mode === "teams"));
+  // Team setup runs after paying: the company first, then its people.
+  const [hasCompany] = teamOrder ? await db.select({ id: companies.id }).from(companies).where(eq(companies.ownerId, userId)).limit(1) : [];
   const designable = orderCards.filter((c) => c.type !== "phonetag");
   const done = designable.filter((c) => c.designSubmitted).length;
   const allDone = designable.length > 0 && done >= designable.length;
@@ -68,9 +73,19 @@ export default async function OrderReceivedPage({ params }: { params: Promise<{ 
       </section>
       {teamOrder ? (
         <section className="acc-panel" aria-labelledby="team-next">
-          <h2 id="team-next">Next, tell us who’s on the team</h2>
-          <p>Paste your team from a spreadsheet, and we’ll set up everyone’s profile. Each card goes to print once its name is in.</p>
-          <Link className="acc-btn acc-btn--primary" href="/team/people/">Add my people</Link>
+          {hasCompany ? (
+            <>
+              <h2 id="team-next">Next, tell us who’s on the team</h2>
+              <p>Paste your team from a spreadsheet, and we’ll set up everyone’s profile. Each card goes to print once its name is in.</p>
+              <Link className="acc-btn acc-btn--primary" href="/team/people/">Add my people</Link>
+            </>
+          ) : (
+            <>
+              <h2 id="team-next">Next, set up your company</h2>
+              <p>We’ll read your website for your logo, colours and details, so your team’s profile looks like your brand. Then you add your people.</p>
+              <Link className="acc-btn acc-btn--primary" href="/team/setup/">Set up my company</Link>
+            </>
+          )}
         </section>
       ) : null}
       <ul className="acc-list" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", display: "grid" }}>

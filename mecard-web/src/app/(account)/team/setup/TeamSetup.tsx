@@ -31,18 +31,21 @@ const ROLES: [keyof Palette, string][] = [
 
 export function TeamSetup({
   suggestedWebsite,
+  suggestedName,
   sampleProfile,
   baseCompany,
   fonts,
 }: {
   suggestedWebsite: string;
+  /** The company name given at checkout. */
+  suggestedName: string;
   sampleProfile: Profile;
   baseCompany: Company;
   fonts: [string, string][];
 }) {
   const [site, setSite] = useState(suggestedWebsite);
   const [mode, setMode] = useState<"start" | "found" | "manual">("start");
-  const [name, setName] = useState("");
+  const [name, setName] = useState(suggestedName);
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
   const [about, setAbout] = useState("");
@@ -69,7 +72,10 @@ export function TeamSetup({
         return;
       }
       const p = r.palette.accentColour ? r.palette : { ...starterPalette(STARTERS[0]), ...Object.fromEntries(Object.entries(r.palette).filter(([, v]) => v)) };
-      setName(r.name);
+      // A name the website states beats checkout's; checkout's beats a guess from the page title.
+      const sure = r.nameFrom === "structured" || r.nameFrom === "domain" || r.nameFrom === "ai";
+      const chosenName = (sure ? r.name : suggestedName || r.name) || suggestedName;
+      setName(chosenName);
       setPhone(r.phone);
       setAddress(r.address);
       setAbout(r.description);
@@ -79,7 +85,7 @@ export function TeamSetup({
       setSocials(r.socials);
       setColours([...new Set([...r.colours, ...STARTERS])].slice(0, 8));
       setPalette(p);
-      setFound({ palette: p, name: r.name, logoPath: r.logos[0]?.path ?? null });
+      setFound({ palette: p, name: chosenName, logoPath: r.logos[0]?.path ?? null });
       setMode("found");
     });
 
@@ -143,7 +149,7 @@ export function TeamSetup({
       <div className="team-main team-panel">
         <div>
           <h1>What’s your company website?</h1>
-          <p>We’ll use it to build your team’s online profile, in your own colours. You can change anything.</p>
+          <p>We’ll read it for your logo, colours and details, so your team’s profile looks like your brand. You can change anything.</p>
         </div>
         <div className="team-field">
           <label htmlFor="team-site">Website</label>

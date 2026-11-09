@@ -17,7 +17,7 @@ export default async function SignUpPage({ searchParams }: { searchParams: Promi
   const forWhom = signupFor((await searchParams).for);
   const teams = forWhom === "teams";
   const state = await accountState(await currentUserId());
-  if (teams && state !== "anonymous") redirect("/team/setup/");
+  if (teams && state !== "anonymous") redirect("/team/order/");
   if (state === "first_time" || state === "onboarding") redirect("/onboarding/");
   if (state === "existing") redirect("/manage/");
 
