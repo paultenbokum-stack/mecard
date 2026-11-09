@@ -113,8 +113,16 @@
 .acc-editor__preview { position: relative; }
 @media (min-width: 960px) { .acc-editor__preview { position: sticky; top: 16px; } }
 .acc-phone { border: 10px solid var(--device); border-radius: 34px; overflow: hidden; background: var(--surface); box-shadow: var(--shadow-device); }
-.acc-phone__screen { height: 680px; overflow-y: auto; overflow-x: hidden; transform: translateZ(0); } /* the transform keeps the card's fixed save bar inside the preview */
+/* The transform makes the screen the save bar's frame, and the page scrolls in .acc-phone__scroll,
+   so the bar stays at the foot of the screen as on a phone, at any window width. */
+.acc-phone__screen { height: 680px; overflow: hidden; transform: translateZ(0); position: relative; }
+.acc-phone__scroll { height: 100%; overflow-y: auto; overflow-x: hidden; }
 .acc-phone__screen .mc-card-container { padding: 0; }
+.acc-phone__screen .mecard-public-card .pro-profile-container,
+.acc-phone__screen .mecard-public-card .standard-profile-container { padding-bottom: 88px; }
+.acc-phone__screen .mecard-public-card [data-me-field="vcard-button"] { position: fixed; left: 0; right: 0; bottom: 0; z-index: 10010; width: 100%; }
+.acc-phone__screen .mecard-public-card [data-me-field="vcard-button"] .vcard-download { position: static; width: 100%; border-top: 1px solid rgba(0, 0, 0, 0.08); box-shadow: 0 -6px 18px rgba(0, 0, 0, 0.12); background: var(--surface); }
+.acc-phone__screen .mecard-public-card .vcard-button { padding: 14px 16px; }
 .acc-phone__label { text-align: center; font-size: 12.5px; color: var(--ink-muted); margin-top: 10px; }
 .acc-preview-inert { pointer-events: none; }
 

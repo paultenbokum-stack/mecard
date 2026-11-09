@@ -21,17 +21,20 @@ export function LivePreview({ view, pro, label }: { view: ProfileView; pro: bool
       {pro && view.company ? <style dangerouslySetInnerHTML={{ __html: designCss(p.id, view.company) }} /> : null}
       <div className="acc-phone" aria-label="Preview">
         <div className="acc-phone__screen">
-          <div className="mc-card-container acc-preview-inert" inert>
-            <div className="mecard-public-card">
-              {pro ? (
-                <ProProfile view={view}>
-                  <VcardBar profileId={p.id} name={displayName(p)} />
-                </ProProfile>
-              ) : (
-                <StandardProfile view={view}>
-                  <VcardBar profileId={p.id} name={displayName(p)} />
-                </StandardProfile>
-              )}
+          {/* The screen holds the save bar at its foot, as a phone does; the page scrolls inside it. */}
+          <div className="acc-phone__scroll">
+            <div className="mc-card-container acc-preview-inert" inert>
+              <div className="mecard-public-card">
+                {pro ? (
+                  <ProProfile view={view}>
+                    <VcardBar profileId={p.id} name={displayName(p)} />
+                  </ProProfile>
+                ) : (
+                  <StandardProfile view={view}>
+                    <VcardBar profileId={p.id} name={displayName(p)} />
+                  </StandardProfile>
+                )}
+              </div>
             </div>
           </div>
         </div>
