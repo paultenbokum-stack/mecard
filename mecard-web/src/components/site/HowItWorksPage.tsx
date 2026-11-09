@@ -20,7 +20,7 @@ export function HowItWorksPage() {
           <h1 className="mc-home__hero-title">One tap, you’re saved</h1>
           <p className="mc-home__lead">A card with a chip, a profile that’s always up to date, and your details in their phone in one tap.</p>
           <p className="mc-how-noapp"><i className="fa-solid fa-check" aria-hidden="true" />No app to install, for you or for them</p>
-          <p className="mc-how-fast"><i className="fa-solid fa-truck-fast" aria-hidden="true" />In a rush? Once we have your artwork, we can get your cards to you in 2 working days in the major metros.</p>
+          <p className="mc-how-fast"><i className="fa-solid fa-truck-fast" aria-hidden="true" />In a rush? Once we have your artwork, we can get your cards to you in 3 working days in the major metros.</p>
         </div>
       </section>
 
@@ -34,7 +34,7 @@ export function HowItWorksPage() {
               <li><i className="fa-solid fa-check mc-home__tick" aria-hidden="true" />Works on modern Android phones and on iPhone 7 and later</li>
               <li><i className="fa-solid fa-check mc-home__tick" aria-hidden="true" />Older phone? They can scan the QR code on the card</li>
               <li><i className="fa-solid fa-check mc-home__tick" aria-hidden="true" />Details changed? The card stays the same and the profile updates</li>
-              <li><i className="fa-solid fa-check mc-home__tick" aria-hidden="true" />In a rush? Cards in 2 working days in the major metros, once we have your artwork</li>
+              <li><i className="fa-solid fa-check mc-home__tick" aria-hidden="true" />In a rush? Cards in 3 working days in the major metros, once we have your artwork</li>
             </ul>
           </div>
           <div className="mc-home__panel mc-home__panel--tint mc-how-card">

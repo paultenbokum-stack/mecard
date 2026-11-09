@@ -20,7 +20,7 @@ const faq = [
   },
   {
     q: "How quickly will we get our cards?",
-    a: "If you’re in a rush, we can get your cards to you in 2 working days in the major metros once we have your artwork, so tell us when you order. Profiles are live as soon as you create them, so your team can start sharing by QR code and WhatsApp while the cards are on their way.",
+    a: "If you’re in a rush, we can get your cards to you in 3 working days in the major metros once we have your artwork, so tell us when you order. Profiles are live as soon as you create them, so your team can start sharing by QR code and WhatsApp while the cards are on their way.",
   },
   {
     q: "How does the NFC card work?",
@@ -191,7 +191,7 @@ export function HomePage({ prices }: { prices: HomePrices }) {
               <Link href="/manage/" className="mc-btn mc-btn-primary mc-btn-lg mc-when-in">Go to Dashboard</Link>
               <Link href="/how-it-works/" className="mc-btn mc-btn-outline mc-btn-lg">How it works</Link>
             </div>
-            <p className="mc-home__fast-line"><i className="fa-solid fa-truck-fast" aria-hidden="true" />In a rush? Once we have your artwork, we can get your cards to you in 2 working days in the major metros.</p>
+            <p className="mc-home__fast-line"><i className="fa-solid fa-truck-fast" aria-hidden="true" />In a rush? Once we have your artwork, we can get your cards to you in 3 working days in the major metros.</p>
             <p className="mc-home__solo-line mc-when-out">Just you? <Link href="/sign-up/?for=me">Create your free profile in 60 seconds</Link></p>
           </div>
           <HeroDevice />
@@ -209,7 +209,7 @@ export function HomePage({ prices }: { prices: HomePrices }) {
             <div className="mc-home__feature-copy">
               <h3>Cards for your whole team</h3>
               <p className="mc-home__lead">Your design or your logo on a card for every person, shipped together and each linked to the right profile.</p>
-              <p>In a rush? Once we have your artwork, we can get your cards to you in 2 working days in the major metros. These are once-off prices with no monthly fees, and you can add a card for each new starter.</p>
+              <p>In a rush? Once we have your artwork, we can get your cards to you in 3 working days in the major metros. These are once-off prices with no monthly fees, and you can add a card for each new starter.</p>
               <Link href="/for-teams/" className="mc-home__feature-link">See team pricing</Link>
             </div>
             <div className="mc-home__panel mc-home__panel--tint">

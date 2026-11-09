@@ -239,7 +239,7 @@ export function CheckoutForm({
         <h2>Your order</h2>
         {summary}
         <h3 style={{ marginTop: 16 }}>Delivery</h3>
-        {ships ? <p className="shop-fast">In a rush? Once we have your artwork, we can get your cards to you in 2 working days in the major metros.</p> : null}
+        {ships ? <p className="shop-fast">In a rush? Once we have your artwork, we can get your cards to you in 3 working days in the major metros.</p> : null}
         <div aria-live="polite">
           {options.map((m) => (
             <label className="shop-choice" key={m.id}>

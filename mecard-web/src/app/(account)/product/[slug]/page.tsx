@@ -81,7 +81,7 @@ export default async function ProductPage({ params, searchParams }: Props) {
             </div>
             {needsShipping([{ productId: p.id }]) ? (
               <p className="shop-fast">
-                <i className="fa-solid fa-truck-fast" aria-hidden="true" />In a rush? Once we have your artwork, we can get your cards to you in 2 working days in the major metros.
+                <i className="fa-solid fa-truck-fast" aria-hidden="true" />In a rush? Once we have your artwork, we can get your cards to you in 3 working days in the major metros.
               </p>
             ) : null}
           </form>
