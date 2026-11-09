@@ -4,6 +4,8 @@ import { redirect } from "next/navigation";
 import { db } from "@/db/client";
 import { users } from "@/db/schema";
 import { requireUserId } from "@/lib/session";
+import { FONT_CHOICES } from "@/lib/company-edit";
+import type { Company, Profile } from "@/lib/profile-view";
 import { teamCompanies } from "@/lib/team";
 import { TeamSetup } from "./TeamSetup";
 import "../team.css";
@@ -31,7 +33,28 @@ export default async function TeamSetupPage({ searchParams }: { searchParams: Pr
         <li className="is-now" aria-current="step">2 Your company</li>
         <li>3 Team size and pay</li>
       </ol>
-      <TeamSetup suggestedWebsite={websiteFromEmail(u?.email ?? "")} />
+      <TeamSetup suggestedWebsite={websiteFromEmail(u?.email ?? "")} sampleProfile={sampleProfile()} baseCompany={baseCompany()} fonts={FONT_CHOICES} />
     </div>
   );
+}
+
+/** The stand-in person on the preview: the real profile template, with sample details. */
+function sampleProfile(): Profile {
+  const now = new Date();
+  return {
+    id: 0, slug: "preview", ownerId: null, managerId: null, companyId: null, type: "pro",
+    firstName: "Sample", lastName: "Person", jobTitle: "Job title", email: "you@example.com", mobile: "082 000 0000", whatsapp: "", workPhone: "",
+    companyName: "", website: "", socials: { linkedin: "https://www.linkedin.com/" }, photoPath: null, companyLogoPath: null,
+    hideProfileLinkOnVcard: false, autoDownloadVcard: false, onboarding: {}, archived: false, createdAt: now, updatedAt: now,
+  };
+}
+
+/** An empty company for the preview, filled from the form as the admin goes. */
+function baseCompany(): Company {
+  const now = new Date();
+  return {
+    id: 0, name: "", slug: "preview", ownerId: null, phone: "", website: "", address: "", supportEmail: "", vatNumber: "", descriptionHtml: "", logoPath: null,
+    headingFont: "", headingColour: "", bodyFont: "", bodyColour: "", accentColour: "", buttonTextColour: "", downloadColour: "", downloadTextColour: "",
+    customCss: "", createdAt: now, updatedAt: now,
+  };
 }

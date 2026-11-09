@@ -45,21 +45,6 @@
 .team-logo img { max-width: 140px; max-height: 56px; object-fit: contain; }
 
 /* The sample profile. The company's chosen colour comes in through --team-colour. */
-.team-phone { width: 100%; max-width: 340px; align-self: center; box-sizing: border-box; background: var(--device); padding: 10px; border-radius: var(--radius-device); box-shadow: var(--shadow-device); }
-.team-phone__screen { background: var(--surface); border-radius: 30px; overflow: hidden; display: flex; flex-direction: column; min-height: 560px; text-align: center; }
-.team-phone__cover { height: 120px; background: var(--team-colour); display: flex; align-items: center; justify-content: center; padding: 0 var(--space-4); color: var(--on-brand); font-family: var(--font-display); font-weight: 700; font-size: 1.25rem; line-height: 1.2; overflow-wrap: anywhere; }
-.team-phone__cover img { max-width: 70%; max-height: 72px; object-fit: contain; background: var(--surface); border-radius: var(--radius-xs); padding: var(--space-1); }
-.team-phone__photo { width: 84px; height: 84px; margin: -42px auto 0; border-radius: var(--radius-md); border: 3px solid var(--surface); background: var(--surface-muted); display: flex; align-items: center; justify-content: center; font-size: 0.75rem; line-height: 1.2; position: relative; }
-.team-phone__name { padding: var(--space-3) var(--space-5) 0; }
-.team-phone__name b { display: block; font-family: var(--font-display); font-weight: 600; font-size: 1.25rem; line-height: 1.25; color: var(--ink); }
-.team-phone__name i { font-size: 0.95rem; }
-.team-phone__actions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-2); padding: 14px var(--space-5); }
-.team-phone__actions span { background: var(--team-colour); color: var(--on-brand); border-radius: 8px; padding: var(--space-2) var(--space-1); font-size: 0.8rem; font-weight: 600; }
-.team-phone__about { padding: 0 var(--space-5) 14px; flex-grow: 1; text-align: left; font-size: 0.875rem; line-height: 1.45; overflow-wrap: anywhere; }
-.team-phone__about b { display: block; font-family: var(--font-display); font-weight: 600; font-size: 1rem; color: var(--ink); }
-.team-phone__about em { display: block; font-style: normal; color: var(--team-colour); }
-.team-phone__about p { margin-top: var(--space-2); }
-.team-phone__save { background: var(--team-colour); color: var(--on-brand); font-weight: 600; padding: 14px; }
 
 /* Choosing a package. */
 .team-stepper { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-3) var(--space-4); background: var(--surface); border: 1px solid var(--surface-muted); border-radius: var(--radius-md); padding: var(--space-4); }
@@ -98,3 +83,19 @@
 @media (max-width: 480px) {
   .team-panel { padding: var(--space-5); }
 }
+
+/* Setup: logo choices, the brand palette and the real profile preview. */
+.team-logos { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.team-logo-choice { min-width: 96px; height: 64px; padding: var(--space-2); border: 2px solid var(--surface-muted); border-radius: var(--radius-md); background: var(--surface); display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--ink-muted); font: inherit; font-size: 0.85rem; }
+.team-logo-choice img { max-width: 140px; max-height: 44px; object-fit: contain; }
+.team-logo-choice.is-light { background: var(--ink); }
+.team-logo-choice.is-on { border-color: var(--brand); }
+.team-logo-choice:focus-visible, .team-colour-input:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+.team-brand { border: 1px solid var(--surface-muted); border-radius: var(--radius-lg); padding: var(--space-4); margin: 0; display: flex; flex-direction: column; gap: var(--space-3); min-width: 0; }
+.team-brand legend { padding: 0 var(--space-1); }
+.team-brand__row { display: flex; flex-direction: column; gap: var(--space-1); }
+.team-brand__name { font-size: 0.9rem; color: var(--ink-muted); }
+.team-swatches--small .team-swatch { width: 32px; height: 32px; border-width: 2px; }
+.team-colour-input { width: 40px; height: 32px; padding: 0; border: 1px solid var(--surface-muted); border-radius: var(--radius-md); background: var(--surface); cursor: pointer; }
+.team-brand__fonts { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: var(--space-3); }
+.team-preview { position: sticky; top: var(--space-4); max-width: 380px; }

@@ -1,16 +1,18 @@
 import "server-only";
 import { lookup } from "node:dns/promises";
 import { randomBytes } from "node:crypto";
+import sharp from "sharp";
 import { revalidatePath } from "next/cache";
 import { and, asc, desc, eq, gt, isNull, ne, sql } from "drizzle-orm";
 import { db } from "@/db/client";
 import { cards, companies, entitlements, events, profiles } from "@/db/schema";
 import { imageDeps } from "./images/config";
 import { storeUpload } from "./images/pipeline";
+import { aiCompanyName } from "./ai-name";
 import { createInvite } from "./invites";
 import { createProfile, linkCard, refreshProfilePages } from "./manage";
 import { recordUpload } from "./media-library";
-import { firstStylesheet, isPrivateAddress, normaliseSiteUrl, parseCompanySite, type SiteRead } from "./site-read";
+import { isPrivateAddress, logoColours, normaliseSiteUrl, paletteFromLogo, parseCompanySite, stylesheets, type LogoCandidate, type SiteRead } from "./site-read";
 import type { ListedPerson } from "./team-people-rules";
 
 // The team flow's server side: reading a company's website, counting the places
@@ -64,9 +66,38 @@ async function safeFetch(rawUrl: string, maxBytes: number): Promise<{ body: Buff
   return null;
 }
 
-export type SiteReadResult = (SiteRead & { website: string; logoPath: string | null }) | { error: string };
+export type FoundLogo = { path: string; light: boolean; source: LogoCandidate["source"] };
+export type SiteReadResult = (Omit<SiteRead, "logos" | "nameHints"> & { website: string; logos: FoundLogo[] }) | { error: string };
 
-/** Read a company's website for the setup step, keeping its logo in the user's image library. */
+const MAX_LOGOS = 3;
+
+/** One logo candidate as a stored image. SVGs are drawn to PNG here, so nothing from the site runs in a browser. */
+async function storeLogo(userId: number, c: LogoCandidate): Promise<(FoundLogo & { colour: string; bytes: number; type: string }) | null> {
+  let body: Buffer;
+  let svg = !!c.svg;
+  if (c.svg) {
+    body = Buffer.from(c.svg, "utf8");
+  } else {
+    const image = await safeFetch(c.url, MAX_IMAGE);
+    if (!image || !/image|svg/i.test(image.type)) return null;
+    body = image.body;
+    svg = /svg/i.test(image.type) || /\.svg(\?|$)/i.test(c.url);
+  }
+  try {
+    if (svg) body = await sharp(body, { density: 300 }).resize({ width: 800, height: 400, fit: "inside" }).png().toBuffer();
+    const meta = await sharp(body).metadata();
+    if ((meta.width ?? 0) < 48 && (meta.height ?? 0) < 48) return null;
+    const { data, info } = await sharp(body).resize({ width: 48, height: 48, fit: "inside" }).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+    const { colour, light } = logoColours(data, info.channels);
+    const path = await storeUpload(body, imageDeps(), { id: `${userId}-${randomBytes(6).toString("hex")}` });
+    if (!path) return null;
+    return { path, light, source: c.source, colour, bytes: body.length, type: svg ? "image/png" : `image/${meta.format ?? "png"}` };
+  } catch {
+    return null;
+  }
+}
+
+/** Read a company's website for the setup step: name, contacts, logo choices and a palette for the profile. */
 export async function readCompanySite(userId: number, rawUrl: string): Promise<SiteReadResult> {
   const url = normaliseSiteUrl(rawUrl);
   if (!url) return { error: "Enter a website address, like yourcompany.co.za." };
@@ -83,26 +114,55 @@ export async function readCompanySite(userId: number, rawUrl: string): Promise<S
     return { error: "We couldn't read that website. Check the address, or enter your details yourself." };
   }
 
-  const cssUrl = firstStylesheet(html, page.url);
-  const css = cssUrl ? await safeFetch(cssUrl, MAX_CSS) : null;
-  const read = parseCompanySite(html, page.url, css?.body.toString("utf8") ?? "");
+  const sheets = await Promise.all(stylesheets(html, page.url).map((u) => safeFetch(u, MAX_CSS)));
+  const css = sheets.map((s) => (s && /css|text\/plain/i.test(s.type) ? s.body.toString("utf8") : "")).join("\n");
+  const { nameHints, ...read } = parseCompanySite(html, page.url, css);
 
-  let logoPath: string | null = null;
-  if (read.logoUrl) {
-    const image = await safeFetch(read.logoUrl, MAX_IMAGE);
-    if (image && /image/i.test(image.type)) {
-      logoPath = await storeUpload(image.body, imageDeps(), { id: `${userId}-${randomBytes(6).toString("hex")}` });
-      if (logoPath) await recordUpload({ ownerId: userId, path: logoPath, filename: "website-logo", mimeType: image.type, bytes: image.body.length });
+  // A name that matches nothing on the page is a guess: the AI picks one that's written there.
+  let { name, nameFrom } = read;
+  if (nameFrom === "title" || nameFrom === "none") {
+    const ai = await aiCompanyName(page.url, nameHints);
+    if (ai) {
+      name = ai;
+      nameFrom = "ai";
     }
   }
+
+  const stored: Awaited<ReturnType<typeof storeLogo>>[] = [];
+  for (const c of read.logos) {
+    if (stored.length >= MAX_LOGOS) break;
+    const s = await storeLogo(userId, c);
+    if (s) stored.push(s);
+  }
+  const logos = stored.filter((s) => s !== null);
+  // A white logo is made for a dark header. A darker version, when the site has one, shows on the profile.
+  logos.sort((a, b) => Number(a.light) - Number(b.light));
+  for (const s of logos) await recordUpload({ ownerId: userId, path: s.path, filename: "website-logo", mimeType: s.type, bytes: s.bytes });
+  const palette = paletteFromLogo(read.palette, logos.find((s) => s.colour)?.colour ?? "");
+  const colours = [...new Set([...read.colours, ...logos.map((s) => s.colour).filter(Boolean)])].slice(0, 8);
 
   await db.insert(events).values({
     name: "team_site_read",
     userId,
     source: "team",
-    meta: { ok: true, name: !!read.name, logo: !!logoPath, colours: read.colours.length, phone: !!read.phone, address: !!read.address, about: !!read.description, socials: read.socials.length },
+    meta: {
+      ok: true,
+      name: !!name,
+      name_from: nameFrom,
+      logo: logos.length > 0,
+      logo_source: logos[0]?.source ?? "none",
+      logos: logos.length,
+      palette_found: read.paletteFound,
+      accent: !!palette.accentColour,
+      fonts: !!(palette.headingFont || palette.bodyFont),
+      colours: colours.length,
+      phone: !!read.phone,
+      address: !!read.address,
+      about: !!read.description,
+      socials: read.socials.length,
+    },
   });
-  return { ...read, website: page.url, logoPath };
+  return { ...read, name, nameFrom, palette, colours, website: page.url, logos: logos.map(({ path, light, source }) => ({ path, light, source })) };
 }
 
 export const teamCompanies = (userId: number) =>

@@ -102,6 +102,12 @@ jobs:
                    INSIGHTS_DATABASE_URL INSIGHTS_MCP_TOKEN; do
             secrets="$secrets,$s=$s:latest"
           done
+          # Optional: added only once the secret exists (the AI step for company names is skipped without it).
+          for s in GEMINI_API_KEY; do
+            if gcloud secrets versions access latest --secret="$s" --project="$PROJECT" >/dev/null 2>&1; then
+              secrets="$secrets,$s=$s:latest"
+            fi
+          done
           cat > /tmp/env.yaml <<YAML
           AUTH_URL: "$SITE_URL"
           AUTH_TRUST_HOST: "true"

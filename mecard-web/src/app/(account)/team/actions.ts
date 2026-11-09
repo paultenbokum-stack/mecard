@@ -13,6 +13,7 @@ import { requireUserId } from "@/lib/session";
 import { addTeamList, archiveLeaver, readCompanySite, type SiteReadResult } from "@/lib/team";
 import { clampPeople, teamPackage } from "@/lib/team-packages";
 import { parseTeamList } from "@/lib/team-people-rules";
+import type { Palette } from "@/lib/site-read";
 
 // The team flow's forms. Each checks the user's rights again.
 
@@ -25,7 +26,19 @@ export async function readSiteAction(url: string): Promise<SiteReadResult> {
 
 const escapeHtml = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
-export type SetupInput = { name: string; website: string; phone: string; address: string; about: string; colour: string; logoPath: string | null; socials: { label: string; url: string; icon: string }[]; fromSite: boolean };
+export type SetupInput = {
+  name: string;
+  website: string;
+  phone: string;
+  address: string;
+  about: string;
+  palette: Palette;
+  logoPath: string | null;
+  socials: { label: string; url: string; icon: string }[];
+  fromSite: boolean;
+  /** Counts for the funnel: whether the admin changed what the website read gave. */
+  changed: { palette: boolean; logo: boolean; name: boolean };
+};
 
 /** Step 2: save the company, whether it came from the website or was typed in. */
 export async function saveTeamCompanyAction(input: SetupInput): Promise<{ error: string } | never> {
@@ -42,15 +55,21 @@ export async function saveTeamCompanyAction(input: SetupInput): Promise<{ error:
       phone: input.phone,
       address: input.address,
       logoPath: input.logoPath,
-      accentColour: input.colour,
-      downloadColour: input.colour,
-      headingColour: input.colour,
+      // cleanCompanyInput keeps only colours and fonts the editor allows.
+      headingColour: input.palette?.headingColour,
+      bodyColour: input.palette?.bodyColour,
+      accentColour: input.palette?.accentColour,
+      buttonTextColour: input.palette?.buttonTextColour,
+      downloadColour: input.palette?.downloadColour,
+      downloadTextColour: input.palette?.downloadTextColour,
+      headingFont: input.palette?.headingFont,
+      bodyFont: input.palette?.bodyFont,
       descriptionHtml: about ? `<p>${escapeHtml(about)}</p>` : "",
       links: input.socials,
     }),
   );
   await setAccountMode(v.id, "teams");
-  await db.insert(events).values({ name: "team_company_created", userId: v.id, companyId: id, source: "team", meta: { has_logo: !!input.logoPath, from_site: !!input.fromSite } });
+  await db.insert(events).values({ name: "team_company_created", userId: v.id, companyId: id, source: "team", meta: { has_logo: !!input.logoPath, from_site: !!input.fromSite, changed_palette: !!input.changed?.palette, changed_logo: !!input.changed?.logo, changed_name: !!input.changed?.name } });
   revalidatePath("/manage", "layout");
   redirect("/team/order/");
 }
