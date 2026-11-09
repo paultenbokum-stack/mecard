@@ -38,8 +38,9 @@ export function AddProfile({ companies }: Awaited<ReturnType<typeof loadAddProfi
       {companies.length ? (
         <div className="acc-field">
           <label htmlFor="np-company">Company</label>
-          <select id="np-company" name="company_id" defaultValue="">
-            <option value="">None — a profile for myself</option>
+          {/* One company is almost always the one: it's chosen already. With several, none is until the user picks. */}
+          <select id="np-company" name="company_id" defaultValue={companies.length === 1 ? String(companies[0].id) : ""}>
+            <option value="">{companies.length === 1 ? "None, a profile for myself" : "None selected"}</option>
             {companies.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.name}
