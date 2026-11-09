@@ -106,7 +106,6 @@ export default async function CheckoutPage() {
 
   return (
     <div className="acc__wrap acc__wrap--wide">
-      <Subnav active="" />
       <h1>Checkout</h1>
       {coupon && !coupon.ok ? <div className="acc-panel acc-panel--error">{coupon.error} Please remove the coupon in your basket to continue.</div> : null}
       <CheckoutForm

@@ -35,8 +35,13 @@ const ACCOUNT_MENU = [
   ["Log out", "/my-account/customer-logout/"],
 ] as const;
 
-/** The team setup steps, shown without the menus (see SiteHeader). */
-const TEAM_WIZARD = /^\/team\/(setup|order|people)(\/|$)/;
+/** Pages shown without the menus, and their one way out (see SiteHeader). */
+function focusedExit(path: string): { label: string; href: string } | null {
+  if (/^\/team\/(setup|order|people)(\/|$)/.test(path)) return { label: "Exit setup", href: "/manage/" };
+  if (/^\/checkout\/?$/.test(path)) return { label: "Back to basket", href: "/basket/" };
+  if (/^\/checkout\/pay\//.test(path)) return { label: "My orders", href: "/my-account/orders/" };
+  return null;
+}
 
 function Chevron() {
   return (
@@ -108,8 +113,9 @@ export function SiteHeader({ loggedIn = false, detect = false, tagline = false }
     };
   }, [detect, pathname]);
   const menu = signedIn ? MENU_LOGGED_IN : MENU;
-  // The team setup steps are a wizard: just the logo and a way out, so nothing pulls the admin away mid-setup.
-  if (TEAM_WIZARD.test(pathname ?? "")) {
+  // The team setup steps and the checkout: just the logo and a way out, so nothing pulls people away mid-way.
+  const exit = focusedExit(pathname ?? "");
+  if (exit) {
     return (
       <header className="mc-site-header mc-site-header--wizard">
         <div className="mc-site-header__bar">
@@ -118,8 +124,8 @@ export function SiteHeader({ loggedIn = false, detect = false, tagline = false }
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="/images/mecard-logo.png" width={165} height={59} alt="MeCard" />
             </div>
-            <Link className="mc-site-header__exit" href="/manage/">
-              Exit setup
+            <Link className="mc-site-header__exit" href={exit.href}>
+              {exit.label}
             </Link>
           </div>
         </div>
