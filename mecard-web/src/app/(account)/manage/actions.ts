@@ -137,9 +137,12 @@ export async function buildCompanyFromSiteAction(
   const typed = String(fallbackName ?? "").trim();
   const name = ((sure ? read.name : typed || read.name) || typed || new URL(read.website).hostname.replace(/^www\./, "")).slice(0, 255);
   const companyId = await createCompany(v, name);
-  // A white logo would vanish on the profile: it stays in My images, unused, and the editor says so.
-  const logo = read.logos.find((l) => !l.light);
-  const lightOnly = !logo && read.logos.length > 0;
+  // A white logo would vanish on white: when it's the only one, it goes on the brand colour,
+  // with some room around it, and the editor says so (Logo area changes it).
+  const dark = read.logos.find((l) => !l.light);
+  const lightOnly = !dark && read.logos.length > 0;
+  const logo = dark ?? read.logos[0];
+  const onBrand = lightOnly && read.palette.accentColour ? { logoBg: read.palette.accentColour, logoPadding: 16, logoWidth: 70 } : {};
   await saveCompany(
     companyId,
     cleanCompanyInput({
@@ -147,7 +150,8 @@ export async function buildCompanyFromSiteAction(
       website: read.website,
       phone: read.phone,
       address: read.address,
-      logoPath: logo?.path ?? null,
+      logoPath: lightOnly && !read.palette.accentColour ? null : (logo?.path ?? null),
+      ...onBrand,
       ...read.palette,
       descriptionHtml: read.description ? `<p>${read.description.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")}</p>` : "",
       links: read.socials,
@@ -155,7 +159,7 @@ export async function buildCompanyFromSiteAction(
   );
   await db.insert(events).values({ name: "team_company_created", userId: v.id, companyId, source: "team", meta: { has_logo: !!logo, from_site: true, from_order: !!fromOrder } });
   revalidatePath("/manage", "layout");
-  return { ok: true, id: companyId, lightLogo: lightOnly };
+  return { ok: true, id: companyId, lightLogo: lightOnly && !!read.palette.accentColour };
 }
 
 export async function acceptInviteAction(form: FormData) {

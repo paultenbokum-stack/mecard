@@ -64,7 +64,7 @@ const DONE: Record<string, [string, "ok" | "error"]> = {
   "profile-saved": ["Profile saved.", "ok"],
   "company-created": ["Company created. Add its details and branding below.", "ok"],
   "company-built": ["Filled in from your website: details, logo, colours and fonts. Check each tab and change anything that isn’t right.", "ok"],
-  "company-built-light": ["Filled in from your website. Its logo is white, made for a dark background, so we left it in My images rather than on the profile. Upload a version for a light background under Logo, then check each tab.", "ok"],
+  "company-built-light": ["Filled in from your website. Its logo is white, so we put it on your brand colour. Adjust that under Logo area, then check each tab.", "ok"],
   "company-invalid": ["Enter a company name.", "error"],
   "invite-accepted": ["Invite accepted. The profile is now yours.", "ok"],
   "invite-failed": ["That invite couldn't be accepted. It may have been withdrawn or sent to a different email address.", "error"],

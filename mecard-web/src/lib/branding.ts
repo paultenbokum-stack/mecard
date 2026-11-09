@@ -69,6 +69,31 @@ export function companyDesign(c: Company): Design {
   };
 }
 
+export const LOGO_WIDTH = { min: 30, max: 100 } as const;
+export const LOGO_PADDING = { min: 0, max: 60 } as const;
+const clamp = (n: unknown, { min, max }: { min: number; max: number }, fallback: number) => {
+  const v = Math.round(Number(n));
+  return Number.isFinite(v) ? Math.min(max, Math.max(min, v)) : fallback;
+};
+export const cleanLogoWidth = (n: unknown) => clamp(n, LOGO_WIDTH, 100);
+export const cleanLogoPadding = (n: unknown) => clamp(n, LOGO_PADDING, 0);
+
+/**
+ * The logo area's size and background. Nothing is emitted for the defaults
+ * (full width, no space, white), so profiles that never set them look as before.
+ * Otherwise the logo is centred in the area, at its width, with space above and below.
+ */
+export function logoAreaCss(scope: string, c: Pick<Company, "logoWidth" | "logoPadding" | "logoBg">): string[] {
+  const width = cleanLogoWidth(c.logoWidth);
+  const pad = cleanLogoPadding(c.logoPadding);
+  const bg = decl("background-color", c.logoBg ?? "");
+  if (width === 100 && pad === 0 && !bg) return [];
+  return [
+    `${scope} .pro-logo { display: flex; align-items: center; justify-content: center; padding: ${pad}px 0 ${pad + (pad ? 30 : 0)}px; ${bg} }`,
+    `${scope} .pro-logo img { max-width: ${width}%; max-height: none; }`,
+  ];
+}
+
 /** The scoped <style> block for a pro profile with a company. */
 export function designCss(profileId: number, company: Company): string {
   const d = companyDesign(company);
@@ -81,6 +106,7 @@ export function designCss(profileId: number, company: Company): string {
     `${scope} button:not(.mecard-share-fab) { ${decl("background-color", d.accent)} ${decl("color", d.buttonText)} border: 0; }`,
     `#vcard-button-${profileId}.vcard-button { ${decl("background-color", d.download)} }`,
     `#vcard-button-${profileId}.vcard-button a { ${decl("color", d.downloadText)} ${decl("font-family", d.bodyFont)} text-decoration: none; }`,
+    ...logoAreaCss(scope, company),
   ];
   return [rules.join("\n"), scopeCss(company.customCss, scope), scopeCss(COMPANY_CSS_FIXES[company.id] ?? "", scope)].filter(Boolean).join("\n");
 }

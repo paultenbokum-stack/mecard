@@ -148,6 +148,13 @@
       "when": 1794160000000,
       "tag": "0020_team_funnel",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1794247841442,
+      "tag": "0021_logo_area",
+      "breakpoints": true
     }
   ]
 }

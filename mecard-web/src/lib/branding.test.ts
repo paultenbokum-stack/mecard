@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { designCss, fontToStack, scopeCss, scopeSelector, withFontFallback } from "./branding";
+import { designCss, fontToStack, scopeCss, scopeSelector, withFontFallback, cleanLogoPadding, cleanLogoWidth, logoAreaCss } from "./branding";
 import type { Company } from "./public-profile";
 
 const S = ".pro-profile-container.post-7";
@@ -74,4 +74,15 @@ test("values that could break out of the declaration are left out", () => {
   const css = designCss(1, company({ headingColour: "red;} body{display:none", bodyFont: "x;} body{display:none" }));
   assert.ok(!css.includes("display:none"));
   assert.match(css, /color: #333333;/, "empty colours fall back to the WordPress defaults");
+});
+
+test("the logo area adds nothing at its defaults, and centres a sized logo otherwise", () => {
+  assert.deepEqual(logoAreaCss(".s", { logoWidth: 100, logoPadding: 0, logoBg: "" }), []);
+  const css = logoAreaCss(".s", { logoWidth: 60, logoPadding: 16, logoBg: "#1d2a3a" }).join("\n");
+  assert.match(css, /\.s \.pro-logo \{ display: flex; align-items: center; justify-content: center; padding: 16px 0 46px; background-color: #1d2a3a; \}/);
+  assert.match(css, /\.s \.pro-logo img \{ max-width: 60%;/);
+  assert.equal(cleanLogoWidth(5), 30);
+  assert.equal(cleanLogoWidth("abc"), 100);
+  assert.equal(cleanLogoPadding(999), 60);
+  assert.deepEqual(logoAreaCss(".s", { logoWidth: 100, logoPadding: 0, logoBg: "red;}body{x" }), []);
 });

@@ -3,6 +3,7 @@ import { eq } from "drizzle-orm";
 import { db } from "@/db/client";
 import { companies } from "@/db/schema";
 import FA_ICONS from "./fa-icons.json";
+import { cleanLogoPadding, cleanLogoWidth } from "./branding";
 import { cleanColour, cleanEmail, cleanPhone, cleanText, cleanUrl } from "./form-values";
 import { refreshCompanyPages } from "./manage";
 import { replaceLinks } from "./profile-edit";
@@ -43,6 +44,9 @@ export interface CompanyInput {
   vatNumber: string;
   descriptionHtml: string;
   logoPath: string | null;
+  logoWidth: number;
+  logoPadding: number;
+  logoBg: string;
   headingFont: string;
   bodyFont: string;
   headingColour: string;
@@ -89,6 +93,9 @@ export function cleanCompanyInput(raw: Record<string, unknown>): CompanyInput {
     // HTML from the rich text editor, cleaned to the allowlist as wp_kses_post did.
     descriptionHtml: sanitizeRichHtml(String(raw.descriptionHtml ?? "").slice(0, 20000)),
     logoPath: logo,
+    logoWidth: cleanLogoWidth(raw.logoWidth),
+    logoPadding: cleanLogoPadding(raw.logoPadding),
+    logoBg: cleanColour(raw.logoBg),
     headingFont: font(raw.headingFont),
     bodyFont: font(raw.bodyFont),
     headingColour: cleanColour(raw.headingColour),

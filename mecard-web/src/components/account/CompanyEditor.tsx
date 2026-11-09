@@ -6,7 +6,7 @@ import { saveCompanyAction, sitePaletteAction } from "@/app/(account)/manage/edi
 import type { Company, ProfileView } from "@/lib/profile-view";
 import { Field, ImageField, LinksEditor, LivePreview, SaveBar, WizardNav, type LinkRow, type WizardLinks } from "./EditorParts";
 import { RichTextEditor } from "./RichTextEditor";
-import { DEFAULT_COLOURS } from "@/lib/branding";
+import { DEFAULT_COLOURS, LOGO_PADDING, LOGO_WIDTH } from "@/lib/branding";
 import { autop } from "@/lib/rich-text";
 
 // The company editor (edit-companies form, Me\Company_Editor and the company
@@ -22,6 +22,9 @@ type Fields = Pick<
   | "vatNumber"
   | "descriptionHtml"
   | "logoPath"
+  | "logoWidth"
+  | "logoPadding"
+  | "logoBg"
   | "headingFont"
   | "bodyFont"
   | "headingColour"
@@ -67,6 +70,9 @@ export function CompanyEditor({
     // Older descriptions keep paragraphs as blank lines; the editor needs the <p> tags.
     descriptionHtml: autop(c0.descriptionHtml),
     logoPath: c0.logoPath,
+    logoWidth: c0.logoWidth,
+    logoPadding: c0.logoPadding,
+    logoBg: c0.logoBg,
     headingFont: c0.headingFont,
     bodyFont: c0.bodyFont,
     headingColour: c0.headingColour,
@@ -152,6 +158,38 @@ export function CompanyEditor({
                 <input id="ce-name" type="text" required {...text("name")} />
               </Field>
               <ImageField label="Logo" logo companyId={c0.id} path={f.logoPath} onChange={(path) => set("logoPath", path)} hint="Shown at the top of every Pro profile. A PNG with a transparent background works best." />
+              {f.logoPath ? (
+                <fieldset className="acc-logo-fit">
+                  <legend>Logo area</legend>
+                  <div className="acc-grid">
+                    <Field id="ce-logo-width" label={`Logo size: ${f.logoWidth}%`} hint="A short, wide logo often looks best smaller.">
+                      <input id="ce-logo-width" type="range" min={LOGO_WIDTH.min} max={LOGO_WIDTH.max} step={5} value={f.logoWidth} onChange={(e) => set("logoWidth", Number(e.target.value))} />
+                    </Field>
+                    <Field id="ce-logo-pad" label={`Space above and below: ${f.logoPadding}px`} hint="Gives the logo room, centred in its area.">
+                      <input id="ce-logo-pad" type="range" min={LOGO_PADDING.min} max={LOGO_PADDING.max} step={4} value={f.logoPadding} onChange={(e) => set("logoPadding", Number(e.target.value))} />
+                    </Field>
+                  </div>
+                  <div className="acc-field">
+                    <label htmlFor="ce-logo-bg">Logo background</label>
+                    <div className="acc-colour">
+                      <input type="color" aria-label="Logo background picker" value={f.logoBg || "#ffffff"} onChange={(e) => set("logoBg", e.target.value)} />
+                      <input id="ce-logo-bg" type="text" placeholder="Default (#ffffff)" {...text("logoBg", 7)} />
+                    </div>
+                    <span className="acc-field__hint">
+                      For a white logo, choose your brand’s dark colour.{" "}
+                      {f.logoWidth !== 100 || f.logoPadding !== 0 || f.logoBg ? (
+                        <button
+                          type="button"
+                          className="acc-link"
+                          onClick={() => setF((x) => ({ ...x, logoWidth: 100, logoPadding: 0, logoBg: "" }))}
+                        >
+                          Reset the logo area
+                        </button>
+                      ) : null}
+                    </span>
+                  </div>
+                </fieldset>
+              ) : null}
               <div className="acc-grid">
                 <Field id="ce-phone" label="Office number">
                   <input id="ce-phone" type="tel" {...text("phone", 100)} />
