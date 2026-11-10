@@ -172,9 +172,16 @@ function AnalyticsShot() {
 }
 
 /** Prices come from the products table. A missing one (the database couldn't be read) is left out. */
-type HomePrices = { pro?: string; classic?: string; custom?: string; bundle?: string };
+type HomePrices = { classic?: string };
+/** Per-person team package prices, as /for-teams/ charges them. */
+type TeamPrices = { custom?: string; classic?: string; pro?: string };
 
-export function HomePage({ prices }: { prices: HomePrices }) {
+export function HomePage({ prices, team }: { prices: HomePrices; team: TeamPrices }) {
+  const teamItems = [
+    { price: team.custom, name: "Custom card + Pro profile", text: "Your own design" },
+    { price: team.classic, name: "Classic bundle", text: "Card, Pro profile and phone tag" },
+    { price: team.pro, name: "Pro profile only", text: "Digital, no card" },
+  ].filter((t) => t.price);
   return (
     <div className="mc-home" id="mc-wp">
       <section className="mc-home__hero">
@@ -218,9 +225,9 @@ export function HomePage({ prices }: { prices: HomePrices }) {
                 <Image className="mc-home__cards-front" src="/images/home/card-custom.webp" alt="" width={900} height={563} />
               </div>
               <dl className="mc-home__price-row">
-                <div><dd>{prices.custom}</dd><dt>Custom card</dt><small>Full custom design</small></div>
-                <div><dd>{prices.classic}</dd><dt>Classic card</dt><small>White + your logo</small></div>
-                <div><dd>{prices.bundle}</dd><dt>Classic bundle</dt><small>Card + Pro + phone tag</small></div>
+                {teamItems.map((t) => (
+                  <div key={t.name}><dd>{t.price}<span className="mc-home__price-per"> per person</span></dd><dt>{t.name}</dt><small>{t.text}</small></div>
+                ))}
               </dl>
             </div>
           </div>

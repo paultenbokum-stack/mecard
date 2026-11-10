@@ -203,6 +203,7 @@
 .mc-home__price-row dd { order: 0; margin: 0; font-family: var(--font-display); font-weight: 700; font-size: 1.5rem; line-height: 1.2; color: var(--ink); }
 .mc-home__price-row dt { order: 1; font-weight: 600; font-size: 0.95rem; line-height: 1.3; color: var(--ink); }
 .mc-home__price-row small { order: 2; font-size: 0.85rem; line-height: 1.35; }
+.mc-home__price-row .mc-home__price-per { display: block; font-family: var(--font-text); font-weight: 400; font-size: 0.85rem; line-height: 1.3; color: var(--ink-muted); }
 
 .mc-home__share-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3); }
 .mc-home .mc-home__share-grid .mc-share { flex-direction: row; text-align: left; align-items: center; gap: var(--space-3); padding: var(--space-4); }
