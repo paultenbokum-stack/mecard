@@ -1,13 +1,14 @@
 import Link from "next/link";
 import { MyCommission } from "@/components/admin/MyCommission";
+import { CopyButton } from "@/components/admin/CopyButton";
 import { CommissionLines, MonthNav, SalesTable } from "@/components/admin/SalesReport";
 import { SalesLinkCard } from "@/components/admin/SalesLinkCard";
 import { SubmitButton } from "@/components/admin/SubmitButton";
 import { AdminHeader, type AdminSearchParams, Card, Flash } from "@/components/admin/ui";
 import { payCommissionsAction } from "@/lib/admin-sales-actions";
 import { rands } from "@/lib/money";
-import { commissionLines, ensureSalesCode, payoutRun, salesReport } from "@/lib/sales";
-import { currentMonth, isMonth, monthLabel, PAYOUT_CUTOFF_DAY, PAYOUT_DAY, payoutClosed } from "@/lib/sales-rules";
+import { commissionLines, ensureSalesCode, listSalespeople, payoutRun, salesReport } from "@/lib/sales";
+import { bpsToPercent, currentMonth, isMonth, monthLabel, PAYOUT_CUTOFF_DAY, PAYOUT_DAY, payoutClosed } from "@/lib/sales-rules";
 import { requireQuoteStaff } from "@/lib/session";
 import { siteUrl } from "@/lib/site";
 
@@ -22,7 +23,9 @@ export default async function AdminCommissions({ searchParams }: { searchParams:
   const chosen = Number(sp.sales);
   const salesUserId = Number.isInteger(chosen) && chosen > 0 ? chosen : undefined;
   const run = `${month}-${PAYOUT_DAY}`;
-  const [all, lines, owed, code] = await Promise.all([salesReport(month), commissionLines(month, salesUserId), payoutRun(run), who.isSales ? ensureSalesCode(who.id) : null]);
+  const [all, lines, owed, code, people] = await Promise.all([salesReport(month), commissionLines(month, salesUserId), payoutRun(run), who.isSales ? ensureSalesCode(who.id) : null, listSalespeople()]);
+  // Everyone who earns commission, with the link to share; a code is made for anyone who has none yet.
+  const links = await Promise.all(people.map(async (p) => ({ ...p, code: p.code ?? (await ensureSalesCode(p.id)) })));
   const rows = salesUserId ? all.filter((r) => r.id === salesUserId) : all;
   const owing = owed.filter((o) => o.salesUserId && (!salesUserId || o.salesUserId === salesUserId));
   const closed = payoutClosed(run);
@@ -37,6 +40,45 @@ export default async function AdminCommissions({ searchParams }: { searchParams:
           <SalesLinkCard url={siteUrl(`/r/${code}/`)} />
         </Card>
       ) : null}
+      <Card title={`Salespeople and their links (${links.length})`}>
+        {links.length ? (
+          <div className="adm-table-wrap">
+            <table className="adm-table adm-table--tight">
+              <thead>
+                <tr>
+                  <th>Salesperson</th>
+                  <th className="adm-num">Rate</th>
+                  <th>Link</th>
+                  <th aria-label="Copy" />
+                </tr>
+              </thead>
+              <tbody>
+                {links.map((p) => {
+                  const url = p.code ? siteUrl(`/r/${p.code}/`) : "";
+                  return (
+                    <tr key={p.id}>
+                      <td>
+                        <Link href={`/admin/users/${p.id}/`}>{p.name}</Link>
+                        <div className="adm-muted adm-small">{p.email}</div>
+                      </td>
+                      <td className="adm-num">{bpsToPercent(p.rateBps)}%</td>
+                      <td style={{ fontFamily: "var(--font-mono)", wordBreak: "break-all" }}>{url || "No link yet"}</td>
+                      <td className="adm-num">{url ? <CopyButton text={url} /> : null}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <p className="adm-muted" style={{ margin: 0 }}>
+            Nobody is a salesperson yet. Tick Salesperson on someone&apos;s user page to give them a link.
+          </p>
+        )}
+        <p className="adm-help" style={{ marginBottom: 0 }}>
+          Each link opens the home page. Add ?to=cards, ?to=teams or ?to=signup to open Pricing, For teams or Sign up instead.
+        </p>
+      </Card>
       <MonthNav month={month} keep={{ sales: salesUserId ? String(salesUserId) : undefined }} />
       <SalesTable rows={rows} month={month} nameHref={(id) => `?${new URLSearchParams({ month, sales: String(id) })}`} />
       {salesUserId ? (

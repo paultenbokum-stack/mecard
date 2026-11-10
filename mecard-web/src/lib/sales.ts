@@ -35,7 +35,7 @@ export async function salesUserByCode(code: string) {
 
 export function listSalespeople() {
   return db
-    .select({ id: users.id, name: nameOf, code: users.salesCode, rateBps: users.commissionRateBps })
+    .select({ id: users.id, name: nameOf, email: users.email, code: users.salesCode, rateBps: users.commissionRateBps })
     .from(users)
     .where(eq(users.isSales, true))
     .orderBy(asc(nameOf));
