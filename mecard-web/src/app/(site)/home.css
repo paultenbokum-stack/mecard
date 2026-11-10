@@ -274,6 +274,11 @@
 .mc-teambox__option-text b, .mc-teambox__option-text span { display: block; }
 .mc-teambox__option-text b { font-weight: 600; color: var(--ink); }
 .mc-teambox__option strong { font-family: var(--font-display); font-weight: 700; color: var(--ink); white-space: nowrap; }
+/* The exported theme turns every button dark with white text on hover and focus; keep the team box readable. */
+.mc-home .mc-teambox__option:hover, .mc-home .mc-teambox__option:focus { color: var(--ink-muted); background: var(--surface); border-color: var(--brand); }
+.mc-home .mc-teambox__option.is-on, .mc-home .mc-teambox__option.is-on:hover, .mc-home .mc-teambox__option.is-on:focus { color: var(--ink-muted); background: var(--brand-tint); border-color: var(--brand); }
+.mc-home .mc-teambox__option:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+.mc-home .mc-stepper button:hover, .mc-home .mc-stepper button:focus { color: var(--ink); background: var(--brand-tint); border-color: var(--brand); }
 .mc-teambox__total { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-4); padding-top: var(--space-4); border-top: 1px solid var(--surface-muted); margin-bottom: var(--space-4); }
 .mc-teambox__total strong { font-family: var(--font-display); font-weight: 700; font-size: 2.35rem; line-height: 1.1; color: var(--ink); }
 .mc-home .mc-teambox__cta { display: flex; width: 100%; }
