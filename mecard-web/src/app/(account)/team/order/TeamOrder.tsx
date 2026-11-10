@@ -1,7 +1,6 @@
 "use client";
 
 /* eslint-disable @next/next/no-img-element */
-import Link from "next/link";
 import { useEffect, useState, type CSSProperties } from "react";
 import { readTeamChoice } from "@/components/site/TeamPriceBox";
 import { beacon } from "@/lib/beacon";
@@ -94,7 +93,7 @@ export function TeamOrder({ prices, company, logo, colour }: { prices: ProductCe
         ) : (
           <button type="button" className="team-more" aria-expanded="false" onClick={showMore}>See more options</button>
         )}
-        <p className="team-note"><Link href="/gallery/">See real customer cards</Link></p>
+        <p className="team-note"><a href="/gallery/" target="_blank" rel="noopener">See real customer cards</a></p>
       </div>
 
       <aside className="team-side team-panel" aria-label="Order summary">
