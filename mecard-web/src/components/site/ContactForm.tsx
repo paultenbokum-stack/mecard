@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import { RecaptchaField } from "@/components/RecaptchaField";
 import { sendContactAction } from "@/app/(site)/actions";
 
 // The Toolset contact-us form, with the same Bootstrap markup and labels.
@@ -24,6 +25,7 @@ export function ContactForm() {
           </div>
         ) : null}
         <input type="hidden" name="started" value={started} />
+        <RecaptchaField action="CONTACT" />
         <div className="mc-hp" aria-hidden="true">
           <label htmlFor="cf-website">Website</label>
           <input type="text" id="cf-website" name="website" tabIndex={-1} autoComplete="off" />

@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import { RecaptchaField } from "@/components/RecaptchaField";
 import { requestQuoteAction } from "@/lib/quote-actions";
 
 // [yith_ywraq_request_quote]: what you need and how to reach you.
@@ -12,6 +13,7 @@ export function QuoteRequestForm({ products, defaults, quantities }: { products:
   const [started] = useState(() => Date.now());
   return (
     <form action={action} className="acc-form">
+      <RecaptchaField action="QUOTE" />
       {state?.error ? (
         <p className="acc-panel acc-panel--error" role="alert" style={{ margin: 0 }}>
           {state.error}

@@ -13,6 +13,7 @@ import { addressFromFields } from "@/lib/addresses";
 import { LOGIN, safeNext } from "@/lib/auth-paths";
 import { hashPassword, verifyPassword } from "@/lib/password";
 import { requestPasswordReset, resetPassword } from "@/lib/password-reset";
+import { RECAPTCHA_BLOCKED, recaptchaAllows } from "@/lib/recaptcha";
 import { requireUserId } from "@/lib/session";
 import { SIGNUP_FOR_COOKIE, signupFor } from "@/lib/signup-choice";
 
@@ -22,6 +23,7 @@ export async function loginAction(_: FormState, form: FormData): Promise<FormSta
   const username = String(form.get("username") ?? "").trim();
   const password = String(form.get("password") ?? "");
   if (!username || !password) return { error: "Enter your username or email address and your password." };
+  if (!(await recaptchaAllows(form, "LOGIN"))) return { error: RECAPTCHA_BLOCKED, username };
   try {
     await signIn("credentials", { username, password, redirectTo: safeNext(form.get("next")) });
   } catch (e) {
@@ -45,6 +47,7 @@ export async function logoutAction() {
 export async function lostPasswordAction(_: FormState, form: FormData): Promise<FormState> {
   const login = String(form.get("user_login") ?? "").trim();
   if (!login) return { error: "Enter a username or email address." };
+  if (!(await recaptchaAllows(form, "PASSWORD_RESET"))) return { error: RECAPTCHA_BLOCKED };
   await requestPasswordReset(login);
   return { ok: "If that matches a MeCard account, a password reset email is on its way. Check your inbox (and spam folder)." };
 }

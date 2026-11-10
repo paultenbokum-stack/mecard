@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { RecaptchaField } from "@/components/RecaptchaField";
 import { loginAction, lostPasswordAction, resetPasswordAction, saveAccountAction, type FormState } from "@/app/(account)/my-account/actions";
 
 // The WooCommerce login, lost-password and reset forms.
@@ -26,6 +27,7 @@ export function LoginForm({ next }: { next: string }) {
   return (
     <form action={action} className="acc-form">
       <input type="hidden" name="next" value={next} />
+      <RecaptchaField action="LOGIN" />
       <div className="acc-field">
         <label htmlFor="username">Username or email address</label>
         <input type="text" id="username" name="username" autoComplete="username" required autoFocus={!state?.username} defaultValue={state?.username} key={state?.username} />
@@ -46,6 +48,7 @@ export function LostPasswordForm() {
   const [state, action, pending] = useActionState(lostPasswordAction, null);
   return (
     <form action={action} className="acc-form">
+      <RecaptchaField action="PASSWORD_RESET" />
       <div className="acc-field">
         <label htmlFor="user_login">Username or email</label>
         <input type="text" id="user_login" name="user_login" autoComplete="username" required autoFocus />

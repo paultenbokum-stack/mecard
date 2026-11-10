@@ -24,6 +24,9 @@ env:
   SITE_URL: https://mecard.co.za
   GA_ID: G-3SRCS4Y6TR
   ADS_PURCHASE: AW-920347099/gtpkCNCnh5AYENvD7bYD
+  # reCAPTCHA Enterprise, the key WordPress used. The site key is public; the API key is the RECAPTCHA_API_KEY secret.
+  RECAPTCHA_SITE_KEY: 6LcjndMsAAAAAFRT3ZRaq4iRSIJZxXl_EUY-odxP
+  RECAPTCHA_PROJECT: taggable-site
 
 jobs:
   test:
@@ -77,7 +80,7 @@ jobs:
             --build-arg NEXT_PUBLIC_APP_URL="$SITE_URL" \
             --build-arg NEXT_PUBLIC_AUTH_GOOGLE=1 \
             --build-arg NEXT_PUBLIC_GA_MEASUREMENT_ID="$GA_ID" \
-            --build-arg NEXT_PUBLIC_GOOGLE_ADS_PURCHASE="$ADS_PURCHASE" .
+            --build-arg NEXT_PUBLIC_GOOGLE_ADS_PURCHASE="$ADS_PURCHASE" \n            --build-arg NEXT_PUBLIC_RECAPTCHA_SITE_KEY="$RECAPTCHA_SITE_KEY" .
           docker push "$IMAGE"
 
       - name: Run database migrations
@@ -102,8 +105,9 @@ jobs:
                    INSIGHTS_DATABASE_URL INSIGHTS_MCP_TOKEN; do
             secrets="$secrets,$s=$s:latest"
           done
-          # Optional: added only once the secret exists (the AI step for company names is skipped without it).
-          for s in GEMINI_API_KEY; do
+          # Optional: added only once the secret exists (without them the AI step for company names
+          # is skipped, and reCAPTCHA lets every form through).
+          for s in GEMINI_API_KEY RECAPTCHA_API_KEY; do
             if gcloud secrets versions access latest --secret="$s" --project="$PROJECT" >/dev/null 2>&1; then
               secrets="$secrets,$s=$s:latest"
             fi
@@ -112,6 +116,8 @@ jobs:
           AUTH_URL: "$SITE_URL"
           AUTH_TRUST_HOST: "true"
           NEXT_PUBLIC_APP_URL: "$SITE_URL"
+          NEXT_PUBLIC_RECAPTCHA_SITE_KEY: "$RECAPTCHA_SITE_KEY"
+          RECAPTCHA_PROJECT: "$RECAPTCHA_PROJECT"
           MEDIA_BUCKET: "$PROJECT-media"
           ARCHIVE_BUCKET: "$PROJECT-uploads"
           PAYFAST_SANDBOX: ""

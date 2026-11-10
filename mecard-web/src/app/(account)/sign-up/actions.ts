@@ -12,6 +12,7 @@ import { freeUsername, saveOnboardingStep, sendProfileLink } from "@/lib/onboard
 import { canUseImage } from "@/lib/media-library";
 import { hashPassword } from "@/lib/password";
 import { MIN_PASSWORD } from "@/lib/password-reset";
+import { RECAPTCHA_BLOCKED, recaptchaAllows } from "@/lib/recaptcha";
 import { requireUserId } from "@/lib/session";
 import { signupFor, signupLanding } from "@/lib/signup-choice";
 
@@ -40,6 +41,7 @@ export async function emailSignupAction(_: SignupState, form: FormData): Promise
     const [taken] = await db.select({ id: users.id }).from(users).where(sql`lower(${users.email}) = ${values.email.toLowerCase()}`).limit(1);
     if (taken) errors.push("An account with that email already exists. Please log in instead.");
   }
+  if (!errors.length && !(await recaptchaAllows(form, "SIGNUP"))) errors.push(RECAPTCHA_BLOCKED);
   if (errors.length) return { errors, values: { first_name: values.firstName, last_name: values.lastName, email: String(form.get("email") ?? ""), mobile: values.mobile } };
 
   const [user] = await db

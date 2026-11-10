@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import { RecaptchaField } from "@/components/RecaptchaField";
 import { emailSignupAction } from "@/app/(account)/sign-up/actions";
 import type { SignupFor } from "@/lib/signup-choice";
 
@@ -20,6 +21,7 @@ export function EmailSignupForm({ forWhom }: { forWhom: SignupFor }) {
         </div>
       ) : null}
       <form className="me-auth-form" action={action} id="me-signup-form" key={JSON.stringify(v)}>
+        <RecaptchaField action="SIGNUP" />
         <label>
           First name
           <input type="text" name="first_name" defaultValue={v.first_name} autoComplete="given-name" required maxLength={100} />
