@@ -17,7 +17,7 @@ export default async function AccountLayout({ children }: { children: React.Reac
   const viewingAs = await isViewingAs();
   return (
     <CardShell>
-      <SiteHeader loggedIn={loggedIn} detect />
+      <SiteHeader loggedIn={loggedIn} detect query />
       <main id="content" className="acc">
         {children}
       </main>

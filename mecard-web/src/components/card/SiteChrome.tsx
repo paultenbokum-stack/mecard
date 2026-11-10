@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { usePathname, useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { MiniCart } from "@/components/shop/MiniCart";
 
 // Astra header and footer as WordPress rendered them. Card pages always get
@@ -36,7 +36,9 @@ const ACCOUNT_MENU = [
 ] as const;
 
 /** Pages shown without the menus, and their one way out (see SiteHeader). */
-function focusedExit(path: string): { label: string; href: string; back?: boolean } | null {
+function focusedExit(path: string, query: URLSearchParams): { label: string; href: string; back?: boolean } | null {
+  // Team sign-up is the first step of the team funnel; the plain sign-up keeps its menu.
+  if (/^\/sign-up(\/|$)/.test(path) && query.get("for") === "teams") return { label: "Back", href: "/for-teams/" };
   if (/^\/team\/order(\/|$)/.test(path)) return { label: "Exit", href: "/manage/" };
   if (/^\/basket\/?$/.test(path)) return { label: "Continue shopping", href: "/shop/" };
   // Reached from the team order step, the basket or /for-teams/: back to wherever that was.
@@ -99,8 +101,27 @@ function AccountDropdown() {
   );
 }
 
-/** `detect`: ask the browser's session which menu to show, on every page (cached pages, and account pages after logging in or out, where the layout isn't re-rendered). `tagline`: the site description under the logo (site pages). */
-export function SiteHeader({ loggedIn = false, detect = false, tagline = false }: { loggedIn?: boolean; detect?: boolean; tagline?: boolean }) {
+type HeaderProps = { loggedIn?: boolean; detect?: boolean; tagline?: boolean };
+
+/**
+ * `detect`: ask the browser's session which menu to show, on every page (cached pages, and account pages after logging in or out, where the layout isn't re-rendered). `tagline`: the site description under the logo (site pages).
+ * `query`: the page's query string can choose the header (/sign-up/?for=teams). Only for dynamic pages; static ones render the fallback.
+ */
+export function SiteHeader({ query = false, ...props }: HeaderProps & { query?: boolean }) {
+  if (!query) return <HeaderBody {...props} search="" />;
+  return (
+    <Suspense fallback={<HeaderBody {...props} search="" />}>
+      <HeaderWithQuery {...props} />
+    </Suspense>
+  );
+}
+
+function HeaderWithQuery(props: HeaderProps) {
+  const search = useSearchParams();
+  return <HeaderBody {...props} search={search.toString()} />;
+}
+
+function HeaderBody({ loggedIn = false, detect = false, tagline = false, search }: HeaderProps & { search: string }) {
   const [open, setOpen] = useState(false);
   const [signedIn, setSignedIn] = useState(loggedIn);
   const pathname = usePathname();
@@ -117,7 +138,7 @@ export function SiteHeader({ loggedIn = false, detect = false, tagline = false }
   }, [detect, pathname]);
   const menu = signedIn ? MENU_LOGGED_IN : MENU;
   // The team order step, basket, quote request and checkout: just the logo and a way out, so nothing pulls people away mid-way.
-  const exit = focusedExit(pathname ?? "");
+  const exit = focusedExit(pathname ?? "", new URLSearchParams(search));
   if (exit) {
     return (
       <header className="mc-site-header mc-site-header--wizard">
