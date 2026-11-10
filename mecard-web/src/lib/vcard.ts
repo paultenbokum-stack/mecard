@@ -1,4 +1,4 @@
-import { isPro } from "./profile-format";
+import { isPro, safeHref } from "./profile-format";
 import type { ProfileView } from "./public-profile";
 
 // vCard 3.0, ported from download_vcard() in the WordPress plugin, with the
@@ -86,6 +86,19 @@ export function buildVcard(view: ProfileView, opts: VcardOptions): string {
     const url = p.socials[key];
     if (!url) continue;
     lines.push(opts.iphone ? `X-SOCIALPROFILE;TYPE=${label.toUpperCase()}:${url}` : `X-CUSTOM(CHARSET=UTF-8,ENCODING=QUOTED-PRINTABLE,${label}):${url}`);
+  }
+  // The profile's own "My Links" (a Pro feature, like on the page), each as a
+  // grouped URL with its button name as the label. iPhone and most Android
+  // contact apps show X-ABLabel as the name of the link.
+  if (isPro(p)) {
+    let n = 0;
+    for (const l of view.profileLinks) {
+      const url = safeHref(l.url);
+      if (!/^https?:/i.test(url)) continue;
+      n++;
+      lines.push(`item${n}.URL;CHARSET=UTF-8:${url}`);
+      lines.push(`item${n}.X-ABLabel;CHARSET=UTF-8:${esc(decodeEntities(l.label?.trim() || "Link"))}`);
+    }
   }
   lines.push(`REV:${p.updatedAt.toISOString()}`);
   if (viral && p.hideProfileLinkOnVcard) lines.push(`NOTE:${esc(viral)}`);

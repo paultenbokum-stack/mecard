@@ -295,6 +295,9 @@ div.pro-logo { border-bottom: 1px solid #000; }
 .profile-buttons .col-4 > a > button i { position: static; }
 div.job-title { text-align: center; font-style: italic; margin-top: 10px; }
 .mecard-section { margin: 20px 0; border-bottom: 1px solid black; border-top: 1px solid black; }
+/* "— My Links —": a centred label with a rule either side. */
+.mecard-divider { display: flex; align-items: center; gap: 12px; margin: 20px 0 8px; font-size: 0.85em; letter-spacing: 0.08em; text-transform: uppercase; color: #555; }
+.mecard-divider::before, .mecard-divider::after { content: ""; flex: 1 1 auto; border-top: 1px solid #bbb; }
 .mecard-social { margin-top: 20px; }
 div.profile-image { margin: auto; text-align: center; }
 div.profile-image.pro { margin-top: -30px; padding: 5px; text-align: center; }

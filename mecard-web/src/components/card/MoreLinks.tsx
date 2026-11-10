@@ -27,7 +27,9 @@ export function MoreLinks({ view }: { view: ProfileView }) {
       {view.profileLinks.length ? (
         <div className="js-wpv-view-layout">
           <div className="row">
-            <div className="col col-12 mecard-section">My Links</div>
+            <div className="col col-12">
+              <div className="mecard-divider">My Links</div>
+            </div>
             {view.profileLinks.map((l) => (
               <div className="col-sm-12" key={l.id}>
                 <a href={safeHref(l.url)}>

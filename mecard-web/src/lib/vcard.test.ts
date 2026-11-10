@@ -91,3 +91,21 @@ test("escaping and file names", () => {
   assert.equal(vcardFileName('a/b:c"d'), "a b c d.vcf");
   assert.equal(vcardFileName(""), "contact.vcf");
 });
+
+test("pro profile: My Links as labelled URLs, standard profile: none", () => {
+  const v = view();
+  v.profileLinks = [
+    { id: 1, label: "Book a viewing, today", url: "www.example.com/book", icon: "" },
+    { id: 2, label: "Bad", url: "javascript:alert(1)", icon: "" },
+    { id: 3, label: "", url: "https://example.com/x", icon: "" },
+  ];
+  const out = lines(buildVcard(v, opts));
+  const i = out.indexOf("item1.URL;CHARSET=UTF-8:https://www.example.com/book");
+  assert.ok(i > 0);
+  assert.equal(out[i + 1], "item1.X-ABLabel;CHARSET=UTF-8:Book a viewing\\, today");
+  assert.ok(out.includes("item2.URL;CHARSET=UTF-8:https://example.com/x"));
+  assert.ok(out.includes("item2.X-ABLabel;CHARSET=UTF-8:Link"));
+  assert.ok(!out.some((l) => l.includes("javascript")));
+  v.profile.type = "standard";
+  assert.ok(!buildVcard(v, opts).includes("item1."));
+});
