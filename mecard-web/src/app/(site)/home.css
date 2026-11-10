@@ -338,6 +338,7 @@
   .mc-home .mc-cta__actions { align-items: center; }
 }
 @media (max-width: 767px) {
+  .mc-teams-tiles { grid-template-columns: 1fr; gap: var(--space-4); }
   .mc-home__section { padding: var(--space-12) 0; }
   .mc-home h2 { font-size: 1.75rem; }
   .mc-home__compare, .mc-home__prices { grid-template-columns: 1fr; }
