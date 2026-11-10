@@ -36,8 +36,11 @@ const ACCOUNT_MENU = [
 ] as const;
 
 /** Pages shown without the menus, and their one way out (see SiteHeader). */
-function focusedExit(path: string): { label: string; href: string } | null {
+function focusedExit(path: string): { label: string; href: string; back?: boolean } | null {
   if (/^\/team\/order(\/|$)/.test(path)) return { label: "Exit", href: "/manage/" };
+  if (/^\/basket\/?$/.test(path)) return { label: "Continue shopping", href: "/shop/" };
+  // Reached from the team order step, the basket or /for-teams/: back to wherever that was.
+  if (/^\/request-quote\/?$/.test(path)) return { label: "Back", href: "/for-teams/", back: true };
   if (/^\/checkout\/?$/.test(path)) return { label: "Back to basket", href: "/basket/" };
   if (/^\/checkout\/pay\//.test(path)) return { label: "My orders", href: "/my-account/orders/" };
   return null;
@@ -113,7 +116,7 @@ export function SiteHeader({ loggedIn = false, detect = false, tagline = false }
     };
   }, [detect, pathname]);
   const menu = signedIn ? MENU_LOGGED_IN : MENU;
-  // The team order step and the checkout: just the logo and a way out, so nothing pulls people away mid-way.
+  // The team order step, basket, quote request and checkout: just the logo and a way out, so nothing pulls people away mid-way.
   const exit = focusedExit(pathname ?? "");
   if (exit) {
     return (
@@ -124,7 +127,15 @@ export function SiteHeader({ loggedIn = false, detect = false, tagline = false }
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="/images/mecard-logo.png" width={165} height={59} alt="MeCard" />
             </div>
-            <Link className="mc-site-header__exit" href={exit.href}>
+            <Link
+              className="mc-site-header__exit"
+              href={exit.href}
+              onClick={(e) => {
+                if (!exit.back || window.history.length < 2) return;
+                e.preventDefault();
+                window.history.back();
+              }}
+            >
               {exit.label}
             </Link>
           </div>
