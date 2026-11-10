@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useEffect, useState, type CSSProperties } from "react";
 import { readTeamChoice } from "@/components/site/TeamPriceBox";
 import { beacon } from "@/lib/beacon";
-import { clampPeople, packageEachCents, TEAM_PACKAGES, teamPackage, wholeRands, type ProductCents, type TeamPackageId } from "@/lib/team-packages";
+import { clampPeople, MAIN_PACKAGES, MORE_PACKAGES, packageEachCents, teamPackage, wholeRands, type ProductCents, type TeamPackage, type TeamPackageId } from "@/lib/team-packages";
 import { placeTeamOrderAction } from "../actions";
 
 // Step 3: a headcount and a package. Names come after paying. Delivery and
@@ -13,12 +13,14 @@ import { placeTeamOrderAction } from "../actions";
 
 const ART: Partial<Record<TeamPackageId, { src: string; alt: string }>> = {
   custom: { src: "/images/home/card-custom.webp", alt: "Example of a full-colour custom MeCard" },
+  "custom-card": { src: "/images/home/card-custom.webp", alt: "Example of a full-colour custom MeCard" },
   pro: { src: "/images/upsell/alessio-pro-profile.webp", alt: "Example of a Pro profile on a phone" },
 };
 
 export function TeamOrder({ prices, company, logo, colour }: { prices: ProductCents; company: string; logo: string | null; colour: string }) {
   const [people, setPeople] = useState(5);
   const [option, setOption] = useState<TeamPackageId>("custom");
+  const [more, setMore] = useState(false);
   const pkg = teamPackage(option);
   const each = packageEachCents(pkg, prices);
 
@@ -29,8 +31,37 @@ export function TeamOrder({ prices, company, logo, colour }: { prices: ProductCe
       // eslint-disable-next-line react-hooks/set-state-in-effect -- the choice from the price box lives in the browser
       setPeople(saved.people);
       setOption(saved.option);
+      // A card-only choice from the price box opens the extra options.
+      if (teamPackage(saved.option).more) setMore(true);
     }
   }, []);
+
+  const showMore = () => {
+    setMore(true);
+    beacon("team_price_changed", { meta: { people, option, more_options: true } });
+  };
+  const packageButton = (p: TeamPackage) => {
+    const c = packageEachCents(p, prices);
+    const art = ART[p.id];
+    const custom = p.id === "custom" || p.id === "custom-card";
+    return (
+      <button type="button" role="radio" aria-checked={p.id === option} className={`team-package${p.id === option ? " is-on" : ""}`} key={p.id} onClick={() => setOption(p.id)}>
+        <span className="team-package__art">
+          {art ? (
+            <img src={art.src} alt={art.alt} />
+          ) : (
+            <span className="team-mini">
+              {logo ? <img src={logo} alt="" /> : <b>{company || "Your logo"}</b>}
+              <span>Name Surname<br />Job title</span>
+            </span>
+          )}
+        </span>
+        <b>{p.name}</b>
+        <span className="team-package__text">{p.text}{custom ? ". Example shown, add your artwork after ordering" : p.ships ? ", as shown" : ""}</span>
+        {c !== null ? <strong>{wholeRands(c)} each</strong> : null}
+      </button>
+    );
+  };
 
   return (
     <form action={placeTeamOrderAction} className="team-grid" style={{ "--team-colour": colour } as CSSProperties}>
@@ -51,28 +82,18 @@ export function TeamOrder({ prices, company, logo, colour }: { prices: ProductCe
         </div>
         <h2>What does each person get?</h2>
         <div className="team-packages" role="radiogroup" aria-label="What each person gets">
-          {TEAM_PACKAGES.map((p) => {
-            const c = packageEachCents(p, prices);
-            const art = ART[p.id];
-            return (
-              <button type="button" role="radio" aria-checked={p.id === option} className={`team-package${p.id === option ? " is-on" : ""}`} key={p.id} onClick={() => setOption(p.id)}>
-                <span className="team-package__art">
-                  {art ? (
-                    <img src={art.src} alt={art.alt} />
-                  ) : (
-                    <span className="team-mini">
-                      {logo ? <img src={logo} alt="" /> : <b>{company || "Your logo"}</b>}
-                      <span>Name Surname<br />Job title</span>
-                    </span>
-                  )}
-                </span>
-                <b>{p.name}</b>
-                <span className="team-package__text">{p.text}{p.id === "custom" ? ". Example shown, add your artwork after ordering" : p.id === "classic" ? ", as shown" : ""}</span>
-                {c !== null ? <strong>{wholeRands(c)} each</strong> : null}
-              </button>
-            );
-          })}
+          {MAIN_PACKAGES.map(packageButton)}
         </div>
+        {more ? (
+          <>
+            <div className="team-packages" role="radiogroup" aria-label="Card-only options">
+              {MORE_PACKAGES.map(packageButton)}
+            </div>
+            <p className="team-note">These come with a free profile for each person, and you can add Pro for anyone later.</p>
+          </>
+        ) : (
+          <button type="button" className="team-more" aria-expanded="false" onClick={showMore}>See more options</button>
+        )}
         <p className="team-note"><Link href="/gallery/">See real customer cards</Link></p>
       </div>
 

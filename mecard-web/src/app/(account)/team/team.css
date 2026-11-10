@@ -54,6 +54,8 @@
 .team-package b { color: var(--ink); font-weight: 600; font-size: 1rem; }
 .team-package span.team-package__text { flex-grow: 1; }
 .team-package strong { font-family: var(--font-display); font-weight: 700; color: var(--ink); }
+.team-more { align-self: flex-start; padding: var(--space-2) 0; font: inherit; font-size: 0.95rem; font-weight: 600; color: var(--brand); background: none; border: 0; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+.team-more:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; border-radius: var(--radius-md); }
 .team-mini { display: flex; flex-direction: column; justify-content: space-between; width: 140px; height: 88px; box-sizing: border-box; padding: 10px; background: var(--surface); border-radius: 8px; box-shadow: var(--shadow-sm); text-align: left; font-size: 0.65rem; line-height: 1.25; color: var(--ink); }
 .team-mini b { font-family: var(--font-display); font-weight: 700; font-size: 0.7rem; color: var(--team-colour); }
 .team-mini img { max-width: 90px; max-height: 34px; object-fit: contain; object-position: left; }

@@ -279,6 +279,10 @@
 .mc-home .mc-teambox__option:hover, .mc-home .mc-teambox__option:focus { color: var(--ink-muted); background: var(--surface); border-color: var(--brand); }
 .mc-home .mc-teambox__option.is-on, .mc-home .mc-teambox__option.is-on:hover, .mc-home .mc-teambox__option.is-on:focus { color: var(--ink-muted); background: var(--brand-tint); border-color: var(--brand); }
 .mc-home .mc-teambox__option:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+.mc-home .mc-teambox__more { align-self: center; padding: var(--space-2) var(--space-3); font: inherit; font-size: 0.9rem; font-weight: 600; color: var(--brand); background: none; border: 0; border-radius: var(--radius-md); cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+.mc-home .mc-teambox__more:hover, .mc-home .mc-teambox__more:focus { color: var(--brand); background: none; }
+.mc-home .mc-teambox__more:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+.mc-home .mc-teambox__more-note { margin: 0; font-size: 0.85rem; line-height: 1.45; color: var(--ink-muted); }
 .mc-home .mc-stepper button:hover, .mc-home .mc-stepper button:focus { color: var(--ink); background: var(--brand-tint); border-color: var(--brand); }
 .mc-teambox__total { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-4); padding-top: var(--space-4); border-top: 1px solid var(--surface-muted); margin-bottom: var(--space-4); }
 .mc-teambox__total strong { font-family: var(--font-display); font-weight: 700; font-size: 2.35rem; line-height: 1.1; color: var(--ink); }
@@ -349,6 +353,11 @@
   .mc-home__device-signal { width: 360px; height: 360px; }
   .mc-home__shares { grid-template-columns: 1fr 1fr; gap: var(--space-3); }
   .mc-home .mc-btn-lg { width: 100%; }
+  /* The price box's choices: picture beside the name, price under it, so names don't wrap word by word. */
+  .mc-teambox { padding: var(--space-5); }
+  .mc-teambox__option { display: grid; grid-template-columns: 56px minmax(0, 1fr); column-gap: var(--space-3); row-gap: 2px; align-items: center; }
+  .mc-teambox__option img { width: 56px; height: 40px; grid-row: span 2; }
+  .mc-teambox__option strong { grid-column: 2; }
 }
 
 @media (prefers-reduced-motion: reduce) {

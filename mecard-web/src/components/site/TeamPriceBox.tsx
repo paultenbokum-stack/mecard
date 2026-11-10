@@ -4,12 +4,14 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { beacon } from "@/lib/beacon";
-import { clampPeople, packageEachCents, TEAM_CHOICE_KEY, TEAM_PACKAGES, TEAM_QUOTE_FROM, teamPackage, wholeRands, type ProductCents, type TeamPackageId } from "@/lib/team-packages";
+import { clampPeople, MAIN_PACKAGES, MORE_PACKAGES, packageEachCents, TEAM_CHOICE_KEY, TEAM_QUOTE_FROM, teamPackage, wholeRands, type ProductCents, type TeamPackage, type TeamPackageId } from "@/lib/team-packages";
 
 const ART: Record<TeamPackageId, string> = {
   custom: "/images/home/card-custom.webp",
   classic: "/images/home/card-classic.webp",
   pro: "/images/upsell/alessio-pro-profile.webp",
+  "custom-card": "/images/home/card-custom.webp",
+  "classic-card": "/images/home/card-classic.webp",
 };
 
 export function saveTeamChoice(people: number, option: TeamPackageId) {
@@ -33,6 +35,7 @@ export function readTeamChoice(): { people: number; option: TeamPackageId } | nu
 export function TeamPriceBox({ prices }: { prices: ProductCents }) {
   const [people, setPeople] = useState(5);
   const [option, setOption] = useState<TeamPackageId>("custom");
+  const [more, setMore] = useState(false);
   const logged = useRef(false);
   const pkg = teamPackage(option);
   const each = packageEachCents(pkg, prices);
@@ -48,6 +51,23 @@ export function TeamPriceBox({ prices }: { prices: ProductCents }) {
       beacon("team_price_changed", { meta: { people: nextPeople, option: nextOption } });
     }
   };
+  const showMore = () => {
+    setMore(true);
+    beacon("team_price_changed", { meta: { people, option, more_options: true } });
+  };
+  const optionButton = (p: TeamPackage) => {
+    const c = packageEachCents(p, prices);
+    return (
+      <button type="button" role="radio" aria-checked={p.id === option} className={`mc-teambox__option${p.id === option ? " is-on" : ""}`} key={p.id} onClick={() => changed(people, p.id)}>
+        <img src={ART[p.id]} alt="" width={72} height={52} />
+        <span className="mc-teambox__option-text">
+          <b>{p.name}</b>
+          <span>{p.text}</span>
+        </span>
+        {c !== null ? <strong>{wholeRands(c)} each</strong> : null}
+      </button>
+    );
+  };
   const started = () => beacon("team_setup_started", { meta: { button: "price_box", people, option } });
 
   return (
@@ -62,19 +82,15 @@ export function TeamPriceBox({ prices }: { prices: ProductCents }) {
         </div>
       </div>
       <div className="mc-teambox__options" role="radiogroup" aria-label="What each person gets">
-        {TEAM_PACKAGES.map((p) => {
-          const c = packageEachCents(p, prices);
-          return (
-            <button type="button" role="radio" aria-checked={p.id === option} className={`mc-teambox__option${p.id === option ? " is-on" : ""}`} key={p.id} onClick={() => changed(people, p.id)}>
-              <img src={ART[p.id]} alt="" width={72} height={52} />
-              <span className="mc-teambox__option-text">
-                <b>{p.name}</b>
-                <span>{p.text}</span>
-              </span>
-              {c !== null ? <strong>{wholeRands(c)} each</strong> : null}
-            </button>
-          );
-        })}
+        {MAIN_PACKAGES.map(optionButton)}
+        {more ? (
+          <>
+            {MORE_PACKAGES.map(optionButton)}
+            <p className="mc-teambox__more-note">These come with a free profile for each person, and you can add Pro for anyone later.</p>
+          </>
+        ) : (
+          <button type="button" className="mc-teambox__more" aria-expanded="false" onClick={showMore}>See more options</button>
+        )}
       </div>
       <div className="mc-teambox__total">
         <span>{people === 1 ? "1 person" : `${people} people`}, before delivery</span>

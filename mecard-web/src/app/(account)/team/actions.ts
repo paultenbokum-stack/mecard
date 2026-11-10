@@ -5,11 +5,11 @@ import { redirect } from "next/navigation";
 import { db } from "@/db/client";
 import { events } from "@/db/schema";
 import { canEditProfile, canManageCompany, viewer } from "@/lib/access";
-import { addToCart, getCart, setLineQty } from "@/lib/cart";
+import { addToCart, getCart, removeLine, setLineQty } from "@/lib/cart";
 import { setAccountMode } from "@/lib/manage-view";
 import { requireUserId } from "@/lib/session";
 import { addTeamList, archiveLeaver } from "@/lib/team";
-import { clampPeople, teamPackage } from "@/lib/team-packages";
+import { clampPeople, otherPackageProducts, teamPackage } from "@/lib/team-packages";
 import { parseTeamList } from "@/lib/team-people-rules";
 
 // The team flow's forms. Each checks the user's rights again.
@@ -23,6 +23,9 @@ export async function placeTeamOrderAction(form: FormData) {
   const pkg = teamPackage(form.get("option"));
   const wantsQuote = form.get("intent") === "quote";
   const cart = await getCart(v.id);
+  // A different package chosen before: its unassigned lines go, so the basket matches the price shown.
+  const drop = otherPackageProducts(pkg);
+  for (const line of cart.items) if (!line.profileId && drop.includes(line.productId)) await removeLine(v.id, line.key);
   for (const productId of pkg.products) {
     const line = cart.items.find((l) => l.productId === productId && !l.profileId);
     if (line) await setLineQty(v.id, line.key, people);
