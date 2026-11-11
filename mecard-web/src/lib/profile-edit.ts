@@ -1,7 +1,7 @@
 import "server-only";
-import { and, eq, notInArray } from "drizzle-orm";
+import { and, asc, eq, inArray, notInArray } from "drizzle-orm";
 import { db } from "@/db/client";
-import { companies, profileLinks, profiles } from "@/db/schema";
+import { cards, companies, profileLinks, profiles } from "@/db/schema";
 import { cleanEmail, cleanPhone, cleanSocial, cleanText, cleanUrl } from "./form-values";
 import { applyProUpgrade, createCompany, pendingProUpgrades, refreshProfilePages } from "./manage";
 import { isPro } from "./profile-format";
@@ -122,12 +122,37 @@ export async function replaceLinks(tx: Tx, owner: { profileId: number } | { comp
   }
 }
 
-/** create_company_for_profile(): a company for a Pro profile that has none, owned by the user. */
+/**
+ * The companies a profile can be linked to without staff: those owned by the
+ * account that manages it or the person it is about. Oldest first.
+ */
+export async function accountCompaniesForProfile(profileId: number): Promise<{ id: number; name: string; slug: string }[]> {
+  const [p] = await db.select({ ownerId: profiles.ownerId, managerId: profiles.managerId }).from(profiles).where(eq(profiles.id, profileId)).limit(1);
+  const accounts = [...new Set([p?.managerId, p?.ownerId].filter((x): x is number => !!x))];
+  if (!accounts.length) return [];
+  return db.select({ id: companies.id, name: companies.name, slug: companies.slug }).from(companies).where(inArray(companies.ownerId, accounts)).orderBy(asc(companies.id));
+}
+
+/** Put a profile, and its live tags, into a company (or none). */
+export async function setProfileCompany(profileId: number, companyId: number | null) {
+  const now = new Date();
+  await db.update(profiles).set({ companyId, updatedAt: now }).where(eq(profiles.id, profileId));
+  await db.update(cards).set({ companyId, updatedAt: now }).where(and(eq(cards.profileId, profileId), eq(cards.archived, false)));
+  await refreshProfilePages(profileId);
+}
+
+/**
+ * create_company_for_profile(): a company for a Pro profile that has none.
+ * It belongs to the account that manages the profile (or the person it is
+ * about), not to whoever clicked: staff editing a customer's profile must not
+ * end up owning the customer's company.
+ */
 export async function createCompanyForProfile(profileId: number, userId: number): Promise<number> {
   const [p] = await db.select().from(profiles).where(eq(profiles.id, profileId)).limit(1);
   if (!p) throw new Error(`Profile ${profileId} not found`);
   if (p.companyId) return p.companyId;
-  const id = await createCompany({ id: userId, isAdmin: false }, p.companyName || `${p.firstName} ${p.lastName} Company`.trim());
+  const ownerId = p.managerId ?? p.ownerId ?? userId;
+  const id = await createCompany({ id: ownerId, isAdmin: false }, p.companyName || `${p.firstName} ${p.lastName} Company`.trim());
   // The logo uploaded during onboarding (me_profile_company_logo_id) becomes the company logo.
   if (p.companyLogoPath) await db.update(companies).set({ logoPath: p.companyLogoPath }).where(eq(companies.id, id));
   await db.update(profiles).set({ companyId: id, updatedAt: new Date() }).where(eq(profiles.id, profileId));

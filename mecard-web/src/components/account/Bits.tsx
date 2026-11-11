@@ -63,6 +63,7 @@ const DONE: Record<string, [string, "ok" | "error"]> = {
   "profile-invalid": ["Enter at least a first name (and a valid email address, if you add one).", "error"],
   "profile-saved": ["Profile saved.", "ok"],
   "company-created": ["Company created. Add its details and branding below.", "ok"],
+  "company-linked": ["Your card now uses that company's branding and details.", "ok"],
   "company-built": ["Filled in from your website: details, logo, colours and fonts. Check each tab and change anything that isn’t right.", "ok"],
   "company-built-light": ["Filled in from your website. Its logo is white, so we put it on your brand colour. Adjust that under Logo area, then check each tab.", "ok"],
   "company-invalid": ["Enter a company name.", "error"],

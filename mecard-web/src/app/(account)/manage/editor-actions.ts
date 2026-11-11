@@ -12,7 +12,7 @@ import { PRODUCT } from "@/lib/catalog";
 import { applyProUpgrade, pendingProUpgrades, refreshProfilePages } from "@/lib/manage";
 import { cleanEmail, cleanText, cleanUrl } from "@/lib/form-values";
 import { canUseImage } from "@/lib/media-library";
-import { cleanProfileInput, createCompanyForProfile, saveProfile } from "@/lib/profile-edit";
+import { accountCompaniesForProfile, cleanProfileInput, createCompanyForProfile, saveProfile, setProfileCompany } from "@/lib/profile-edit";
 import { requireUserId } from "@/lib/session";
 import { sanitizeKey } from "@/lib/tracking";
 import type { Palette } from "@/lib/site-read";
@@ -85,6 +85,22 @@ export async function setupCompanyAction(form: FormData) {
   if (!(await canEditProfile(v, profileId))) redirect("/manage/?done=denied");
   const companyId = await createCompanyForProfile(profileId, v.id);
   redirect(nextPath(form, `/manage/company/${companyId}/`, "company-created"));
+}
+
+/** "Use this company": link a profile with no company to one its account already owns. */
+export async function linkCompanyAction(form: FormData) {
+  const v = await viewer(await requireUserId());
+  const profileId = Number(form.get("profile_id"));
+  const companyId = Number(form.get("company_id"));
+  if (!(await canEditProfile(v, profileId))) redirect("/manage/?done=denied");
+  const [p] = await db.select({ companyId: profiles.companyId }).from(profiles).where(eq(profiles.id, profileId)).limit(1);
+  if (!p) redirect("/manage/?done=denied");
+  if (!p.companyId) {
+    const mine = await accountCompaniesForProfile(profileId);
+    if (!mine.some((c) => c.id === companyId)) redirect("/manage/?done=denied");
+    await setProfileCompany(profileId, companyId);
+  }
+  redirect(nextPath(form, `/manage/profile/${profileId}/`, "company-linked"));
 }
 
 /** The Branding tab's "Read colours from my website": a palette for the form, saved only when the user saves. */

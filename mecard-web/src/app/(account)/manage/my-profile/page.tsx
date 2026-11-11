@@ -8,8 +8,8 @@ import { UpsellSeen } from "@/components/account/Upsells";
 import { COLOUR_FIELDS, FONT_CHOICES, ICON_CHOICES } from "@/lib/company-edit";
 import { manageViewFor } from "@/lib/manage-view";
 import { requireUserId } from "@/lib/session";
-import { applyUpgradeAction, setupCompanyAction, startProUpgradeAction } from "../editor-actions";
-import { loadProfileEditor, ProfileBadge } from "../profile/[id]/EditProfile";
+import { applyUpgradeAction, startProUpgradeAction } from "../editor-actions";
+import { CompanyChoice, loadProfileEditor, ProfileBadge } from "../profile/[id]/EditProfile";
 
 export const metadata: Metadata = { title: "Edit profile" };
 
@@ -131,11 +131,7 @@ function LookAndFeel({ data, proEditing }: { data: Awaited<ReturnType<typeof loa
         <section className="acc-panel">
           <h2>Set up your look and feel</h2>
           <p>Add your company&rsquo;s logo, colours, fonts, address and buttons to your card. You can change them any time.</p>
-          <form action={setupCompanyAction}>
-            <input type="hidden" name="profile_id" value={p.id} />
-            <input type="hidden" name="next" value={next} />
-            <ConfirmButton className="acc-btn acc-btn--primary">Start designing</ConfirmButton>
-          </form>
+          <CompanyChoice profileId={p.id} companies={data.accountCompanies} next={next} newLabel="Start designing" />
         </section>
         <StepButtons />
       </>

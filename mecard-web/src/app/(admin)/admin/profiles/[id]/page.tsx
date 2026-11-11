@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { desc, eq, sql } from "drizzle-orm";
+import { asc, desc, eq, inArray, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import { db } from "@/db/client";
 import { cards, companies, entitlements, events, profiles, profileSlugHistory, users } from "@/db/schema";
@@ -47,6 +47,16 @@ export default async function AdminProfile({ params, searchParams }: { params: P
     profileArchiveCounts(id),
     db.select({ oldSlug: profileSlugHistory.oldSlug }).from(profileSlugHistory).where(eq(profileSlugHistory.profileId, id)).orderBy(desc(profileSlugHistory.createdAt)),
   ]);
+  // The companies of the profile's owner and manager, to pick from under "Belongs to".
+  const accounts = [...new Set([p.ownerId, p.managerId].filter((x): x is number => !!x))];
+  const accountCompanies = accounts.length
+    ? await db
+        .select({ id: companies.id, name: companies.name, ownerId: companies.ownerId })
+        .from(companies)
+        .where(inArray(companies.ownerId, accounts))
+        .orderBy(asc(companies.name), asc(companies.id))
+    : [];
+  const currentListed = !company?.id || accountCompanies.some((c) => c.id === company.id);
   const name = `${p.firstName} ${p.lastName}`.trim() || `Profile ${p.id}`;
   const guard = profileArchiveGuard(counts);
   const liveTags = tags.filter((t) => !t.archived);
@@ -161,9 +171,27 @@ export default async function AdminProfile({ params, searchParams }: { params: P
                 <input id="p-manager" name="manager" type="email" defaultValue={mgr?.email ?? ""} className="adm-input" />
               </div>
               <div className="adm-field">
-                <label htmlFor="p-company">Company (number or address)</label>
-                <input id="p-company" name="company" defaultValue={company?.id ?? ""} className="adm-input" />
-                <span className="adm-help">Blank for none. Its tags move with it.</span>
+                <label htmlFor="p-company-pick">Company</label>
+                <select id="p-company-pick" name="company_pick" defaultValue={company?.id ? String(company.id) : ""} className="adm-select">
+                  <option value="">None</option>
+                  {!currentListed && company?.id ? (
+                    <option value={company.id}>
+                      {company.name} #{company.id} (another account&apos;s)
+                    </option>
+                  ) : null}
+                  {accountCompanies.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name} #{c.id}
+                      {accounts.length > 1 ? (c.ownerId === p.ownerId ? " (owner's)" : " (manager's)") : ""}
+                    </option>
+                  ))}
+                </select>
+                <span className="adm-help">The companies of the owner and manager above. Its tags move with it.</span>
+              </div>
+              <div className="adm-field">
+                <label htmlFor="p-company">Or another company (number or address)</label>
+                <input id="p-company" name="company" className="adm-input" autoComplete="off" />
+                <span className="adm-help">Overrides the choice above when filled in.</span>
               </div>
               <div className="adm-field">
                 <label htmlFor="p-type">Type</label>

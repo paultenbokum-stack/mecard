@@ -10,7 +10,8 @@ import { productPriceWords } from "@/lib/product-prices";
 import { isPro } from "@/lib/profile-format";
 import { displayName, getProfileView } from "@/lib/public-profile";
 import { requireUserId } from "@/lib/session";
-import { applyUpgradeAction, setupCompanyAction, startProUpgradeAction } from "../../editor-actions";
+import { accountCompaniesForProfile } from "@/lib/profile-edit";
+import { applyUpgradeAction, linkCompanyAction, setupCompanyAction, startProUpgradeAction } from "../../editor-actions";
 
 /** The profile editor and what is loaded for it; the page and the /manage/ modal both show it. */
 export async function loadProfileEditor(id: string) {
@@ -29,8 +30,10 @@ export async function loadProfileEditor(id: string) {
     pro ? undefined : pendingProUpgrades([p.id], v.id).then((m) => m.get(p.id)),
     view.company ? canManageCompany(v, view.company.id) : Promise.resolve(false),
   ]);
+  // A profile with no company is offered the companies its account already has before a new one.
+  const accountCompanies = view.company ? [] : await accountCompaniesForProfile(p.id);
   const proPrice = (await productPriceWords())[PRODUCT.proUpgrade];
-  return { view, pro, upgrades, pending, proPending, manageCompany, name: displayName(p), proPrice };
+  return { view, pro, upgrades, pending, proPending, manageCompany, accountCompanies, name: displayName(p), proPrice };
 }
 
 export function ProfileBadge({ pro, pending }: { pro: boolean; pending?: boolean }) {
@@ -38,8 +41,42 @@ export function ProfileBadge({ pro, pending }: { pro: boolean; pending?: boolean
   return <span className={`acc-badge${pro ? " acc-badge--pro" : ""}`}>{pro ? "Pro" : "Standard"}</span>;
 }
 
+/**
+ * The company step for a profile with no company: the account's own companies
+ * to use, then a new one. With none, just the button to set one up.
+ */
+export function CompanyChoice({ profileId, companies, next, newLabel }: { profileId: number; companies: { id: number; name: string }[]; next?: string; newLabel: string }) {
+  const setup = (
+    <form action={setupCompanyAction}>
+      <input type="hidden" name="profile_id" value={profileId} />
+      {next ? <input type="hidden" name="next" value={next} /> : null}
+      <ConfirmButton className={`acc-btn${companies.length ? "" : " acc-btn--primary"}`}>{companies.length ? "Set up a new company" : newLabel}</ConfirmButton>
+    </form>
+  );
+  if (!companies.length) return setup;
+  return (
+    <>
+      <p>Use one of your companies, so this card shares its logo, colours and details:</p>
+      <ul className="acc-company-choice">
+        {companies.map((c) => (
+          <li key={c.id}>
+            <form action={linkCompanyAction}>
+              <input type="hidden" name="profile_id" value={profileId} />
+              <input type="hidden" name="company_id" value={c.id} />
+              {next ? <input type="hidden" name="next" value={next} /> : null}
+              <ConfirmButton className="acc-btn acc-btn--primary">Use {c.name}</ConfirmButton>
+            </form>
+          </li>
+        ))}
+      </ul>
+      <p className="acc__muted">Or start a separate company for this card.</p>
+      {setup}
+    </>
+  );
+}
+
 export function EditProfile({ data, done }: { data: Awaited<ReturnType<typeof loadProfileEditor>>; done?: string }) {
-  const { view, pro, upgrades, pending, proPending, manageCompany, proPrice } = data;
+  const { view, pro, upgrades, pending, proPending, manageCompany, accountCompanies, proPrice } = data;
   // Ordered but not paid: Pro is unlocked here, the public card stays standard.
   const proEditing = pro || !!proPending;
   const p = view.profile;
@@ -75,10 +112,7 @@ export function EditProfile({ data, done }: { data: Awaited<ReturnType<typeof lo
             ) : (
               <>
                 <p>Add your company&rsquo;s logo, colours, fonts, address and buttons to your card.</p>
-                <form action={setupCompanyAction}>
-                  <input type="hidden" name="profile_id" value={p.id} />
-                  <ConfirmButton className="acc-btn acc-btn--primary">Set up company branding</ConfirmButton>
-                </form>
+                <CompanyChoice profileId={p.id} companies={accountCompanies} newLabel="Set up company branding" />
               </>
             )}
           </section>

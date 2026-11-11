@@ -69,7 +69,8 @@ export async function saveProfileAdminAction(form: FormData) {
   const manager = await userByEmail(managerEmail);
   if (ownerEmail && !owner) back(path, { error: `No account for ${ownerEmail}.` });
   if (managerEmail && !manager) back(path, { error: `No account for ${managerEmail}.` });
-  const companyRef = str(form, "company");
+  // A number or address typed in wins over the picked company; the profile page offers both.
+  const companyRef = str(form, "company") || (form.has("company_pick") ? str(form, "company_pick") : "");
   const company = companyRef ? await companyByRef(companyRef) : null;
   if (companyRef && !company) back(path, { error: "No company with that number or address." });
   const type = str(form, "type") === "pro" ? "pro" : "standard";
