@@ -37,11 +37,14 @@ export default async function OrderReceivedPage({ params }: { params: Promise<{ 
   const designable = orderCards.filter((c) => c.type !== "phonetag");
   const done = designable.filter((c) => c.designSubmitted).length;
   const allDone = designable.length > 0 && done >= designable.length;
-  // The sale for GA4 and Google Ads: paid, or back from PayFast before its ITN
-  // arrived. An EFT order on hold isn't counted until it is paid.
+  // The sale for GA4 and Google Ads: paid, back from PayFast before its ITN
+  // arrived, or an EFT order on hold. EFT buyers rarely come back here once
+  // staff mark the order paid, so it counts when placed (Pro goes live then too).
   const value = order.totalCents / 100;
+  const pendingPayfast = order.status === "pending" && order.paymentMethod === "payfast";
+  const eftPlaced = order.status === "on-hold" && order.paymentMethod === "bacs";
   const purchase: GtagEvent[] =
-    paid || (order.status === "pending" && order.paymentMethod === "payfast")
+    paid || pendingPayfast || eftPlaced
       ? [
           ["purchase", { transaction_id: String(order.id), value, currency: "ZAR", items: items.map((i) => ({ item_id: String(i.productId), item_name: i.name, price: i.unitPriceCents / 100, quantity: i.quantity })) }],
           ...(ADS_PURCHASE ? [["conversion", { send_to: ADS_PURCHASE, value, currency: "ZAR", transaction_id: String(order.id) }] as GtagEvent] : []),
