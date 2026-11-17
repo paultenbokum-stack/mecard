@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { basketAction, DAY, HOUR, MINUTE, markSent, onHoldReminderDue, SENT } from "./automation-rules";
+import { basketAction, DAY, HOUR, MINUTE, markSent, onHoldReminderDue, lastReminderLabel, SENT } from "./automation-rules";
 
 const basket = (ageMs: number, sent = 0, hasCards = true) => basketAction({ ageMs, sent, hasCards, empty: false });
 
@@ -20,8 +20,11 @@ test("a job that missed a few runs sends only the reminder that fits the basket'
   assert.equal(markSent(0, "day5") & SENT.day1, SENT.day1);
 });
 
-test("baskets without cards get no reminders but still expire; empty baskets are left alone", () => {
-  assert.equal(basket(2 * DAY, 0, false), null);
+test("baskets without cards (a Pro upgrade) skip the 15-minute card email but get 1 day and 5 days; empty baskets are left alone", () => {
+  assert.equal(basket(20 * MINUTE, 0, false), null);
+  assert.equal(basket(DAY + HOUR, 0, false), "day1");
+  assert.equal(basket(2 * DAY, markSent(0, "day1"), false), null);
+  assert.equal(basket(5 * DAY + HOUR, markSent(0, "day1"), false), "day5");
   assert.equal(basket(8 * DAY, 0, false), "expire");
   assert.equal(basketAction({ ageMs: 8 * DAY, sent: 0, hasCards: false, empty: true }), null);
 });
@@ -30,4 +33,11 @@ test("on-hold reminders go between 2 and 7 days", () => {
   assert.equal(onHoldReminderDue(DAY), false);
   assert.equal(onHoldReminderDue(2 * DAY + MINUTE), true);
   assert.equal(onHoldReminderDue(30 * DAY), false);
+});
+
+test("the baskets list names the latest reminder sent", () => {
+  assert.equal(lastReminderLabel(0), null);
+  assert.equal(lastReminderLabel(markSent(0, "checkout")), "15 min");
+  assert.equal(lastReminderLabel(markSent(0, "day1")), "1 day");
+  assert.equal(lastReminderLabel(markSent(0, "day5")), "5 days");
 });

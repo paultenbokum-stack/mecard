@@ -7,6 +7,7 @@ const items = [
   { href: "/admin/", label: "Dashboard", icon: "fa-tachometer-alt", exact: true },
   { href: "/admin/stats/", label: "Stats", icon: "fa-chart-bar" },
   { href: "/admin/orders/", label: "Orders", icon: "fa-receipt" },
+  { href: "/admin/baskets/", label: "Baskets", icon: "fa-shopping-basket" },
   { href: "/admin/cards/", label: "Card processing", icon: "fa-id-card" },
   { href: "/admin/encoding/", label: "Encoding file", icon: "fa-file-csv" },
   { href: "/admin/quotes/", label: "Quotes", icon: "fa-file-invoice" },

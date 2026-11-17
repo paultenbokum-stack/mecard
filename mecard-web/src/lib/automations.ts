@@ -24,10 +24,29 @@ import { siteUrl } from "./site";
 
 const ORPHAN_SWEEP_WINDOW = 90 * DAY;
 
-function basketEmail(r: BasketReminder, firstName: string) {
+function basketEmail(r: BasketReminder, firstName: string, hasCards: boolean) {
   const basket = siteUrl("/basket/");
   const checkout = siteUrl("/checkout/");
   const shop = siteUrl("/");
+  if (!hasCards) {
+    // A basket without cards (usually a Pro upgrade): no designs to submit, nothing printed.
+    const last = r === "day5";
+    return {
+      subject: last ? "Your MeCard basket is about to be cleared" : `Still thinking it over, ${firstName || "friend"}?`,
+      text: [
+        `Hi ${firstName || "there"},`,
+        "",
+        last
+          ? `You left something in your basket on ${shop} 5 days ago. We'll clear it in 2 days, so if you still want it, now is a good time to check out.`
+          : `It looks like you didn't get to finish checking out on ${shop}, so we saved your basket for you. It will stay there for another 6 days.`,
+        "",
+        `Complete your order: ${basket}`,
+        "",
+        "See you soon,",
+        "The team at MeCard",
+      ].join("\n"),
+    };
+  }
   if (r === "checkout") {
     return {
       subject: "Confirm your MeCard Order",
@@ -98,7 +117,7 @@ function basketEmail(r: BasketReminder, firstName: string) {
   };
 }
 
-/** Abandoned baskets: the three reminders, then emptied after 7 days. */
+/** Abandoned baskets: the reminders (three with cards, two without), then emptied after 7 days. */
 async function runBaskets(now: Date, log: string[]) {
   const counts = { checkout: 0, day1: 0, day5: 0, expired: 0 };
   const rows = await db
@@ -107,12 +126,8 @@ async function runBaskets(now: Date, log: string[]) {
     .innerJoin(users, eq(users.id, carts.userId))
     .where(sql`jsonb_array_length(${carts.items}) > 0`);
   for (const { c, email, firstName } of rows) {
-    const action = basketAction({
-      ageMs: now.getTime() - c.updatedAt.getTime(),
-      sent: c.remindersSent,
-      hasCards: c.items.some((l) => REMINDER_PRODUCTS.includes(l.productId)),
-      empty: !c.items.length,
-    });
+    const hasCards = c.items.some((l) => REMINDER_PRODUCTS.includes(l.productId));
+    const action = basketAction({ ageMs: now.getTime() - c.updatedAt.getTime(), sent: c.remindersSent, hasCards, empty: !c.items.length });
     if (!action) continue;
     if (action === "expire") {
       // Removing each line archives its cards and cancels its entitlement rows, as removing it by hand does.
@@ -121,7 +136,7 @@ async function runBaskets(now: Date, log: string[]) {
       log.push(`basket of user ${c.userId}: emptied after 7 days (${c.items.length} line(s))`);
       continue;
     }
-    const msg = basketEmail(action, firstName);
+    const msg = basketEmail(action, firstName, hasCards);
     const sent = await sendEmail({ to: email, ...msg });
     if (!sent.ok) {
       log.push(`basket of user ${c.userId}: ${action} reminder failed: ${sent.error}`);

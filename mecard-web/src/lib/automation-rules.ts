@@ -1,8 +1,8 @@
 // The AutomateWoo workflows, as rules. Pure, so they can be unit tested.
 //
 //   Card checkout reminder   basket with cards abandoned (15 minutes, AutomateWoo's default)
-//   Abandoned cart (1 Day)   1 day after, if it has cards
-//   Abandoned Cart (5 days)  5 days after, if it has cards
+//   Abandoned cart (1 Day)   1 day after (baskets without cards, e.g. a Pro upgrade, get their own wording)
+//   Abandoned Cart (5 days)  5 days after, the same
 //   (WooCommerce session)    the basket is emptied after 7 days, as the emails promise
 //   Trash Abandoned Tags     30 days: cards still marked as in a basket that no longer has them
 //   Order on hold            2 days after an EFT order goes on hold, if it still is
@@ -33,10 +33,10 @@ export type BasketReminder = keyof typeof SENT;
 export function basketAction(b: { ageMs: number; sent: number; hasCards: boolean; empty: boolean }): BasketReminder | "expire" | null {
   if (b.empty) return null;
   if (b.ageMs >= BASKET_EXPIRES_AFTER) return "expire";
-  if (!b.hasCards) return null;
   if (b.ageMs >= 5 * DAY) return b.sent & SENT.day5 ? null : "day5";
   if (b.ageMs >= DAY) return b.sent & SENT.day1 ? null : "day1";
-  if (b.ageMs >= ABANDONED_AFTER) return b.sent & SENT.checkout ? null : "checkout";
+  // The 15-minute "Confirm your MeCard Order" email is about designing cards, so only baskets with cards get it.
+  if (b.ageMs >= ABANDONED_AFTER && b.hasCards) return b.sent & SENT.checkout ? null : "checkout";
   return null;
 }
 
@@ -45,6 +45,14 @@ export function markSent(sent: number, r: BasketReminder): number {
   if (r === "day5") return sent | SENT.day5 | SENT.day1 | SENT.checkout;
   if (r === "day1") return sent | SENT.day1 | SENT.checkout;
   return sent | SENT.checkout;
+}
+
+/** The latest reminder sent for a basket's contents, for the staff baskets list (later ones set the earlier bits too). */
+export function lastReminderLabel(sent: number): string | null {
+  if (sent & SENT.day5) return "5 days";
+  if (sent & SENT.day1) return "1 day";
+  if (sent & SENT.checkout) return "15 min";
+  return null;
 }
 
 export const onHoldReminderDue = (onHoldMs: number) => onHoldMs >= ON_HOLD_REMINDER_AFTER && onHoldMs < ON_HOLD_REMINDER_UNTIL;
